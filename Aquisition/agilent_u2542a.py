@@ -15,25 +15,63 @@ class Polarity:
     all_polarities = ['BIP','UNIP']
     Bipolar,Unipolar = all_polarities
 
+class Range:
+    all_ranges = ['10','5','2.5','1.25']
+    Range_10, Range_5, Range_2_5,Range_1_25 = all_ranges
+
 class ConvertionFunction:
+    maxInt16 = 65536
     def BipolarConversionFunction(range_value, data_code):
-        return (2*data_code*range_value)/pow(2,16)
+        return (2*data_code*range_value)/ConvertionFunction.maxInt16
         
     def UnipolarConversionFunction(range_value, data_code):
-        return (data_code/pow(2,16)+0.5)*range_value
+        return (data_code/ConvertionFunction.maxInt16+0.5)*range_value
+
+class AI_Channel:
+        def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = ConvertionFunction.maxInt16):
+            self.name = ch_name
+            self.enabled = ch_enabled
+            self.range = ch_range
+            self.polarity = ch_polarity
+            
+
+        def ai_get_val_str(self):
+            return "name = {n}, en = {0}, rang = {1}, pol = {2}".format(self.enabled,self.range,self.polarity,n = self.name)
+
+        def ai_convertion_function(self,int16_value):
+            
+
+        
+
 
 class AgilentU2542A:
-       
     def __init__(self,resource):
         rm = visa.ResourceManager()
         self.instrument = rm.open_resource(resource, write_termination='\n', read_termination = '\n') #write termination
+        
         self.daq_channels_enabled = []
         self.daq_init_channel_enabled()
-        self.daq_channel_polarities = ()
+        self.daq_channel_polarities = []
+        self.daq_init_polarities()
+        self.daq_channel_ranges = []
+        self.daq_init_ranges()
+
+    def daq_init_channels(self):
+        self.daq_channels = []
+        channels = "(@101:104)"
+        range_response = self.instrument.ask("ROUT:CHAN:RANG? {0}".format(channels))
+        polarity_response = self.instrument.ask("ROUT:CHAN:POL? {0}".format(channels))
+        enabled_response = self.instrument.ask("ROUT:ENAB? {0}".format(channels))
+        channel_range = range_response.split(',')
+        channel_polarity = polarity_response.split(',')
+        channel_enabled = enabled_response.split(',')
+        for i in range(4):
+            self.daq_channels.append(AI_Channel(ch_name = AI_Channels.all_channels[i], ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]))
+##            print(self.daq_channels[i].ai_get_val_str())
 
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
-
+    
     
     def daq_setup(self, srate,points):
         self.instrument.write("ACQ:SRAT {0}".format(srate))
@@ -46,12 +84,8 @@ class AgilentU2542A:
     def daq_get_enabled_channels(self):
         return self.daq_channels_enabled
 
-    def daq_set_polarity(self, channel_polarity_tuple):
-##        self.instrument.write
-        if type(channel_polarity_tuple) is tuple:
-            for cp in channel_polarity_tuple:
-                if type(cp) is tuple:
-                    self.instrument
+    def daq_init_polarities(self):
+        pass
             
         
     
@@ -69,7 +103,7 @@ class AgilentU2542A:
                 self.daq_channels_enabled.append(AI_Channels.all_channels[i])
         return self.daq_channels_enabled
 
-    def daq_is_running(self):
+    def daq_init_ranges(self):
         pass
         
    
@@ -116,6 +150,7 @@ class AgilentU2542A:
 
 if __name__ == "__main__":
     d = AgilentU2542A('ADC')
+    
     d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
     print(d.daq_get_enabled_channels())
     print(repr(d.daq_init_channel_enabled()))
@@ -123,7 +158,8 @@ if __name__ == "__main__":
     t = ('asd','sgreg',)
     f = ConvertionFunction.UnipolarConversionFunction
     print("convertion value {0}".format(f(10,56000)))
-
+    print(ConvertionFunction.maxInt16)
+    d.daq_init_channels()
 
 
 

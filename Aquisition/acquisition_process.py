@@ -42,8 +42,9 @@ class AcquisitionProcess(Process):
         except:
             raise
         finally:
-            d.daq_reset()
             d.daq_stop()
+            d.daq_reset()
+            
 
 
 
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     a.start()
     a.configure()
     counter = 0
-    while counter<5:
+    while counter<1000:
         print(q.get())
         counter +=1
     a.stop()
