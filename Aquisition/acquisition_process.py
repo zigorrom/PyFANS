@@ -36,7 +36,6 @@ class AcquisitionProcess(Process):
                         t = time.time()-init_time
                         data = d.daq_read_data()
                         self.queue.put((t,data))
-
                 except:
                     pass
         except:
@@ -55,7 +54,7 @@ if __name__ == '__main__':
     a.start()
     a.configure()
     counter = 0
-    while counter<1000:
+    while counter<600:
         print(q.get())
         counter +=1
     a.stop()
