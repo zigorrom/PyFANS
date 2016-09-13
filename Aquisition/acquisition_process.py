@@ -5,6 +5,29 @@ import time
 from agilent_u2542a import AgilentU2542A, AI_Channels
 from multiprocessing import *
 
+class ProcessingProcess(Process):
+    def __init__(self,input_queue, output_queue):
+        super(ProcessingProcess,self).__init__()
+        self.input_queue = input_queue
+        self.output_queue = output_queue
+        self.exit = Event()
+
+    def stop(self):
+        self.exit.set()
+        
+    def run(self):
+        try:
+            while not self.exit.is_set():
+                val = input_queue.get()
+                l = len(val)
+                self.output_queue.put(l)
+        except:
+                raise
+        finally:
+                 pass   
+        
+            
+
 class AcquisitionProcess(Process):
     def __init__(self, idx, data_queue,  resource):
         super(AcquisitionProcess,self).__init__()
@@ -49,17 +72,23 @@ class AcquisitionProcess(Process):
 
 if __name__ == '__main__':
     q = Queue()
-
+##    rq = Queue()
     a = AcquisitionProcess(data_queue = q, idx = 10,resource = 'ADC')
+##    p = ProcessingProcess( input_queue = q,output_queue = rq)
     a.start()
+##    p.start()
     a.configure()
     counter = 0
-    while counter<600:
+    while counter<6:
         print(q.get())
+##        print(rq.get())
         counter +=1
     a.stop()
+##    p.stop()
+    
     
     a.join()
+##    p.join()
     print("joined")
 
     
