@@ -11,28 +11,23 @@ class MainView(QtGui.QMainWindow):
         self.setupUi()
 
     def setupUi(self):
+        self.statusBar()
+
         exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)        
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
-##trigger
-        exitAction.triggered.connect(QtGui.qApp.quit)
-        
-        restoreAction = QtGui.QAction(QtGui.QIcon('restore_wnd.png'), '&Restore windows', self)
-        restoreAction.setShortcut('Ctrl+R')
-        restoreAction.setStatusTip('Restore dock positions')
-##trigger
-        restoreAction.triggered.connect(self.load)
-
-        self.statusBar()
 
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
 
+        restoreAction = QtGui.QAction(QtGui.QIcon('restore_wnd.png'), '&Restore windows', self)
+        restoreAction.setShortcut('Ctrl+R')
+        restoreAction.setStatusTip('Restore dock positions')
+        
         wndMenu = menubar.addMenu('&Window')
         wndMenu.addAction(restoreAction)
 
-        
         dockArea = DockArea()
         self.dockArea = dockArea
         self.setCentralWidget(dockArea)
@@ -41,15 +36,38 @@ class MainView(QtGui.QMainWindow):
         noise_d = Dock("Noise")
         frequencies_d = Dock("Frequencies", autoOrientation=False)#, size=(10,10))
         voltages_d = Dock("Voltages", autoOrientation=False)#, size=(500,200)
-        controls_d = Dock("Controls", autoOrientation=False)#, closable=True)
+        controls_d = Dock("Controls", autoOrientation=False,size=(10,10))#, closable=True)
+
         dockArea.addDock(tt_d, 'left')      ## place d1 at left edge of dock area (it will fill the whole space since there are no other docks yet)
         dockArea.addDock(noise_d, 'bottom',tt_d)     ## place d2 at right edge of dock area
         dockArea.addDock(controls_d, 'right')## place d3 at bottom edge of d1
         dockArea.addDock(frequencies_d, 'bottom',controls_d)     ## place d4 at right edge of dock area
         dockArea.addDock(voltages_d, 'bottom',controls_d)
 
-        self.save()
+
+
+        w1 = pg.LayoutWidget()
+        startBtn = QtGui.QPushButton('Start')
+        stopBtn = QtGui.QPushButton('Stop')
+        singleShotBtn = QtGui.QPushButton('Single shot')
+        w1.addWidget(startBtn, row=0, col=0)
+        w1.addWidget(stopBtn, row=0, col=1)
+        w1.addWidget(singleShotBtn, row = 1, col=0, colspan =2)
+        controls_d.addWidget(w1)
+
+        w2 = pg.PlotWidget(title = "Timetrace")
+        w2.plot(np.random.normal(size = 50000))
+        tt_d.addWidget(w2)
         
+        
+
+        self.save()
+
+        exitAction.triggered.connect(self.quit)
+        restoreAction.triggered.connect(self.load)
+
+
+        self.setWindowIcon(QtGui.QIcon('pyfans.png'))
         self.setWindowTitle('PyFANS')    
         self.showMaximized()
         
@@ -60,7 +78,10 @@ class MainView(QtGui.QMainWindow):
     def load(self):
         print("clicked")
         self.dockArea.restoreState(self.state)
-        
+
+    def quit(self):
+        print("quit")
+        QtGui.qApp.quit()
     
 def main():
     
