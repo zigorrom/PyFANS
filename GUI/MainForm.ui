@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>PyFANS</string>
   </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Rounded</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="spacing">
@@ -51,7 +54,7 @@
      <x>0</x>
      <y>0</y>
      <width>917</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -94,6 +97,7 @@
      <addaction name="actionVoltages_2"/>
      <addaction name="actionAll_3"/>
     </widget>
+    <addaction name="actionChannel_settings"/>
     <addaction name="menuSave_2"/>
     <addaction name="menuLoad_2"/>
    </widget>
@@ -112,8 +116,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>159</width>
-     <height>77</height>
+     <width>195</width>
+     <height>91</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -217,7 +221,7 @@
   <widget class="QDockWidget" name="frequenciesWidget">
    <property name="minimumSize">
     <size>
-     <width>191</width>
+     <width>200</width>
      <height>200</height>
     </size>
    </property>
@@ -241,36 +245,10 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="5" column="0">
-      <widget class="QPushButton" name="pushButton">
+     <item row="5" column="1">
+      <widget class="QPushButton" name="pushButton_2">
        <property name="text">
-        <string>Add</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Bin size</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="spinBox">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="suffix">
-        <string> Hz</string>
-       </property>
-       <property name="minimum">
-        <number>100</number>
-       </property>
-       <property name="maximum">
-        <number>500000</number>
+        <string>Delete</string>
        </property>
       </widget>
      </item>
@@ -299,17 +277,10 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
-      <widget class="QPushButton" name="pushButton_2">
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Delete</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Sample rate</string>
+        <string>Bin size</string>
        </property>
       </widget>
      </item>
@@ -332,6 +303,46 @@
          <width>200</width>
          <height>100</height>
         </size>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Sample rate</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="spinBox">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="suffix">
+        <string> Hz</string>
+       </property>
+       <property name="minimum">
+        <number>100</number>
+       </property>
+       <property name="maximum">
+        <number>500000</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0" colspan="2">
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="text">
+        <string>Select channels</string>
        </property>
       </widget>
      </item>
@@ -603,6 +614,11 @@
   <action name="actionAll_3">
    <property name="text">
     <string>All</string>
+   </property>
+  </action>
+  <action name="actionChannel_settings">
+   <property name="text">
+    <string>Channel settings</string>
    </property>
   </action>
  </widget>
