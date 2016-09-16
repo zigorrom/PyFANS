@@ -79,8 +79,10 @@ if __name__ == '__main__':
 ##    p.start()
     a.configure()
     counter = 0
-    while counter<6:
+    while counter<1000:
+        
         print(q.get())
+        print("\n\r")
 ##        print(rq.get())
         counter +=1
     a.stop()

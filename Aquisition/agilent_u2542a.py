@@ -147,11 +147,28 @@ class AgilentU2542A:
         enabled_channels = self.daq_get_enabled_channels()
         nchan = len(enabled_channels)
         narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
+
+        single_channel_data_len = int(len_from_header/nchan)
         package = []
+    
+##        for ch in range(nchan):
+##            ch_desc = enabled_channels[ch].ai_get_val_tuple()
+##            package.append((ch_desc,np.empty(single_channel_data_len,dtype = float)))
+##
+##        print(package)
+##        counter = 0
+##        for ch in range(nchan):
+##            for val in narr:            
+##                package[ch][1][counter] = enabled_channels[ch]. ai_convertion_function(val)
+##            counter += 1
+
+        
+                           
         for ch in range(nchan):
             arr = narr[ch::nchan]
             ch_desc = enabled_channels[ch].ai_get_val_tuple()
-            package.append((ch_desc,arr,))#enabled_channels[ch].ai_vect_cf(arr),))
+##            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
+            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
         return package
 
     
