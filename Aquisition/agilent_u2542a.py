@@ -144,23 +144,22 @@ class AgilentU2542A:
     def daq_parse_raw(self, raw_data): ## improve performance ---> need to do all the convertions in the same loop
         len_from_header = int(raw_data[2:10])
         data = raw_data[10:]
+        data_len = len(data)
         enabled_channels = self.daq_get_enabled_channels()
         nchan = len(enabled_channels)
         narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
 
-        single_channel_data_len = int(len_from_header/nchan)
+        single_channel_data_len = int(data_len/nchan)
         package = []
     
+##        counter = 0
 ##        for ch in range(nchan):
 ##            ch_desc = enabled_channels[ch].ai_get_val_tuple()
 ##            package.append((ch_desc,np.empty(single_channel_data_len,dtype = float)))
-##
-##        print(package)
-##        counter = 0
-##        for ch in range(nchan):
-##            for val in narr:            
-##                package[ch][1][counter] = enabled_channels[ch]. ai_convertion_function(val)
-##            counter += 1
+##            for idx in range(ch,data_len,nchan):            
+##                package[ch][1][counter] = enabled_channels[ch].ai_convertion_function(narr[idx])
+##                counter+=1
+##            counter =0
 
         
                            
