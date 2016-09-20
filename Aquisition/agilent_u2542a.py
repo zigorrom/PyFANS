@@ -1,15 +1,18 @@
 import visa
 import numpy as np
 import time
+import os
+import sys
+
 from math import pow
 
 class AI_Channels:
     all_channels = ['101','102','103','104']
-    AI_1,AI_2, AI_3, AI_4 = all_channels 
+    AI_1,AI_2, AI_3, AI_4 = all_channels
 
 class AO_Channels:
     all_channels = ['201','202']
-    AO_1,AO_2 = all_channels 
+    AO_1,AO_2 = all_channels
 
 class Polarity:
     all_polarities = ['BIP','UNIP']
@@ -23,12 +26,13 @@ class ConvertionFunction:
     maxInt16 = 65536
     def BipolarConversionFunction(range_value, data_code):
         return (2*data_code*range_value)/ConvertionFunction.maxInt16
-        
+
     def UnipolarConversionFunction(range_value, data_code):
         return (data_code/ConvertionFunction.maxInt16+0.5)*range_value
 
 class AI_Channel:
         def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = ConvertionFunction.maxInt16):
+            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
             self.name = ch_name
             self.enabled = ch_enabled
             self.range = ch_range
@@ -38,8 +42,8 @@ class AI_Channel:
                 self.cf = ConvertionFunction.UnipolarConversionFunction
             elif self.polarity == Polarity.Bipolar:
                 self.cf = ConvertionFunction.BipolarConversionFunction
-            self.vcf = np.vectorize(self.ai_convertion_function) 
-            
+            self.vcf = np.vectorize(self.ai_convertion_function)
+
         def ai_is_enabled(self):
             return int(self.enabled)>0
 
@@ -54,7 +58,7 @@ class AI_Channel:
 
         def from_tuple(tuple):
             return AI_Channel(tuple[0],tuple[1],tuple[2],tuple[3])
-        
+
         def ai_get_val_tuple(self):
             return (self.name,self.enabled,self.range,self.polarity,)
 
@@ -66,18 +70,18 @@ class AI_Channel:
 
         def ai_vect_cf(self,int16_value):
             return self.vcf(int16_value)
-        
+
 
 
 class AgilentU2542A:
     def __init__(self,resource):
         rm = visa.ResourceManager()
         self.instrument = rm.open_resource(resource, write_termination='\n', read_termination = '\n') #write termination
-        
+
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
-    
-    
+
+
     def daq_setup(self, srate,points):
         self.instrument.write("ACQ:SRAT {0}".format(srate))
         self.instrument.write("WAV:POIN {0}".format(points))
@@ -93,7 +97,7 @@ class AgilentU2542A:
 
     def daq_setpolarity(self,polarity, channels):
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(polarity,",".join(channels)))
-    
+
     def daq_set_unipolar(self,channels):
         self.daq_setpolarity(Polarity.Unipolar,channels)
 
@@ -119,7 +123,7 @@ class AgilentU2542A:
             if ch.ai_is_enabled():
                 result.append(ch)
         return result
-   
+
     def daq_run(self):
         self.daq_init_channels()
         self.instrument.write("RUN")
@@ -127,12 +131,13 @@ class AgilentU2542A:
 
     def daq_stop(self):
         self.instrument.write("STOP")
-        
+
     def daq_get_status(self):
         return self.instrument.ask("WAV:STAT?")
 
     def daq_is_data_ready(self):
         r = self.daq_get_status()
+        print(r)
         if r== "DATA":
             return True
         return False
@@ -140,49 +145,71 @@ class AgilentU2542A:
     def daq_read_raw(self):
         self.instrument.write("WAV:DATA?")
         return self.instrument.read_raw()
-    
+
     def daq_parse_raw(self, raw_data): ## improve performance ---> need to do all the convertions in the same loop
         len_from_header = int(raw_data[2:10])
+
+        print (len_from_header)
+        sys.stdout.flush()
         data = raw_data[10:]
-        data_len = len(data)
+
         enabled_channels = self.daq_get_enabled_channels()
+
         nchan = len(enabled_channels)
+        print(nchan)
+        sys.stdout.flush()
         narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
+        data_len = narr.size
 
+        print(data_len)
+        sys.stdout.flush()
         single_channel_data_len = int(data_len/nchan)
+        print("sc data len:{0}".format(single_channel_data_len))
+        sys.stdout.flush()
         package = []
-    
-##        counter = 0
-##        for ch in range(nchan):
-##            ch_desc = enabled_channels[ch].ai_get_val_tuple()
-##            package.append((ch_desc,np.empty(single_channel_data_len,dtype = float)))
-##            for idx in range(ch,data_len,nchan):            
-##                package[ch][1][counter] = enabled_channels[ch].ai_convertion_function(narr[idx])
-##                counter+=1
-##            counter =0
+        print("channels routing")
+        sys.stdout.flush()
+        counter = 0
+##        try:
+##            for ch in range(nchan):
+##                print("channel: {0}".format(ch))
+##                ch_desc = enabled_channels[ch].ai_get_val_tuple()
+##                package.append((ch_desc,np.empty(single_channel_data_len,dtype = float)))
+##                for idx in range(ch,data_len,nchan):
+##                    package[ch][1][counter] = enabled_channels[ch].ai_convertion_function(narr[idx])
+##                    counter+=1
+##                counter =0
+##                print(counter)
+##                sys.stdout.flush()
+##        except Exception as e:
+##            print("Exception"+str(e))
+##            sys.stdout.flush()
+##        print(package)
+##        return package
 
-        
-                           
+
+
+
         for ch in range(nchan):
             arr = narr[ch::nchan]
             ch_desc = enabled_channels[ch].ai_get_val_tuple()
-##            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
-            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
+            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
+##            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
         return package
 
-    
+
     def daq_read_data(self):
         raw = self.daq_read_raw()
         package = self.daq_parse_raw(raw)
         return package
-        
-    
+
+
 
 
 
 if __name__ == "__main__":
     d = AgilentU2542A('ADC')
-    
+
     d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
 ##    print(d.daq_get_enabled_channels())
 
@@ -234,16 +261,16 @@ if __name__ == "__main__":
 
 
 
-        
+
 
 ##print(AI_Channels.AI_1)
 
 
 
-    
+
 ##    def daq_run(self):
 ##        self.instrument.write("RUN")
-##        
+##
 ##        counter = 0
 ##        data = ""
 ##        maxCount= 100
@@ -252,7 +279,7 @@ if __name__ == "__main__":
 ##            if counter == maxCount:
 ##                self.instrument.write("STOP")
 ##                print("stopping")
-##                 
+##
 ##            r = self.instrument.ask("WAV:STAT?")
 ##            if r == "DATA":
 ##                print(r)
@@ -262,11 +289,11 @@ if __name__ == "__main__":
 ##                print(data[:10])
 ##                counter += 1
 ##
-##       
+##
 ##        print("stopped")
 
 ##print (__name__)
-##        
+##
 ##if __name__ == '__main__':
 ##    agi = AgilentU2542A('ADC')
 ##    print(agi.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2]))
@@ -280,5 +307,5 @@ if __name__ == "__main__":
 ##            print(data)
 ##            counter += 1
 ##    agi.daq_stop()
-    
-   
+
+
