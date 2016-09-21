@@ -32,7 +32,7 @@ class ConvertionFunction:
 
 class AI_Channel:
         def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = ConvertionFunction.maxInt16):
-            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
+##            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
             self.name = ch_name
             self.enabled = ch_enabled
             self.range = ch_range
@@ -193,8 +193,8 @@ class AgilentU2542A:
         for ch in range(nchan):
             arr = narr[ch::nchan]
             ch_desc = enabled_channels[ch].ai_get_val_tuple()
-            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
-##            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
+##            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
+            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
         return package
 
 
