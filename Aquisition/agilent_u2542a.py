@@ -3,7 +3,7 @@ import numpy as np
 import time
 import os
 import sys
-
+import timeit
 from math import pow
 
 class AI_Channels:
@@ -146,6 +146,9 @@ class AgilentU2542A:
         self.instrument.write("WAV:DATA?")
         return self.instrument.read_raw()
 
+    def daq_read_binary(self):
+        pass
+
     def daq_parse_raw(self, raw_data): ## improve performance ---> need to do all the convertions in the same loop
         len_from_header = int(raw_data[2:10])
 
@@ -189,7 +192,7 @@ class AgilentU2542A:
 
 
 
-
+        
         for ch in range(nchan):
             arr = narr[ch::nchan]
             ch_desc = enabled_channels[ch].ai_get_val_tuple()
@@ -208,23 +211,51 @@ class AgilentU2542A:
 
 
 if __name__ == "__main__":
+    
     d = AgilentU2542A('ADC')
 
-    d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
-##    print(d.daq_get_enabled_channels())
-
-    print(d.daq_parse_raw('#800000006\xeb\xff\xea\xff\xeb\xff'))
-    f = ConvertionFunction.UnipolarConversionFunction
-    print("convertion value {0}".format(f(10,56000)))
-    print(ConvertionFunction.maxInt16)
-##    d.daq_init_channels()
-    en = d.daq_get_enabled_channels()
-    print(en[0].ai_convertion_function(43971))
-##    ai = AI_Channel(
-
-
+##    d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
+####    print(d.daq_get_enabled_channels())
+##
+##    print(d.daq_parse_raw('#800000006\xeb\xff\xea\xff\xeb\xff'))
+##    f = ConvertionFunction.UnipolarConversionFunction
+##    print("convertion value {0}".format(f(10,56000)))
+##    print(ConvertionFunction.maxInt16)
+####    d.daq_init_channels()
+##    en = d.daq_get_enabled_channels()
+##    print(en[0].ai_convertion_function(43971))
+####    ai = AI_Channel(
 
 
+    
+    try:
+        
+        counter = 0
+        d.daq_reset()
+        d.daq_setup(500000,500000)
+        d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
+        d.daq_run()
+        print("started")
+        init_time = time.time()
+        while counter < 100:
+            try:
+                if d.daq_is_data_ready():
+                    print("data ready")
+                    counter += 1
+                    t = time.time()-init_time
+                    data = d.daq_read_data()
+                    print(data)
+##                    self.queue.put((t,data))
+            except Exception as e:
+                print("exception: " + str(e))
+                counter = 100
+            
+                
+    except:
+        pass
+    finally:
+        d.daq_stop()
+        d.daq_reset()
 
 
 

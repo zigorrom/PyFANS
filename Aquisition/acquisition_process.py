@@ -16,7 +16,7 @@ class AcquisitionProcess(Process):
         self.idx = idx
         self.queue = data_queue
         self.resource = resource
-##        sys.stdout = open(str(os.getpid()) + ".txt", "w")
+        sys.stdout = open(str(os.getpid()) + ".txt", "w")
 
     def stop(self):
         self.exit.set()
@@ -37,7 +37,7 @@ class AcquisitionProcess(Process):
             d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
             d.daq_run()
             print("started")
-            while (not self.exit.is_set()) and counter < 1000:
+            while (not self.exit.is_set()) and counter < 100:
                 try:
                     if d.daq_is_data_ready():
                         print("data ready")
