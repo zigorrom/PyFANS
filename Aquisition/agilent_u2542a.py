@@ -71,6 +71,8 @@ class AI_Channel:
         def ai_vect_cf(self,int16_value):
             return self.vcf(int16_value)
 
+        
+
 
 
 class AgilentU2542A:
@@ -140,6 +142,8 @@ class AgilentU2542A:
         print(r)
         if r== "DATA":
             return True
+        elif r == "OVER":
+            raise Exception('overload')
         return False
 
     def daq_read_raw(self):
@@ -191,13 +195,18 @@ class AgilentU2542A:
 ##        return package
 
 
-
         
+##1. use map function
+##2. get rid of dots
+##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
+        chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
+        func_arr = [c.ai_vect_cf for c in enabled_channels]
         for ch in range(nchan):
             arr = narr[ch::nchan]
-            ch_desc = enabled_channels[ch].ai_get_val_tuple()
+##            ch_desc = enabled_channels[ch].ai_get_val_tuple()
+            package.append((chan_desc[ch],func_arr[ch](arr),))
 ##            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
-            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
+##            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
         return package
 
 
@@ -232,7 +241,7 @@ if __name__ == "__main__":
         
         counter = 0
         d.daq_reset()
-        d.daq_setup(500000,500000)
+        d.daq_setup(500000,50000)
         d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
         d.daq_run()
         print("started")
