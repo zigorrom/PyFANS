@@ -24,8 +24,9 @@ class Range:
 
 class ConvertionFunction:
     maxInt16 = 65536
+    maxInt16div2 = 32768
     def BipolarConversionFunction(range_value, data_code):
-        return (2*data_code*range_value)/ConvertionFunction.maxInt16
+        return (data_code*range_value)/ConvertionFunction.maxInt16div2
 
     def UnipolarConversionFunction(range_value, data_code):
         return (data_code/ConvertionFunction.maxInt16+0.5)*range_value
@@ -42,7 +43,8 @@ class AI_Channel:
                 self.cf = ConvertionFunction.UnipolarConversionFunction
             elif self.polarity == Polarity.Bipolar:
                 self.cf = ConvertionFunction.BipolarConversionFunction
-            self.vcf = np.vectorize(self.ai_convertion_function)
+##            self.vcf = np.vectorize(self.ai_convertion_function,otypes=[np.float])
+            self.vcf = np.vectorize(self.cf,otypes=[np.float])
 
         def ai_is_enabled(self):
             return int(self.enabled)>0
@@ -70,6 +72,9 @@ class AI_Channel:
 
         def ai_vect_cf(self,int16_value):
             return self.vcf(int16_value)
+
+        def ai_get_cf_parans(self):
+            return (self.fRange, self.vcf)
 
         
 
@@ -153,75 +158,40 @@ class AgilentU2542A:
     def daq_read_binary(self):
         pass
 
-    def daq_parse_raw(self, raw_data): ## improve performance ---> need to do all the convertions in the same loop
+    def daq_read_data(self):
+        self.instrument.write("WAV:DATA?")
+        raw_data = self.instrument.read_raw()
         len_from_header = int(raw_data[2:10])
-
-        print (len_from_header)
-        sys.stdout.flush()
         data = raw_data[10:]
-
         enabled_channels = self.daq_get_enabled_channels()
-
         nchan = len(enabled_channels)
-        print(nchan)
-        sys.stdout.flush()
         narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
         data_len = narr.size
-
-        print(data_len)
-        sys.stdout.flush()
         single_channel_data_len = int(data_len/nchan)
         print("sc data len:{0}".format(single_channel_data_len))
-        sys.stdout.flush()
         package = []
-        print("channels routing")
-        sys.stdout.flush()
         counter = 0
-##        try:
-##            for ch in range(nchan):
-##                print("channel: {0}".format(ch))
-##                ch_desc = enabled_channels[ch].ai_get_val_tuple()
-##                package.append((ch_desc,np.empty(single_channel_data_len,dtype = float)))
-##                for idx in range(ch,data_len,nchan):
-##                    package[ch][1][counter] = enabled_channels[ch].ai_convertion_function(narr[idx])
-##                    counter+=1
-##                counter =0
-##                print(counter)
-##                sys.stdout.flush()
-##        except Exception as e:
-##            print("Exception"+str(e))
-##            sys.stdout.flush()
-##        print(package)
-##        return package
-
-
         
-##1. use map function
-##2. get rid of dots
+
 ##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
         chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
-        func_arr = [c.ai_vect_cf for c in enabled_channels]
+        func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
         for ch in range(nchan):
             arr = narr[ch::nchan]
-##            ch_desc = enabled_channels[ch].ai_get_val_tuple()
-            package.append((chan_desc[ch],func_arr[ch](arr),))
-##            package.append((ch_desc,enabled_channels[ch].ai_vect_cf(arr),))#arr,))#enabled_channels[ch].ai_vect_cf(arr),))
-##            package.append((ch_desc,arr,))##enabled_channels[ch].ai_vect_cf(arr),))
+            package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],arr),))
         return package
 
 
-    def daq_read_data(self):
-        raw = self.daq_read_raw()
-        package = self.daq_parse_raw(raw)
-        return package
+    
 
 
 
 
 
 if __name__ == "__main__":
-    
-    d = AgilentU2542A('ADC')
+
+    def main():
+        d = AgilentU2542A('ADC')
 
 ##    d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
 ####    print(d.daq_get_enabled_channels())
@@ -237,34 +207,36 @@ if __name__ == "__main__":
 
 
     
-    try:
-        
-        counter = 0
-        d.daq_reset()
-        d.daq_setup(500000,50000)
-        d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
-        d.daq_run()
-        print("started")
-        init_time = time.time()
-        while counter < 100:
-            try:
-                if d.daq_is_data_ready():
-                    print("data ready")
-                    counter += 1
-                    t = time.time()-init_time
-                    data = d.daq_read_data()
-                    print(data)
-##                    self.queue.put((t,data))
-            except Exception as e:
-                print("exception: " + str(e))
-                counter = 100
+        try:
             
+            counter = 0
+            d.daq_reset()
+            d.daq_setup(500000,50000)
+            d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
+            d.daq_run()
+            print("started")
+            init_time = time.time()
+            while counter < 100:
+                try:
+                    if d.daq_is_data_ready():
+##                        print("data ready")
+                        counter += 1
+                        t = time.time()-init_time
+                        data = d.daq_read_data()
+##                        print(data)
+    ##                    self.queue.put((t,data))
+                except Exception as e:
+                    print("exception: " + str(e))
+                    counter = 100
                 
-    except:
-        pass
-    finally:
-        d.daq_stop()
-        d.daq_reset()
+                    
+        except:
+            pass
+        finally:
+            d.daq_stop()
+            d.daq_reset()
+    import profile
+    profile.run('main()')
 
 
 
@@ -302,50 +274,5 @@ if __name__ == "__main__":
 
 
 
-
-##print(AI_Channels.AI_1)
-
-
-
-
-##    def daq_run(self):
-##        self.instrument.write("RUN")
-##
-##        counter = 0
-##        data = ""
-##        maxCount= 100
-##        maxCountOne = maxCount+1
-##        while counter <maxCountOne:
-##            if counter == maxCount:
-##                self.instrument.write("STOP")
-##                print("stopping")
-##
-##            r = self.instrument.ask("WAV:STAT?")
-##            if r == "DATA":
-##                print(r)
-##                self.instrument.write("WAV:DATA?")
-##                data = self.instrument.read_raw()
-##                print("counter = {}".format(counter))
-##                print(data[:10])
-##                counter += 1
-##
-##
-##        print("stopped")
-
-##print (__name__)
-##
-##if __name__ == '__main__':
-##    agi = AgilentU2542A('ADC')
-##    print(agi.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2]))
-##    print(agi.instr())
-##    counter = 0
-##    agi.daq_setup(500000,50000)
-##    agi.daq_run()
-##    while counter<100:
-##        if agi.daq_is_data_ready():
-##            data = agi.daq_read_raw()[:10]
-##            print(data)
-##            counter += 1
-##    agi.daq_stop()
 
 
