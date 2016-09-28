@@ -123,6 +123,7 @@ class AgilentU2542A:
         for i in range(4):
             self.daq_channels.append(AI_Channel(ch_name = AI_Channels.all_channels[i], ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]))
             print(self.daq_channels[i].ai_get_val_str())
+        self.enabled_ai_channels = self.daq_get_enabled_channels()
 
     def daq_get_enabled_channels(self):
         result = []
@@ -144,7 +145,7 @@ class AgilentU2542A:
 
     def daq_is_data_ready(self):
         r = self.daq_get_status()
-        print(r)
+##        print(r)
         if r== "DATA":
             return True
         elif r == "OVER":
@@ -163,12 +164,12 @@ class AgilentU2542A:
         raw_data = self.instrument.read_raw()
         len_from_header = int(raw_data[2:10])
         data = raw_data[10:]
-        enabled_channels = self.daq_get_enabled_channels()
+        enabled_channels = self.enabled_ai_channels#self.daq_get_enabled_channels()
         nchan = len(enabled_channels)
         narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
         data_len = narr.size
         single_channel_data_len = int(data_len/nchan)
-        print("sc data len:{0}".format(single_channel_data_len))
+##        print("sc data len:{0}".format(single_channel_data_len))
         package = []
         counter = 0
         
@@ -176,11 +177,13 @@ class AgilentU2542A:
 ##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
         chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
         func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
-        for ch in range(nchan):
-            arr = narr[ch::nchan]
-            package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],arr),))
-        return package
-
+        
+##        for ch in range(nchan):
+##            arr = narr[ch::nchan]
+##        package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
+##        package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
+##        return package
+        return narr
 
     
 
@@ -191,7 +194,64 @@ class AgilentU2542A:
 if __name__ == "__main__":
 
     def main():
-        d = AgilentU2542A('ADC')
+        d = AgilentU2542A('ADC')  
+        try:
+            
+            counter = 0
+            d.daq_reset()
+            d.daq_setup(500000,50000)
+            d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
+            d.daq_run()
+            print("started")
+            init_time = time.time()
+            max_count = 1000
+            while counter < max_count:
+                try:
+                    if d.daq_is_data_ready():
+
+                        counter += 1
+                        t = time.time()-init_time
+
+                        data = d.daq_read_data()
+                        print(t)
+
+                except Exception as e:
+                    err = str(e)
+                    print(err)
+                    if err== 'overload':
+                        counter = max_count
+                
+                    
+        except Exception as e:
+##            pass
+            print ("exception"+str(e))
+        finally:
+            d.daq_stop()
+            d.daq_reset()
+            print("finished")
+
+    main()
+##    import profile
+##    profile.run('main()')
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##    d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
 ####    print(d.daq_get_enabled_channels())
@@ -204,59 +264,6 @@ if __name__ == "__main__":
 ##    en = d.daq_get_enabled_channels()
 ##    print(en[0].ai_convertion_function(43971))
 ####    ai = AI_Channel(
-
-
-    
-        try:
-            
-            counter = 0
-            d.daq_reset()
-            d.daq_setup(500000,50000)
-            d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
-            d.daq_run()
-            print("started")
-            init_time = time.time()
-            while counter < 100:
-                try:
-                    if d.daq_is_data_ready():
-##                        print("data ready")
-                        counter += 1
-                        t = time.time()-init_time
-                        data = d.daq_read_data()
-##                        print(data)
-    ##                    self.queue.put((t,data))
-                except Exception as e:
-                    print("exception: " + str(e))
-                    counter = 100
-                
-                    
-        except:
-            pass
-        finally:
-            d.daq_stop()
-            d.daq_reset()
-    import profile
-    profile.run('main()')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
