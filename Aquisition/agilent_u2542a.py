@@ -175,18 +175,18 @@ class AgilentU2542A:
 ##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
         chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
         func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
-        narr = narr.reshape((nchan,single_channel_data_len))
+        narr = narr.reshape((single_channel_data_len,nchan)).transpose()
         
         for ch in range(nchan):            
             package[ch] = func_arr[ch][1](func_arr[ch][0],narr[ch])
             
         
-        return package
+##        return package
 ##        for ch in range(nchan):
 ##            arr = narr[ch::nchan]
 ##            package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
 ##            package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
-##        return package
+        return package
 ##        return narr
 
     
