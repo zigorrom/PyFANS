@@ -170,19 +170,23 @@ class AgilentU2542A:
         data_len = narr.size
         single_channel_data_len = int(data_len/nchan)
 ##        print("sc data len:{0}".format(single_channel_data_len))
-        package = []
+        package = {}
         counter = 0
-        
-
 ##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
         chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
         func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
+        narr = narr.reshape((nchan,single_channel_data_len))
         
-        for ch in range(nchan):
-            arr = narr[ch::nchan]
-        package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
-        package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
+        for ch in range(nchan):            
+            package[ch] = func_arr[ch][1](func_arr[ch][0],narr[ch])
+            
+        
         return package
+##        for ch in range(nchan):
+##            arr = narr[ch::nchan]
+##            package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
+##            package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
+##        return package
 ##        return narr
 
     
@@ -204,7 +208,7 @@ if __name__ == "__main__":
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 1000
+            max_count = 100
             while counter < max_count:
                 try:
                     if d.daq_is_data_ready():
@@ -214,6 +218,7 @@ if __name__ == "__main__":
 
                         data = d.daq_read_data()
                         print(t)
+                        print(data)
 
                 except Exception as e:
                     err = str(e)
