@@ -178,12 +178,12 @@ class AgilentU2542A:
         chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
         func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
         
-##        for ch in range(nchan):
-##            arr = narr[ch::nchan]
-##        package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
-##        package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
-##        return package
-        return narr
+        for ch in range(nchan):
+            arr = narr[ch::nchan]
+        package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
+        package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
+        return package
+##        return narr
 
     
 
