@@ -3,87 +3,88 @@ import numpy as np
 import time
 import os
 import sys
-import timeit
+
 from math import pow
 
-class AI_Channels:
-    all_channels = ['101','102','103','104']
-    AI_1,AI_2, AI_3, AI_4 = all_channels
 
-class AO_Channels:
-    all_channels = ['201','202']
-    AO_1,AO_2 = all_channels
+ai_all_channels = ['101','102','103','104']
+AI_1,AI_2, AI_3, AI_4 = ai_all_channels
 
-class Polarity:
-    all_polarities = ['BIP','UNIP']
-    Bipolar,Unipolar = all_polarities
+ao_all_channels = ['201','202']
+AO_1,AO_2 = ao_all_channels
 
-class Range:
-    all_ranges = ['10','5','2.5','1.25']
-    Range_10, Range_5, Range_2_5,Range_1_25 = all_ranges
+ai_all_ranges = ['10','5','2.5','1.25']
+Range_10, Range_5, Range_2_5,Range_1_25 = ai_all_ranges
+ai_all_fRanges = [float(i) for i in ai_all_ranges]
 
-class ConvertionFunction:
-    maxInt16 = 65536
-    maxInt16div2 = 32768
-    def BipolarConversionFunction(range_value, data_code):
-        return (data_code*range_value)/ConvertionFunction.maxInt16div2
+ai_all_polarities = ['BIP','UNIP']
+Bipolar,Unipolar = ai_all_polarities
 
-    def UnipolarConversionFunction(range_value, data_code):
-        return (data_code/ConvertionFunction.maxInt16+0.5)*range_value
+maxInt16 = 65536
+maxInt16div2 = 32768
+def BipolarConversionFunction(range_value, data_code):
+    return (data_code*range_value)/maxInt16div2
+
+def UnipolarConversionFunction(range_value, data_code):
+    return (data_code/maxInt16+0.5)*range_value
+### maybe optimization of execution speed
+### IMPORTANT ORDER OF FUNCTIONS IN LIST -> CORRESPONDS TO ORDER IN AI_ALL_POLARITIES
+ai_convertion_functions = [BipolarConversionFunction,UnipolarConversionFunction]
+ai_vect_convertion_functions = [np.vectorize(BipolarConversionFunction, otypes = [np.float]),np.vectorize(UnipolarConversionFunction, otypes = [np.float])]
+
+def Convertion(a):
+    pol_idx = a[2]
+    range_val = ai_all_fRanges[a[1]]
+    f = ai_vect_convertion_functions[pol_idx]
+    # starting from 4 since the header has 4 items
+    res = f(range_val,a[4:])
+    return res
+    
 
 class AI_Channel:
-        def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = ConvertionFunction.maxInt16):
+        def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = maxInt16):
 ##            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
-            self.name = ch_name
-            self.enabled = ch_enabled
-            self.range = ch_range
-            self.fRange = float(self.range)
-            self.polarity = ch_polarity
-            if self.polarity == Polarity.Unipolar:
-                self.cf = ConvertionFunction.UnipolarConversionFunction
-            elif self.polarity == Polarity.Bipolar:
-                self.cf = ConvertionFunction.BipolarConversionFunction
-##            self.vcf = np.vectorize(self.ai_convertion_function,otypes=[np.float])
-            self.vcf = np.vectorize(self.cf,otypes=[np.float])
+            try:
+                self.ch_name_idx = ai_all_channels.index(ch_name)
+                self.ch_enabled = ch_enabled      
+                self.ch_range_idx = ai_all_ranges.index(ch_range)
+                self.ch_polarity_idx = ai_all_polarities.index(ch_polarity)
+                self.conv_func = ai_convertion_functions[self.ch_polarity_idx]
+                self.vect_conv_func = ai_vect_convertion_functions[self.ch_polarity_idx]
+            except ValueError as e:
+                print(str(e))
+
+        def ai_name(self):
+            return ai_all_channels[self.ch_name_idx]
 
         def ai_is_enabled(self):
-            return int(self.enabled)>0
-
+            return int(self.ch_enabled)>0
+        
         def ai_enabled(self):
-            return self.enabled
+            return self.ch_enabled
 
         def ai_range(self):
-            return self.range
+            return ai_all_ranges[self.ch_range_idx]
 
         def ai_polarity(self):
-            return self.polarity
+            return ai_all_polarities[self.ch_polarity_idx]
 
         def from_tuple(tuple):
             return AI_Channel(tuple[0],tuple[1],tuple[2],tuple[3])
 
-        def ai_get_val_tuple(self):
-            return (self.name,self.enabled,self.range,self.polarity,)
+        def ai_get_valsIdx(self):
+            return [self.ch_name_idx,self.ch_range_idx,self.ch_polarity_idx]
 
         def ai_get_val_str(self):
-            return "name = {n}, en = {0}, rang = {1}, pol = {2}".format(self.enabled,self.range,self.polarity,n = self.name)
+            return "name = {0}, en = {1}, rang = {2}, pol = {3}".format(self.ai_name(),self.ai_enabled(),self.ai_range(),self.ai_polarity())
 
-        def ai_convertion_function(self,int16_value):
-            return self.cf(self.fRange, int16_value)
-
-        def ai_vect_cf(self,int16_value):
-            return self.vcf(int16_value)
-
-        def ai_get_cf_parans(self):
-            return (self.fRange, self.vcf)
-
-        
-
-
+ 
 
 class AgilentU2542A:
     def __init__(self,resource):
         rm = visa.ResourceManager()
         self.instrument = rm.open_resource(resource, write_termination='\n', read_termination = '\n') #write termination
+        self.conversion_header = None
 
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
@@ -106,10 +107,10 @@ class AgilentU2542A:
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(polarity,",".join(channels)))
 
     def daq_set_unipolar(self,channels):
-        self.daq_setpolarity(Polarity.Unipolar,channels)
+        self.daq_setpolarity(Unipolar,channels)
 
     def daq_set_bipolar(self,channels):
-        self.daq_setpolarity(Polarity.Bipolar,channels)
+        self.daq_setpolarity(Bipolar,channels)
 
     def daq_init_channels(self):
         self.daq_channels = []
@@ -121,15 +122,19 @@ class AgilentU2542A:
         channel_polarity = polarity_response.split(',')
         channel_enabled = enabled_response.split(',')
         for i in range(4):
-            self.daq_channels.append(AI_Channel(ch_name = AI_Channels.all_channels[i], ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]))
+            self.daq_channels.append(AI_Channel(ch_name = ai_all_channels[i], ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]))
             print(self.daq_channels[i].ai_get_val_str())
         self.enabled_ai_channels = self.daq_get_enabled_channels()
+        n_enabled_ch = len(self.enabled_ai_channels)
+        arr = np.arange(n_enabled_ch).reshape((n_enabled_ch,1))
+        self.conversion_header = np.hstack((arr,np.asarray([ch.ai_get_valsIdx() for ch in self.enabled_ai_channels])))
+        print( self.conversion_header )
 
-    def daq_get_enabled_channels(self):
+    def daq_get_enabled_channels(self):### list( myBigList[i] for i in [87, 342, 217, 998, 500] )
         result = []
         for ch in self.daq_channels:
             if ch.ai_is_enabled():
-                result.append(ch)
+                result.append(ch)        
         return result
 
     def daq_run(self):
@@ -144,8 +149,7 @@ class AgilentU2542A:
         return self.instrument.ask("WAV:STAT?")
 
     def daq_is_data_ready(self):
-        r = self.daq_get_status()
-##        print(r)
+        r = self.instrument.ask("WAV:STAT?")
         if r== "DATA":
             return True
         elif r == "OVER":
@@ -156,38 +160,22 @@ class AgilentU2542A:
         self.instrument.write("WAV:DATA?")
         return self.instrument.read_raw()
 
-    def daq_read_binary(self):
-        pass
 
     def daq_read_data(self):
         self.instrument.write("WAV:DATA?")
         raw_data = self.instrument.read_raw()
         len_from_header = int(raw_data[2:10])
         data = raw_data[10:]
-        enabled_channels = self.enabled_ai_channels#self.daq_get_enabled_channels()
+        enabled_channels = self.enabled_ai_channels
         nchan = len(enabled_channels)
-        narr = np.fromstring(data, dtype = '<i2') #np.uint16)     #np.uint16)'<u2'
-        data_len = narr.size
-        single_channel_data_len = int(data_len/nchan)
-##        print("sc data len:{0}".format(single_channel_data_len))
-        package = {}
-        counter = 0
-##https://wiki.python.org/moin/PythonSpeed/PerformanceTips
-        chan_desc = [c.ai_get_val_tuple() for c in enabled_channels]
-        func_arr = [c.ai_get_cf_parans() for c in enabled_channels]
-        narr = narr.reshape((single_channel_data_len,nchan)).transpose()
+        narr = np.fromstring(data, dtype = '<i2') 
+        single_channel_data_len = int(narr.size/nchan)
         
-        for ch in range(nchan):            
-            package[ch] = func_arr[ch][1](func_arr[ch][0],narr[ch])
-            
-        
-##        return package
-##        for ch in range(nchan):
-##            arr = narr[ch::nchan]
-##            package.append((chan_desc[ch],func_arr[ch][1](func_arr[ch][0],narr),))
-##            package.append((chan_desc[0],func_arr[0][1](func_arr[0][0],narr),))
-        return package
-##        return narr
+        narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
+        res = np.apply_along_axis(Convertion,1,narr)
+
+        return narr
+
 
     
 
@@ -204,11 +192,11 @@ if __name__ == "__main__":
             counter = 0
             d.daq_reset()
             d.daq_setup(500000,50000)
-            d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_3,AI_Channels.AI_4])
+            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 100
+            max_count = 1000
             while counter < max_count:
                 try:
                     if d.daq_is_data_ready():
@@ -217,8 +205,10 @@ if __name__ == "__main__":
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
-                        print(t)
-                        print(data)
+                        print()
+##                        print(t)
+##                        print(data)
+                        
 
                 except Exception as e:
                     err = str(e)
