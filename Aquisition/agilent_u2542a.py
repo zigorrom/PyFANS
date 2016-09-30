@@ -90,28 +90,36 @@ class AgilentU2542A:
         return self.instrument.ask("*IDN?")
 
 
+##
+##      ADC acquisition REGION
+##
+
+    ## SET POINTS PER SHOT
+    ## SET SAMPLE RATE
     def daq_setup(self, srate,points):
         self.instrument.write("ACQ:SRAT {0}".format(srate))
+        self.instrument.write("ACQ:POIN {0}".format(points))
         self.instrument.write("WAV:POIN {0}".format(points))
 
+    ##RESET DEVICE
     def daq_reset(self):
         self.instrument.write("*RST")
         self.instrument.write("*CLS")
-
+    ##ENABLE CHANNELS
     def daq_enable_channels(self, channels):
         self.instrument.write("ROUT:ENAB OFF,(@101:104)")
         self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channels)))
         self.daq_init_channels()
-
+    ##SET POLARITY FOR CHANNELS
     def daq_setpolarity(self,polarity, channels):
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(polarity,",".join(channels)))
-
+    ##SET UNIPOLAR TO CHANNELS
     def daq_set_unipolar(self,channels):
         self.daq_setpolarity(Unipolar,channels)
-
+    ##SET BIPOLAR TO CHANNELS
     def daq_set_bipolar(self,channels):
         self.daq_setpolarity(Bipolar,channels)
-
+    ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     def daq_init_channels(self):
         self.daq_channels = []
         channels = "(@101:104)"
@@ -129,25 +137,25 @@ class AgilentU2542A:
         arr = np.arange(n_enabled_ch).reshape((n_enabled_ch,1))
         self.conversion_header = np.hstack((arr,np.asarray([ch.ai_get_valsIdx() for ch in self.enabled_ai_channels])))
         print( self.conversion_header )
-
+    ##GET ENABLED CHANNELS
     def daq_get_enabled_channels(self):### list( myBigList[i] for i in [87, 342, 217, 998, 500] )
         result = []
         for ch in self.daq_channels:
             if ch.ai_is_enabled():
                 result.append(ch)        
         return result
-
+    ##RUN ACQUISITION
     def daq_run(self):
         self.daq_init_channels()
         self.instrument.write("RUN")
 
-
+    ##STOP ACQUISITION
     def daq_stop(self):
         self.instrument.write("STOP")
-
+    ##GET ACQUISITION STATUS
     def daq_get_status(self):
         return self.instrument.ask("WAV:STAT?")
-
+    ##CHECK IF DATA IS READY
     def daq_is_data_ready(self):
         r = self.instrument.ask("WAV:STAT?")
         if r== "DATA":
@@ -155,12 +163,12 @@ class AgilentU2542A:
         elif r == "OVER":
             raise Exception('overload')
         return False
-
+    ##READ RAW DATA
     def daq_read_raw(self):
         self.instrument.write("WAV:DATA?")
         return self.instrument.read_raw()
 
-
+    ##READ DATA AS FLOAT
     def daq_read_data(self):
         self.instrument.write("WAV:DATA?")
         raw_data = self.instrument.read_raw()
@@ -170,13 +178,41 @@ class AgilentU2542A:
         nchan = len(enabled_channels)
         narr = np.fromstring(data, dtype = '<i2') 
         single_channel_data_len = int(narr.size/nchan)
-        
         narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
         res = np.apply_along_axis(Convertion,1,narr)
-
         return res
 
 
+    def daq_single_shot_read_data(self):
+        self.instrument.write("DIG")
+        while self.instrument.ask("WAV:COMP?")=="NO":
+            pass
+        return self.daq_read_data()
+        
+        
+##
+##  END ADC acquisition REGION
+##
+
+
+##
+##  POLLING MODE
+##
+
+    
+
+##
+##  END POLLING MODE
+##
+
+##
+##  DAC REGION
+##
+    
+
+##
+##  END DAC REGION
+##
     
 
 
