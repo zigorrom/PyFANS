@@ -30,12 +30,12 @@ def UnipolarConversionFunction(range_value, data_code):
 ### maybe optimization of execution speed
 ### IMPORTANT ORDER OF FUNCTIONS IN LIST -> CORRESPONDS TO ORDER IN AI_ALL_POLARITIES
 ai_convertion_functions = [BipolarConversionFunction,UnipolarConversionFunction]
-ai_vect_convertion_functions = [np.vectorize(BipolarConversionFunction, otypes = [np.float]),np.vectorize(UnipolarConversionFunction, otypes = [np.float])]
+##ai_vect_convertion_functions = [np.vectorize(BipolarConversionFunction, otypes = [np.float]),np.vectorize(UnipolarConversionFunction, otypes = [np.float])]
 
 def Convertion(a):
     pol_idx = a[2]
     range_val = ai_all_fRanges[a[1]]
-    f = ai_vect_convertion_functions[pol_idx]
+    f = ai_convertion_functions[pol_idx]
     # starting from 4 since the header has 4 items
     res = f(range_val,a[4:])
     return res
@@ -49,8 +49,8 @@ class AI_Channel:
                 self.ch_enabled = ch_enabled      
                 self.ch_range_idx = ai_all_ranges.index(ch_range)
                 self.ch_polarity_idx = ai_all_polarities.index(ch_polarity)
-                self.conv_func = ai_convertion_functions[self.ch_polarity_idx]
-                self.vect_conv_func = ai_vect_convertion_functions[self.ch_polarity_idx]
+##                self.conv_func = ai_convertion_functions[self.ch_polarity_idx]
+##                self.vect_conv_func = ai_vect_convertion_functions[self.ch_polarity_idx]
             except ValueError as e:
                 print(str(e))
 
@@ -174,7 +174,7 @@ class AgilentU2542A:
         narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
         res = np.apply_along_axis(Convertion,1,narr)
 
-        return narr
+        return res
 
 
     
@@ -191,12 +191,12 @@ if __name__ == "__main__":
             
             counter = 0
             d.daq_reset()
-            d.daq_setup(500000,50000)
+            d.daq_setup(10000,500)
             d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 1000
+            max_count = 100
             while counter < max_count:
                 try:
                     if d.daq_is_data_ready():
@@ -205,9 +205,9 @@ if __name__ == "__main__":
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
-                        print()
+##                        print()
 ##                        print(t)
-##                        print(data)
+                        print(data)
                         
 
                 except Exception as e:
