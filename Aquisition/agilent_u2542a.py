@@ -3,10 +3,13 @@ import numpy as np
 import time
 import os
 import sys
-
+import matplotlib.pyplot as plt
 from math import pow
 
 
+##
+##  DAQ CONSTANTS
+##
 ai_all_channels = ['101','102','103','104']
 AI_1,AI_2, AI_3, AI_4 = ai_all_channels
 
@@ -39,7 +42,32 @@ def Convertion(a):
     # starting from 4 since the header has 4 items
     res = f(range_val,a[4:])
     return res
-    
+
+
+##
+##  END DAQ CONSTANTS
+##
+
+##
+##  DIGITAL CONSTANTS
+##
+
+dig_all_channels = ['501','502','503','504']
+DIG_1, DIG_2,DIG_3,DIG_4 = dig_all_channels
+dig_channel_bits = [8,8,4,4]
+
+dig_directions = ['INP','OUTP']
+DIG_INP, DIG_OUTP = dig_directions
+
+
+##
+##  END DIGITAL CONSTANTS
+##
+
+states = ['ON','OFF']
+STATE_ON, STATE_OFF = states
+
+
 
 class AI_Channel:
         def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = maxInt16):
@@ -89,7 +117,6 @@ class AgilentU2542A:
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
 
-
 ##
 ##      ADC acquisition REGION
 ##
@@ -119,6 +146,11 @@ class AgilentU2542A:
     ##SET BIPOLAR TO CHANNELS
     def daq_set_bipolar(self,channels):
         self.daq_setpolarity(Bipolar,channels)
+
+
+    def daq_set_range(self,rang,channels):
+        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rang,channels))
+        
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     def daq_init_channels(self):
         self.daq_channels = []
@@ -194,40 +226,78 @@ class AgilentU2542A:
 ##  END ADC acquisition REGION
 ##
 
+##
+##  SET - MEASURE REGION
+##    
 
-##
-##  POLLING MODE
-##
+    def dig_set_direction(self,direction,channels):
+        self.instrument.write("CONF:DIG:DIR {0},(@{1})".format(direction, ",".join(channels)))
+
+    def dig_write_channel(self,data,channels):
+        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channels)))
+
+    def dig_write_bit_channel(self,value,bit,channels):
+        self.instrument.write("SOUR:DIG:DATA:BIT {0},{1},(@{2})".format(value,bit,",".join(channels)))
+
+
+    def adc_set_voltage_range(self,rang,channels):
+        self.instrument.write("VOLT:RANG {0}, (@{1})".format(rang,",".join(channels)))
+
+    def adc_set_voltage_polarity(self,pol,channels):
+        self.instrument.write("VOLT:POL {0}, (@{1})".format(pol,",".join(channels)))
+
+    def adc_set_voltage_average(self,aver):
+        self.instrument.write("VOLT:AVER {0}".format(aver))
+    
+    def adc_measure(self,channels):
+        vals = self.instrument.ask("MEAS? (@{0})".format(",".join(channels))).split(',')
+        if len(vals) != len(channels):
+            raise Exception("non equal lengths")
+        res = { ch: val for ch in channels for val in vals }
+        return res
+
+    def dig_measure(self,channels):
+        vals = self.instrument.ask("MEAS:DIG? (@{0})".format(",".join(channels))).split(',')
+        if len(vals) != len(channels):
+            raise Exception("non equal lengths")
+        res = {ch: val for ch in channels for val in vals}
+        return res
+
+    def dig_bit_measure(self,bit,channels):
+        vals = self.instrument.ask("MEAS:DIG:BIT? {0}, (@{1})".format(bit,",".join(channels))).split(',')
+        if len(vals) != len(channels):
+            raise Exception("non equal lengths")
+        res = {ch: val for ch in channels for val in vals}
+        return res
 
     
-
-##
-##  END POLLING MODE
-##
-
-##
-##  DAC REGION
-##
+    def dac_set_output(self, state):
+        if state in states:
+            self.instrument.write("OUTPUT {0}".format(state))
     
+    def dac_source_voltage(self, value, channels):
+        self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,",".join(channels)))
+
+    def dac_set_polarity(self,polarity,channels):
+        self.instrument.write("SOUR:VOLT:POL {0}, (@{1})".format(polarity,",".join(channels)))
 
 ##
-##  END DAC REGION
+##  END SET - MEASURE REGION
 ##
-    
-
-
+        
 
 
 
 if __name__ == "__main__":
 
     def main():
-        d = AgilentU2542A('ADC')  
+        d = AgilentU2542A('ADC')
+##        plt.ion()
         try:
             
             counter = 0
             d.daq_reset()
-            d.daq_setup(10000,500)
+            d.daq_setup(500000,50000)
             d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
@@ -241,6 +311,8 @@ if __name__ == "__main__":
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
+##                        plt.plot(data[0])
+##                        plt.pause(0.05)
 ##                        print()
 ##                        print(t)
                         print(data)
@@ -265,52 +337,3 @@ if __name__ == "__main__":
 ##    import profile
 ##    profile.run('main()')
    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##    d.daq_enable_channels([AI_Channels.AI_1,AI_Channels.AI_2,AI_Channels.AI_4])
-####    print(d.daq_get_enabled_channels())
-##
-##    print(d.daq_parse_raw('#800000006\xeb\xff\xea\xff\xeb\xff'))
-##    f = ConvertionFunction.UnipolarConversionFunction
-##    print("convertion value {0}".format(f(10,56000)))
-##    print(ConvertionFunction.maxInt16)
-####    d.daq_init_channels()
-##    en = d.daq_get_enabled_channels()
-##    print(en[0].ai_convertion_function(43971))
-####    ai = AI_Channel(
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
