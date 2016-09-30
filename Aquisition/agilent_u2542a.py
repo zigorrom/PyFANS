@@ -237,7 +237,7 @@ class AgilentU2542A:
         self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channels)))
 
     def dig_write_bit_channel(self,value,bit,channels):
-        self.instrument.write("SOUR:DIG:DATA:BIT {0},{1},(@{2})".format(value,bit,",".join(channels)))
+        self.instrument.write("SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,",".join(channels)))
 
 
     def adc_set_voltage_range(self,rang,channels):
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 ##                        plt.plot(data[0])
 ##                        plt.pause(0.05)
 ##                        print()
-##                        print(t)
+                        print(t)
                         print(data)
                         
 
@@ -332,6 +332,8 @@ if __name__ == "__main__":
             d.daq_stop()
             d.daq_reset()
             print("finished")
+
+        os.system("pause")
 
     main()
 ##    import profile
