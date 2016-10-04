@@ -42,8 +42,10 @@ def Convertion(a):
     f = ai_convertion_functions[pol_idx]
     # starting from 4 since the header has 4 items
     timetrace = f(range_val,a[4:])
-    result = np.fft.fft(timetrace)
+##    fft = np.fft.fft(timetrace)
+##    res = np.concatenate(timetrace,fft).reshape((timetrace.size,2))
     return timetrace
+
 
 
 ##
@@ -214,6 +216,7 @@ class AgilentU2542A:
         single_channel_data_len = int(narr.size/nchan)
         narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
         res = np.apply_along_axis(Convertion,1,narr)
+        
         return res
 
 
@@ -235,12 +238,23 @@ class AgilentU2542A:
     def dig_set_direction(self,direction,channels):
         self.instrument.write("CONF:DIG:DIR {0},(@{1})".format(direction, ",".join(channels)))
 
-    def dig_write_channel(self,data,channels):
+    def dig_write_channels(self,data,channels):
         self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channels)))
 
-    def dig_write_bit_channel(self,value,bit,channels):
-        self.instrument.write("SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,",".join(channels)))
-
+    def dig_write_channel(self,data,channel):
+        print(data)
+        print(channel)
+        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,channel))
+                              
+    def dig_write_bit_channels(self,value,bit,channels):
+        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,",".join(channels))
+        print(msg)
+        self.instrument.write(msg)
+        
+    def dig_write_bit_channel(self,value,bit,channel):
+        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,channel)
+        print("writing value {0} to bit{1}".format(value,bit))
+        self.instrument.write(msg)
 
     def adc_set_voltage_range(self,rang,channels):
         self.instrument.write("VOLT:RANG {0}, (@{1})".format(rang,",".join(channels)))
