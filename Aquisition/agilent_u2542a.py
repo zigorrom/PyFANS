@@ -1,5 +1,6 @@
 import visa
 import numpy as np
+##from scipy import signal
 import time
 import os
 import sys
@@ -40,8 +41,9 @@ def Convertion(a):
     range_val = ai_all_fRanges[a[1]]
     f = ai_convertion_functions[pol_idx]
     # starting from 4 since the header has 4 items
-    res = f(range_val,a[4:])
-    return res
+    timetrace = f(range_val,a[4:])
+    result = np.fft.fft(timetrace)
+    return timetrace
 
 
 ##
@@ -311,8 +313,9 @@ if __name__ == "__main__":
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
-##                        plt.plot(data[0])
-##                        plt.pause(0.05)
+##                        if counter % 10 == 0:
+##                            plt.plot(data[0])
+##                            plt.pause(0.05)
 ##                        print()
                         print(t)
                         print(data)
