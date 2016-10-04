@@ -63,7 +63,7 @@ AO_DAC_LETCH_PULS_BIT = 3
 
 def get_ai_channel_default_params():
     return {
-        'mode': AI_DC_mode,
+        'mode': AI_AC_mode,
         'filter_cutoff': '0',
         'filter_gain': 1,
         'pga_gain':1,

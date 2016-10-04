@@ -1,5 +1,6 @@
 import visa
 import numpy as np
+#install all necessary files from here http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
 ##from scipy import signal
 import time
 import os
@@ -318,7 +319,7 @@ if __name__ == "__main__":
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 100
+            max_count = 10000
             while counter < max_count:
                 try:
                     if d.daq_is_data_ready():
