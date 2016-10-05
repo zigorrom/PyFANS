@@ -162,9 +162,12 @@ class FANScontroller:
 
         
     def set_measurement_channel(self, meas_channel):
-        if (meas_channel<=MAX_MEAS_CHANNELS)
-            pass
-
+        if (meas_channel<=MAX_MEAS_CHANNELS) and (meas_channel>=0):
+            self.measurement_channel = meas_channel
+            self.dev.dig_write_channel(meas_channel,DIG_1)
+            self.pulse_bit(3,DIG_3)
+            
+    
     
     
     
