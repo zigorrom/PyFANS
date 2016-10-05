@@ -63,7 +63,7 @@ AO_DAC_LETCH_PULS_BIT = 3
 
 def get_ai_channel_default_params():
     return {
-        'mode': AI_DC_mode,
+        'mode': AI_AC_mode,
         'filter_cutoff': '0',
         'filter_gain': 1,
         'pga_gain':1,
@@ -71,8 +71,12 @@ def get_ai_channel_default_params():
         }
 
 def get_ao_channel_default_params():
-    return {'selected_output':0}
+    return {
+        'selected_output':0,
+        'voltage':0
+            }
 
+MAX_MEAS_CHANNELS = 32
 ##def get_channel_selector_params():
 ##    return {'selected_meas_ch':0}
 
@@ -107,10 +111,8 @@ class FANScontroller:
             AO_2: get_ao_channel_default_params()
             }
 
-##        self.ch_selector_params = get_channel_selector_params()
-        
-##        print(self.ai_channel_params)
-##        print(self.ao_channel_params)
+        self.measurement_channel = 0
+
         self.init_channels()
         
 
@@ -123,69 +125,73 @@ class FANScontroller:
         defaults = get_ai_channel_default_params()
         self.set_ai_params(defaults['mode'],defaults['cs_hold'],defaults['filter_cutoff'],defaults['filter_gain'],defaults['pga_gain'],ai_all_channels)
         
+    def set_ai_channel_params(self, mode, cs_hold, filter_cutoff, filter_gain, pga_gain, channel):
+        if (mode in AI_MODEs) and (filter_cutoff in FINTER_CUTOFF_FREQUENCIES) and (filter_gain in FILTER_GAINS) and (pga_gain in PGA_GAINS) and (channel in ai_all_channels):
+            ch = self.ai_channel_params[channel]
+            ch['mode'] = mode
+            ch['filter_cutoff'] = filter_cutoff
+            ch['filter_gain'] = filter_gain
+            ch['pga_gain'] = pga_gain
+            ch['cs_hold'] = cs_hold
+            ## set channel selected
+##                print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
+            self.dev.dig_write_channel(AI_ChannelSelector[channel],DIG_2)
+                
+            ## set DC or AC position of relays
+##                print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
+            self.dev.dig_write_bit_channel(AI_MODE_VAL[mode],AI_SET_MODE_BIT,DIG_4)#AI_MODE_VAL[mode]
+            self.pulse_bit(AI_SET_MODE_PULS_BIT,DIG_4)
+
+                
+            ## set filter frequency and gain parameters
+            filter_val = get_filter_value(filter_gain,filter_cutoff)
+            self.dev.dig_write_channel(filter_val,DIG_1)
+
+            ## set pga params
+            pga_val = get_pga_value(pga_gain,cs_hold)
+            self.dev.dig_write_channel(pga_val, DIG_3)
+            self.pulse_bit(AI_ADC_LETCH_PULS_BIT,DIG_4)
+                
+            print("ch: {0} - set".format(ch))
+
+
     def set_ai_params(self, mode, cs_hold, filter_cutoff, filter_gain, pga_gain, channels):
         if (mode in AI_MODEs) and (filter_cutoff in FINTER_CUTOFF_FREQUENCIES) and (filter_gain in FILTER_GAINS) and (pga_gain in PGA_GAINS) and all(ch in ai_all_channels for ch in channels):
             for ch in channels:
-                self.ai_channel_params[ch]['mode'] = mode
-                self.ai_channel_params[ch]['filter_cutoff'] = filter_cutoff
-                self.ai_channel_params[ch]['filter_gain'] = filter_gain
-                self.ai_channel_params[ch]['pga_gain'] = pga_gain
-                self.ai_channel_params[ch]['cs_hold'] = cs_hold
+                self.set_ai_channel_params(mode,cs_hold,filter_cutoff,filter_gain,pga_gain,ch)
 
-                ## set channel selected
-##                print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
-                self.dev.dig_write_channel(AI_ChannelSelector[ch],DIG_2)
-                
-                ## set DC or AC position of relays
-##                print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
-                self.dev.dig_write_bit_channel(AI_MODE_VAL[mode],AI_SET_MODE_BIT,DIG_4)#AI_MODE_VAL[mode]
-                self.pulse_bit(AI_SET_MODE_PULS_BIT,DIG_4)
-
-                
-                ## set filter frequency and gain parameters
-                filter_val = get_filter_value(filter_gain,filter_cutoff)
-                self.dev.dig_write_channel(filter_val,DIG_1)
-
-                ## set pga params
-                pga_val = get_pga_value(pga_gain,cs_hold)
-                self.dev.dig_write_channel(pga_val, DIG_3)
-                self.pulse_bit(AI_ADC_LETCH_PULS_BIT,DIG_4)
-                
-                print("ch: {0} - set".format(ch))
-                
-##    def set_ao_output_for_channel(self,output, channel):
-##        self.ao_channel_params[channel]['selected_output'] = output
-##        pass
-
-            
+        
+    def set_measurement_channel(self, meas_channel):
+        if (meas_channel<=MAX_MEAS_CHANNELS)
+            pass
 
     
     
     
 
 def main():
-    d = AgilentU2542A('ADC')
-    d.dig_set_direction(DIG_OUTP,dig_all_channels)
-    set_reset = True
-    for i in range(3):
-        print("**********************************************")
-        print(i)
-        print("**********************************************")
-        for a in AI_ChannelSelector:
-            val = AI_ChannelSelector[a]
-            d.dig_write_channel(val, DIG_2)
-            if set_reset:
-                d.dig_write_bit_channel(1,1,DIG_4)
-            else:
-                d.dig_write_bit_channel(0,1,DIG_4)
-            d.dig_write_bit_channel(1,0,DIG_4)
-            time.sleep(0.005)
-            d.dig_write_bit_channel(0,0,DIG_4)
-        time.sleep(1)
-        set_reset= not set_reset
+    #d = AgilentU2542A('ADC')
+    #d.dig_set_direction(DIG_OUTP,dig_all_channels)
+    #set_reset = True
+    #for i in range(3):
+    #    print("**********************************************")
+    #    print(i)
+    #    print("**********************************************")
+    #    for a in AI_ChannelSelector:
+    #        val = AI_ChannelSelector[a]
+    #        d.dig_write_channel(val, DIG_2)
+    #        if set_reset:
+    #            d.dig_write_bit_channel(1,1,DIG_4)
+    #        else:
+    #            d.dig_write_bit_channel(0,1,DIG_4)
+    #        d.dig_write_bit_channel(1,0,DIG_4)
+    #        time.sleep(0.005)
+    #        d.dig_write_bit_channel(0,0,DIG_4)
+    #    time.sleep(1)
+    #    set_reset= not set_reset
         
         
-##    d = FANScontroller('ADC')
+    d = FANScontroller('ADC')
 ##    fs = FINTER_CUTOFF_FREQUENCIES['60k']
 ##    fg = FILTER_GAINS[3]
 ##    print("{0:08b}".format(AI_MODE_SET_PULS_MASK|AI_ADC_LETCH_MASK |AO_CHANNEL_LETCH_MASK))

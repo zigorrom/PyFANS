@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{f866595c-17a5-4210-90d4-63a7bf30cd26}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>GUI\mainform.py</StartupFile>
+    <StartupFile>Aquisition\fans_controller.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
