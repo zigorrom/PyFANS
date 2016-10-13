@@ -12,7 +12,21 @@ class DAQthread(QtCore.QThread):
     def __init__(self,data_storage, parent = None):
         super().__init__(parent)
         self.data_storage = data_storage
-        
+        self.alive = False
+        self.process = None
+
+    def process_start(self):
+        pass
+
+    def process_stop(self):
+        pass
+
+    def process_terminate(self):
+        pass
+
+    def enqueue_task(self):
+        pass
+    
 
 
 def main():
