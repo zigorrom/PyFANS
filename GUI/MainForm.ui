@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>917</width>
-    <height>776</height>
+    <width>856</width>
+    <height>716</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,33 +18,21 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
-    <property name="spacing">
-     <number>3</number>
-    </property>
-    <property name="leftMargin">
-     <number>3</number>
-    </property>
-    <property name="topMargin">
-     <number>3</number>
-    </property>
-    <property name="rightMargin">
-     <number>3</number>
-    </property>
-    <property name="bottomMargin">
-     <number>3</number>
-    </property>
     <item>
-     <widget class="PlotWidget" name="timetracePlot">
-      <property name="minimumSize">
-       <size>
-        <width>10</width>
-        <height>10</height>
-       </size>
+     <widget class="QSplitter" name="plotSplitter">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
       </property>
+      <widget class="PlotWidget" name="timetracePlot">
+       <property name="minimumSize">
+        <size>
+         <width>10</width>
+         <height>10</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="PlotWidget" name="noisePlot"/>
      </widget>
-    </item>
-    <item>
-     <widget class="PlotWidget" name="noisePlot"/>
     </item>
    </layout>
   </widget>
@@ -53,8 +41,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>917</width>
-     <height>26</height>
+     <width>856</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -69,7 +57,7 @@
     <property name="title">
      <string>Window</string>
     </property>
-    <addaction name="actionRestore_windows"/>
+    <addaction name="actionRestoreWindows"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -87,7 +75,7 @@
      </property>
      <addaction name="actionFrequencies"/>
      <addaction name="actionVoltages"/>
-     <addaction name="actionAll_2"/>
+     <addaction name="actionSaveAll_2"/>
     </widget>
     <widget class="QMenu" name="menuLoad_2">
      <property name="title">
@@ -95,9 +83,9 @@
      </property>
      <addaction name="actionFrequencies_2"/>
      <addaction name="actionVoltages_2"/>
-     <addaction name="actionAll_3"/>
+     <addaction name="actionLoadAll"/>
     </widget>
-    <addaction name="actionChannel_settings"/>
+    <addaction name="actionChannelSettings"/>
     <addaction name="menuSave_2"/>
     <addaction name="menuLoad_2"/>
    </widget>
@@ -246,14 +234,14 @@
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QGridLayout" name="gridLayout_2">
      <item row="5" column="1">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="DeleteFrequencyRangeButton">
        <property name="text">
         <string>Delete</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox">
+      <widget class="QDoubleSpinBox" name="BinSizeSpinBox">
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
@@ -285,7 +273,7 @@
       </widget>
      </item>
      <item row="2" column="0" colspan="2">
-      <widget class="QListWidget" name="listWidget">
+      <widget class="QListWidget" name="BinSizeList">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -314,7 +302,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="SampleRateSpinBox">
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
        </property>
@@ -333,16 +321,9 @@
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="AddFrequencyRangeButton">
        <property name="text">
         <string>Add</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0" colspan="2">
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="text">
-        <string>Select channels</string>
        </property>
       </widget>
      </item>
@@ -353,7 +334,7 @@
    <property name="maximumSize">
     <size>
      <width>200</width>
-     <height>300</height>
+     <height>400</height>
     </size>
    </property>
    <property name="allowedAreas">
@@ -381,7 +362,7 @@
          </widget>
         </item>
         <item row="0" column="2">
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="SampleStartVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -395,13 +376,13 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+         <widget class="QDoubleSpinBox" name="SampleStartVoltage"/>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+         <widget class="QDoubleSpinBox" name="SampleStepVoltage"/>
         </item>
         <item row="2" column="2">
-         <widget class="QComboBox" name="comboBox_3">
+         <widget class="QComboBox" name="SampleStepVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -422,7 +403,7 @@
          </widget>
         </item>
         <item row="1" column="2">
-         <widget class="QComboBox" name="comboBox_2">
+         <widget class="QComboBox" name="SampleStopVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -443,7 +424,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+         <widget class="QDoubleSpinBox" name="SampleStopVoltage"/>
         </item>
        </layout>
       </widget>
@@ -455,7 +436,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="2" column="2">
-         <widget class="QComboBox" name="comboBox_6">
+         <widget class="QComboBox" name="GateStopVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -476,7 +457,7 @@
          </widget>
         </item>
         <item row="3" column="2">
-         <widget class="QComboBox" name="comboBox_4">
+         <widget class="QComboBox" name="GateStepVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -497,10 +478,10 @@
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_6"/>
+         <widget class="QDoubleSpinBox" name="GateStepVoltage"/>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_7"/>
+         <widget class="QDoubleSpinBox" name="GateStopVoltage"/>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_6">
@@ -510,10 +491,10 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
+         <widget class="QDoubleSpinBox" name="GateStartVoltage"/>
         </item>
         <item row="1" column="2">
-         <widget class="QComboBox" name="comboBox_5">
+         <widget class="QComboBox" name="GateStartVoltageUnits">
           <item>
            <property name="text">
             <string>V</string>
@@ -528,6 +509,70 @@
         </item>
        </layout>
       </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="title">
+        <string>Current Values</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Sample Current</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Gate Voltage</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="GateVoltage">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="SampleCurrent">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="SampleVoltage">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Sample Voltage</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </widget>
@@ -546,7 +591,7 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionRestore_windows">
+  <action name="actionRestoreWindows">
    <property name="text">
     <string>Restore</string>
    </property>
@@ -596,7 +641,7 @@
     <string>Voltages</string>
    </property>
   </action>
-  <action name="actionAll_2">
+  <action name="actionSaveAll_2">
    <property name="text">
     <string>All</string>
    </property>
@@ -611,12 +656,12 @@
     <string>Voltages</string>
    </property>
   </action>
-  <action name="actionAll_3">
+  <action name="actionLoadAll">
    <property name="text">
     <string>All</string>
    </property>
   </action>
-  <action name="actionChannel_settings">
+  <action name="actionChannelSettings">
    <property name="text">
     <string>Channel settings</string>
    </property>

@@ -60,6 +60,15 @@ AI_ADC_LETCH_PULS_BIT = 2
 AO_DAC_LETCH_PULS_BIT = 3
 
 
+BOX_AI_CHANNELS_MAP = {1: {"channel": AI_1,"mode": AI_AC_mode},
+                       2: {"channel": AI_2,"mode": AI_AC_mode},
+                       3: {"channel": AI_3,"mode": AI_AC_mode},
+                       4: {"channel": AI_4,"mode": AI_AC_mode},
+                       5: {"channel": AI_1,"mode": AI_DC_mode},
+                       6: {"channel": AI_2,"mode": AI_DC_mode},
+                       7: {"channel": AI_3,"mode": AI_DC_mode},
+                       8: {"channel": AI_4,"mode": AI_DC_mode}
+                       }
 
 def get_ai_channel_default_params():
     return {
@@ -173,25 +182,25 @@ class FANScontroller:
     
 
 def main():
-    #d = AgilentU2542A('ADC')
-    #d.dig_set_direction(DIG_OUTP,dig_all_channels)
-    #set_reset = True
-    #for i in range(3):
-    #    print("**********************************************")
-    #    print(i)
-    #    print("**********************************************")
-    #    for a in AI_ChannelSelector:
-    #        val = AI_ChannelSelector[a]
-    #        d.dig_write_channel(val, DIG_2)
-    #        if set_reset:
-    #            d.dig_write_bit_channel(1,1,DIG_4)
-    #        else:
-    #            d.dig_write_bit_channel(0,1,DIG_4)
-    #        d.dig_write_bit_channel(1,0,DIG_4)
-    #        time.sleep(0.005)
-    #        d.dig_write_bit_channel(0,0,DIG_4)
-    #    time.sleep(1)
-    #    set_reset= not set_reset
+##    d = AgilentU2542A('ADC')
+##    d.dig_set_direction(DIG_OUTP,dig_all_channels)
+##    set_reset = True
+##    for i in range(3):
+##        print("**********************************************")
+##        print(i)
+##        print("**********************************************")
+##        for a in AI_ChannelSelector:
+##            val = AI_ChannelSelector[a]
+##            d.dig_write_channel(val, DIG_2)
+##            if set_reset:
+##                d.dig_write_bit_channel(1,1,DIG_4)
+##            else:
+##                d.dig_write_bit_channel(0,1,DIG_4)
+##            d.dig_write_bit_channel(1,0,DIG_4)
+##            time.sleep(0.005)
+##            d.dig_write_bit_channel(0,0,DIG_4)
+##        time.sleep(1)
+##        set_reset= not set_reset
         
         
     d = FANScontroller('ADC')
