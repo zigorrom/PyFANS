@@ -350,14 +350,18 @@ def main(q):
             d.daq_reset()
             print("finished")
 
-        
+def proc(q):
+    pass
 
 if __name__ == "__main__":
     q = Queue()
     p = Process(target = main,args=(q,))
     p.start()
     while True:
-        print(q.get())
+        try:
+            print(q.get())
+        except:
+            print("***")
 ##    main()
     os.system("pause")
 
