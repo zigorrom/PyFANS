@@ -354,6 +354,16 @@ def proc(q):
     pass
 
 if __name__ == "__main__":
+
+
+##
+##
+##
+##          USE PIPES!!!
+##
+##
+##
+
     q = Queue()
     p = Process(target = main,args=(q,))
     p.start()
