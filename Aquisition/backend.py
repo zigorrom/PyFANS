@@ -9,7 +9,7 @@ class DAQthread(QtCore.QThread):
     threadProgressChanged = QtCore.pyqtSignal()
     threadTaskDone = QtCore.pyqtSignal()
 
-    def __init__(self,data_storage, parent = None):
+    def __init__(self,daq_resource=None,data_storage=None, parent = None):
         super().__init__(parent)
         self.data_storage = data_storage
         self.alive = False
@@ -26,11 +26,14 @@ class DAQthread(QtCore.QThread):
 
     def enqueue_task(self):
         pass
-    
+
+    def run(self):
+        
 
 
 def main():
-    pass
+  thread = DAQthread()
+  tread
 
 if __name__ == "__main__":
     main()
