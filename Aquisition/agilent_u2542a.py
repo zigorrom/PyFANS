@@ -7,6 +7,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 from math import pow
+from multiprocessing import Process, Queue
 
 
 ##
@@ -301,13 +302,9 @@ class AgilentU2542A:
 ##
 ##  END SET - MEASURE REGION
 ##
-        
+    
 
-
-
-if __name__ == "__main__":
-
-    def main():
+def main(q):
         d = AgilentU2542A('ADC')
 ##        plt.ion()
         try:
@@ -328,12 +325,14 @@ if __name__ == "__main__":
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
+                        q.put(t)
+                        q.put(data)
 ##                        if counter % 10 == 0:
 ##                            plt.plot(data[0])
 ##                            plt.pause(0.05)
 ##                        print()
-                        print(t)
-                        print(data)
+##                        print(t)
+##                        print(data)
                         
 
                 except Exception as e:
@@ -351,9 +350,18 @@ if __name__ == "__main__":
             d.daq_reset()
             print("finished")
 
-        os.system("pause")
+        
 
-    main()
+if __name__ == "__main__":
+    q = Queue()
+    p = Process(target = main,args=(q,))
+    p.start()
+    while True:
+        print(q.get())
+##    main()
+    os.system("pause")
+
+    
 ##    import profile
 ##    profile.run('main()')
    
