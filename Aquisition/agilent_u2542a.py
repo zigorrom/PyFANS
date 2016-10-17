@@ -1,7 +1,7 @@
 import visa
 import numpy as np
 #install all necessary files from here http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
-##from scipy import signal
+from scipy import signal
 import time
 import os
 import sys
@@ -218,7 +218,7 @@ class AgilentU2542A:
         single_channel_data_len = int(narr.size/nchan)
         narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
         res = np.apply_along_axis(Convertion,1,narr)
-        
+##        res_fft = np.apply_along_axis(signal.periodogram,1,narr,fs = 500000)
         return res
 
 
@@ -304,7 +304,7 @@ class AgilentU2542A:
 ##
     
 
-def main(q):
+def main():
         d = AgilentU2542A('ADC')
 ##        plt.ion()
         try:
@@ -325,14 +325,14 @@ def main(q):
                         t = time.time()-init_time
 
                         data = d.daq_read_data()
-                        q.put(t)
-                        q.put(data)
+##                        q.put(t)
+##                        q.put(data)
 ##                        if counter % 10 == 0:
 ##                            plt.plot(data[0])
 ##                            plt.pause(0.05)
 ##                        print()
-##                        print(t)
-##                        print(data)
+                        print(t)
+                        print(data)
                         
 
                 except Exception as e:
@@ -364,15 +364,15 @@ if __name__ == "__main__":
 ##
 ##
 
-    q = Queue()
-    p = Process(target = main,args=(q,))
-    p.start()
-    while True:
-        try:
-            print(q.get())
-        except:
-            print("***")
-##    main()
+##    q = Queue()
+##    p = Process(target = main,args=(q,))
+##    p.start()
+##    while True:
+##        try:
+##            print(q.get())
+##        except:
+##            print("***")
+    main()
     os.system("pause")
 
     
