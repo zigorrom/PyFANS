@@ -120,7 +120,7 @@ class AgilentU2542A:
         self.instrument = rm.open_resource(resource, write_termination='\n', read_termination = '\n') #write termination
         self.conversion_header = None
         self.daq_channels = []
-
+##        print(self.daq_idn())
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
 

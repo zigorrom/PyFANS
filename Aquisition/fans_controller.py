@@ -1,4 +1,6 @@
 from agilent_u2542a import *
+from multiprocessing import Process
+from time import sleep
 
 PGA_GAINS = {1:     0,
              10:    1,
@@ -123,6 +125,7 @@ class FANScontroller:
         self.measurement_channel = 0
 
         self.init_channels()
+        self.daq_proc = None
         
 
     def pulse_bit(self,bit,channel, pulse_width = 0.005):
@@ -176,10 +179,64 @@ class FANScontroller:
             self.dev.dig_write_channel(meas_channel,DIG_1)
             self.pulse_bit(3,DIG_3)
             
+    def start_acquisition(self):
+        self.dac_proc = Process(target = acquisition)
+        self.dac_proc.start()
+        print("started")
+        
+
+    def stop_acquisition(self):
+        self.dac_proc.terminate()
+        self.dac_proc.join()
+        print("joined")
+        
     
-    
-    
-    
+def acquisition(res = 'ADC'):
+##    sys.stdout = open(str(os.getpid()) + ".txt", "w")
+    sys.stdout = open("log.txt", "w")
+    try:
+        d = AgilentU2542A('ADC')
+        counter = 0
+##        d.daq_reset()
+##        d.daq_setup(500000,50000)
+##        d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
+        d.daq_run()
+        print("started")
+        init_time = time.time()
+        max_count = 10000
+        while counter < max_count:
+            try:
+                if d.daq_is_data_ready():
+
+                    counter += 1
+                    t = time.time()-init_time
+
+                    data = d.daq_read_data()
+    ##                        q.put(t)
+    ##                        q.put(data)
+    ##                        if counter % 10 == 0:
+    ##                            plt.plot(data[0])
+    ##                            plt.pause(0.05)
+    ##                        print()
+                    print(t)
+                    print(data)
+                    
+
+            except Exception as e:
+                err = str(e)
+                print(err)
+                if err== 'overload':
+                    counter = max_count
+            
+                
+    except Exception as e:
+    ##            pass
+        print ("exception"+str(e))
+    finally:
+        d.daq_stop()
+##        d.daq_reset()
+        print("finished") 
+
 
 def main():
 ##    d = AgilentU2542A('ADC')
@@ -204,6 +261,14 @@ def main():
         
         
     d = FANScontroller('ADC')
+    d.start_acquisition()
+    c = 0
+    while c<10:
+        print(c)
+        c+=1
+        sleep(0.5)
+    
+    d.stop_acquisition()
 ##    fs = FINTER_CUTOFF_FREQUENCIES['60k']
 ##    fg = FILTER_GAINS[3]
 ##    print("{0:08b}".format(AI_MODE_SET_PULS_MASK|AI_ADC_LETCH_MASK |AO_CHANNEL_LETCH_MASK))
