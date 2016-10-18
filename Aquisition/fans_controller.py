@@ -1,6 +1,8 @@
 from agilent_u2542a import *
-from multiprocessing import Process
+from multiprocessing import Process, Event, Pipe
 from time import sleep
+from scipy import signal
+
 
 PGA_GAINS = {1:     0,
              10:    1,
@@ -180,65 +182,87 @@ class FANScontroller:
             self.pulse_bit(3,DIG_3)
             
     def start_acquisition(self):
-        self.dac_proc = Process(target = acquisition)
+        self.dac_proc = Acquisition()
         self.dac_proc.start()
         print("started")
         
 
     def stop_acquisition(self):
-        self.dac_proc.terminate()
+        self.dac_proc.stop()
         self.dac_proc.join()
         print("joined")
         
+
+class Acquisition(Process):
+    def __init__(self):# child_pipe):
+        super().__init__()
+        self.exit = Event()
+##        self.pipe = child_pipe
+        
+    def stop(self):
+        self.exit.set()
+
     
-def acquisition(res = 'ADC'):
-##    sys.stdout = open(str(os.getpid()) + ".txt", "w")
-    sys.stdout = open("log.txt", "w")
-    try:
-        d = AgilentU2542A('ADC')
-        counter = 0
-##        d.daq_reset()
-##        d.daq_setup(500000,50000)
-##        d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
-        d.daq_run()
-        print("started")
-        init_time = time.time()
-        max_count = 10000
-        while counter < max_count:
-            try:
-                if d.daq_is_data_ready():
+        
+    def run(self):
+        sys.stdout = open("log.txt", "w")
+        try:
+            d = AgilentU2542A('ADC')
+            counter = 0
+            d.daq_setup(500000,50000)
+            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
+            d.daq_run()
+            print("started")
+            init_time = time.time()
+            max_count = 10000
+            while (not self.exit.is_set()) and counter < max_count:
+                try:
+                    if d.daq_is_data_ready():
+                        counter += 1
+                        t = time.time()-init_time
+                        data = d.daq_read_data()
+                        print(t)
+                        print(data.size)
+                        print(data)
+                        freq, psd = signal.periodogram(data,500000)
+                        print(freq)
+                        print(psd)
 
-                    counter += 1
-                    t = time.time()-init_time
-
-                    data = d.daq_read_data()
-    ##                        q.put(t)
-    ##                        q.put(data)
-    ##                        if counter % 10 == 0:
-    ##                            plt.plot(data[0])
-    ##                            plt.pause(0.05)
-    ##                        print()
-                    print(t)
-                    print(data)
-                    
-
-            except Exception as e:
-                err = str(e)
-                print(err)
-                if err== 'overload':
-                    counter = max_count
-            
-                
-    except Exception as e:
-    ##            pass
-        print ("exception"+str(e))
-    finally:
-        d.daq_stop()
-##        d.daq_reset()
-        print("finished") 
+                except Exception as e:
+                    err = str(e)
+                    print(err)
+                    if err== 'overload':
+                        counter = max_count
+                                    
+        except Exception as e:
+            print ("exception"+str(e))
+        finally:
+            d.daq_stop()
+            print("finished") 
 
 
 def main():
+  
+        
+    d = FANScontroller('ADC')
+    d.start_acquisition()
+    c = 0
+    while c<100:
+        print(c)
+        c+=1
+        sleep(0.5)
+    
+    d.stop_acquisition()
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+## Archive switch parameters
+##
+##
 ##    d = AgilentU2542A('ADC')
 ##    d.dig_set_direction(DIG_OUTP,dig_all_channels)
 ##    set_reset = True
@@ -258,32 +282,4 @@ def main():
 ##            d.dig_write_bit_channel(0,0,DIG_4)
 ##        time.sleep(1)
 ##        set_reset= not set_reset
-        
-        
-    d = FANScontroller('ADC')
-    d.start_acquisition()
-    c = 0
-    while c<10:
-        print(c)
-        c+=1
-        sleep(0.5)
-    
-    d.stop_acquisition()
-##    fs = FINTER_CUTOFF_FREQUENCIES['60k']
-##    fg = FILTER_GAINS[3]
-##    print("{0:08b}".format(AI_MODE_SET_PULS_MASK|AI_ADC_LETCH_MASK |AO_CHANNEL_LETCH_MASK))
-
-##    a  = {'a':123,'b':321}
-##    a['a'] = 222
-##    if 'a' in a:
-##        print("yes")
-##    print(a)
-##    print(DIG_1)
-##    print("{0:08b}".format(fs))
-##    print("{0:08b}".format(fg))
-##    print("{0:08b}".format((fg<<4)|(fs)))
-
-##    print(",".join(("101","102")))
-
-if __name__ == "__main__":
-    main()
+      
