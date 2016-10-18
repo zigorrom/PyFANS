@@ -76,41 +76,41 @@ STATE_ON, STATE_OFF = states
 
 
 class AI_Channel:
-        def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = maxInt16):
+    def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = maxInt16):
 ##            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
-            try:
-                self.ch_name_idx = ai_all_channels.index(ch_name)
-                self.ch_enabled = ch_enabled      
-                self.ch_range_idx = ai_all_ranges.index(ch_range)
-                self.ch_polarity_idx = ai_all_polarities.index(ch_polarity)
+        try:
+            self.ch_name_idx = ai_all_channels.index(ch_name)
+            self.ch_enabled = ch_enabled      
+            self.ch_range_idx = ai_all_ranges.index(ch_range)
+            self.ch_polarity_idx = ai_all_polarities.index(ch_polarity)
 ##                self.conv_func = ai_convertion_functions[self.ch_polarity_idx]
 ##                self.vect_conv_func = ai_vect_convertion_functions[self.ch_polarity_idx]
-            except ValueError as e:
-                print(str(e))
+        except ValueError as e:
+            print(str(e))
 
-        def ai_name(self):
-            return ai_all_channels[self.ch_name_idx]
+    def ai_name(self):
+        return ai_all_channels[self.ch_name_idx]
 
-        def ai_is_enabled(self):
-            return int(self.ch_enabled)>0
+    def ai_is_enabled(self):
+        return int(self.ch_enabled)>0
         
-        def ai_enabled(self):
-            return self.ch_enabled
+    def ai_enabled(self):
+        return self.ch_enabled
 
-        def ai_range(self):
-            return ai_all_ranges[self.ch_range_idx]
+    def ai_range(self):
+        return ai_all_ranges[self.ch_range_idx]
 
-        def ai_polarity(self):
-            return ai_all_polarities[self.ch_polarity_idx]
+    def ai_polarity(self):
+        return ai_all_polarities[self.ch_polarity_idx]
 
-        def from_tuple(tuple):
-            return AI_Channel(tuple[0],tuple[1],tuple[2],tuple[3])
+    def from_tuple(tuple):
+        return AI_Channel(tuple[0],tuple[1],tuple[2],tuple[3])
 
-        def ai_get_valsIdx(self):
-            return [self.ch_name_idx,self.ch_range_idx,self.ch_polarity_idx]
+    def ai_get_valsIdx(self):
+        return [self.ch_name_idx,self.ch_range_idx,self.ch_polarity_idx]
 
-        def ai_get_val_str(self):
-            return "name = {0}, en = {1}, rang = {2}, pol = {3}".format(self.ai_name(),self.ai_enabled(),self.ai_range(),self.ai_polarity())
+    def ai_get_val_str(self):
+        return "name = {0}, en = {1}, rang = {2}, pol = {3}".format(self.ai_name(),self.ai_enabled(),self.ai_range(),self.ai_polarity())
 
  
 
@@ -119,6 +119,7 @@ class AgilentU2542A:
         rm = visa.ResourceManager()
         self.instrument = rm.open_resource(resource, write_termination='\n', read_termination = '\n') #write termination
         self.conversion_header = None
+        self.daq_channels = []
 
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
@@ -159,7 +160,7 @@ class AgilentU2542A:
         
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     def daq_init_channels(self):
-        self.daq_channels = []
+        
         channels = "(@101:104)"
         range_response = self.instrument.ask("ROUT:CHAN:RANG? {0}".format(channels))
         polarity_response = self.instrument.ask("ROUT:CHAN:POL? {0}".format(channels))
