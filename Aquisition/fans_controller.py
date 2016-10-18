@@ -107,7 +107,7 @@ class FANScontroller:
     def __init__(self, visa_resource):
         print("initialization")
         self.dev = AgilentU2542A(visa_resource)
-
+        self.dev.dig_set_direction(DIG_OUTP,dig_all_channels)
         self.ai_channel_params = {
             AI_1:get_ai_channel_default_params(),
             AI_2:get_ai_channel_default_params(),
