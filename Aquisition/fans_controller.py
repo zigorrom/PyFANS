@@ -110,6 +110,7 @@ def get_pga_value(pga_gain, cs_hold):
 class FANScontroller:
     def __init__(self, visa_resource):
         print("initialization")
+        self.visa_resource = visa_resource
         self.dev = AgilentU2542A(visa_resource)
         self.dev.dig_set_direction(DIG_OUTP,dig_all_channels)
         self.ai_channel_params = {
@@ -182,7 +183,7 @@ class FANScontroller:
             self.pulse_bit(3,DIG_3)
             
     def start_acquisition(self):
-        self.dac_proc = Acquisition()
+        self.dac_proc = Acquisition(self.visa_resource)
         self.dac_proc.start()
         print("started")
         
@@ -194,9 +195,10 @@ class FANScontroller:
         
 
 class Acquisition(Process):
-    def __init__(self):# child_pipe):
+    def __init__(self, visa_resource):# child_pipe):
         super().__init__()
         self.exit = Event()
+        self.visa_resource = visa_resource
 ##        self.pipe = child_pipe
         
     def stop(self):
@@ -207,7 +209,7 @@ class Acquisition(Process):
     def run(self):
         sys.stdout = open("log.txt", "w")
         try:
-            d = AgilentU2542A('ADC')
+            d = AgilentU2542A(self.visa_resource)
             counter = 0
             d.daq_setup(500000,50000)
             d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
@@ -222,7 +224,7 @@ class Acquisition(Process):
                         t = time.time()-init_time
                         data = d.daq_read_data()
                         print(t)
-                        print(data.size)
+                        print(len(size))
                         print(data)
                         freq, psd = signal.periodogram(data,500000)
                         print(freq)
