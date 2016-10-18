@@ -224,7 +224,7 @@ class Acquisition(Process):
                         t = time.time()-init_time
                         data = d.daq_read_data()
                         print(t)
-                        print(len(size))
+                        print(len(data))
                         print(data)
                         freq, psd = signal.periodogram(data,500000)
                         print(freq)
