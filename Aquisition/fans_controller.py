@@ -1,8 +1,9 @@
 from agilent_u2542a import *
-from multiprocessing import Process, Event, Pipe
+from multiprocessing import Process, Event, JoinableQueue
 from time import sleep
 from scipy import signal
 import matplotlib.pyplot as plt
+from acquisition_process import *
 
 PGA_GAINS = {1:     0,
              10:    1,
@@ -76,7 +77,7 @@ BOX_AI_CHANNELS_MAP = {1: {"channel": AI_1,"mode": AI_AC_mode},
 
 def get_ai_channel_default_params():
     return {
-        'mode': AI_AC_mode,
+        'mode': AI_DC_mode,
         'filter_cutoff': '100k',
         'filter_gain': 1,
         'pga_gain':1,
@@ -112,6 +113,8 @@ class FANScontroller:
         print("initialization")
         self.visa_resource = visa_resource
         self.dev = AgilentU2542A(visa_resource)
+
+        self.data_queue = None
 ##        self.dev.daq_reset()
         self.dev.dig_set_direction(DIG_OUTP,dig_all_channels)
         self.ai_channel_params = {
@@ -184,94 +187,46 @@ class FANScontroller:
             self.pulse_bit(3,DIG_3)
             
     def start_acquisition(self):
-        self.dac_proc = Acquisition(self.visa_resource)
+##        self.in_data_pipe, self.out_data_pipe = Pipe()
+        self.data_queue = JoinableQueue()
+                
+        self.dac_proc = Acquisition(self.visa_resource,self.data_queue)
+        self.data_thread = AcquisitionProcess(None,self.data_queue)
+        
         self.dac_proc.start()
+        self.data_thread.start()
         print("started")
         
 
     def stop_acquisition(self):
         self.dac_proc.stop()
+        print("stopped process")
         self.dac_proc.join()
-        print("joined")
+        print("joined process")
+        
+        self.data_queue.join()
+        self.data_thread.stop()
+        print("joined thread")
 
     def acquisition_alive(self):
         return self.dac_proc.is_alive()
         
 
-class Acquisition(Process):
-    def __init__(self, visa_resource):# child_pipe):
-        super().__init__()
-        self.exit = Event()
-        self.visa_resource = visa_resource
-##        self.pipe = child_pipe
-        
-    def stop(self):
-        self.exit.set()
-
-    
-        
-    def run(self):
-        sys.stdout = open("log.txt", "w")
-        try:
-            d = AgilentU2542A(self.visa_resource)
-            counter = 0
-            fs = 500000
-            npoints = 50000
-            d.daq_setup(fs,npoints)
-            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
-            d.daq_run()
-            print("started")
-            init_time = time.time()
-            max_count = 10000
-            
-            
-            while (not self.exit.is_set()) and counter < max_count:
-                try:
-                    if d.daq_is_data_ready():
-                        counter += 1
-                        t = time.time()-init_time
-                        data = d.daq_read_data()
-                        print(t)
-                        print(len(data))
-                        print(data)
-                        freq, psd = tup = signal.periodogram(data,fs)
-                        
-                        res = np.vstack(tup).transpose()
-                        print(res)
-                        np.savetxt("file_{0}.txt".format(counter),res)
-##                      
-##                        print(freq)
-##                        print(len(freq))
-##                        print(psd)
-##                        print(len(psd))
-                            
-
-                except Exception as e:
-                    err = str(e)
-                    print(err)
-                    if err== 'overload':
-                        counter = max_count
-                                    
-        except Exception as e:
-            print ("exception"+str(e))
-        finally:
-            d.daq_stop()
-            print("finished") 
 
 
-def main():
-  
-        
+
+def main():    
     d = FANScontroller('ADC')
     d.start_acquisition()
+    sleep(1)
     c = 0
-    while c<20:
+    while c<1:
         print(c)
         c+=1
         sleep(0.5)
         if not d.acquisition_alive():
             break
-    
+    print("stopping acquisition")
     d.stop_acquisition()
 
 
