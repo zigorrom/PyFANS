@@ -220,7 +220,7 @@ def main():
     d.start_acquisition()
     sleep(1)
     c = 0
-    while c<1:
+    while c<100:
         print(c)
         c+=1
         sleep(0.5)
