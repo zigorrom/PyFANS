@@ -220,10 +220,10 @@ def main():
     d.start_acquisition()
     sleep(1)
     c = 0
-    while c<100:
+    while c<3600:
         print(c)
         c+=1
-        sleep(0.5)
+        sleep(1)
         if not d.acquisition_alive():
             break
     print("stopping acquisition")

@@ -33,10 +33,10 @@ class Acquisition(Process):
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 10000
+            max_count = 100000000
             
             
-            while (not self.exit.is_set()) and counter < max_count:
+            while (not self.exit.is_set()): #and counter < max_count:
                 try:
                     if d.daq_is_data_ready():
                         counter += 1
@@ -55,6 +55,7 @@ class Acquisition(Process):
                     print(err)
                     if err== 'overload':
                         counter = max_count
+                        break
                                     
         except Exception as e:
             print ("exception"+str(e))
