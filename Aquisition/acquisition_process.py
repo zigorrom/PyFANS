@@ -35,8 +35,9 @@ class Acquisition(Process):
             counter = 0
             fs = self.sample_rate
             npoints = self.points_per_shot
-            max_count = total_samples
+            max_count = self.total_samples
             
+           
             
             d.daq_setup(fs,npoints)
             d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])

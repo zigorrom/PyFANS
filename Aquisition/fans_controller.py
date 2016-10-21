@@ -189,8 +189,9 @@ class FANScontroller:
     def start_acquisition(self):
 ##        self.in_data_pipe, self.out_data_pipe = Pipe()
         self.data_queue = JoinableQueue()
-                
-        self.dac_proc = Acquisition(self.visa_resource,self.data_queue)
+        fs = 500000
+        t = 1
+        self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, 50000, t*fs)
         self.data_thread = AcquisitionProcess(None,self.data_queue)
         
         self.dac_proc.start()
