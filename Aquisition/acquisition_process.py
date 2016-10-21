@@ -3,6 +3,7 @@ import numpy as np
 from PyQt4 import QtCore
 from multiprocessing import Process, Event, JoinableQueue
 from agilent_u2542a import *
+from scipy.signal import periodogram
 
 """
 This class implements acquisition from hardware and fourier tranform
@@ -34,18 +35,22 @@ class Acquisition(Process):
             print("started")
             init_time = time.time()
             max_count = 100000000
+
+            #functions for reducing dot anmount in cycle below
+            need_exit = self.exit.is_set
+            is_data_ready = d.daq_is_data_ready
+            read_data = d.daq_read_data
             
-            
-            while (not self.exit.is_set()): #and counter < max_count:
+            while (not need_exit()): #and counter < max_count:
                 try:
-                    if d.daq_is_data_ready():
+                    if is_data_ready():
                         counter += 1
                         t = time.time()-init_time
-                        data = d.daq_read_data()
+                        data = read_data()
                         print(t)
 ##                        print(len(data))
                         print(data)
-                        tup = signal.periodogram(data,fs) #freq, psd = 
+                        tup = periodogram(data,fs) #freq, psd = 
                         res = np.vstack(tup)
                         ## sending data
                         data_queue.put(res)
