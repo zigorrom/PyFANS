@@ -215,19 +215,24 @@ class FANScontroller:
 
 
 
-def main():    
+def main():
+    
     d = FANScontroller('ADC')
     d.start_acquisition()
     sleep(1)
-    c = 0
-    while c<3600:
-        print(c)
-        c+=1
-        sleep(1)
-        if not d.acquisition_alive():
-            break
-    print("stopping acquisition")
-    d.stop_acquisition()
+    try:
+        c = 0
+        while c<3600:
+            print(c)
+            c+=1
+            sleep(1)
+            if not d.acquisition_alive():
+                break
+    except Exception as e:
+        print(str(e))
+    finally:       
+        print("stopping acquisition")
+        d.stop_acquisition()
 
 
 if __name__ == "__main__":
