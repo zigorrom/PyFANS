@@ -10,11 +10,16 @@ This class implements acquisition from hardware and fourier tranform
 Need to implement amount of samples to acquire    
 """
 class Acquisition(Process):
-    def __init__(self, visa_resource, data_queue):# child_pipe):
+    """sample_rate is acquisition sample rate, points per shot - how much points would be acquired each time, total samples = acquiring time*sample_rate"""
+    def __init__(self, visa_resource, data_queue, sample_rate, points_per_shot, total_samples):# child_pipe):
         super().__init__()
         self.exit = Event()
         self.visa_resource = visa_resource
         self.data_queue = data_queue
+        
+        self.sample_rate = sample_rate
+        self.points_per_shot = points_per_shot
+        self.total_samples = total_samples
         
     def stop(self):
         self.exit.set()
@@ -24,27 +29,31 @@ class Acquisition(Process):
     def run(self):
         sys.stdout = open("log.txt", "w")
         data_queue = self.data_queue
+        
         try:
             d = AgilentU2542A(self.visa_resource)
             counter = 0
-            fs = 500000
-            npoints = 50000
+            fs = self.sample_rate
+            npoints = self.points_per_shot
+            max_count = total_samples
+            
+            
             d.daq_setup(fs,npoints)
             d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
             init_time = time.time()
-            max_count = 100000000
+            
 
             #functions for reducing dot anmount in cycle below
             need_exit = self.exit.is_set
             is_data_ready = d.daq_is_data_ready
             read_data = d.daq_read_data
             
-            while (not need_exit()): #and counter < max_count:
+            while (not need_exit()) and counter < max_count:
                 try:
                     if is_data_ready():
-                        counter += 1
+                        counter += npoints
                         t = time.time()-init_time
                         data = read_data()
                         print(t)

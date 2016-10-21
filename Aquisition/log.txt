@@ -1,2 +1,0 @@
-exceptionVI_ERROR_INP_PROT_VIOL (-1073807305): Device reported an input protocol error during transfer.
-finished
