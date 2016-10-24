@@ -39,8 +39,8 @@ class Acquisition(Process):
             
            
             
-            d.daq_setup(fs,npoints)
-            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
+##            d.daq_setup(fs,npoints)
+##            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
             init_time = time.time()

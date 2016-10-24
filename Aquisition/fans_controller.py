@@ -75,6 +75,9 @@ BOX_AI_CHANNELS_MAP = {1: {"channel": AI_1,"mode": AI_AC_mode},
                        8: {"channel": AI_4,"mode": AI_DC_mode}
                        }
 
+
+                       
+
 def get_ai_channel_default_params():
     return {
         'mode': AI_DC_mode,
@@ -89,6 +92,12 @@ def get_ao_channel_default_params():
         'selected_output':0,
         'voltage':0
             }
+
+def get_ao_channel_by_output(output):
+    if(output>0 and output<9): 
+        return AO_1
+    elif (output>8 and output<17):
+        return AO_2
 
 MAX_MEAS_CHANNELS = 32
 ##def get_channel_selector_params():
@@ -107,6 +116,7 @@ def get_pga_value(pga_gain, cs_hold):
         cs = CS_HOLD[cs_hold]
         val = cs & pg
         return val
+
 
 class FANScontroller:
     def __init__(self, visa_resource):
@@ -131,6 +141,9 @@ class FANScontroller:
 
         self.measurement_channel = 0
 
+        self.sample_rate = 1000
+        self.points_per_shot = 500
+        
         self.init_channels()
         self.daq_proc = None
         
@@ -185,13 +198,18 @@ class FANScontroller:
             self.measurement_channel = meas_channel
             self.dev.dig_write_channel(meas_channel,DIG_1)
             self.pulse_bit(3,DIG_3)
-            
+
+    def init_acquisition(self,sample_rate,points_per_shot,channels):
+        self.sample_rate = sample_rate
+        self.points_per_shot = points_per_shot
+        self.dev.daq_setup(sample_rate,points_per_shot)
+        self.dev.daq_enable_channels(channels)
+    
     def start_acquisition(self):
-##        self.in_data_pipe, self.out_data_pipe = Pipe()
         self.data_queue = JoinableQueue()
-        fs = 500000
-        t = 1
-        self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, 50000, t*fs)
+        fs = self.sample_rate
+        t = 0.5
+        self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
         self.data_thread = AcquisitionProcess(None,self.data_queue)
         
         self.dac_proc.start()
@@ -219,6 +237,7 @@ class FANScontroller:
 def main():
     
     d = FANScontroller('ADC')
+    d.init_acquisition(500000,50000,[AI_1])#,AI_2,AI_3,AI_4])
     d.start_acquisition()
     sleep(1)
     try:
