@@ -3,7 +3,7 @@ import time, sys
 from PyQt4 import QtCore
 import numpy as np
 
-from qspectrumanalyzer.utils import smooth
+from utils import smooth
 
 
 class HistoryBuffer:
@@ -64,13 +64,14 @@ class DataStorage(QtCore.QObject):
     peak_hold_max_updated = QtCore.pyqtSignal(object)
     peak_hold_min_updated = QtCore.pyqtSignal(object)
 
-    def __init__(self, max_history_size=100, parent=None):
+    def __init__(self, max_history_size=100, display_channel = 0, parent=None):
         super().__init__(parent)
         self.max_history_size = max_history_size
         self.smooth = False
         self.smooth_length = 11
         self.smooth_window = "hanning"
 
+        self.display_channel = display_channel
         # Use only one worker thread because it is not faster
         # with more threads (and memory consumption is much higher)
         self.threadpool = QtCore.QThreadPool()
@@ -108,7 +109,7 @@ class DataStorage(QtCore.QObject):
         self.average_counter += 1
 
         if self.x is None:
-            self.x = data["x"]
+            self.x = data["f"]
 
         self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
@@ -116,9 +117,10 @@ class DataStorage(QtCore.QObject):
     def update_data(self, data):
         """Update main spectrum data (and possibly apply smoothing)"""
         if self.smooth:
-            data["y"] = self.smooth_data(data["y"])
+            data['p'] = np.apply_along_axis(self.smooth_data, 1, data['p'])
+##            data["p"] = self.smooth_data(data["y"])
 
-        self.y = data["y"]
+        self.y = data["p"][
         self.data_updated.emit(self)
 
         self.start_task(self.update_average, data)
@@ -222,6 +224,7 @@ class Test:
         t = time.time()
         for i in range(runs):
             self.run_one()
+            print(i)
         self.datastorage.wait()
         total_time = time.time() - t
         print("Total time:", total_time)
@@ -229,5 +232,5 @@ class Test:
 
 
 if __name__ == "__main__":
-    test = Test(int(sys.argv[1]), int(sys.argv[2]))
-    test.run(int(sys.argv[3]))
+    test = Test(500000,100)
+    test.run(100)

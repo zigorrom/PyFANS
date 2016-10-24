@@ -202,11 +202,13 @@ class FANScontroller:
         self.points_per_shot = points_per_shot
         self.dev.daq_setup(sample_rate,points_per_shot)
         self.dev.daq_enable_channels(channels)
+
+    
     
     def start_acquisition(self):
         self.data_queue = JoinableQueue()
         fs = self.sample_rate
-        t = 1*60
+        t = 10*60
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
         self.data_thread = AcquisitionProcess(None,self.data_queue)
         
