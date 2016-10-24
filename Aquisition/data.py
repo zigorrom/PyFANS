@@ -109,7 +109,7 @@ class DataStorage(QtCore.QObject):
         self.average_counter += 1
 
         if self.x is None:
-            self.x = data["f"]
+            self.x = data["x"]
 
         self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
@@ -117,10 +117,10 @@ class DataStorage(QtCore.QObject):
     def update_data(self, data):
         """Update main spectrum data (and possibly apply smoothing)"""
         if self.smooth:
-            data['p'] = np.apply_along_axis(self.smooth_data, 1, data['p'])
-##            data["p"] = self.smooth_data(data["y"])
+##            data['p'] = np.apply_along_axis(self.smooth_data, 1, data['p'])
+            data["y"] = self.smooth_data(data["y"])
 
-        self.y = data["p"][
+        self.y = data["y"]#[self.display_channel]
         self.data_updated.emit(self)
 
         self.start_task(self.update_average, data)
@@ -232,5 +232,5 @@ class Test:
 
 
 if __name__ == "__main__":
-    test = Test(500000,100)
+    test = Test(4*500000,100)
     test.run(100)
