@@ -60,11 +60,17 @@ class Acquisition(Process):
                         print(t)
 ##                        print(len(data))
                         print(data)
-                        tup = periodogram(data,fs) #freq, psd = 
-                        res = np.vstack(tup)
-                        ## sending data
-                        data_queue.put(res)
+                        freq, psd = periodogram(data,fs) 
+##                        res = np.vstack(tup)
 
+                        block = {"t":t,
+                                 "d":data,
+                                 "f":freq,
+                                 "p":psd}
+                        ## sending data
+##                        data_queue.put(res)
+                        data_queue.put(block)
+                        
                 except Exception as e:
                     err = str(e)
                     print(err)
@@ -111,7 +117,8 @@ class AcquisitionProcess(QtCore.QThread):
                 data = data_queue.get(timeout=1)
                 data_queue.task_done()
                 print("data received")
-                parse(data.transpose(),counter)
+##                parse(data.transpose(),counter)
+                parse(data,counter)
                 counter += 1
                 
             except EOFError as e:

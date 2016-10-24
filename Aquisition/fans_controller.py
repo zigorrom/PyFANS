@@ -206,7 +206,7 @@ class FANScontroller:
     def start_acquisition(self):
         self.data_queue = JoinableQueue()
         fs = self.sample_rate
-        t = 0.5
+        t = 1*60
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
         self.data_thread = AcquisitionProcess(None,self.data_queue)
         
@@ -230,7 +230,7 @@ class FANScontroller:
 def main():
     
     d = FANScontroller('ADC')
-    d.init_acquisition(500000,50000,[AI_1])#,AI_2,AI_3,AI_4])
+    d.init_acquisition(500000,50000,[AI_1,AI_2,AI_3,AI_4])
     d.start_acquisition()
     sleep(1)
     try:
