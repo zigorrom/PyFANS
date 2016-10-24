@@ -117,7 +117,6 @@ def get_pga_value(pga_gain, cs_hold):
         val = cs & pg
         return val
 
-
 class FANScontroller:
     def __init__(self, visa_resource):
         print("initialization")
@@ -192,7 +191,6 @@ class FANScontroller:
             for ch in channels:
                 self.set_ai_channel_params(mode,cs_hold,filter_cutoff,filter_gain,pga_gain,ch)
 
-        
     def set_measurement_channel(self, meas_channel):
         if (meas_channel<=MAX_MEAS_CHANNELS) and (meas_channel>=0):
             self.measurement_channel = meas_channel
@@ -215,7 +213,6 @@ class FANScontroller:
         self.dac_proc.start()
         self.data_thread.start()
         print("started")
-        
 
     def stop_acquisition(self):
         self.dac_proc.stop()
@@ -230,10 +227,6 @@ class FANScontroller:
     def acquisition_alive(self):
         return self.dac_proc.is_alive()
         
-
-
-
-
 def main():
     
     d = FANScontroller('ADC')
