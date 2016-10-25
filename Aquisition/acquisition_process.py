@@ -105,6 +105,9 @@ class AcquisitionProcess(QtCore.QThread):
         data_queue = self.data_queue
         parse = self.parse_output
         counter = 0
+##        file_tt = open("data_tt.npy", 'a')
+##        file_psd = open("data_psd.npy", 'a')
+        
         while self.alive or (not data_queue.empty()):
             try:
                 print("wait for data")
@@ -113,15 +116,25 @@ class AcquisitionProcess(QtCore.QThread):
                 print("data received")
 ##                parse(data.transpose(),counter)
                 parse(data,counter)
+
+##                d = data["d"]
+##                np.savetxt(file_tt,d,fmt="%f")
+##
+##                p = data["p"]
+##                np.savetxt(file_psd,p,fmt="%f")
+
                 counter += 1
                 
             except EOFError as e:
                 print("error raised")
                 break
-            except:
-                pass
+            except Exception as exc:
+                print("exception")
+                print(str(exc))
 
         self.alive = False
+##        file_tt.close()
+##        file_psd.close()
         self.threadStopped.emit()
 
 def main():
