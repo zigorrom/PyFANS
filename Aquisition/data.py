@@ -50,7 +50,7 @@ class Task(QtCore.QRunnable):
 
     def run(self):
         """Run task in worker thread and emit signal with result"""
-        #print('Running', self.task, 'in thread', QtCore.QThread.currentThreadId())
+        print('Running', self.task, 'in thread', QtCore.QThread.currentThreadId())
         result = self.task(*self.args, **self.kwargs)
         self.signals.result.emit(result)
 
@@ -70,7 +70,6 @@ class DataStorage(QtCore.QObject):
         self.smooth = False
         self.smooth_length = 11
         self.smooth_window = "hanning"
-
         self.display_channel = display_channel
         # Use only one worker thread because it is not faster
         # with more threads (and memory consumption is much higher)

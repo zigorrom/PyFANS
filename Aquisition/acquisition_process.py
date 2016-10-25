@@ -37,10 +37,6 @@ class Acquisition(Process):
             npoints = self.points_per_shot
             max_count = self.total_samples
             
-           
-            
-##            d.daq_setup(fs,npoints)
-##            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
             d.daq_run()
             print("started")
             init_time = time.time()
@@ -50,6 +46,7 @@ class Acquisition(Process):
             need_exit = self.exit.is_set
             is_data_ready = d.daq_is_data_ready
             read_data = d.daq_read_data
+            
             
             while (not need_exit()) and counter < max_count:
                 try:
@@ -61,14 +58,11 @@ class Acquisition(Process):
 ##                        print(len(data))
 ##                        print(data)
                         freq, psd = periodogram(data,fs) 
-##                        res = np.vstack(tup)
-
+##                        decimated_data = 
                         block = {"t":t,
                                  "d":data,
                                  "f":freq,
                                  "p":psd}
-                        ## sending data
-##                        data_queue.put(res)
                         data_queue.put(block)
                         
                 except Exception as e:
@@ -129,9 +123,6 @@ class AcquisitionProcess(QtCore.QThread):
 
         self.alive = False
         self.threadStopped.emit()
-            
-
-
 
 def main():
     pass
