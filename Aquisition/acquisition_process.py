@@ -107,6 +107,8 @@ class AcquisitionProcess(QtCore.QThread):
         counter = 0
         file_tt = open("data_tt.txt", 'wb')
         file_psd = open("data_psd.txt", 'wb')
+##        file_ave_psd = open("data_psd_ave.txt", 'wb')
+##        average = None
         
         while self.alive or (not data_queue.empty()):
             try:
@@ -118,11 +120,16 @@ class AcquisitionProcess(QtCore.QThread):
                 parse(data,counter)
 
                 d = data["d"].transpose()
-                np.savetxt(file_tt,d,fmt='%.10f',delimiter='\t')
+##                if average == None:
+##                    average = d
+##                else:
+##                    average = average + d
+                
+                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
 ##                np.savetxt(file_tt,d,delimiter = ",",fmt="%s")
 
                 p = np.vstack((data["f"], data["p"])).transpose()
-                np.savetxt(file_psd,p,fmt='%.10f',delimiter='\t')
+                np.savetxt(file_psd,p,fmt='%e',delimiter='\t', newline='\r\n')
 
                 counter += 1
                 
@@ -136,6 +143,8 @@ class AcquisitionProcess(QtCore.QThread):
         self.alive = False
         file_tt.close()
         file_psd.close()
+##        np.savetxt(file_ave_psd,average,fmt='%e',delimiter='\t', newline='\r\n')
+##        file_ave_psd.close()
         self.threadStopped.emit()
 
 def main():
