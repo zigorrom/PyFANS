@@ -105,8 +105,8 @@ class AcquisitionProcess(QtCore.QThread):
         data_queue = self.data_queue
         parse = self.parse_output
         counter = 0
-##        file_tt = open("data_tt.npy", 'a')
-##        file_psd = open("data_psd.npy", 'a')
+        file_tt = open("data_tt.txt", 'wb')
+        file_psd = open("data_psd.txt", 'wb')
         
         while self.alive or (not data_queue.empty()):
             try:
@@ -117,24 +117,25 @@ class AcquisitionProcess(QtCore.QThread):
 ##                parse(data.transpose(),counter)
                 parse(data,counter)
 
-##                d = data["d"]
-##                np.savetxt(file_tt,d,fmt="%f")
-##
-##                p = data["p"]
-##                np.savetxt(file_psd,p,fmt="%f")
+                d = data["d"].transpose()
+                np.savetxt(file_tt,d,fmt='%.10f',delimiter='\t')
+##                np.savetxt(file_tt,d,delimiter = ",",fmt="%s")
+
+                p = np.vstack((data["f"], data["p"])).transpose()
+                np.savetxt(file_psd,p,fmt='%.10f',delimiter='\t')
 
                 counter += 1
                 
             except EOFError as e:
                 print("error raised")
                 break
-            except Exception as exc:
+            except:
                 print("exception")
-                print(str(exc))
+                pass
 
         self.alive = False
-##        file_tt.close()
-##        file_psd.close()
+        file_tt.close()
+        file_psd.close()
         self.threadStopped.emit()
 
 def main():
