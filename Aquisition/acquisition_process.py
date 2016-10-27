@@ -84,11 +84,14 @@ class AcquisitionProcess(QtCore.QThread):
     threadStarted = QtCore.pyqtSignal()
     threadStopped = QtCore.pyqtSignal()
 
-    def __init__(self, data_storage, data_queue, parent=None):
+    def __init__(self, data_storage, data_queue,nchan = 1, npoints = 100, parent=None):
         super().__init__(parent)
         self.data_storage = data_storage
         self.data_queue = data_queue
         self.alive = False
+        self.nchan = nchan
+        self.npoints = npoints
+        self.arr = np.zeros((nchan,npoints))
         
 
     def stop(self):
@@ -110,6 +113,7 @@ class AcquisitionProcess(QtCore.QThread):
 ##        file_ave_psd = open("data_psd_ave.txt", 'wb')
 ##        average = None
         
+        
         while self.alive or (not data_queue.empty()):
             try:
                 print("wait for data")
@@ -120,14 +124,11 @@ class AcquisitionProcess(QtCore.QThread):
                 parse(data,counter)
 
                 d = data["d"].transpose()
-##                if average == None:
-##                    average = d
-##                else:
-##                    average = average + d
-                
-                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
-##                np.savetxt(file_tt,d,delimiter = ",",fmt="%s")
 
+                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
+
+##                self.arr += data['p']
+                
                 p = np.vstack((data["f"], data["p"])).transpose()
                 np.savetxt(file_psd,p,fmt='%e',delimiter='\t', newline='\r\n')
 
@@ -143,7 +144,10 @@ class AcquisitionProcess(QtCore.QThread):
         self.alive = False
         file_tt.close()
         file_psd.close()
-##        np.savetxt(file_ave_psd,average,fmt='%e',delimiter='\t', newline='\r\n')
+
+##        np.divide(self.arr,counter)
+
+##        np.savetxt(file_ave_psd,self.arr.transpose(),fmt='%e',delimiter='\t', newline='\r\n')
 ##        file_ave_psd.close()
         self.threadStopped.emit()
 
