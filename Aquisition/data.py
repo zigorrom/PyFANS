@@ -55,7 +55,7 @@ class Task(QtCore.QRunnable):
         self.signals.result.emit(result)
 
 
-class DataStorage(QtCore.QObject):
+class DataHandler(QtCore.QObject):
     """Data storage for spectrum measurements"""
     history_updated = QtCore.pyqtSignal(object)
     data_updated = QtCore.pyqtSignal(object)
