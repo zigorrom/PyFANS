@@ -64,13 +64,17 @@ class DataStorage(QtCore.QObject):
     peak_hold_max_updated = QtCore.pyqtSignal(object)
     peak_hold_min_updated = QtCore.pyqtSignal(object)
 
-    def __init__(self, max_history_size=100, display_channel = 0, parent=None):
+    def __init__(self, max_history_size=100, display_channel = 0, sample_rate = 500000, points_per_shot = 50000, parent=None):
         super().__init__(parent)
         self.max_history_size = max_history_size
         self.smooth = False
         self.smooth_length = 11
         self.smooth_window = "hanning"
         self.display_channel = display_channel
+
+        
+
+        
         # Use only one worker thread because it is not faster
         # with more threads (and memory consumption is much higher)
         self.threadpool = QtCore.QThreadPool()
@@ -78,6 +82,24 @@ class DataStorage(QtCore.QObject):
 
         self.reset()
 
+
+    def init_values(self,sample_rate,points_per_shot):
+        self.sample_rate = sample_rate
+        self.points_per_shot = points_per_shot
+        selt.sampling_period = 1/sample_rate
+        # data['t']
+        self.current_timestamp = 0
+        # data['d']
+        self.timetrace_data = None#np.empty(points_per_shot,dtype=float)
+        #data['f']
+        self.frequency_bins = None
+        #data['p']
+        self.psd_data = None
+
+##        http://stackoverflow.com/questions/25143066/python-numpy-array-of-arrays
+        
+        
+                                       
     def reset(self):
         """Reset all data"""
         self.wait()
@@ -106,7 +128,7 @@ class DataStorage(QtCore.QObject):
     def update(self, data):
         """Update data storage"""
         self.average_counter += 1
-
+        
         if self.x is None:
             self.x = data["x"]
 

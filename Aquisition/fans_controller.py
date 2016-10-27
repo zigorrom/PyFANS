@@ -208,7 +208,7 @@ class FANScontroller:
     def start_acquisition(self):
         self.data_queue = JoinableQueue()
         fs = self.sample_rate
-        t = 0.3 #16*60*60
+        t = 1 #16*60*60
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
         self.data_thread = AcquisitionProcess(None,self.data_queue)
         
