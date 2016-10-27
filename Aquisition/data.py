@@ -73,7 +73,7 @@ class DataHandler(QtCore.QObject):
         self.display_channel = display_channel
 
         
-
+        self.init_values(sample_rate, points_per_shot)
         
         # Use only one worker thread because it is not faster
         # with more threads (and memory consumption is much higher)
@@ -87,8 +87,11 @@ class DataHandler(QtCore.QObject):
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
         selt.sampling_period = 1/sample_rate
+        self.time_length = points_per_shot/sample_rate
         # data['t']
-        self.current_timestamp = 0
+        self.current_time = 0
+
+        self.timetrace_time = None
         # data['d']
         self.timetrace_data = None#np.empty(points_per_shot,dtype=float)
         #data['f']
@@ -103,18 +106,17 @@ class DataHandler(QtCore.QObject):
     def reset(self):
         """Reset all data"""
         self.wait()
-        self.x = None
-        self.history = None
-        self.reset_data()
+        self.current_time = 0
+        self.timetrace_data = None#np.empty(points_per_shot,dtype=float)
+        self.frequency_bins = None
+        self.psd_data = None
 
-    def reset_data(self):
-        """Reset current data"""
-        self.wait()
-        self.y = None
         self.average_counter = 0
         self.average = None
         self.peak_hold_max = None
         self.peak_hold_min = None
+
+        
 
     def start_task(self, fn, *args, **kwargs):
         """Run function asynchronously in worker thread"""
@@ -128,40 +130,48 @@ class DataHandler(QtCore.QObject):
     def update(self, data):
         """Update data storage"""
         self.average_counter += 1
+        self.timetrace_time = 
         
-        if self.x is None:
-            self.x = data["x"]
-
         self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
 
     def update_data(self, data):
         """Update main spectrum data (and possibly apply smoothing)"""
-        if self.smooth:
-##            data['p'] = np.apply_along_axis(self.smooth_data, 1, data['p'])
-            data["y"] = self.smooth_data(data["y"])
+##        if self.smooth:
+####            data['p'] = np.apply_along_axis(self.smooth_data, 1, data['p'])
+##            data["y"] = self.smooth_data(data["y"])
 
-        self.y = data["y"]#[self.display_channel]
+        new_time = self.current_time+self.time_length
+        self.timetrace_time = np.linspace(self.current_time,new_time,self.points_per_shot,dtype = float)
+        self.current_time = new_time
+
+        self.timetrace_data = data['d']
+
+        self.frequency_bins = data['f']
+
+        self.psd_data = data['p']
+        
+##        self.y = data["y"]#[self.display_channel]
         self.data_updated.emit(self)
 
         self.start_task(self.update_average, data)
-        self.start_task(self.update_peak_hold_max, data)
-        self.start_task(self.update_peak_hold_min, data)
+##        self.start_task(self.update_peak_hold_max, data)
+##        self.start_task(self.update_peak_hold_min, data)
 
-    def update_history(self, data):
-        """Update spectrum measurements history"""
-        if self.history is None:
-            self.history = HistoryBuffer(len(data["y"]), self.max_history_size)
-
-        self.history.append(data["y"])
-        self.history_updated.emit(self)
+##    def update_history(self, data):
+##        """Update spectrum measurements history"""
+##        if self.history is None:
+##            self.history = HistoryBuffer(len(data["y"]), self.max_history_size)
+##
+##        self.history.append(data["y"])
+##        self.history_updated.emit(self)
 
     def update_average(self, data):
         """Update average data"""
         if self.average is None:
-            self.average = data["y"].copy()
+            self.average = data['p'].copy()
         else:
-            self.average = np.average((self.average, data["y"]), axis=0, weights=(self.average_counter - 1, 1))
+            self.average = np.average((self.average, data['p']), axis=0, weights=(self.average_counter - 1, 1))
             self.average_updated.emit(self)
 
     def update_peak_hold_max(self, data):
