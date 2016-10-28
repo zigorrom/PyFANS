@@ -124,7 +124,7 @@ class SpectrumPlotWidget:
             return
 
         if self.main_curve or force:
-            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data)
+            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[0])
             if force:
                 self.curve.setVisible(self.main_curve)
 
