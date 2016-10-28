@@ -4,6 +4,7 @@ from time import sleep
 from scipy import signal
 import matplotlib.pyplot as plt
 from acquisition_process import *
+from data import *
 
 PGA_GAINS = {1:     0,
              10:    1,
@@ -208,9 +209,11 @@ class FANScontroller:
     def start_acquisition(self):
         self.data_queue = JoinableQueue()
         fs = self.sample_rate
-        t = 1 #16*60*60
+        t = 300 #16*60*60
+
+        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
-        self.data_thread = AcquisitionProcess(None,self.data_queue)
+        self.data_thread = AcquisitionProcess(data_storage,self.data_queue)
         
         self.dac_proc.start()
         self.data_thread.start()

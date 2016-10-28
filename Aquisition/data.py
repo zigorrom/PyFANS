@@ -50,7 +50,7 @@ class Task(QtCore.QRunnable):
 
     def run(self):
         """Run task in worker thread and emit signal with result"""
-        print('Running', self.task, 'in thread', QtCore.QThread.currentThreadId())
+##        print('Running', self.task, 'in thread', QtCore.QThread.currentThreadId())
         result = self.task(*self.args, **self.kwargs)
         self.signals.result.emit(result)
 
@@ -86,7 +86,7 @@ class DataHandler(QtCore.QObject):
     def init_values(self,sample_rate,points_per_shot):
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
-        selt.sampling_period = 1/sample_rate
+        self.sampling_period = 1/sample_rate
         self.time_length = points_per_shot/sample_rate
         # data['t']
         self.current_time = 0
@@ -130,9 +130,9 @@ class DataHandler(QtCore.QObject):
     def update(self, data):
         """Update data storage"""
         self.average_counter += 1
-        self.timetrace_time = 
         
-        self.start_task(self.update_history, data.copy())
+        
+##        self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
 
     def update_data(self, data):
@@ -144,7 +144,7 @@ class DataHandler(QtCore.QObject):
         new_time = self.current_time+self.time_length
         self.timetrace_time = np.linspace(self.current_time,new_time,self.points_per_shot,dtype = float)
         self.current_time = new_time
-
+        print(self.timetrace_time)
         self.timetrace_data = data['d']
 
         self.frequency_bins = data['f']
@@ -172,6 +172,7 @@ class DataHandler(QtCore.QObject):
             self.average = data['p'].copy()
         else:
             self.average = np.average((self.average, data['p']), axis=0, weights=(self.average_counter - 1, 1))
+##            print(self.average)
             self.average_updated.emit(self)
 
     def update_peak_hold_max(self, data):

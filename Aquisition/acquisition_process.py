@@ -108,8 +108,9 @@ class AcquisitionProcess(QtCore.QThread):
         data_queue = self.data_queue
         parse = self.parse_output
         counter = 0
-        file_tt = open("data_tt.txt", 'wb')
-        file_psd = open("data_psd.txt", 'wb')
+        data_storage = self.data_storage
+##        file_tt = open("data_tt.txt", 'wb')
+##        file_psd = open("data_psd.txt", 'wb')
 ##        file_ave_psd = open("data_psd_ave.txt", 'wb')
 ##        average = None
         
@@ -121,16 +122,16 @@ class AcquisitionProcess(QtCore.QThread):
                 data_queue.task_done()
                 print("data received")
 ##                parse(data.transpose(),counter)
-                parse(data,counter)
+##                parse(data,counter)
+                data_storage.update(data)
+##                d = data["d"].transpose()
 
-                d = data["d"].transpose()
-
-                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
+##                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
 
 ##                self.arr += data['p']
                 
-                p = np.vstack((data["f"], data["p"])).transpose()
-                np.savetxt(file_psd,p,fmt='%e',delimiter='\t', newline='\r\n')
+##                p = np.vstack((data["f"], data["p"])).transpose()
+##                np.savetxt(file_psd,p,fmt='%e',delimiter='\t', newline='\r\n')
 
                 counter += 1
                 
@@ -142,8 +143,8 @@ class AcquisitionProcess(QtCore.QThread):
                 pass
 
         self.alive = False
-        file_tt.close()
-        file_psd.close()
+##        file_tt.close()
+##        file_psd.close()
 
 ##        np.divide(self.arr,counter)
 
