@@ -3,13 +3,24 @@ import sys, signal, time
 from PyQt4 import QtCore, QtGui
 
 from ui_mainform import Ui_mainWindow
-
+from plot import SpectrumPlotWidget, WaterfallPlotWidget
+from data import *
+from fans_controller import *
 
 class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi(self)
 
+##        print(self.noisePlot)
+        self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot)
+        self.sample_rate = 500000
+        self.points_per_shot = 50000
+        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot)
+        self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
+        self.fans_controller = FANScontroller("ADC",self.data_storage)
+        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
+        
         self.load_settings()
         self.show()
 
@@ -53,13 +64,21 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
 
 
 ##
+    def start(self):
+        self.fans_controller.start_acquisition()
+        
     @QtCore.pyqtSlot()
     def on_startButton_clicked(self):
         print("start")
+        self.start()
+
+    def stop(self):
+        self.fans_controller.stop_acquisition()
 
     @QtCore.pyqtSlot()
     def on_stopButton_clicked(self):
         print("stop")
+        self.stop()
 
     @QtCore.pyqtSlot()
     def on_singleShotButton_clicked(self):

@@ -34,10 +34,10 @@ class Ui_mainWindow(object):
         self.plotSplitter = QtGui.QSplitter(self.centralwidget)
         self.plotSplitter.setOrientation(QtCore.Qt.Vertical)
         self.plotSplitter.setObjectName(_fromUtf8("plotSplitter"))
-        self.timetracePlot = PlotWidget(self.plotSplitter)
+        self.timetracePlot = GraphicsLayoutWidget(self.plotSplitter)
         self.timetracePlot.setMinimumSize(QtCore.QSize(10, 10))
         self.timetracePlot.setObjectName(_fromUtf8("timetracePlot"))
-        self.noisePlot = PlotWidget(self.plotSplitter)
+        self.noisePlot = GraphicsLayoutWidget(self.plotSplitter)
         self.noisePlot.setObjectName(_fromUtf8("noisePlot"))
         self.verticalLayout.addWidget(self.plotSplitter)
         mainWindow.setCentralWidget(self.centralwidget)
@@ -393,7 +393,7 @@ class Ui_mainWindow(object):
         self.actionLoadAll.setText(_translate("mainWindow", "All", None))
         self.actionChannelSettings.setText(_translate("mainWindow", "Channel settings", None))
 
-from pyqtgraph import PlotWidget
+from pyqtgraph import GraphicsLayoutWidget
 
 if __name__ == "__main__":
     import sys

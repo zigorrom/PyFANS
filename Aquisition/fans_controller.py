@@ -119,7 +119,7 @@ def get_pga_value(pga_gain, cs_hold):
         return val
 
 class FANScontroller:
-    def __init__(self, visa_resource):
+    def __init__(self, visa_resource,data_storage):
         print("initialization")
         self.visa_resource = visa_resource
         self.dev = AgilentU2542A(visa_resource)
@@ -143,6 +143,8 @@ class FANScontroller:
 
         self.sample_rate = 1000
         self.points_per_shot = 500
+
+        self.data_storage = data_storage
         
         self.init_channels()
         self.daq_proc = None
@@ -211,9 +213,9 @@ class FANScontroller:
         fs = self.sample_rate
         t = 300 #16*60*60
 
-        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
+##        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
-        self.data_thread = AcquisitionProcess(data_storage,self.data_queue)
+        self.data_thread = AcquisitionProcess(self.data_storage,self.data_queue)
         
         self.dac_proc.start()
         self.data_thread.start()

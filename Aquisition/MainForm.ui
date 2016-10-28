@@ -23,7 +23,7 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="PlotWidget" name="timetracePlot">
+      <widget class="GraphicsLayoutWidget" name="timetracePlot">
        <property name="minimumSize">
         <size>
          <width>10</width>
@@ -31,7 +31,7 @@
         </size>
        </property>
       </widget>
-      <widget class="PlotWidget" name="noisePlot"/>
+      <widget class="GraphicsLayoutWidget" name="noisePlot"/>
      </widget>
     </item>
    </layout>
@@ -669,7 +669,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>GraphicsLayoutWidget</class>
    <extends>QGraphicsView</extends>
    <header>pyqtgraph</header>
   </customwidget>
