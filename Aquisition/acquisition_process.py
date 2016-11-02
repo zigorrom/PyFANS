@@ -59,10 +59,11 @@ class Acquisition(Process):
 ##                        print(data)
                         freq, psd = periodogram(data,fs) 
 ##                        decimated_data = 
-                        block = {"t":t,
-                                 "d":data,
-                                 "f":freq,
-                                 "p":psd}
+                        block = {"t": t,
+                                 "d": data,
+                                 "f": freq, #np.delete(freq,1,0),
+                                 "p": psd #np.delete(psd,1,1)}
+                                 }
                         data_queue.put(block)
                         
                 except Exception as e:
