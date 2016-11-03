@@ -155,8 +155,8 @@ class DataHandler(QtCore.QObject):
         self.data_updated.emit(self)
 
         self.start_task(self.update_average, data)
-##        self.start_task(self.update_peak_hold_max, data)
-##        self.start_task(self.update_peak_hold_min, data)
+        self.start_task(self.update_peak_hold_max, data)
+        self.start_task(self.update_peak_hold_min, data)
 
 ##    def update_history(self, data):
 ##        """Update spectrum measurements history"""
@@ -173,22 +173,23 @@ class DataHandler(QtCore.QObject):
         else:
             self.average = np.average((self.average, data['p']), axis=0, weights=(self.average_counter - 1, 1))
 ##            print(self.average)
+##            print("average updated")
             self.average_updated.emit(self)
 
     def update_peak_hold_max(self, data):
         """Update max. peak hold data"""
         if self.peak_hold_max is None:
-            self.peak_hold_max = data["y"].copy()
+            self.peak_hold_max = data["p"].copy()
         else:
-            self.peak_hold_max = np.maximum(self.peak_hold_max, data["y"])
+            self.peak_hold_max = np.maximum(self.peak_hold_max, data["p"])
             self.peak_hold_max_updated.emit(self)
 
     def update_peak_hold_min(self, data):
         """Update min. peak hold data"""
         if self.peak_hold_min is None:
-            self.peak_hold_min = data["y"].copy()
+            self.peak_hold_min = data["p"].copy()
         else:
-            self.peak_hold_min = np.minimum(self.peak_hold_min, data["y"])
+            self.peak_hold_min = np.minimum(self.peak_hold_min, data["p"])
             self.peak_hold_min_updated.emit(self)
 
     def smooth_data(self, y):

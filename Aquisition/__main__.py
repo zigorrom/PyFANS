@@ -18,6 +18,10 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
         self.points_per_shot = 50000
         self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot)
         self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
+        self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
+        self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
+        self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
+
         self.fans_controller = FANScontroller("ADC",self.data_storage)
         self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
         

@@ -23,11 +23,11 @@ class SpectrumPlotWidget:
         self.persistence_color = pg.mkColor("g")
         self.persistence_data = None
         self.persistence_curves = None
-        self.peak_hold_max = False
+        self.peak_hold_max = True
         self.peak_hold_max_color = pg.mkColor("r")
-        self.peak_hold_min = False
+        self.peak_hold_min = True
         self.peak_hold_min_color = pg.mkColor("b")
-        self.average = False
+        self.average = True
         self.average_color = pg.mkColor("c")
 
         self.create_plot()
@@ -37,7 +37,7 @@ class SpectrumPlotWidget:
         self.posLabel = self.layout.addLabel(row=0, col=0, justify="right")
         self.plot = self.layout.addPlot(row=1, col=0)
         self.plot.showGrid(x=True, y=True)
-        self.plot.setLogMode(x=True, y=True)
+        self.plot.setLogMode(x=False, y=True)
         self.plot.setLabel("left", "Power", units="dBm")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
         self.plot.setLimits(xMin=0)
@@ -77,7 +77,7 @@ class SpectrumPlotWidget:
     def create_average_curve(self):
         """Create average curve"""
         self.curve_average = self.plot.plot(pen=self.average_color)
-        self.curve_average.setZValue(700)
+        self.curve_average.setZValue(1000)
 
     def create_persistence_curves(self):
         """Create spectrum persistence curves"""
@@ -127,36 +127,38 @@ class SpectrumPlotWidget:
         if self.main_curve or force:
             self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[0])
             if force:
+                print("forced plot")
                 self.curve.setVisible(self.main_curve)
 
     def update_peak_hold_max(self, data_storage, force=False):
         """Update max. peak hold curve"""
-        if data_storage.x is None:
+        if data_storage.frequency_bins is None:
             return
 
         if self.peak_hold_max or force:
-            self.curve_peak_hold_max.setData(data_storage.x, data_storage.peak_hold_max)
+            self.curve_peak_hold_max.setData(data_storage.frequency_bins, data_storage.peak_hold_max[0])
             if force:
                 self.curve_peak_hold_max.setVisible(self.peak_hold_max)
 
     def update_peak_hold_min(self, data_storage, force=False):
         """Update min. peak hold curve"""
-        if data_storage.x is None:
+        if data_storage.frequency_bins is None:
             return
 
         if self.peak_hold_min or force:
-            self.curve_peak_hold_min.setData(data_storage.x, data_storage.peak_hold_min)
+            self.curve_peak_hold_min.setData(data_storage.frequency_bins, data_storage.peak_hold_min[0])
             if force:
                 self.curve_peak_hold_min.setVisible(self.peak_hold_min)
 
     def update_average(self, data_storage, force=False):
         """Update average curve"""
-        if data_storage.x is None:
+        if data_storage.frequency_bins is None:
             return
 
         if self.average or force:
-            self.curve_average.setData(data_storage.x, data_storage.average)
+            self.curve_average.setData(data_storage.frequency_bins, data_storage.average[0])
             if force:
+                print("forced average")
                 self.curve_average.setVisible(self.average)
 
     def update_persistence(self, data_storage, force=False):
