@@ -37,8 +37,8 @@ class SpectrumPlotWidget:
         self.posLabel = self.layout.addLabel(row=0, col=0, justify="right")
         self.plot = self.layout.addPlot(row=1, col=0)
         self.plot.showGrid(x=True, y=True)
-        self.plot.setLogMode(x=False, y=True)
-        self.plot.setLabel("left", "Power", units="dBm")
+        self.plot.setLogMode(x=True, y=True)
+        self.plot.setLabel("left", "Power", units="V^2Hz-1")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
         self.plot.setLimits(xMin=0)
         self.plot.showButtons()
@@ -207,8 +207,8 @@ class SpectrumPlotWidget:
         if self.plot.sceneBoundingRect().contains(pos):
             mousePoint = self.plot.vb.mapSceneToView(pos)
             self.posLabel.setText(
-                "<span style='font-size: 12pt'>f={:0.3f} MHz, P={:0.3f} dBm</span>".format(
-                    mousePoint.x() / 1e6,
+                "<span style='font-size: 12pt'>f=10^{:0.3f} Hz, P={:0.3f} V^2/Hz</span>".format(
+                    mousePoint.x() ,
                     mousePoint.y()
                 )
             )
@@ -284,7 +284,7 @@ class WaterfallPlotWidget:
         # Create waterfall image on first run
         if self.counter == 1:
             self.waterfallImg = pg.ImageItem()
-            self.waterfallImg.scale((data_storage.x[-1] - data_storage.x[0]) / len(data_storage.x), 1)
+            self.waterfallImg.scale((data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins), 1)
             self.plot.clear()
             self.plot.addItem(self.waterfallImg)
 
@@ -294,7 +294,7 @@ class WaterfallPlotWidget:
 
         # Move waterfall image to always start at 0
         self.waterfallImg.setPos(
-            data_storage.x[0],
+            data_storage.frequency_bins[0],
             -self.counter if self.counter < self.history_size else -self.history_size
         )
 

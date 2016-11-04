@@ -61,8 +61,8 @@ class Acquisition(Process):
 ##                        decimated_data = 
                         block = {"t": t,
                                  "d": data,
-                                 "f": freq, #np.delete(freq,1,0),
-                                 "p": psd #np.delete(psd,1,1)}
+                                 "f": np.delete(freq,1,0),
+                                 "p": np.delete(psd,1,1)
                                  }
                         data_queue.put(block)
                         
