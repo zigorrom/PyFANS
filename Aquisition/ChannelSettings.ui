@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>188</width>
-    <height>464</height>
+    <width>243</width>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,6 +62,9 @@
        <widget class="QRadioButton" name="BipolarRadioButton">
         <property name="text">
          <string>Bipolar</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
