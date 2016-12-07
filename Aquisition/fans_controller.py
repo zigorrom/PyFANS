@@ -76,9 +76,6 @@ BOX_AI_CHANNELS_MAP = {1: {"channel": AI_1,"mode": AI_AC_mode},
                        8: {"channel": AI_4,"mode": AI_DC_mode}
                        }
 
-
-                       
-
 def get_ai_channel_default_params():
     return {
         'mode': AI_DC_mode,

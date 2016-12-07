@@ -226,6 +226,22 @@ class AgilentU2542A:
 ##        res_fft = np.apply_along_axis(signal.periodogram,1,narr,fs = 500000)
         return res
 
+##    def daq_single_channel_read_data(self):
+##        self.instrument.write("WAV:DATA?")
+##        raw_data = self.instrument.read_raw()
+##        len_from_header = int(raw_data[2:10])
+##        data = raw_data[10:]
+####        enabled_channels = self.enabled_ai_channels
+####        nchan = len(enabled_channels)
+####        print("nchan {0}".format(nchan))
+##        narr = np.fromstring(data, dtype = '<i2')
+##        print(len(narr))
+##        single_channel_data_len = int(narr.size/nchan)
+##        narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
+##        print(len(narr))
+##        res = np.apply_along_axis(Convertion,1,narr)
+####        res_fft = np.apply_along_axis(signal.periodogram,1,narr,fs = 500000)
+##        return res
 
     def daq_single_shot_read_data(self):
         self.instrument.write("DIG")

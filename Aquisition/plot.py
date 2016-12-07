@@ -23,9 +23,9 @@ class SpectrumPlotWidget:
         self.persistence_color = pg.mkColor("g")
         self.persistence_data = None
         self.persistence_curves = None
-        self.peak_hold_max = True
+        self.peak_hold_max = False#True
         self.peak_hold_max_color = pg.mkColor("r")
-        self.peak_hold_min = True
+        self.peak_hold_min = False#True
         self.peak_hold_min_color = pg.mkColor("b")
         self.average = True
         self.average_color = pg.mkColor("c")
