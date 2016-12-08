@@ -1,613 +1,453 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ChannelSettingsForm</class>
- <widget class="QWidget" name="ChannelSettingsForm">
+ <class>ChannelSettings</class>
+ <widget class="QDialog" name="ChannelSettings">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>243</width>
-    <height>583</height>
+    <width>500</width>
+    <height>166</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
-   <string>Channel Settings</string>
+   <string>Dialog</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Analog Input Channel</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="2" column="1">
+      <widget class="QComboBox" name="comboBox">
+       <item>
         <property name="text">
-         <string>Range</string>
+         <string>1.25 V</string>
         </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="AnalogInputRangeComboBox">
-        <item>
-         <property name="text">
-          <string>1.25</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2.5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QRadioButton" name="UnipolarRadioButton">
+       </item>
+       <item>
+        <property name="text">
+         <string>2.5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>10 V</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QCheckBox" name="checkBox_2">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="label_4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Input 4</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="label_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Input 3</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="checkBox">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Range</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Polarity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Function</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Input 2</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QCheckBox" name="checkBox_4">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QCheckBox" name="checkBox_3">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Input 1</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Enabled</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="comboBox_9">
+       <item>
+        <property name="text">
+         <string>Nope</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vds</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vlg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vbg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vmain</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="4">
+      <widget class="QComboBox" name="comboBox_8">
+       <item>
         <property name="text">
          <string>Unipolar</string>
         </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QRadioButton" name="BipolarRadioButton">
+       </item>
+       <item>
         <property name="text">
          <string>Bipolar</string>
         </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="AnaloInputChannelComboBox">
-        <item>
-         <property name="text">
-          <string>In1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In8</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QComboBox" name="comboBox_3">
+       <item>
         <property name="text">
-         <string>Analog in</string>
+         <string>1.25 V</string>
         </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+       </item>
+       <item>
+        <property name="text">
+         <string>2.5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>10 V</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QComboBox" name="comboBox_2">
+       <item>
+        <property name="text">
+         <string>1.25 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2.5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>10 V</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="4">
+      <widget class="QComboBox" name="comboBox_4">
+       <item>
+        <property name="text">
+         <string>1.25 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2.5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>5 V</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>10 V</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="comboBox_5">
+       <item>
+        <property name="text">
+         <string>Unipolar</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Bipolar</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="3">
+      <widget class="QComboBox" name="comboBox_7">
+       <item>
+        <property name="text">
+         <string>Unipolar</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Bipolar</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="comboBox_6">
+       <item>
+        <property name="text">
+         <string>Unipolar</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Bipolar</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QComboBox" name="comboBox_10">
+       <item>
+        <property name="text">
+         <string>Nope</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vds</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vlg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vbg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vmain</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="3">
+      <widget class="QComboBox" name="comboBox_11">
+       <item>
+        <property name="text">
+         <string>Nope</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vds</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vlg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vbg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vmain</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="4">
+      <widget class="QComboBox" name="comboBox_12">
+       <item>
+        <property name="text">
+         <string>Nope</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vds</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vlg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vbg</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Vmain</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
-     <property name="title">
-      <string>Voltage measurement Channels</string>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Sample Voltage</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="SampleVoltageMeasuremenChannelComboBox">
-        <item>
-         <property name="text">
-          <string>In5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In8</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Gate Voltage</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="GateVoltageMeasuremenChannelComboBox">
-        <item>
-         <property name="text">
-          <string>In5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In8</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Main Voltage</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="MainVoltageMeasuremenChannelComboBox">
-        <item>
-         <property name="text">
-          <string>In5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>In8</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="title">
-      <string>Voltage setting</string>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Sample Motor</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="SampleMotorComboBox">
-        <item>
-         <property name="text">
-          <string>Out 1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 8</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 9</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 10</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 11</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 12</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 13</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 14</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 15</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 16</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Sample Relay</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="SampleRelayComboBox">
-        <property name="currentIndex">
-         <number>1</number>
-        </property>
-        <item>
-         <property name="text">
-          <string>Out 1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 8</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 9</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 10</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 11</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 12</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 13</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 14</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 15</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 16</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Gate Motor</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="GatMotorComboBox">
-        <property name="currentIndex">
-         <number>8</number>
-        </property>
-        <item>
-         <property name="text">
-          <string>Out 1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 8</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 9</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 10</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 11</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 12</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 13</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 14</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 15</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 16</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Gate Relay</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QComboBox" name="GateRelayComboBox">
-        <property name="currentIndex">
-         <number>9</number>
-        </property>
-        <item>
-         <property name="text">
-          <string>Out 1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 8</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 9</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 10</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 11</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 12</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 13</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 14</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 15</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Out 16</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
     </widget>
    </item>
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ChannelSettings</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ChannelSettings</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

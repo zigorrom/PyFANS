@@ -79,9 +79,9 @@ BOX_AI_CHANNELS_MAP = {1: {"channel": AI_1,"mode": AI_AC_mode},
 def get_ai_channel_default_params():
     return {
         'mode': AI_DC_mode,
-        'filter_cutoff': '100k',
-        'filter_gain': 1,
-        'pga_gain':1,
+        'filter_cutoff': '10k',
+        'filter_gain': 16,
+        'pga_gain':100,
         'cs_hold':'OFF'
         }
 
