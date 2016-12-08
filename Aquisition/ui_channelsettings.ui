@@ -161,7 +161,7 @@
       <widget class="QComboBox" name="comboBox_9">
        <item>
         <property name="text">
-         <string>Nope</string>
+         <string>None</string>
         </property>
        </item>
        <item>
@@ -318,7 +318,7 @@
       <widget class="QComboBox" name="comboBox_10">
        <item>
         <property name="text">
-         <string>Nope</string>
+         <string>None</string>
         </property>
        </item>
        <item>
@@ -347,7 +347,7 @@
       <widget class="QComboBox" name="comboBox_11">
        <item>
         <property name="text">
-         <string>Nope</string>
+         <string>None</string>
         </property>
        </item>
        <item>
@@ -376,7 +376,7 @@
       <widget class="QComboBox" name="comboBox_12">
        <item>
         <property name="text">
-         <string>Nope</string>
+         <string>None</string>
         </property>
        </item>
        <item>

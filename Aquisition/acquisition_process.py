@@ -56,7 +56,7 @@ class Acquisition(Process):
                         data = read_data()
                         print(t)
 ##                        print(len(data))
-##                        print(data)
+                        print(data)
                         freq, psd = periodogram(data,fs) 
 ##                        decimated_data = 
                         block = {"t": t,
