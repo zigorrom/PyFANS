@@ -65,6 +65,7 @@ class Acquisition(Process):
                                  "p": np.delete(psd,1,1)
                                  }
                         data_queue.put(block)
+                        print(psd)
                         
                 except Exception as e:
                     err = str(e)

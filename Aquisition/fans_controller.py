@@ -80,8 +80,8 @@ def get_ai_channel_default_params():
     return {
         'mode': AI_DC_mode,
         'filter_cutoff': '10k',
-        'filter_gain': 16,
-        'pga_gain':100,
+        'filter_gain': 1,
+        'pga_gain':1,
         'cs_hold':'OFF'
         }
 
