@@ -42,7 +42,7 @@ class Ui_mainWindow(object):
         self.verticalLayout.addWidget(self.plotSplitter)
         mainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(mainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 856, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 856, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -259,6 +259,10 @@ class Ui_mainWindow(object):
         self.actionLoadAll.setObjectName(_fromUtf8("actionLoadAll"))
         self.actionChannelSettings = QtGui.QAction(mainWindow)
         self.actionChannelSettings.setObjectName(_fromUtf8("actionChannelSettings"))
+        self.actionOutputSettings = QtGui.QAction(mainWindow)
+        self.actionOutputSettings.setObjectName(_fromUtf8("actionOutputSettings"))
+        self.actionAcquisitionSettings = QtGui.QAction(mainWindow)
+        self.actionAcquisitionSettings.setObjectName(_fromUtf8("actionAcquisitionSettings"))
         self.menuFile.addAction(self.actionWorkingFolder)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
@@ -271,6 +275,8 @@ class Ui_mainWindow(object):
         self.menuLoad_2.addAction(self.actionVoltages_2)
         self.menuLoad_2.addAction(self.actionLoadAll)
         self.menuSettings.addAction(self.actionChannelSettings)
+        self.menuSettings.addAction(self.actionOutputSettings)
+        self.menuSettings.addAction(self.actionAcquisitionSettings)
         self.menuSettings.addAction(self.menuSave_2.menuAction())
         self.menuSettings.addAction(self.menuLoad_2.menuAction())
         self.menubar.addAction(self.menuFile.menuAction())
@@ -335,6 +341,8 @@ class Ui_mainWindow(object):
         self.actionVoltages_2.setText(_translate("mainWindow", "Voltages", None))
         self.actionLoadAll.setText(_translate("mainWindow", "All", None))
         self.actionChannelSettings.setText(_translate("mainWindow", "Channel settings", None))
+        self.actionOutputSettings.setText(_translate("mainWindow", "Output settings", None))
+        self.actionAcquisitionSettings.setText(_translate("mainWindow", "Acquisition settings", None))
 
 from pyqtgraph import GraphicsLayoutWidget
 

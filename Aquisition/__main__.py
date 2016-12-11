@@ -32,8 +32,8 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
         self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
         self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
 
-        self.fans_controller = FANScontroller("ADC",self.data_storage)
-        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
+##        self.fans_controller = FANScontroller("ADC",self.data_storage)
+##        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
         
 ## FILE MENU ITEM
     
@@ -57,6 +57,15 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     @QtCore.pyqtSlot()
     def on_actionLoadAll_triggered(self):
         print("load all")
+
+    @QtCore.pyqtSlot()
+    def on_actionOutputSettings_triggered(self):
+        print("output settings")
+
+    @QtCore.pyqtSlot()  
+    def on_actionAcquisitionSettings_triggered(self):
+        print("acquisition settings")
+        
     
 ## WINDOW MENU ITEM
     @QtCore.pyqtSlot()
