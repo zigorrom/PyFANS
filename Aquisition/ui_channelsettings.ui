@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ChannelSettings</class>
- <widget class="QDialog" name="ChannelSettings">
+ <class>ui_channelsettings</class>
+ <widget class="QDialog" name="ui_channelsettings">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>166</height>
+    <height>185</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="2" column="1">
-      <widget class="QComboBox" name="comboBox">
+      <widget class="QComboBox" name="range_in1">
        <item>
         <property name="text">
          <string>1.25 V</string>
@@ -50,7 +50,7 @@
       </widget>
      </item>
      <item row="1" column="2">
-      <widget class="QCheckBox" name="checkBox_2">
+      <widget class="QCheckBox" name="enabled_in2">
        <property name="text">
         <string/>
        </property>
@@ -83,7 +83,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="enabled_in1">
        <property name="text">
         <string/>
        </property>
@@ -124,14 +124,14 @@
       </widget>
      </item>
      <item row="1" column="4">
-      <widget class="QCheckBox" name="checkBox_4">
+      <widget class="QCheckBox" name="enabled_in4">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="3">
-      <widget class="QCheckBox" name="checkBox_3">
+      <widget class="QCheckBox" name="enabled_in3">
        <property name="text">
         <string/>
        </property>
@@ -158,7 +158,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QComboBox" name="comboBox_9">
+      <widget class="QComboBox" name="function_in1">
        <item>
         <property name="text">
          <string>None</string>
@@ -187,7 +187,7 @@
       </widget>
      </item>
      <item row="3" column="4">
-      <widget class="QComboBox" name="comboBox_8">
+      <widget class="QComboBox" name="polarity_in4">
        <item>
         <property name="text">
          <string>Unipolar</string>
@@ -201,7 +201,7 @@
       </widget>
      </item>
      <item row="2" column="3">
-      <widget class="QComboBox" name="comboBox_3">
+      <widget class="QComboBox" name="range_in3">
        <item>
         <property name="text">
          <string>1.25 V</string>
@@ -225,7 +225,7 @@
       </widget>
      </item>
      <item row="2" column="2">
-      <widget class="QComboBox" name="comboBox_2">
+      <widget class="QComboBox" name="range_in2">
        <item>
         <property name="text">
          <string>1.25 V</string>
@@ -249,7 +249,7 @@
       </widget>
      </item>
      <item row="2" column="4">
-      <widget class="QComboBox" name="comboBox_4">
+      <widget class="QComboBox" name="range_in4">
        <item>
         <property name="text">
          <string>1.25 V</string>
@@ -273,7 +273,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="comboBox_5">
+      <widget class="QComboBox" name="polarity_in1">
        <item>
         <property name="text">
          <string>Unipolar</string>
@@ -287,7 +287,7 @@
       </widget>
      </item>
      <item row="3" column="3">
-      <widget class="QComboBox" name="comboBox_7">
+      <widget class="QComboBox" name="polarity_in3">
        <item>
         <property name="text">
          <string>Unipolar</string>
@@ -301,7 +301,7 @@
       </widget>
      </item>
      <item row="3" column="2">
-      <widget class="QComboBox" name="comboBox_6">
+      <widget class="QComboBox" name="polarity_in2">
        <item>
         <property name="text">
          <string>Unipolar</string>
@@ -315,7 +315,7 @@
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QComboBox" name="comboBox_10">
+      <widget class="QComboBox" name="function_in2">
        <item>
         <property name="text">
          <string>None</string>
@@ -344,7 +344,7 @@
       </widget>
      </item>
      <item row="4" column="3">
-      <widget class="QComboBox" name="comboBox_11">
+      <widget class="QComboBox" name="function_in3">
        <item>
         <property name="text">
          <string>None</string>
@@ -373,7 +373,7 @@
       </widget>
      </item>
      <item row="4" column="4">
-      <widget class="QComboBox" name="comboBox_12">
+      <widget class="QComboBox" name="function_in4">
        <item>
         <property name="text">
          <string>None</string>
@@ -420,7 +420,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>ChannelSettings</receiver>
+   <receiver>ui_channelsettings</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -436,7 +436,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>ChannelSettings</receiver>
+   <receiver>ui_channelsettings</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
