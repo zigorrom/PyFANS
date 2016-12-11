@@ -11,8 +11,18 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi(self)
-
+        self.setupDAQ()
 ##        print(self.noisePlot)
+        
+        
+        self.load_settings()
+        self.show()
+
+    def closeEvent(self,event):
+        print("closing")
+        self.save_settings()
+
+    def setupDAQ(self):
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot)
         self.sample_rate = 500000
         self.points_per_shot = 50000
@@ -24,13 +34,6 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
 
         self.fans_controller = FANScontroller("ADC",self.data_storage)
         self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
-        
-        self.load_settings()
-        self.show()
-
-    def closeEvent(self,event):
-        print("closing")
-        self.save_settings()
         
 ## FILE MENU ITEM
     
