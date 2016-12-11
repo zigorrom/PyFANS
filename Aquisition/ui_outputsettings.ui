@@ -1,77 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ui_outputsettings</class>
- <widget class="QWidget" name="ui_outputsettings">
+ <class>OutputSettings</class>
+ <widget class="QDialog" name="OutputSettings">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>317</width>
-    <height>131</height>
+    <width>400</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Output Settings</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="3">
+   <item row="0" column="1">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Output 1</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Output 2</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" rowspan="2">
+   <item row="1" column="0">
     <widget class="QLabel" name="label_5">
      <property name="text">
       <string>Enabled</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="2">
+   <item row="1" column="1">
     <widget class="QCheckBox" name="enabled_out1">
      <property name="text">
       <string>CheckBox</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="3">
+   <item row="1" column="2">
     <widget class="QCheckBox" name="enabled_out2">
      <property name="text">
       <string>CheckBox</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="2" rowspan="2">
-    <widget class="QComboBox" name="pin_out1"/>
-   </item>
-   <item row="2" column="3" rowspan="2">
-    <widget class="QComboBox" name="pin_out2"/>
-   </item>
-   <item row="3" column="0">
+   <item row="2" column="0">
     <widget class="QLabel" name="label_3">
      <property name="text">
       <string>Output pin</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="3">
-    <widget class="QComboBox" name="function_out2"/>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="pin_out1"/>
    </item>
-   <item row="4" column="2">
-    <widget class="QComboBox" name="function_out1"/>
+   <item row="2" column="2">
+    <widget class="QComboBox" name="pin_out2"/>
    </item>
-   <item row="4" column="0">
+   <item row="3" column="0">
     <widget class="QLabel" name="label_4">
      <property name="text">
       <string>Function</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="2">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Output 1</string>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="function_out1"/>
+   </item>
+   <item row="3" column="2">
+    <widget class="QComboBox" name="function_out2"/>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -83,7 +93,7 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>281</height>
+       <height>132</height>
       </size>
      </property>
     </spacer>
@@ -91,5 +101,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>OutputSettings</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>OutputSettings</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

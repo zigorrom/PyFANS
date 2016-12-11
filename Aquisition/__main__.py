@@ -3,9 +3,43 @@ import sys, signal, time
 from PyQt4 import QtCore, QtGui
 
 from ui_mainform import Ui_mainWindow
+from ui_acquisitionsettings import Ui_AcquisitionSettings
+from ui_channelsettings import Ui_ChannelSettings
+from ui_outputsettings import Ui_OutputSettings
+
 from plot import SpectrumPlotWidget, WaterfallPlotWidget
 from data import *
 from fans_controller import *
+
+
+class OutputSettings(QtGui.QDialog, Ui_OutputSettings):
+    def __init__(self,parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        
+    def accept(self):
+        print("outp settings accepted")
+        QtGui.QDialog.accept(self)
+        
+class AcquisitionSettings(QtGui.QDialog, Ui_AcquisitionSettings):
+    def __init__(self,parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+    def accept(self):
+        print("adc settings accepted")
+        QtGui.QDialog.accept(self)
+
+class ChannelSettings(QtGui.QDialog, Ui_ChannelSettings):
+    def __init__(self,parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+    def accept(self):
+        print("channel settings accepted")
+        QtGui.QDialog.accept(self)
+
+
 
 class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     def __init__(self, parent = None):
@@ -46,10 +80,7 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
         print("exit pressed")
 
 ## SETTINGS MENU ITEM
-    @QtCore.pyqtSlot()
-    def on_actionChannelSettings_triggered(self):
-        print("channel settings")
-
+    
     @QtCore.pyqtSlot()
     def on_actionSaveAll_2_triggered(self):
         print("save all")
@@ -59,12 +90,24 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
         print("load all")
 
     @QtCore.pyqtSlot()
+    def on_actionChannelSettings_triggered(self):
+        dialog = ChannelSettings(self)
+        if dialog.exec_():
+           print("channel settings")
+
+
+    @QtCore.pyqtSlot()
     def on_actionOutputSettings_triggered(self):
-        print("output settings")
+        dialog = OutputSettings(self)
+        if dialog.exec_():
+            print("output settings")    
+        
 
     @QtCore.pyqtSlot()  
     def on_actionAcquisitionSettings_triggered(self):
-        print("acquisition settings")
+        dialog = AcquisitionSettings(self)
+        if dialog.exec_():
+            print("acquisition settings")
         
     
 ## WINDOW MENU ITEM
