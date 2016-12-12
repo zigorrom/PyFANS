@@ -88,6 +88,7 @@
     <addaction name="actionChannelSettings"/>
     <addaction name="actionOutputSettings"/>
     <addaction name="actionAcquisitionSettings"/>
+    <addaction name="actionPowerSupplySettings"/>
     <addaction name="menuSave_2"/>
     <addaction name="menuLoad_2"/>
    </widget>
@@ -552,6 +553,11 @@
   <action name="actionAcquisitionSettings">
    <property name="text">
     <string>Acquisition settings</string>
+   </property>
+  </action>
+  <action name="actionPowerSupplySettings">
+   <property name="text">
+    <string>Power Supply Settings</string>
    </property>
   </action>
  </widget>
