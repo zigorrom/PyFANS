@@ -6,6 +6,7 @@ from ui_mainform import Ui_mainWindow
 from ui_acquisitionsettings import Ui_AcquisitionSettings
 from ui_channelsettings import Ui_ChannelSettings
 from ui_outputsettings import Ui_OutputSettings
+from ui_powersupplysettings import Ui_PowerSupplySettings
 
 from plot import SpectrumPlotWidget, WaterfallPlotWidget
 from data import *
@@ -39,6 +40,14 @@ class ChannelSettings(QtGui.QDialog, Ui_ChannelSettings):
         print("channel settings accepted")
         QtGui.QDialog.accept(self)
 
+class PowerSupplySettings(QtGui.QDialog, Ui_PowerSupplySettings):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+    def accept(self):
+        print("power settings accepted")
+        QtGui.QDialog.accept(self)
 
 
 class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
@@ -106,6 +115,12 @@ class fansMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     @QtCore.pyqtSlot()  
     def on_actionAcquisitionSettings_triggered(self):
         dialog = AcquisitionSettings(self)
+        if dialog.exec_():
+            print("acquisition settings")
+
+    @QtCore.pyqtSlot()  
+    def on_actionPowerSupplySettings_triggered(self):
+        dialog = PowerSupplySettings(self)
         if dialog.exec_():
             print("acquisition settings")
         

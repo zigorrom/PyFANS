@@ -263,6 +263,8 @@ class Ui_mainWindow(object):
         self.actionOutputSettings.setObjectName(_fromUtf8("actionOutputSettings"))
         self.actionAcquisitionSettings = QtGui.QAction(mainWindow)
         self.actionAcquisitionSettings.setObjectName(_fromUtf8("actionAcquisitionSettings"))
+        self.actionPowerSupplySettings = QtGui.QAction(mainWindow)
+        self.actionPowerSupplySettings.setObjectName(_fromUtf8("actionPowerSupplySettings"))
         self.menuFile.addAction(self.actionWorkingFolder)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
@@ -277,6 +279,7 @@ class Ui_mainWindow(object):
         self.menuSettings.addAction(self.actionChannelSettings)
         self.menuSettings.addAction(self.actionOutputSettings)
         self.menuSettings.addAction(self.actionAcquisitionSettings)
+        self.menuSettings.addAction(self.actionPowerSupplySettings)
         self.menuSettings.addAction(self.menuSave_2.menuAction())
         self.menuSettings.addAction(self.menuLoad_2.menuAction())
         self.menubar.addAction(self.menuFile.menuAction())
@@ -343,6 +346,7 @@ class Ui_mainWindow(object):
         self.actionChannelSettings.setText(_translate("mainWindow", "Channel settings", None))
         self.actionOutputSettings.setText(_translate("mainWindow", "Output settings", None))
         self.actionAcquisitionSettings.setText(_translate("mainWindow", "Acquisition settings", None))
+        self.actionPowerSupplySettings.setText(_translate("mainWindow", "Power Supply Settings", None))
 
 from pyqtgraph import GraphicsLayoutWidget
 
