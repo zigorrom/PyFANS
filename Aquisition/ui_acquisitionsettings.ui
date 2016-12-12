@@ -43,7 +43,14 @@
     </widget>
    </item>
    <item row="2" column="2">
-    <widget class="QSpinBox" name="spinBox"/>
+    <widget class="QSpinBox" name="spinBox">
+     <property name="minimum">
+      <number>500</number>
+     </property>
+     <property name="maximum">
+      <number>500000</number>
+     </property>
+    </widget>
    </item>
    <item row="7" column="2">
     <widget class="QComboBox" name="comboBox_3"/>
@@ -80,45 +87,20 @@
     </widget>
    </item>
    <item row="6" column="2">
-    <widget class="QComboBox" name="comboBox_2">
-     <item>
-      <property name="text">
-       <string>1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>10</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>100</string>
-      </property>
-     </item>
-    </widget>
+    <widget class="QComboBox" name="comboBox_2"/>
    </item>
    <item row="5" column="2">
-    <widget class="QComboBox" name="comboBox">
-     <item>
-      <property name="text">
-       <string>1</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>10</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>100</string>
-      </property>
-     </item>
-    </widget>
+    <widget class="QComboBox" name="comboBox"/>
    </item>
    <item row="3" column="2">
-    <widget class="QSpinBox" name="spinBox_2"/>
+    <widget class="QSpinBox" name="spinBox_2">
+     <property name="minimum">
+      <number>100</number>
+     </property>
+     <property name="maximum">
+      <number>2000000</number>
+     </property>
+    </widget>
    </item>
    <item row="0" column="2">
     <widget class="QLineEdit" name="lineEdit"/>
