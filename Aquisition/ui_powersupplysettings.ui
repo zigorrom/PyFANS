@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>PowerSupplySettings</class>
+ <widget class="QDialog" name="PowerSupplySettings">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Power Supply</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="1">
@@ -21,7 +21,10 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QLCDNumber" name="lcdNumber_2">
+       <widget class="QLCDNumber" name="gatevoltage">
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
         <property name="digitCount">
          <number>10</number>
         </property>
@@ -31,7 +34,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QDial" name="dial_2"/>
+       <widget class="QDial" name="GateVoltageSet"/>
       </item>
      </layout>
     </widget>
@@ -53,10 +56,20 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QLCDNumber" name="lcdNumber"/>
+       <widget class="QLCDNumber" name="drainsourcevoltage">
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
+       </widget>
       </item>
       <item>
-       <widget class="QDial" name="dial">
+       <widget class="QDial" name="DrainSourceVoltageSet">
         <property name="minimum">
          <number>-10</number>
         </property>
@@ -78,7 +91,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>PowerSupplySettings</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -94,7 +107,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>PowerSupplySettings</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
