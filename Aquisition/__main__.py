@@ -17,7 +17,7 @@ class OutputSettings(QtGui.QDialog, Ui_OutputSettings):
     def __init__(self,parent = None):
         super().__init__(parent)
         self.setupUi(self)
-        
+##        self.
     def accept(self):
         print("outp settings accepted")
         QtGui.QDialog.accept(self)
