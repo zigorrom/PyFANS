@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui, uic
 import sys
 
-class Node(QtCore.QObject):
+class Node(object):
     
     def __init__(self, name, parent=None):
         
@@ -20,7 +20,7 @@ class Node(QtCore.QObject):
 
     def addChild(self, child):
         self._children.append(child)
-        child.parent = self
+        child._parent = self
 
     def insertChild(self, position, child):
         
@@ -96,7 +96,7 @@ class Node(QtCore.QObject):
 
 class LabelNode(Node):
     def __init__(self,name, label = "",parent=None):
-        super().__init__(name,parent)
+        super(LabelNode,self).__init__(name,parent)
 
         self._label = label
 
@@ -111,7 +111,7 @@ class LabelNode(Node):
 
 class NumericNode(Node):
     def __init__(self,name,  value = 10,parent = None):
-        super().__init__(name,parent)
+        super(NumericNode,self).__init__(name,parent)
         self._value = value
         
 
@@ -126,7 +126,7 @@ class NumericNode(Node):
 
 class CheckNode(Node):
     def __init__(self,name,checked = False, parent=None):
-        super().__init__(name,parent)
+        super(CheckNode,self).__init__(name,parent)
         self._checked = checked
 
     def typeInfo(self):
@@ -140,7 +140,7 @@ class CheckNode(Node):
     
 class ComboNode(Node):
     def __init__(self,name,case_list = [], parent=None):
-        super().__init__(name,parent)
+        super(ComboNode,self).__init__(name,parent)
         self._case_list = case_list
         self._selectedIndex = 0
 
@@ -151,7 +151,7 @@ class ComboNode(Node):
     def selectedIndex(self):
         return self._selectedIndex
 
-    def set_selectionIndex(self,index):
+    def set_selectedIndex(self,index):
         self._selectedIndex = index
 
     def case_list(self):
@@ -163,9 +163,9 @@ class ComboNode(Node):
 
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
-        super().__init__(name,parent)
+        super(InChannelNode,self).__init__(name,parent)
         self._enabled = CheckNode(name+"_enabled", parent = self)
-        self._range = ComboNode(name+"_range", parent = self)
+        self._range = ComboNode(name+"_range", case_list=['One','Two','Three'], parent = self)
         self._polarity = ComboNode(name+"_polarity",parent = self)
         self._function = ComboNode(name+"_function",parent=  self)
 
@@ -182,7 +182,7 @@ class InChannelNode(Node):
 
 class OutChannelNode(Node):
     def __init__(self,name,parent=None):
-        super().__init__(name,parent)
+        super(OutChannelNode,self).__init__(name,parent)
         self._enabled = CheckNode(name+"_enabled", parent = self)
         self._range = ComboNode(name+"_range", parent = self)
         self._polarity = ComboNode(name+"_polarity",parent = self)
@@ -194,13 +194,13 @@ class OutChannelNode(Node):
 
 class AcquisitionSettingsNode(Node):
     def __init__(self,name,parent=None):
-        super().__init__(name,parent)
-        self._sample_rate = NumericNode("sample_rate", parent = self)
-        self._points_per_shot = NumericNode("points_per_shot", parent = self)
-        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
-        self._pga_gain = ComboNode("pga_gain",parent = self)
-        self._filter_gain = ComboNode("filter_gain", parent = self)
-        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
+        super(AcquisitionSettingsNode,self).__init__(name,parent)
+##        self._sample_rate = NumericNode("sample_rate", parent = self)
+##        self._points_per_shot = NumericNode("points_per_shot", parent = self)
+##        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
+##        self._pga_gain = ComboNode("pga_gain",parent = self)
+##        self._filter_gain = ComboNode("filter_gain", parent = self)
+##        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
 
     def typeInfo(self):
         return "ACQUISITION_SETTINGS"
@@ -266,8 +266,10 @@ class SettingsModel(QtCore.QAbstractItemModel):
 
             if typeInfo == "COMBO":
                 if index.column() == 2:
+                    print(node.selectedIndex())
                     return node.selectedIndex()
-                
+##                if index.column() == 3:
+##                    return node.case_list()
 
 
         
@@ -307,22 +309,24 @@ class SettingsModel(QtCore.QAbstractItemModel):
 
                 if typeInfo == "LABEL":
                     if index.column() == 2:
-                        return node.set_label()
+                        node.set_label(value)
                 
        
                 if typeInfo == "NUMERIC":
                     if index.column() == 2:
-                        return node.set_value()
+                        node.set_value()
                     
                     
                 if typeInfo == "CHECK":
                     if index.column() == 2:
-                        return node.set_value()
+                        node.set_value()
                     
 
                 if typeInfo == "COMBO":
                     if index.column() == 2:
-                        return node.set_selectedIndex()    
+                        print("value to set {0}".format(value))
+                        node.set_selectedIndex(value)
+                        print(node.selectedIndex())
                         
 
 
@@ -356,11 +360,10 @@ class SettingsModel(QtCore.QAbstractItemModel):
     def parent(self, index):
         
         node = self.getNode(index)
-
         
         parentNode = node.parent()
         
-        print(node.typeInfo())
+        
         if parentNode == self._rootNode:
             return QtCore.QModelIndex()
         
@@ -438,16 +441,17 @@ class WndTutorial(base,form):
         rootNode = Node("Settings")
 
 ##        print(type(rootNode))
-        acq_settings = AcquisitionSettingsNode("acquisition_settings", rootNode)
-        selected_channel = LabelNode("selected_channel",acq_settings)
-        sample_rate = NumericNode("sample_rate",acq_settings)
-        pps = NumericNode("points per shot", acq_settings)
-        hma = CheckNode("homemade amp",acq_settings)
-        pga = ComboNode("pga",acq_settings)
-        fg = ComboNode("fg",acq_settings)
-        fc = ComboNode("fc",acq_settings)
+##        acq_settings = Node("acquisirion_settings", rootNode)
+        acq_settings        = AcquisitionSettingsNode("acquisition_settings",parent = rootNode)
+        selected_channel    = LabelNode("selected_channel",parent = acq_settings)
+        sample_rate         = NumericNode("sample_rate",parent = acq_settings)
+        pps                 = NumericNode("points per shot", parent = acq_settings)
+        hma                 = CheckNode("homemade amp",parent = acq_settings)
+        pga                 = ComboNode("pga",parent = acq_settings)
+        fg                  = ComboNode("fg",parent = acq_settings)
+        fc                  = ComboNode("fc",parent = acq_settings)
 
-        inp_settings = Node("input_settings", rootNode)
+        inp_settings = Node("input_settings", parent = rootNode)
         ch1 = InChannelNode("ch1",inp_settings)
         ch2 = InChannelNode("ch2",inp_settings)
         ch3 = InChannelNode("ch3",inp_settings)
@@ -455,7 +459,7 @@ class WndTutorial(base,form):
 
 
 
-        out_settings = Node("out_settings", rootNode)
+        out_settings = Node("out_settings", parent = rootNode)
         och1 = OutChannelNode("och1",out_settings)
         och2 = OutChannelNode("och2",out_settings)
 
@@ -473,11 +477,152 @@ class WndTutorial(base,form):
         
         self.treeView.setModel(self._proxyModel)
         
-##        QtCore.QObject.connect(self.uiFilter, QtCore.SIGNAL("textChanged(QString)"), self._proxyModel.setFilterRegExp)
+        QtCore.QObject.connect(self.uiFilter, QtCore.SIGNAL("textChanged(QString)"), self._proxyModel.setFilterRegExp)
         
         self.treeView.setSortingEnabled(True)
 
-##        QtCore.QObject.connect(self.treeView.selectionModel(), QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self._propEditor.setSelection)
+        self._propEditor = PropertiesEditor(self)
+        self.layoutMain.addWidget(self._propEditor)
+        self._propEditor.setModel(self._proxyModel)
+
+        QtCore.QObject.connect(self.treeView.selectionModel(), QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self._propEditor.setSelection)
+
+propBase, propForm = uic.loadUiType("PropertiesLayout.ui")
+"""PROPERTIESEDITOR"""
+class PropertiesEditor(propBase, propForm):
+    
+    def __init__(self, parent = None):
+        super(propBase, self).__init__(parent)
+        self.setupUi(self)
+
+        self._proxyModel = None
+        
+        self._nodeEditor = NodeEditor(self)
+        self._labelEditor = LabelEditor(self)
+        self._comboEditor = ComboEditor(self)
+        
+
+        
+        self.layoutNode.addWidget(self._nodeEditor)
+        self.layoutSpecs.addWidget(self._labelEditor)
+        self.layoutSpecs.addWidget(self._comboEditor)
+
+        self._labelEditor.setVisible(False)
+        self._comboEditor.setVisible(False)
+               
+    """INPUTS: QModelIndex, QModelIndex"""
+    def setSelection(self, current, old):
+
+        current = self._proxyModel.mapToSource(current)
+
+        node = current.internalPointer()
+        
+        if node is not None:
+            
+            typeInfo = node.typeInfo()
+            
+        if typeInfo == "LABEL":
+            self._labelEditor.setVisible(True)
+            self._comboEditor.setVisible(False)
+            self._labelEditor.setSelection(current)
+        elif typeInfo == "COMBO":
+            self._labelEditor.setVisible(False)
+            self._comboEditor.setVisible(True)
+            self._comboEditor.setSelection(current)
+        else:
+            self._labelEditor.setVisible(False)
+            self._comboEditor.setVisible(False)
+        
+        self._nodeEditor.setSelection(current)
+##        self._labelEditor.setSelection(current)
+##        self._comboEditor.setSelection(current)
+    
+    def setModel(self, proxyModel):
+        
+        self._proxyModel = proxyModel
+        
+        self._nodeEditor.setModel(proxyModel)
+        self._labelEditor.setModel(proxyModel)
+        self._comboEditor.setModel(proxyModel)
+
+
+
+        
+
+nodeBase, nodeForm = uic.loadUiType("NodeProperties.ui") 
+class NodeEditor(nodeBase, nodeForm):
+    
+    def __init__(self, parent=None):
+        super(nodeBase, self).__init__(parent)
+        self.setupUi(self)
+        
+        self._dataMapper = QtGui.QDataWidgetMapper()
+        
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+        
+        self._dataMapper.addMapping(self.uiName, 0)
+        self._dataMapper.addMapping(self.uiType, 1)
+        
+    """INPUTS: QModelIndex"""
+    def setSelection(self, current):
+        
+        parent = current.parent()
+        self._dataMapper.setRootIndex(parent)
+        
+        self._dataMapper.setCurrentModelIndex(current)
+
+
+labelBase, labelForm = uic.loadUiType("LabelWidget.ui")
+class LabelEditor(labelBase, labelForm):
+    def __init__(self,parent = None):
+        super(labelBase,self).__init__(parent)
+        self.setupUi(self)
+
+        self._dataMapper = QtGui.QDataWidgetMapper()
+
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+
+        self._dataMapper.addMapping(self.ui_name,0,"text")
+        self._dataMapper.addMapping(self.ui_label,2)
+
+    def setSelection(self,current):
+        parent = current.parent()
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
+
+
+comboBase, comboForm = uic.loadUiType("ComboWidget.ui")
+class ComboEditor(comboBase, comboForm):
+    def __init__(self,parent = None):
+        super(comboBase,self).__init__(parent)
+        self.setupUi(self)
+
+        self._dataMapper = QtGui.QDataWidgetMapper()
+
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+        
+        
+        self._dataMapper.addMapping(self.ui_name,0,"text")
+        self._dataMapper.addMapping(self.ui_combo,2,"selectedIndex")
+
+    def setSelection(self,current):
+        print("set selection")
+        node = self._proxyModel.sourceModel().getNode(current)
+        self.ui_combo.clear()
+        self.ui_combo.addItems(node.case_list())
+
+        parent = current.parent()
+        
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
+        print(node.selectedIndex())
+
 
 
 if __name__ == '__main__':
