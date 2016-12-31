@@ -216,12 +216,64 @@ class InChannelNode(Node):
         self._polarity = ComboNode(name+"_polarity",case_list=['Unipolar','Bipolar'],parent = self)
         self._function = ComboNode(name+"_function",case_list=['Vds','Vlg','Vbg'],parent=  self)
 
+    def enabled(self):
+        return self._enabled.is_checked()
+
+    def set_enabled(self,value):
+        self._enabled.set_value(value)
+
+    def enabled_label(self):
+        return self._enabled.name()
+
+    def selected_range(self):
+        return self._range.selectedIndex()
+
+    def set_selected_range(self,value):
+        self._range.set_selectedIndex(value)
+
+    def range_label(self):
+        return self._range.name()
+
+    def selected_polarity(self):
+        return self._polarity.selectedIndex()
+
+    def set_selected_polarity(self,value):
+        self._polarity.set_selectedIndex(value)
+
+    def polarity_label(self):
+        return self._polarity.name()
+
+    def selected_function(self):
+        return self._function.selectedIndex()
+
+    def set_selected_function(self,value):
+        self._function.set_selectedIndex(value)
+
+    def function_label(self):
+        return self._function.name()
 
     def typeInfo(self):
         return "IN_CHANNEL"
 
-    
+    def data(self, column):
+        r = super(InChannelNode,self).data(column)
+        if column is 2:     r = self.enabled()
+        elif column is 3:   r = self.selected_range()
+        elif column is 4:   r = self.selected_polarity()
+        elif column is 5:   r = self.selected_function()
+        elif column is 6:   r = self.enabled_label()
+        elif column is 7:   r = self.range_label()
+        elif column is 8:   r = self.polarity_label()
+        elif column is 9:   r = self.function_label()
+        return r
 
+    def setData(self, column, value):
+        super(InChannelNode,self).setData(column,value)
+        if column is 2:     self.set_enabled(value)
+        elif column is 3:   self.set_selected_range(value)
+        elif column is 4:   self.set_selected_polarity(value)
+        elif column is 5:   self.set_selected_function(value)
+        
 
 class OutChannelNode(Node):
     def __init__(self,name,parent=None):
@@ -474,6 +526,7 @@ class PropertiesEditor(propBase, propForm):
         self._comboEditor = ComboEditor(self)
         self._checkEditor = CheckEditor(self)
         self._numericEditor = NumericEditor(self)
+        self._inChannelEditor = InChannelEditor(self)
 
         
         self.layoutNode.addWidget(self._nodeEditor)
@@ -481,12 +534,14 @@ class PropertiesEditor(propBase, propForm):
         self.layoutSpecs.addWidget(self._comboEditor)
         self.layoutSpecs.addWidget(self._checkEditor)
         self.layoutSpecs.addWidget(self._numericEditor)
+        self.layoutSpecs.addWidget(self._inChannelEditor)
         
 
         self._labelEditor.setVisible(False)
         self._comboEditor.setVisible(False)
         self._checkEditor.setVisible(False)
         self._numericEditor.setVisible(False)
+        self._inChannelEditor.setVisible(False)
                
     """INPUTS: QModelIndex, QModelIndex"""
     def setSelection(self, current, old):
@@ -503,31 +558,44 @@ class PropertiesEditor(propBase, propForm):
             self._comboEditor.setVisible(False)
             self._checkEditor.setVisible(False)
             self._numericEditor.setVisible(False)
+            self._inChannelEditor.setVisible(False)
             self._labelEditor.setSelection(current)
         elif typeInfo == "COMBO":
             self._comboEditor.setVisible(True)
             self._labelEditor.setVisible(False)
             self._checkEditor.setVisible(False)
             self._numericEditor.setVisible(False)
+            self._inChannelEditor.setVisible(False)
             self._comboEditor.setSelection(current)
         elif typeInfo == "CHECK":
             self._comboEditor.setVisible(False)
             self._labelEditor.setVisible(False)
             self._checkEditor.setVisible(True)
             self._numericEditor.setVisible(False)
+            self._inChannelEditor.setVisible(False)
             self._checkEditor.setSelection(current)
         elif typeInfo == "NUMERIC":
             self._comboEditor.setVisible(False)
             self._labelEditor.setVisible(False)
             self._checkEditor.setVisible(False)
             self._numericEditor.setVisible(True)
+            self._inChannelEditor.setVisible(False)
             self._numericEditor.setSelection(current)
+        elif typeInfo == "IN_CHANNEL":
+            self._comboEditor.setVisible(False)
+            self._labelEditor.setVisible(False)
+            self._checkEditor.setVisible(False)
+            self._numericEditor.setVisible(False)
+            self._inChannelEditor.setVisible(True)
+            self._inChannelEditor.setSelection(current)
+            pass
+            
         else:
             self._labelEditor.setVisible(False)
             self._comboEditor.setVisible(False)
             self._checkEditor.setVisible(False)
             self._numericEditor.setVisible(False)
-
+            self._inChannelEditor.setVisible(False)
             
         self._nodeEditor.setSelection(current)
     
@@ -540,6 +608,9 @@ class PropertiesEditor(propBase, propForm):
         self._comboEditor.setModel(proxyModel)
         self._checkEditor.setModel(proxyModel)
         self._numericEditor.setModel(proxyModel)
+        self._inChannelEditor.setModel(proxyModel)
+
+
 
         
 
@@ -548,6 +619,7 @@ class NodeEditor(nodeBase, nodeForm):
     
     def __init__(self, parent=None):
         super(nodeBase, self).__init__(parent)
+        
         self.setupUi(self)
         
         self._dataMapper = QtGui.QDataWidgetMapper()
@@ -566,7 +638,6 @@ class NodeEditor(nodeBase, nodeForm):
         self._dataMapper.setRootIndex(parent)
         
         self._dataMapper.setCurrentModelIndex(current)
-
 
 labelBase, labelForm = uic.loadUiType("LabelWidget.ui")
 class LabelEditor(labelBase, labelForm):
@@ -650,13 +721,40 @@ class ComboEditor(comboBase, comboForm):
         node = self._proxyModel.sourceModel().getNode(current)
         self.ui_combo.clear()
         self.ui_combo.addItems(node.case_list())
-
         parent = current.parent()
         
         self._dataMapper.setRootIndex(parent)
         self._dataMapper.setCurrentModelIndex(current)
         
 
+inChannelBase, inChannelForm = uic.loadUiType("InChannelWidget.ui")
+class InChannelEditor(inChannelBase, inChannelForm):
+    def __init__(self,parent = None):
+        super(inChannelBase,self).__init__(parent)
+        self.setupUi(self)
+
+        self._dataMapper = QtGui.QDataWidgetMapper()
+
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+
+        self._dataMapper.addMapping(self.ui_enabled,2)
+        self._dataMapper.addMapping(self.ui_range,3)
+        self._dataMapper.addMapping(self.ui_polarity,4)
+        self._dataMapper.addMapping(self.ui_function,5)
+
+        self._dataMapper.addMapping(self.ui_en_label,6,"text")
+        self._dataMapper.addMapping(self.ui_rang_label,7,"text")
+        self._dataMapper.addMapping(self.ui_pol_label,8,"text")
+        self._dataMapper.addMapping(self.ui_func_label,9,"text")
+        
+    
+    def setSelection(self,current):
+        parent = current.parent()
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
+    
 
 
 if __name__ == '__main__':
