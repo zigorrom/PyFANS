@@ -41,6 +41,8 @@ class Node(object):
 
         return True
 
+    def columnCount(self):
+        return 2
 
     def name(self):
         return self._name
@@ -255,6 +257,9 @@ class InChannelNode(Node):
     def typeInfo(self):
         return "IN_CHANNEL"
 
+    def columnCount(self):
+        return 3
+
     def data(self, column):
         r = super(InChannelNode,self).data(column)
         if column is 2:     r = self.enabled()
@@ -326,7 +331,12 @@ class SettingsModel(QtCore.QAbstractItemModel):
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
     def columnCount(self, parent):
-        return 6
+        if not parent.isValid():
+            parentNode = self._rootNode
+        else:
+            parentNode = parent.internalPointer()
+        return parentNode.columnCount()
+        
 
     """INPUTS: QModelIndex, int"""
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
@@ -372,10 +382,15 @@ class SettingsModel(QtCore.QAbstractItemModel):
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
-            if section == 0:
-                return "Settings"
+            if orientation == QtCore.Qt.Horizontal:                            
+                if section == 0:
+                    return "Settings"
+                elif section == 1:
+                    return "Typeinfo"
+                else:
+                    return "Value"
             else:
-                return "Typeinfo"
+                return ""
 
         
     
@@ -754,7 +769,7 @@ class InChannelEditor(inChannelBase, inChannelForm):
     
     def setSelection(self,current):
         parent = current.parent()
-        self.ui_tableView.setRootIndex(parent)
+        self.ui_tableView.setRootIndex(current)#parent)
 ##        self.ui_tableView.setCurrentModelIndex(current)
 ##        self._dataMapper.setRootIndex(parent)
 ##        self._dataMapper.setCurrentModelIndex(current)
