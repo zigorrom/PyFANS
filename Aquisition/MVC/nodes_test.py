@@ -326,7 +326,7 @@ class SettingsModel(QtCore.QAbstractItemModel):
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
     def columnCount(self, parent):
-        return 1
+        return 6
 
     """INPUTS: QModelIndex, int"""
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
@@ -727,34 +727,40 @@ class ComboEditor(comboBase, comboForm):
         self._dataMapper.setCurrentModelIndex(current)
         
 
-inChannelBase, inChannelForm = uic.loadUiType("InChannelWidget.ui")
+inChannelBase, inChannelForm = uic.loadUiType("InChannelWidget - Copy.ui")
 class InChannelEditor(inChannelBase, inChannelForm):
     def __init__(self,parent = None):
         super(inChannelBase,self).__init__(parent)
         self.setupUi(self)
 
-        self._dataMapper = QtGui.QDataWidgetMapper()
+##        self._dataMapper = QtGui.QDataWidgetMapper()
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
-        self._dataMapper.setModel(proxyModel.sourceModel())
-
-        self._dataMapper.addMapping(self.ui_enabled,2)
-        self._dataMapper.addMapping(self.ui_range,3)
-        self._dataMapper.addMapping(self.ui_polarity,4)
-        self._dataMapper.addMapping(self.ui_function,5)
-
-        self._dataMapper.addMapping(self.ui_en_label,6,"text")
-        self._dataMapper.addMapping(self.ui_rang_label,7,"text")
-        self._dataMapper.addMapping(self.ui_pol_label,8,"text")
-        self._dataMapper.addMapping(self.ui_func_label,9,"text")
+        self.ui_tableView.setModel(proxyModel.sourceModel())
+##        self._dataMapper.setModel(proxyModel.sourceModel())
+##        self._dataMapper.addMapping(self.ui_tableView,2)
+##
+##        self._dataMapper.addMapping(self.ui_enabled,2)
+##        self._dataMapper.addMapping(self.ui_range,3)
+##        self._dataMapper.addMapping(self.ui_polarity,4)
+##        self._dataMapper.addMapping(self.ui_function,5)
+##
+##        self._dataMapper.addMapping(self.ui_en_label,6,"text")
+##        self._dataMapper.addMapping(self.ui_rang_label,7,"text")
+##        self._dataMapper.addMapping(self.ui_pol_label,8,"text")
+##        self._dataMapper.addMapping(self.ui_func_label,9,"text")
         
     
     def setSelection(self,current):
         parent = current.parent()
-        self._dataMapper.setRootIndex(parent)
-        self._dataMapper.setCurrentModelIndex(current)
+        self.ui_tableView.setRootIndex(parent)
+##        self.ui_tableView.setCurrentModelIndex(current)
+##        self._dataMapper.setRootIndex(parent)
+##        self._dataMapper.setCurrentModelIndex(current)
     
+
+
 
 
 if __name__ == '__main__':
