@@ -44,11 +44,11 @@ class Node(object):
     def columnCount(self):
         return 2
 
-    def name(self):
-        return self._name
-
-    def setName(self, name):
-        self._name = name
+    def name():
+        def fget(self):return self._name
+        def fset(self,value):self._name = value
+        return locals()
+    name = property(**name())
 
     def child(self, row):
         return self._children[row]
@@ -86,12 +86,12 @@ class Node(object):
         return self.log()
 
     def data(self,column):
-        if      column is 0: return self.name()
+        if      column is 0: return self.name
         elif    column is 1: return self.typeInfo()
         
 
     def setData(self,column,value):
-        if column is 0: self.setName(value)#.toPyObject())
+        if column is 0: self.name=value#.toPyObject())
         elif column is 1: pass
 
     def resource(self):
@@ -108,20 +108,21 @@ class LabelNode(Node):
     def typeInfo(self):
         return "LABEL"
 
-    def label(self):
-        return self._label
-
-    def set_label(self, label):
-        self._label = label
+    def label():
+        def fget(self): return self._label
+        def fset(self,value): self._label = value
+        return locals()
+    label= property(**label())
+    
 
     def data(self,column):
         r = super(LabelNode,self).data(column)
-        if column is 2: r = self.label()
+        if column is 2: r = self.label
         return r
 
     def setData(self,column,value):
         super(LabelNode,self).setData(column,value)
-        if column is 2: self.set_label(value)#.toPyObject())
+        if column is 2: self_label = value#.toPyObject())
         
 
     
@@ -136,20 +137,21 @@ class NumericNode(Node):
     def typeInfo(self):
         return "NUMERIC"
 
-    def value(self):
-        return self._value
-
-    def set_value(self,value):
-        self._value = value
+    def value():
+        def fget(self): return self._value
+        def fset(self,val): self._value = val 
+        return locals()
+    value = property(**value())
+    
 
     def data(self,column):
         r = super(NumericNode,self).data(column)
-        if column is 2: r = self.value()
+        if column is 2: r = self.value
         return r
 
     def setData(self,column,value):
         super(NumericNode,self).setData(column,value)
-        if column is 2: self.set_value(value)#.toPyObject())
+        if column is 2: self.value = value#.toPyObject())
     
 
 class CheckNode(Node):
@@ -160,21 +162,20 @@ class CheckNode(Node):
     def typeInfo(self):
         return "CHECK"
 
-    def is_checked(self):
-        return self._checked
-
-    def set_value(self,value):
-        self._checked = value
-
+    def checked():
+        def fget(self): return self._checked
+        def fset(self,value): self._checked = value
+        return locals()
+    checked = property(**checked())
 
     def data(self,column):
         r = super(CheckNode,self).data(column)
-        if column is 2: r = self.is_checked()
+        if column is 2: r = self.checked
         return r
 
     def setData(self,column,value):
         super(CheckNode,self).setData(column,value)
-        if column is 2: self.set_value(value)#.toPyObject())
+        if column is 2: self.checked = value#.toPyObject())
 
     
 class ComboNode(Node):
@@ -187,60 +188,68 @@ class ComboNode(Node):
     def typeInfo(self):
         return "COMBO"
 
-    def selectedIndex(self):
-        return self._selectedIndex
+    
+    def selectedIndex():
+        def fget(self):return self._selectedIndex
+        def fset(self,value): self._selectedIndex = value
+        return locals()
+    selectedIndex = property(**selectedIndex())
 
-    def set_selectedIndex(self,index):
-        self._selectedIndex = index
-
-    def case_list(self):
-        return self._case_list
-
-    def set_case_list(self,case_list):
-        self._case_list = case_list
-
-
+    def case_list():
+        def fget(self): return self._case_list
+        def fset(self,value): self._case_list = value
+        return locals()
+    case_list = property(**case_list())
+    
+    
     def data(self,column):
         r = super(ComboNode,self).data(column)
-        if column is 2: r = self.selectedIndex()
+        if column is 2: r = self.selectedIndex
         return r
 
     def setData(self,column,value):
         super(ComboNode,self).setData(column,value)
-        if column is 2: self.set_selectedIndex(value)#.toPyObject())
+        if column is 2: self.selectedIndex = value#.toPyObject())
 
 
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
         super(InChannelNode,self).__init__(name,parent)
-        self._enabled = CheckNode(name+"_enabled", parent = self)
-        self._range = ComboNode(name+"_range", case_list=['One','Two','Three'], parent = self)
-        self._polarity = ComboNode(name+"_polarity",case_list=['Unipolar','Bipolar'],parent = self)
-        self._function = ComboNode(name+"_function",case_list=['Vds','Vlg','Vbg'],parent=  self)
+        self._enabled = CheckNode("enabled", parent = self)
+        self._range = ComboNode("range", case_list=['One','Two','Three'], parent = self)
+        self._polarity = ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
+        self._function = ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
 
-    def enabled(self):
-        return self._enabled.is_checked()
+##    def enabled(self):
+##        return self._enabled.is_checked()
+##
+##    def set_enabled(self,value):
+##        self._enabled.set_value(value)
 
-    def set_enabled(self,value):
-        self._enabled.set_value(value)
+    def enabled():
+        def fget(self):return self._enabled.checked
+        def fset(self,value): self._enabled.checked = value
+        return locals()
+    enabled = property(**enabled())
 
     def enabled_label(self):
-        return self._enabled.name()
+        return self._enabled.name
 
-    def selected_range(self):
-        return self._range.selectedIndex()
 
-    def set_selected_range(self,value):
-        self._range.set_selectedIndex(value)
+    def selected_range():
+        def fget(self): return self._range.selectedIndex
+        def fset(self,value): self._range.selectedIndex = value
+        return locals()
+    selected_range = property(**selected_range())
 
     def range_label(self):
         return self._range.name()
 
-    def selected_polarity(self):
-        return self._polarity.selectedIndex()
-
-    def set_selected_polarity(self,value):
-        self._polarity.set_selectedIndex(value)
+    def selected_polarity():
+        def fget(self): return self._polarity.selectedIndex
+        def fset(self,value): self._polarity.selectedIndex = value
+        return locals()
+    selected_polarity = property(**selected_polarity())
 
     def polarity_label(self):
         return self._polarity.name()
@@ -495,7 +504,6 @@ class WndTutorial(base,form):
         ch4 = InChannelNode("ch4",inp_settings)
 
 
-
         out_settings = Node("out_settings", parent = rootNode)
 
         och1 = OutChannelNode("och1",out_settings)
@@ -525,6 +533,8 @@ class WndTutorial(base,form):
         self._propEditor.setModel(self._proxyModel)
 
         QtCore.QObject.connect(self.treeView.selectionModel(), QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self._propEditor.setSelection)
+        print(rootNode)
+        
 
 propBase, propForm = uic.loadUiType("PropertiesLayout.ui")
 """PROPERTIESEDITOR"""
@@ -543,6 +553,7 @@ class PropertiesEditor(propBase, propForm):
         self._numericEditor = NumericEditor(self)
         self._inChannelEditor = InChannelEditor(self)
 
+        
         
         self.layoutNode.addWidget(self._nodeEditor)
         self.layoutSpecs.addWidget(self._labelEditor)
@@ -624,7 +635,7 @@ class PropertiesEditor(propBase, propForm):
         self._checkEditor.setModel(proxyModel)
         self._numericEditor.setModel(proxyModel)
         self._inChannelEditor.setModel(proxyModel)
-
+        
 
 
         
@@ -735,7 +746,7 @@ class ComboEditor(comboBase, comboForm):
     def setSelection(self,current):
         node = self._proxyModel.sourceModel().getNode(current)
         self.ui_combo.clear()
-        self.ui_combo.addItems(node.case_list())
+        self.ui_combo.addItems(node.case_list)
         parent = current.parent()
         
         self._dataMapper.setRootIndex(parent)
@@ -753,6 +764,7 @@ class InChannelEditor(inChannelBase, inChannelForm):
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
         self.ui_tableView.setModel(proxyModel.sourceModel())
+##        self.ui_tableView.setItemDelegate
 ##        self._dataMapper.setModel(proxyModel.sourceModel())
 ##        self._dataMapper.addMapping(self.ui_tableView,2)
 ##
