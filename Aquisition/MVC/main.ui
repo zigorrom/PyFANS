@@ -15,6 +15,9 @@
   </property>
   <layout class="QVBoxLayout" name="layoutMain">
    <item>
+    <widget class="QTextEdit" name="ui_xml"/>
+   </item>
+   <item>
     <widget class="QLineEdit" name="uiFilter"/>
    </item>
    <item>

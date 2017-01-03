@@ -1,5 +1,9 @@
-from PyQt4 import QtCore, QtGui, uic
+from PyQt4 import QtCore, QtGui, QtXml,uic
 import sys
+from xml_highlighter import XMLHighlighter
+
+
+
 
 class Node(object):
     
@@ -14,6 +18,46 @@ class Node(object):
         if parent is not None:
             parent.addChild(self)
 
+    def attrs(self):
+        classes = self.__class__.__mro__
+        
+        kv = {}
+        for cls in classes:
+            for k,v in cls.__dict__.items():
+                if isinstance(v,property):
+##                    print("Property: {0}\n\tValue: {1}".format(k.rstrip("_"),v.fget(self)))
+                    kv[k] = v.fget(self)
+        return kv
+
+    def asXml(self):
+        
+        doc = QtXml.QDomDocument()
+        
+
+        node = doc.createElement(self.typeInfo())
+        doc.appendChild(node)
+       
+        for i in self._children:
+            i._recurseXml(doc, node)
+
+        return doc.toString(indent=4)
+
+
+    def _recurseXml(self, doc, parent):
+        node = doc.createElement(self.typeInfo())
+        parent.appendChild(node)
+
+        attrs = self.attrs().items()
+        
+        for k, v in attrs:
+##            print("--------------")
+##            print("type: {0}, val {1}".format(type(k),k))
+##            print("type: {0}, val {1}".format(type(v),k))
+##            print("--------------")
+            node.setAttribute(k, v)
+
+        for i in self._children:
+            i._recurseXml(doc, node)
 
     def typeInfo(self):
         return "NODE"
@@ -122,7 +166,7 @@ class LabelNode(Node):
 
     def setData(self,column,value):
         super(LabelNode,self).setData(column,value)
-        if column is 2: self_label = value#.toPyObject())
+        if column is 2: self._label = value#.toPyObject())
         
 
     
@@ -195,11 +239,13 @@ class ComboNode(Node):
         return locals()
     selectedIndex = property(**selectedIndex())
 
-    def case_list():
-        def fget(self): return self._case_list
-        def fset(self,value): self._case_list = value
-        return locals()
-    case_list = property(**case_list())
+    def case_list(self):
+        return self._case_list
+##    def case_list():
+##        def fget(self): return self._case_list
+##        def fset(self,value): self._case_list = value
+##        return locals()
+##    case_list = property(**case_list())
     
     
     def data(self,column):
@@ -220,11 +266,13 @@ class InChannelNode(Node):
         self._polarity = ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
         self._function = ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
 
-##    def enabled(self):
-##        return self._enabled.is_checked()
+##    def _recurseXml(self, doc, parent):
+##        node = doc.createElement(self.typeInfo())
+##        parent.appendChild(node)
 ##
-##    def set_enabled(self,value):
-##        self._enabled.set_value(value)
+##        for i in self._children:
+##            i._recurseXml(doc, node)
+
 
     def enabled():
         def fget(self):return self._enabled.checked
@@ -232,9 +280,10 @@ class InChannelNode(Node):
         return locals()
     enabled = property(**enabled())
 
-    def enabled_label(self):
-        return self._enabled.name
-
+    def enabled_label():
+        def fget(self): return self._enabled.name
+        return locals()
+    enabled_label = property(**enabled_label())
 
     def selected_range():
         def fget(self): return self._range.selectedIndex
@@ -242,27 +291,37 @@ class InChannelNode(Node):
         return locals()
     selected_range = property(**selected_range())
 
-    def range_label(self):
-        return self._range.name()
+    def range_label():
+        def fget(self):return self._range.name
+        return locals()
 
+    range_label = property(**range_label())
+        
+        
     def selected_polarity():
         def fget(self): return self._polarity.selectedIndex
         def fset(self,value): self._polarity.selectedIndex = value
         return locals()
     selected_polarity = property(**selected_polarity())
 
-    def polarity_label(self):
-        return self._polarity.name()
+    def polarity_label():
+        def fget(self): return self._polarity.name
+        return locals()
+    polarity_label = property(**polarity_label())
 
-    def selected_function(self):
-        return self._function.selectedIndex()
+    def selected_function():
+        def fget(self): return self._function.selectedIndex
+        def fset(self,value): self._function.selectedIndex = value
+        return locals()
+    selected_function = property(**selected_function())
+    
+    
+    def function_label():
+        def fget(self):return self._function.name
+        return locals()
+    function_label = property(**function_label())
 
-    def set_selected_function(self,value):
-        self._function.set_selectedIndex(value)
-
-    def function_label(self):
-        return self._function.name()
-
+    
     def typeInfo(self):
         return "IN_CHANNEL"
 
@@ -271,10 +330,10 @@ class InChannelNode(Node):
 
     def data(self, column):
         r = super(InChannelNode,self).data(column)
-        if column is 2:     r = self.enabled()
-        elif column is 3:   r = self.selected_range()
-        elif column is 4:   r = self.selected_polarity()
-        elif column is 5:   r = self.selected_function()
+        if column is 2:     r = self.enabled
+        elif column is 3:   r = self.selected_range
+        elif column is 4:   r = self.selected_polarity
+        elif column is 5:   r = self.selected_function
         elif column is 6:   r = self.enabled_label()
         elif column is 7:   r = self.range_label()
         elif column is 8:   r = self.polarity_label()
@@ -283,10 +342,10 @@ class InChannelNode(Node):
 
     def setData(self, column, value):
         super(InChannelNode,self).setData(column,value)
-        if column is 2:     self.set_enabled(value)
-        elif column is 3:   self.set_selected_range(value)
-        elif column is 4:   self.set_selected_polarity(value)
-        elif column is 5:   self.set_selected_function(value)
+        if column is 2:     self.enabled = value
+        elif column is 3:   self.selected_range = value
+        elif column is 4:   self.selected_polarity = value
+        elif column is 5:   self.selected_function =value
         
 
 class OutChannelNode(Node):
@@ -488,15 +547,20 @@ class SettingsModel(QtCore.QAbstractItemModel):
 base, form = uic.loadUiType("main.ui")
 
 class WndTutorial(base,form):
+    def updateXml(self):
+        print("Updating xml")
+        xml = self._rootNode.asXml()
+        self.ui_xml.setPlainText(xml)
+
     def __init__(self,parent = None):
         super(base,self).__init__(parent)
         self.setupUi(self)
 
-        rootNode = Node("Settings")
+        self._rootNode = Node("Settings")
 
-        acq_settings = AcquisitionSettingsNode("acquisition_settings",parent = rootNode)
+        acq_settings = AcquisitionSettingsNode("acquisition_settings",parent = self._rootNode)
 
-        inp_settings = Node("input_settings", parent = rootNode)
+        inp_settings = Node("input_settings", parent = self._rootNode)
 
         ch1 = InChannelNode("ch1",inp_settings)
         ch2 = InChannelNode("ch2",inp_settings)
@@ -504,7 +568,7 @@ class WndTutorial(base,form):
         ch4 = InChannelNode("ch4",inp_settings)
 
 
-        out_settings = Node("out_settings", parent = rootNode)
+        out_settings = Node("out_settings", parent = self._rootNode)
 
         och1 = OutChannelNode("och1",out_settings)
         och2 = OutChannelNode("och2",out_settings)
@@ -512,7 +576,7 @@ class WndTutorial(base,form):
 ##        print(rootNode)
 
         self._proxyModel = QtGui.QSortFilterProxyModel(self)
-        self._model = SettingsModel(rootNode, self)
+        self._model = SettingsModel(self._rootNode, self)
 
         self._proxyModel.setSourceModel(self._model)
         self._proxyModel.setDynamicSortFilter(True)
@@ -533,7 +597,13 @@ class WndTutorial(base,form):
         self._propEditor.setModel(self._proxyModel)
 
         QtCore.QObject.connect(self.treeView.selectionModel(), QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self._propEditor.setSelection)
-        print(rootNode)
+        QtCore.QObject.connect(self._model , QtCore.SIGNAL("dataChanged(QModelIndex, QModelIndex)"), self.updateXml)
+
+##        print(self.ui_xml.document())
+        
+        highlighter = XMLHighlighter(self.ui_xml)
+        
+
         
 
 propBase, propForm = uic.loadUiType("PropertiesLayout.ui")
@@ -746,7 +816,7 @@ class ComboEditor(comboBase, comboForm):
     def setSelection(self,current):
         node = self._proxyModel.sourceModel().getNode(current)
         self.ui_combo.clear()
-        self.ui_combo.addItems(node.case_list)
+        self.ui_combo.addItems(node.case_list())
         parent = current.parent()
         
         self._dataMapper.setRootIndex(parent)
@@ -797,5 +867,14 @@ if __name__ == '__main__':
     
     wnd = WndTutorial()
     wnd.show()
+    
 
+   
+        
+##    classes = a.__class__.__mro__
+##    for cls in classes:
+##        for k,v in cls.__dict__.items():            
+##            if isinstance(v,property):
+##                print("PROPERTY NAME: {0}".format(k))
+    
     sys.exit(app.exec_())
