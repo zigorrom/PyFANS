@@ -5,6 +5,37 @@ from xml_highlighter import XMLHighlighter
 
 
 
+class XmlNodeSerializer():
+    def __init__(self):
+        pass
+
+    def serialize(self,node):
+        doc = QtXml.QDomDocument()
+        node = doc.createElement(self.typeInfo())
+        doc.appendChild(node)
+        
+        for i in self._children:
+            i._recurseXml(doc, node)
+
+        return doc.toString(indent=4)
+
+    def _recurseXml(self, doc, parent):
+        node = doc.createElement(self.typeInfo())
+        parent.appendChild(node)
+
+        attrs = self.attrs().items()
+        
+        for k, v in attrs:
+            node.setAttribute(k, v)
+
+        for i in self._children:
+            i._recurseXml(doc, node)
+
+    def deserialize(self):
+        pass
+
+    
+
 class Node(object):
     
     def __init__(self, name, parent=None):
