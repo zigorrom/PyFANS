@@ -50,10 +50,6 @@ class Node(object):
         attrs = self.attrs().items()
         
         for k, v in attrs:
-##            print("--------------")
-##            print("type: {0}, val {1}".format(type(k),k))
-##            print("type: {0}, val {1}".format(type(v),k))
-##            print("--------------")
             node.setAttribute(k, v)
 
         for i in self._children:
@@ -602,6 +598,7 @@ class WndTutorial(base,form):
 ##        print(self.ui_xml.document())
         
         highlighter = XMLHighlighter(self.ui_xml)
+        self.updateXml()
         
 
         

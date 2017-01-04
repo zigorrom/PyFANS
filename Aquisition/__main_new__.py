@@ -6,10 +6,6 @@ from data import *
 from fans_controller import *
 
 
-
-
-
-
 output_settings_form_name = "ui_outputsettings.ui"
 output_settings_base, output_settings_form = uic.loadUiType(output_settings_form_name)
 
