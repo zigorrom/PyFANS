@@ -2,6 +2,11 @@ from PyQt4 import QtCore, QtGui, QtXml,uic
 import sys
 from xml_highlighter import XMLHighlighter
 
+import inspect
+##
+##clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+##print(__name__)
+##print(clsmembers)
 
 
 
@@ -10,29 +15,35 @@ class XmlNodeSerializer():
         pass
 
     def serialize(self,node):
-        doc = QtXml.QDomDocument()
-        node = doc.createElement(self.typeInfo())
-        doc.appendChild(node)
-        
-        for i in self._children:
-            i._recurseXml(doc, node)
-
-        return doc.toString(indent=4)
+        pass
+##        doc = QtXml.QDomDocument()
+##        node = doc.createElement(self.typeInfo())
+##        doc.appendChild(node)
+##        
+##        for i in self._children:
+##            i._recurseXml(doc, node)
+##
+##        return doc.toString(indent=4)
 
     def _recurseXml(self, doc, parent):
-        node = doc.createElement(self.typeInfo())
-        parent.appendChild(node)
-
-        attrs = self.attrs().items()
-        
-        for k, v in attrs:
-            node.setAttribute(k, v)
-
-        for i in self._children:
-            i._recurseXml(doc, node)
-
-    def deserialize(self):
         pass
+##        node = doc.createElement(self.typeInfo())
+##        parent.appendChild(node)
+##
+##        attrs = self.attrs().items()
+##        
+##        for k, v in attrs:
+##            node.setAttribute(k, v)
+##
+##        for i in self._children:
+##            i._recurseXml(doc, node)
+
+    def deserialize(self, xmlString):
+        xml = QtXml.QDomDocument()
+        if xml.setContent(xmlString):
+            print("success")
+        else:
+            print("failed")
 
     
 
@@ -578,6 +589,8 @@ class WndTutorial(base,form):
         print("Updating xml")
         xml = self._rootNode.asXml()
         self.ui_xml.setPlainText(xml)
+        s = XmlNodeSerializer()
+        s.deserialize(xml)
 
     def __init__(self,parent = None):
         super(base,self).__init__(parent)
@@ -886,6 +899,13 @@ class InChannelEditor(inChannelBase, inChannelForm):
     
 
 
+def print_classes():
+    for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+##        if inspect.isclass(obj):
+        print("Name: {0}; Object: {1}".format(name,obj))
+
+print_classes()
+print(type(Node).__module__)
 
 
 if __name__ == '__main__':
@@ -895,10 +915,7 @@ if __name__ == '__main__':
     
     wnd = WndTutorial()
     wnd.show()
-    
-
    
-        
 ##    classes = a.__class__.__mro__
 ##    for cls in classes:
 ##        for k,v in cls.__dict__.items():            
