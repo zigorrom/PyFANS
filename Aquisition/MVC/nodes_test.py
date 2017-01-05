@@ -3,16 +3,14 @@ import sys
 from xml_highlighter import XMLHighlighter
 
 import inspect
-##
-##clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-##print(__name__)
-##print(clsmembers)
-
 
 
 class XmlNodeSerializer():
     def __init__(self):
-        pass
+        t = Node
+        self.typeDic = dict((cls.typeInfo(),(cls, self.requiredNodeAttributes(cls))) for cls in t.__subclasses__())
+        self.typeDic[t.typeInfo()] = (t, self.requiredNodeAttributes(t))
+        
 
     def serialize(self,node):
         pass
@@ -38,18 +36,79 @@ class XmlNodeSerializer():
 ##        for i in self._children:
 ##            i._recurseXml(doc, node)
 
+
+
+    def requiredNodeAttributes(self, nodeType):
+        requiredAttributes = {}
+        print(nodeType.__dict__)
+##        print(nodeType.__mro__)
+##        for cls in nodeType.__mro__:
+####            print(cls.__dict__)
+##            print(cls)
+##            for k,v in cls.__dict__.items():
+        for k,v in nodeType.__dict__.items():
+            if isinstance(v,property):
+                print("Property: {0}".format(k.rstrip("_")))
+                requiredAttributes[k] = v
+        print(requiredAttributes)
+        return requiredAttributes
+    
+    def nodeFromXml(self,domElement):
+        key = domElement.tagName()
+        cls, attrs = self.typeDic[key]
+        node = cls("unknown")
+##        print(attrs)
+        counter = 0
+        for k,v in attrs.items():
+            print(counter)
+            print("attr {0} val {2} available {1}".format(k,domElement.hasAttribute(k),v))
+            
+            if domElement.hasAttribute(k):
+                if v.fset is not None:
+                    v.fset(node,domElement.attribute(k))
+
+            counter+=1
+        return node
+
+        
     def deserialize(self, xmlString):
         xml = QtXml.QDomDocument()
-        if xml.setContent(xmlString):
-            print("success")
-        else:
+        if not xml.setContent(xmlString):
             print("failed")
-
+            raise ValueError()
+        
+        xmlRootNode = xml.documentElement()
+        rootNode = self.nodeFromXml(xmlRootNode)
+        self.build_tree(xmlRootNode,rootNode)
+        return rootNode
     
+    def build_tree(self, parentXmlNode, parentNode=None, tabLevel=-1):
+        key = parentXmlNode.tagName()
+        tabLevel += 1
+        print("{0}|------ {1}\n".format("\t"*tabLevel,key))
+        print(parentNode)
+
+        xmlChildNode = parentXmlNode.firstChild()        
+        while not xmlChildNode.isNull():
+            xmlElement = xmlChildNode.toElement()
+            if not xmlElement.isNull():
+                node = self.nodeFromXml(xmlElement)
+                if parentNode is not None:
+                    parentNode.addChild(node)
+                
+                self.build_tree(xmlElement,parentNode = node,tabLevel=tabLevel)
+            xmlChildNode = xmlChildNode.nextSibling()
+        tabLevel -=1 
+
+           
+
 
 class Node(object):
-    
-    def __init__(self, name, parent=None):
+
+##    def __init__(self,parent = None):
+##        self.__init__("unknown",parent = parent)
+##        
+    def __init__(self, name = "unknown", parent=None):
         
         super(Node, self).__init__()
         
@@ -71,14 +130,20 @@ class Node(object):
                     kv[k] = v.fget(self)
         return kv
 
+
+    
+    
+    
     def asXml(self):
         
         doc = QtXml.QDomDocument()
         
-
         node = doc.createElement(self.typeInfo())
+        attrs = self.attrs().items()
+        for k, v in attrs:
+            node.setAttribute(k, v)
         doc.appendChild(node)
-       
+        
         for i in self._children:
             i._recurseXml(doc, node)
 
@@ -97,9 +162,14 @@ class Node(object):
         for i in self._children:
             i._recurseXml(doc, node)
 
+    
     def typeInfo(self):
         return "NODE"
 
+    @classmethod
+    def typeInfo(cls):
+        return "NODE"
+    
     def addChild(self, child):
         self._children.append(child)
         child._parent = self
@@ -190,6 +260,10 @@ class LabelNode(Node):
     def typeInfo(self):
         return "LABEL"
 
+    @classmethod
+    def typeInfo(cls):
+        return "LABEL"
+    
     def label():
         def fget(self): return self._label
         def fset(self,value): self._label = value
@@ -219,6 +293,11 @@ class NumericNode(Node):
     def typeInfo(self):
         return "NUMERIC"
 
+    @classmethod
+    def typeInfo(cls):
+        return "NUMERIC"
+    
+
     def value():
         def fget(self): return self._value
         def fset(self,val): self._value = val 
@@ -242,6 +321,10 @@ class CheckNode(Node):
         self._checked = checked
 
     def typeInfo(self):
+        return "CHECK"
+
+    @classmethod
+    def typeInfo(cls):
         return "CHECK"
 
     def checked():
@@ -270,6 +353,9 @@ class ComboNode(Node):
     def typeInfo(self):
         return "COMBO"
 
+    @classmethod
+    def typeInfo(cls):
+        return "COMBO"
     
     def selectedIndex():
         def fget(self):return self._selectedIndex
@@ -363,6 +449,10 @@ class InChannelNode(Node):
     def typeInfo(self):
         return "IN_CHANNEL"
 
+    @classmethod
+    def typeInfo(cls):
+        return "IN_CHANNEL"
+
     def columnCount(self):
         return 3
 
@@ -398,6 +488,10 @@ class OutChannelNode(Node):
     def typeInfo(self):
         return "OUT_CHANNEL"
 
+    @classmethod
+    def typeInfo(cls):
+        return "OUT_CHANNEL"
+
 
 class AcquisitionSettingsNode(Node):
     def __init__(self,name,parent=None):
@@ -410,6 +504,10 @@ class AcquisitionSettingsNode(Node):
         self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
 
     def typeInfo(self):
+        return "ACQUISITION_SETTINGS"
+
+    @classmethod
+    def typeInfo(cls):
         return "ACQUISITION_SETTINGS"
 
 
@@ -586,11 +684,19 @@ base, form = uic.loadUiType("main.ui")
 
 class WndTutorial(base,form):
     def updateXml(self):
+        print(self._rootNode)
+        
         print("Updating xml")
         xml = self._rootNode.asXml()
         self.ui_xml.setPlainText(xml)
         s = XmlNodeSerializer()
-        s.deserialize(xml)
+        node = s.deserialize(xml)
+
+        print("\n"*3)
+        print("AFTER DESERIALIZATION")
+        print(node)
+            
+        
 
     def __init__(self,parent = None):
         super(base,self).__init__(parent)
@@ -899,13 +1005,6 @@ class InChannelEditor(inChannelBase, inChannelForm):
     
 
 
-def print_classes():
-    for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-##        if inspect.isclass(obj):
-        print("Name: {0}; Object: {1}".format(name,obj))
-
-print_classes()
-print(type(Node).__module__)
 
 
 if __name__ == '__main__':
@@ -915,7 +1014,13 @@ if __name__ == '__main__':
     
     wnd = WndTutorial()
     wnd.show()
-   
+
+    t = Node
+    
+    
+##    l2 = [[for cls in v.__mro__] for v in lst]
+##    print(l2)
+##    
 ##    classes = a.__class__.__mro__
 ##    for cls in classes:
 ##        for k,v in cls.__dict__.items():            
