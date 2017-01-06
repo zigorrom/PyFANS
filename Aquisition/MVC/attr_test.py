@@ -1,5 +1,5 @@
-class A(object):
-    def __init__():
+class Aobj(object):
+    def __init__(self):
         self._name = "s"
     
     def name():
@@ -9,10 +9,14 @@ class A(object):
     name = property(**name())
 
 
-print( A.__mro__)
-for cls in A.__mro__:
-    for c,v in cls.__dict__.items():
-        if isinstance(v,property):
-            print(c)
-        
+def main():
+    a = Aobj()
+##    print( Aobj.__mro__)
+    for cls in Aobj.__mro__:
+        for c,v in cls.__dict__.items():
+            if isinstance(v,property):
+                print(v.fset(a,"kldfakjs"))
 
+    
+if __name__ == "__main__":
+    main()

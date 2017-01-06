@@ -42,14 +42,14 @@ class XmlNodeSerializer():
         requiredAttributes = {}
         print(nodeType.__dict__)
 ##        print(nodeType.__mro__)
-##        for cls in nodeType.__mro__:
-####            print(cls.__dict__)
+        for cls in nodeType.__mro__:
+##            print(cls.__dict__)
 ##            print(cls)
-##            for k,v in cls.__dict__.items():
-        for k,v in nodeType.__dict__.items():
-            if isinstance(v,property):
-                print("Property: {0}".format(k.rstrip("_")))
-                requiredAttributes[k] = v
+            for k,v in cls.__dict__.items():
+##        for k,v in nodeType.__dict__.items():
+                if isinstance(v,property):
+                    print("Property: {0}".format(k.rstrip("_")))
+                    requiredAttributes[k] = v
         print(requiredAttributes)
         return requiredAttributes
     
@@ -64,6 +64,7 @@ class XmlNodeSerializer():
             print("attr {0} val {2} available {1}".format(k,domElement.hasAttribute(k),v))
             
             if domElement.hasAttribute(k):
+##                setattr(node,k,domElement.attribute(k))
                 if v.fset is not None:
                     v.fset(node,domElement.attribute(k))
 
@@ -385,10 +386,10 @@ class ComboNode(Node):
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
         super(InChannelNode,self).__init__(name,parent)
-        self._enabled = CheckNode("enabled", parent = self)
-        self._range = ComboNode("range", case_list=['One','Two','Three'], parent = self)
-        self._polarity = ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
-        self._function = ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
+##        self._enabled = CheckNode("enabled", parent = self)
+##        self._range = ComboNode("range", case_list=['One','Two','Three'], parent = self)
+##        self._polarity = ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
+##        self._function = ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
 
 ##    def _recurseXml(self, doc, parent):
 ##        node = doc.createElement(self.typeInfo())
@@ -398,53 +399,54 @@ class InChannelNode(Node):
 ##            i._recurseXml(doc, node)
 
 
-    def enabled():
-        def fget(self):return self._enabled.checked
-        def fset(self,value): self._enabled.checked = value
-        return locals()
-    enabled = property(**enabled())
-
-    def enabled_label():
-        def fget(self): return self._enabled.name
-        return locals()
-    enabled_label = property(**enabled_label())
-
-    def selected_range():
-        def fget(self): return self._range.selectedIndex
-        def fset(self,value): self._range.selectedIndex = value
-        return locals()
-    selected_range = property(**selected_range())
-
-    def range_label():
-        def fget(self):return self._range.name
-        return locals()
-
-    range_label = property(**range_label())
-        
-        
-    def selected_polarity():
-        def fget(self): return self._polarity.selectedIndex
-        def fset(self,value): self._polarity.selectedIndex = value
-        return locals()
-    selected_polarity = property(**selected_polarity())
-
-    def polarity_label():
-        def fget(self): return self._polarity.name
-        return locals()
-    polarity_label = property(**polarity_label())
-
-    def selected_function():
-        def fget(self): return self._function.selectedIndex
-        def fset(self,value): self._function.selectedIndex = value
-        return locals()
-    selected_function = property(**selected_function())
-    
-    
-    def function_label():
-        def fget(self):return self._function.name
-        return locals()
-    function_label = property(**function_label())
-
+##    def enabled():
+##        def fget(self):return self._enabled.checked
+##        def fset(self,value): self._enabled.checked = value
+##            
+##        return locals()
+##    enabled = property(**enabled())
+##
+##    def enabled_label():
+##        def fget(self): return self._enabled.name
+##        return locals()
+##    enabled_label = property(**enabled_label())
+##
+##    def selected_range():
+##        def fget(self): return self._range.selectedIndex
+##        def fset(self,value): self._range.selectedIndex = value
+##        return locals()
+##    selected_range = property(**selected_range())
+##
+##    def range_label():
+##        def fget(self):return self._range.name
+##        return locals()
+##
+##    range_label = property(**range_label())
+##        
+##        
+##    def selected_polarity():
+##        def fget(self): return self._polarity.selectedIndex
+##        def fset(self,value): self._polarity.selectedIndex = value
+##        return locals()
+##    selected_polarity = property(**selected_polarity())
+##
+##    def polarity_label():
+##        def fget(self): return self._polarity.name
+##        return locals()
+##    polarity_label = property(**polarity_label())
+##
+##    def selected_function():
+##        def fget(self): return self._function.selectedIndex
+##        def fset(self,value): self._function.selectedIndex = value
+##        return locals()
+##    selected_function = property(**selected_function())
+##    
+##    
+##    def function_label():
+##        def fget(self):return self._function.name
+##        return locals()
+##    function_label = property(**function_label())
+##
     
     def typeInfo(self):
         return "IN_CHANNEL"
@@ -458,32 +460,32 @@ class InChannelNode(Node):
 
     def data(self, column):
         r = super(InChannelNode,self).data(column)
-        if column is 2:     r = self.enabled
-        elif column is 3:   r = self.selected_range
-        elif column is 4:   r = self.selected_polarity
-        elif column is 5:   r = self.selected_function
-        elif column is 6:   r = self.enabled_label()
-        elif column is 7:   r = self.range_label()
-        elif column is 8:   r = self.polarity_label()
-        elif column is 9:   r = self.function_label()
+##        if column is 2:     r = self.enabled
+##        elif column is 3:   r = self.selected_range
+##        elif column is 4:   r = self.selected_polarity
+##        elif column is 5:   r = self.selected_function
+##        elif column is 6:   r = self.enabled_label()
+##        elif column is 7:   r = self.range_label()
+##        elif column is 8:   r = self.polarity_label()
+##        elif column is 9:   r = self.function_label()
         return r
 
     def setData(self, column, value):
         super(InChannelNode,self).setData(column,value)
-        if column is 2:     self.enabled = value
-        elif column is 3:   self.selected_range = value
-        elif column is 4:   self.selected_polarity = value
-        elif column is 5:   self.selected_function =value
+##        if column is 2:     self.enabled = value
+##        elif column is 3:   self.selected_range = value
+##        elif column is 4:   self.selected_polarity = value
+##        elif column is 5:   self.selected_function =value
         
 
 class OutChannelNode(Node):
     def __init__(self,name,parent=None):
         super(OutChannelNode,self).__init__(name,parent)
-        self._enabled = CheckNode(name+"_enabled", parent = self)
-        self._range = ComboNode(name+"_range", parent = self)
-        self._polarity = ComboNode(name+"_polarity",parent = self)
-        self._output_pin = ComboNode(name+"_out_pin",parent = self)
-        self._function = ComboNode(name+"_function",parent=  self)
+##        self._enabled = CheckNode(name+"_enabled", parent = self)
+##        self._range = ComboNode(name+"_range", parent = self)
+##        self._polarity = ComboNode(name+"_polarity",parent = self)
+##        self._output_pin = ComboNode(name+"_out_pin",parent = self)
+##        self._function = ComboNode(name+"_function",parent=  self)
 
     def typeInfo(self):
         return "OUT_CHANNEL"
@@ -496,12 +498,12 @@ class OutChannelNode(Node):
 class AcquisitionSettingsNode(Node):
     def __init__(self,name,parent=None):
         super(AcquisitionSettingsNode,self).__init__(name,parent)
-        self._sample_rate = NumericNode("sample_rate", parent = self)
-        self._points_per_shot = NumericNode("points_per_shot", parent = self)
-        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
-        self._pga_gain = ComboNode("pga_gain",parent = self)
-        self._filter_gain = ComboNode("filter_gain", parent = self)
-        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
+##        self._sample_rate = NumericNode("sample_rate", parent = self)
+##        self._points_per_shot = NumericNode("points_per_shot", parent = self)
+##        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
+##        self._pga_gain = ComboNode("pga_gain",parent = self)
+##        self._filter_gain = ComboNode("filter_gain", parent = self)
+##        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
 
     def typeInfo(self):
         return "ACQUISITION_SETTINGS"
@@ -705,19 +707,63 @@ class WndTutorial(base,form):
         self._rootNode = Node("Settings")
 
         acq_settings = AcquisitionSettingsNode("acquisition_settings",parent = self._rootNode)
+        NumericNode("sample_rate", parent = acq_settings)
+        NumericNode("points_per_shot", parent = acq_settings)
+        CheckNode("homemade_amplifier", parent = acq_settings)
+        ComboNode("pga_gain",parent = acq_settings)
+        ComboNode("filter_gain", parent = acq_settings)
+        ComboNode("filter_cutoff",parent = acq_settings)
+
+
 
         inp_settings = Node("input_settings", parent = self._rootNode)
 
         ch1 = InChannelNode("ch1",inp_settings)
-        ch2 = InChannelNode("ch2",inp_settings)
-        ch3 = InChannelNode("ch3",inp_settings)
-        ch4 = InChannelNode("ch4",inp_settings)
+        CheckNode("enabled", parent = ch1)
+        ComboNode("range", case_list=['One','Two','Three'], parent = ch1)
+        ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = ch1)
+        ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  ch1)
 
+        
+        ch2 = InChannelNode("ch2",inp_settings)
+        CheckNode("enabled", parent = ch2)
+        ComboNode("range", case_list=['One','Two','Three'], parent = ch2)
+        ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = ch2)
+        ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  ch2)
+
+
+                
+        ch3 = InChannelNode("ch3",inp_settings)
+        CheckNode("enabled", parent = ch3)
+        ComboNode("range", case_list=['One','Two','Three'], parent = ch3)
+        ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = ch3)
+        ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  ch3)
+
+
+        
+        ch4 = InChannelNode("ch4",inp_settings)
+        CheckNode("enabled", parent = ch4)
+        ComboNode("range", case_list=['One','Two','Three'], parent = ch4)
+        ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = ch4)
+        ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  ch4)
 
         out_settings = Node("out_settings", parent = self._rootNode)
 
         och1 = OutChannelNode("och1",out_settings)
+        CheckNode("enabled", parent = och1)
+        ComboNode("range", parent = och1)
+        ComboNode("polarity",parent = och1)
+        ComboNode("out_pin",parent = och1)
+        ComboNode("function",parent=  och1)
+
+        
         och2 = OutChannelNode("och2",out_settings)
+        CheckNode("enabled", parent = och2)
+        ComboNode("range", parent = och2)
+        ComboNode("polarity",parent = och2)
+        ComboNode("out_pin",parent = och2)
+        ComboNode("function",parent=  och2)
+        
 
 ##        print(rootNode)
 
