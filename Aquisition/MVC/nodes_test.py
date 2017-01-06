@@ -12,62 +12,47 @@ class XmlNodeSerializer():
         self.typeDic[t.typeInfo()] = (t, self.requiredNodeAttributes(t))
         
 
-    def serialize(self,node):
-        pass
-##        doc = QtXml.QDomDocument()
-##        node = doc.createElement(self.typeInfo())
-##        doc.appendChild(node)
-##        
-##        for i in self._children:
-##            i._recurseXml(doc, node)
-##
-##        return doc.toString(indent=4)
+    def serialize(self,rootNode):
+        doc = QtXml.QDomDocument()
+        xmlNode = self.xmlFromNode(doc,rootNode)
+        doc.appendChild(xmlNode)
+        for child in rootNode._children:
+            self._recurseXml(doc, xmlNode,child)
+        return doc.toString(indent = 4)
 
-    def _recurseXml(self, doc, parent):
-        pass
-##        node = doc.createElement(self.typeInfo())
-##        parent.appendChild(node)
-##
-##        attrs = self.attrs().items()
-##        
-##        for k, v in attrs:
-##            node.setAttribute(k, v)
-##
-##        for i in self._children:
-##            i._recurseXml(doc, node)
+    def _recurseXml(self, doc, parentXmlNode,node):
+        xmlNode = self.xmlFromNode(doc,node)
+        parentXmlNode.appendChild(xmlNode)
+        for child in node._children:
+            self._recurseXml(doc,xmlNode,child)
 
+    def xmlFromNode(self,doc, node):
+        key = node.typeInfo()
+        xmlNode = doc.createElement(key)
+        cls, attrs = self.typeDic[key]
+        for k, v in attrs.items():
+            xmlNode.setAttribute(k, v.fget(node))
+        return xmlNode
+        
 
 
     def requiredNodeAttributes(self, nodeType):
         requiredAttributes = {}
-        print(nodeType.__dict__)
-##        print(nodeType.__mro__)
         for cls in nodeType.__mro__:
-##            print(cls.__dict__)
-##            print(cls)
             for k,v in cls.__dict__.items():
-##        for k,v in nodeType.__dict__.items():
                 if isinstance(v,property):
-                    print("Property: {0}".format(k.rstrip("_")))
                     requiredAttributes[k] = v
-        print(requiredAttributes)
         return requiredAttributes
     
     def nodeFromXml(self,domElement):
         key = domElement.tagName()
         cls, attrs = self.typeDic[key]
         node = cls("unknown")
-##        print(attrs)
         counter = 0
         for k,v in attrs.items():
-            print(counter)
-            print("attr {0} val {2} available {1}".format(k,domElement.hasAttribute(k),v))
-            
             if domElement.hasAttribute(k):
-##                setattr(node,k,domElement.attribute(k))
                 if v.fset is not None:
                     v.fset(node,domElement.attribute(k))
-
             counter+=1
         return node
 
@@ -86,9 +71,8 @@ class XmlNodeSerializer():
     def build_tree(self, parentXmlNode, parentNode=None, tabLevel=-1):
         key = parentXmlNode.tagName()
         tabLevel += 1
-        print("{0}|------ {1}\n".format("\t"*tabLevel,key))
-        print(parentNode)
-
+##        print("{0}|------ {1}\n".format("\t"*tabLevel,key))
+##        print(parentNode)
         xmlChildNode = parentXmlNode.firstChild()        
         while not xmlChildNode.isNull():
             xmlElement = xmlChildNode.toElement()
@@ -105,10 +89,6 @@ class XmlNodeSerializer():
 
 
 class Node(object):
-
-##    def __init__(self,parent = None):
-##        self.__init__("unknown",parent = parent)
-##        
     def __init__(self, name = "unknown", parent=None):
         
         super(Node, self).__init__()
@@ -120,48 +100,48 @@ class Node(object):
         if parent is not None:
             parent.addChild(self)
 
-    def attrs(self):
-        classes = self.__class__.__mro__
-        
-        kv = {}
-        for cls in classes:
-            for k,v in cls.__dict__.items():
-                if isinstance(v,property):
-##                    print("Property: {0}\n\tValue: {1}".format(k.rstrip("_"),v.fget(self)))
-                    kv[k] = v.fget(self)
-        return kv
+##    def attrs(self):
+##        classes = self.__class__.__mro__
+##        
+##        kv = {}
+##        for cls in classes:
+##            for k,v in cls.__dict__.items():
+##                if isinstance(v,property):
+####                    print("Property: {0}\n\tValue: {1}".format(k.rstrip("_"),v.fget(self)))
+##                    kv[k] = v.fget(self)
+##        return kv
 
 
     
     
     
-    def asXml(self):
-        
-        doc = QtXml.QDomDocument()
-        
-        node = doc.createElement(self.typeInfo())
-        attrs = self.attrs().items()
-        for k, v in attrs:
-            node.setAttribute(k, v)
-        doc.appendChild(node)
-        
-        for i in self._children:
-            i._recurseXml(doc, node)
-
-        return doc.toString(indent=4)
-
-
-    def _recurseXml(self, doc, parent):
-        node = doc.createElement(self.typeInfo())
-        parent.appendChild(node)
-
-        attrs = self.attrs().items()
-        
-        for k, v in attrs:
-            node.setAttribute(k, v)
-
-        for i in self._children:
-            i._recurseXml(doc, node)
+##    def asXml(self):
+##        
+##        doc = QtXml.QDomDocument()
+##        
+##        node = doc.createElement(self.typeInfo())
+##        attrs = self.attrs().items()
+##        for k, v in attrs:
+##            node.setAttribute(k, v)
+##        doc.appendChild(node)
+##        
+##        for i in self._children:
+##            i._recurseXml(doc, node)
+##
+##        return doc.toString(indent=4)
+##
+##
+##    def _recurseXml(self, doc, parent):
+##        node = doc.createElement(self.typeInfo())
+##        parent.appendChild(node)
+##
+##        attrs = self.attrs().items()
+##        
+##        for k, v in attrs:
+##            node.setAttribute(k, v)
+##
+##        for i in self._children:
+##            i._recurseXml(doc, node)
 
     
     def typeInfo(self):
@@ -686,14 +666,13 @@ base, form = uic.loadUiType("main.ui")
 
 class WndTutorial(base,form):
     def updateXml(self):
-        print(self._rootNode)
-        
         print("Updating xml")
-        xml = self._rootNode.asXml()
-        self.ui_xml.setPlainText(xml)
-        s = XmlNodeSerializer()
-        node = s.deserialize(xml)
+##        xml = self._rootNode.asXml()
 
+        s = XmlNodeSerializer()
+        xml = s.serialize(self._rootNode)
+        self.ui_xml.setPlainText(xml)
+        node = s.deserialize(xml)
         print("\n"*3)
         print("AFTER DESERIALIZATION")
         print(node)
