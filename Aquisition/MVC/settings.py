@@ -2,7 +2,7 @@ from PyQt4 import QtCore, QtGui, QtXml,uic
 from xml_highlighter import XMLHighlighter
 from nodes import *
 import sys
-import node_configuration as config
+from node_configuration import Configuration 
 
 
 class SettingsModel(QtCore.QAbstractItemModel):
@@ -188,14 +188,16 @@ class WndTutorial(base,form):
         print("\n"*3)
         print("AFTER DESERIALIZATION")
         print(node)
+
+        self.config.save_config()
             
         
 
     def __init__(self,parent = None):
         super(base,self).__init__(parent)
         self.setupUi(self)
-
-        self._rootNode = config.get_default_tree()
+        self.config = Configuration()
+        self._rootNode = self.config.get_root_node()
 
         self._proxyModel = QtGui.QSortFilterProxyModel(self)
         self._model = SettingsModel(self._rootNode, self)
