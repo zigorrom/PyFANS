@@ -439,7 +439,8 @@ class ComboEditor(comboBase, comboForm):
     def setSelection(self,current):
         node = self._proxyModel.sourceModel().getNode(current)
         self.ui_combo.clear()
-        self.ui_combo.addItems(node.case_list())
+##        self.ui_combo.addItems(node.case_list())
+        self.ui_combo.addItems(node.case_list)
         parent = current.parent()
         
         self._dataMapper.setRootIndex(parent)

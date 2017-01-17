@@ -27,7 +27,11 @@ class XmlNodeSerializer():
         xmlNode = doc.createElement(key)
         cls, attrs = self.typeDic[key]
         for k, v in attrs.items():
-            xmlNode.setAttribute(k, v.fget(node))
+            val = v.fget(node)
+##            res = val
+            if type(val) is list:
+                val = "list[{0}]".format(",".join(val))
+            xmlNode.setAttribute(k, val)
         return xmlNode
         
 
@@ -48,7 +52,11 @@ class XmlNodeSerializer():
         for k,v in attrs.items():
             if domElement.hasAttribute(k):
                 if v.fset is not None:
-                    v.fset(node,domElement.attribute(k))
+                    val = domElement.attribute(k)
+                    if val.startswith("list[") and val.endswith("]"):
+                        val = val[5:-1]
+                        val = val.split(",")
+                    v.fset(node,val)
             counter+=1
         return node
 
@@ -276,10 +284,12 @@ class CheckNode(Node):
 
     
 class ComboNode(Node):
-    def __init__(self,name,case_list = [], parent=None):
+    def __init__(self,name,case_list = [] , parent=None):
         super(ComboNode,self).__init__(name,parent)
         self._case_list = case_list
         self._selectedIndex = 0
+##        self.enumeration = enumeration
+##        self.selectedValue = enumeration.names[0]
 
 
     def typeInfo(self):
@@ -295,28 +305,31 @@ class ComboNode(Node):
         return locals()
     selectedIndex = property(**selectedIndex())
 
-    def selectedValue():
-        def fget(self):return self._selectedIndex
-        def fset(self,value): self._selectedIndex = value
-        return locals()
-    selectedIndex = property(**selectedIndex())
-    def case_list(self):
-        return self._case_list
-##    def case_list():
-##        def fget(self): return self._case_list
-##        def fset(self,value): self._case_list = value
+##    def selectedValue():
+##        def fget(self):return self._selectedValue
+##        def fset(self,value): self._selectedValue = value
 ##        return locals()
-##    case_list = property(**case_list())
+##    selectedIndex = property(**selectedValue())
+    
+##    def case_list(self):
+##        return self._case_list
+    def case_list():
+        def fget(self): return self._case_list
+        def fset(self,value): self._case_list = value
+        return locals()
+    case_list = property(**case_list())
     
     
     def data(self,column):
         r = super(ComboNode,self).data(column)
         if column is 2: r = self.selectedIndex
+##        elif column is 2: r = self.enumeration.names.index(self._selectedValue)
         return r
 
     def setData(self,column,value):
         super(ComboNode,self).setData(column,value)
         if column is 2: self.selectedIndex = value#.toPyObject())
+##        if column is 2: self.selectedValue = self.enumeration.names[value]
 
 
 class InChannelNode(Node):

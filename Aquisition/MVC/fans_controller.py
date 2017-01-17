@@ -36,8 +36,17 @@ class FANS_controller:
         self._init_daq_ai_channels()
         ## INITIALIZE FANS INPUT CHANNELS
         for channel in AI_CHANNELS.names:
-            passs
-
+            ## create dummy variables
+            ## need to replace by real values
+            mode = AI_MODES.DC
+            cs_hold = CS_HOLD.OFF
+            filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f100k
+            filter_gain = FILTER_GAINS.x1
+            self._set_fans_ai_channel_params(mode,cs_hold,filter_cutoff, filter_gain)
+        ## END INITIALIZE FANS INPUT CHANNELS
+        ## need to check which channels are for acquisition, for vds, for vlg, etc.
+        
+    
     def _set_fans_ai_channel_params(self, ai_mode, ai_cs_hold, ai_filter_cutoff,ai_filter_gain ):
         pass
 
