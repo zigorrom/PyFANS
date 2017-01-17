@@ -89,6 +89,7 @@ class XmlNodeSerializer():
             xmlChildNode = xmlChildNode.nextSibling()
         tabLevel -=1 
 
+
            
 
 class Node(object):

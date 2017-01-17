@@ -32,7 +32,8 @@ class Configuration(object):
             return node
             
 ##        return "from file"
-
+    
+    
     def _write_config_file(self):
         if self.rootNode is not None:
             with open(configuration_filename,"w") as cfg:
@@ -40,6 +41,30 @@ class Configuration(object):
                 text = serializer.serialize(self.rootNode)
                 cfg.write(text)
 
+##  Setings.acquisition_settings.sample_rate
+##  or
+##  .acquisirion_settings.sample_rate
+##  or
+##  .sample_rate                
+##
+    
+
+    def get_node_from_path(self, path):
+        path_list = path.split(".")
+        node = _traverse_tree(self.rootNode, path_list, len(path_list))
+        return node
+
+    def _traverse_tree(self,current_node,path_list, path_list_length = 0,level=-1,parent_fits_path = False):
+        level += 1
+        if current_node.name is path_list[level]:
+            if level== path_list_length-1:
+                return current_node
+            
+            for i in range(current_node.childCount):
+                self._traverse_tree(current_node.child(i), path_list, path_list_length, level, True)
+        
+
+    
     
     def _get_default_tree(self):
         rootNode = Node("Settings")

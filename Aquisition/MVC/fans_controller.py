@@ -35,16 +35,17 @@ class FANS_controller:
             en = STATE_ON
             rng = Range_5
             pol = Unipolar
-            self._set_daq_ai_channel_params(en,rng,pol,channel)
+            ch = AI_CHANNELS.names.index(channel)
+            self._set_daq_ai_channel_params(en,rng,pol,ch)
         
 
     def _set_daq_ai_channel_params(self, ai_enabled, ai_range, ai_polarity, ai_channel):
 
     ## issue with channel names
-        
-        self.device.daq_set_channel_enable(ai_enabled,ai_channel)
-        self.device.daq_set_range(ai_range, [ai_channel])
-        self.device.daq_setpolarity(ai_polarity,[ai_channel])
+        channel = ai_all_channels[ai_channel]
+        self.device.daq_set_channel_enable(ai_enabled,channel)
+        self.device.daq_set_range(ai_range, [channel])
+        self.device.daq_setpolarity(ai_polarity,[channel])
 
     def _init_fans_ai_channels(self):
         
