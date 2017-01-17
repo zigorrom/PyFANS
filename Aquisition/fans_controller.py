@@ -191,6 +191,9 @@ class FANScontroller:
             for ch in channels:
                 self.set_ai_channel_params(mode,cs_hold,filter_cutoff,filter_gain,pga_gain,ch)
 
+
+##    def set_ao_params(self,
+
     def set_measurement_channel(self, meas_channel):
         if (meas_channel<=MAX_MEAS_CHANNELS) and (meas_channel>=0):
             self.measurement_channel = meas_channel

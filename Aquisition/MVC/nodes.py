@@ -295,6 +295,11 @@ class ComboNode(Node):
         return locals()
     selectedIndex = property(**selectedIndex())
 
+    def selectedValue():
+        def fget(self):return self._selectedIndex
+        def fset(self,value): self._selectedIndex = value
+        return locals()
+    selectedIndex = property(**selectedIndex())
     def case_list(self):
         return self._case_list
 ##    def case_list():
