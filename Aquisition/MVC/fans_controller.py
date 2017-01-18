@@ -2,6 +2,8 @@
 from fans_constants import *
 from agilent_u2542a import *
 from node_configuration import Configuration
+from multiprocessing import Process, Event, JoinableQueue
+from acquisition_process import Acquisition,AcquisitionProcess
 
 
 class FANS_controller:
@@ -10,9 +12,11 @@ class FANS_controller:
         self.device = AgilentU2542A(visa_resource)
 
         self.data_queue = None
-        self.config = Configuration()
+        self.config = configuration
 ##        print(self.config.get_root_node())
-
+##        self.config = Configuration()
+##        print(self.config.get_root_node())
+        
         ## CALL DIG DAQ HARDWARE INITIALIZATION
         self._init_daq_dig_channels()
 
@@ -33,10 +37,13 @@ class FANS_controller:
     def _init_daq_ai_channels(self):
         for channel in AI_CHANNELS.names:
             en = STATE_ON
-            rng = Range_5
-            pol = Unipolar
+            rng = Range_10
+            pol = Bipolar
             ch = AI_CHANNELS.names.index(channel)
             self._set_daq_ai_channel_params(en,rng,pol,ch)
+        ## 
+        print("read back hardware params")
+        self.device.daq_init_channels()
         
 
     def _set_daq_ai_channel_params(self, ai_enabled, ai_range, ai_polarity, ai_channel):
@@ -50,21 +57,23 @@ class FANS_controller:
     def _init_fans_ai_channels(self):
         
         ## INITIALIZE FANS INPUT CHANNELS
-        for channel in AI_CHANNELS.names:
+        for channel in range(len(AI_CHANNELS.names)):
             ## create dummy variables
             ## need to replace by real values
+            
             mode = AI_MODES.AC
             cs_hold = CS_HOLD.OFF
             filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f100k
             filter_gain = FILTER_GAINS.x1
             pga_gain = PGA_GAINS.x1
-            
+##            time.sleep(1)
             self._set_fans_ai_channel_params(mode,cs_hold,filter_cutoff, filter_gain,pga_gain,channel)
         ## END INITIALIZE FANS INPUT CHANNELS
         ## need to check which channels are for acquisition, for vds, for vlg, etc.
         
     
     def _set_fans_ai_channel_params(self, ai_mode, ai_cs_hold, ai_filter_cutoff,ai_filter_gain, ai_pga_gain, ai_channel):
+##        print(ai_channel)
         ## set channel selected
         ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
         self.device.dig_write_channel(ai_channel, DIG_2)
@@ -72,7 +81,7 @@ class FANS_controller:
         ##print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
         self.device.dig_write_bit_channel(ai_mode,AI_SET_MODE_BIT,DIG_4)#AI_MODE_VAL[mode]
         self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIG_4)
-
+        
             
         ## set filter frequency and gain parameters
         filter_val = get_filter_value(ai_filter_gain,ai_filter_cutoff)
@@ -86,17 +95,37 @@ class FANS_controller:
         print("ch: {0} - set".format(ai_channel))
         
 
-    def _init_acquisiion(self):
-        pass
+    def init_acquisition(self, sample_rate,points_per_shot,channels):
+        self.sample_rate = sample_rate
+        self.points_per_shot = points_per_shot
+        self.device.daq_setup(sample_rate,points_per_shot)
+        self.device.daq_enable_channels(channels)
 
-    def _start_acquisition(self):
-        pass
+    def start_acquisition(self):
+        self.data_queue = JoinableQueue()
+        fs = self.sample_rate
+        t = 600 #16*60*60
 
-    def _stop_acquisition(self):
-        pass
+##        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
+        self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
+        self.data_thread = AcquisitionProcess(None,self.data_queue)#self.data_storage,self.data_queue)
+        
+        self.dac_proc.start()
+        self.data_thread.start()
+        print("started")
 
-    def _acquisition_alive(self):
-        pass
+    def stop_acquisition(self):
+        self.dac_proc.stop()
+        print("stopped process")
+        self.dac_proc.join()
+        print("joined process")
+        
+        self.data_queue.join()
+        self.data_thread.stop()
+        print("joined thread")
+
+    def acquisition_alive(self):
+        return self.dac_proc.is_alive()
 
 ##
 ##    ANALOG OUTPUT SECTION
@@ -128,7 +157,24 @@ class FANS_controller:
     
 
 def main():
-    f = FANS_controller("ADC")
+##    cfg = Configuration()
+    f = FANS_controller("ADC")#,configuration = cfg)
+    f.init_acquisition(500000,50000,[AI_1,AI_2,AI_3,AI_4])
+    f.start_acquisition()
+##    sleep(1)
+    try:
+        c = 0
+        while True:
+##            print(c)
+            c+=1
+##            sleep(1)
+            if not f.acquisition_alive():
+                break
+    except Exception as e:
+        print(str(e))
+    finally:       
+        print("stopping acquisition")
+        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()

@@ -145,10 +145,24 @@ class Node(object):
 
     def child(self, row):
         return self._children[row]
+
+    def getChildByName(self,name, case_sensitive= False):
+        def equal_case_sensitive(a,b):
+            return a == b
+        def equal_case_insensitive(a,b):
+            return a.lower() == b.lower()
+
+        comparator = equal_case_sensitive if case_sensitive else equal_case_insensitive
+                                   
+        childs = [n for n in self._children if comparator(n.name,name)]#n.name == name]
+        if len(childs)>0:
+            return childs[0]
+        else:
+            return None
     
     def childCount(self):
         return len(self._children)
-
+    
     def parent(self):
         return self._parent
     

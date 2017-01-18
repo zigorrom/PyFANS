@@ -51,24 +51,61 @@ class Configuration(object):
 
     def get_node_from_path(self, path):
         path_list = path.split(".")
-        node = _traverse_tree(self.rootNode, path_list, len(path_list))
+        print(path_list)
+        node = self._traverse_tree(path_list)
         return node
 
-    def _traverse_tree(self,current_node,path_list, path_list_length = 0,level=-1,parent_fits_path = False):
-        level += 1
-        if current_node.name is path_list[level]:
-            if level== path_list_length-1:
-                return current_node
-            
-            for i in range(current_node.childCount):
-                self._traverse_tree(current_node.child(i), path_list, path_list_length, level, True)
+    def _fing_current_node(self,root_node, node_name):
+        if node_name == root_node.name:
+            return root_node
+        else:
+            for i in range(root_node.childCount()):
+                node = self._fing_current_node(root_node.child(i),node_name)
+                if node is not None:
+                    return node
         
+    def _find_target_node_by_path_from_relative_node(self, rootNode, path_list):
+        length = len(path_list)
+        if length < 2:
+            return rootNode
+        
+        path_count = 1
+        node_found = False
+        currentNode = rootNode
+        while not node_found:
+            if path_count >= length:
+                return currentNode
+            
+            node = currentNode.getChildByName(path_list[path_count])
+            if node is None:
+                return None
+            else:
+                currentNode = node
+                path_count+=1
+        
+            
+    def _traverse_tree(self, path_list):
+        path_length =len(path_list)
+        if path_length < 1:
+            return None
+        root = self.rootNode
+        relativeRoot = self._fing_current_node(root,path_list[0])
+        print(relativeRoot)
+            
+        if relativeRoot is None:
+            return None
 
-    
+        if path_length == 1:
+            return relativeRoot
+
+        node = self._find_target_node_by_path_from_relative_node(relativeRoot,path_list)
+
+        return node
+            
     
     def _get_default_tree(self):
         rootNode = Node("Settings")
-
+        ##Settings
         acq_settings = AcquisitionSettingsNode("acquisition_settings",parent = rootNode)
         NumericNode("sample_rate", parent = acq_settings)
         NumericNode("points_per_shot", parent = acq_settings)
@@ -133,12 +170,15 @@ class Configuration(object):
 def main():
     c = Configuration()
     root = c.get_root_node()
-    
-    if os.path.isfile(configuration_filename):
-        print("file exist")
-    else:
-        c.save_config()
     print(root)
+    path = "ch1.enabled"
+    node = c.get_node_from_path(path)
+    print(node)
+##    if os.path.isfile(configuration_filename):
+##        print("file exist")
+##    else:
+##        c.save_config()
+    
 
 if __name__ == "__main__":
     main()    

@@ -37,10 +37,10 @@ class SpectrumPlotWidget:
         self.posLabel = self.layout.addLabel(row=0, col=0, justify="right")
         self.plot = self.layout.addPlot(row=1, col=0)
         self.plot.showGrid(x=True, y=True)
-        self.plot.setLogMode(x=True, y=True)
+##        self.plot.setLogMode(x=True, y=True)
         self.plot.setLabel("left", "Power", units="V^2Hz-1")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
-        self.plot.setLimits(xMin=0, xMax=6, yMin = -20, yMax = -4)
+##        self.plot.setLimits(xMin=0, xMax=6, yMin = -20, yMax = -4)
         self.plot.showButtons()
 
         self.create_persistence_curves()

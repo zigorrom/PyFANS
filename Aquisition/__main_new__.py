@@ -79,8 +79,8 @@ class FANS_main_window(base,form):
         self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
         self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
 
-##        self.fans_controller = FANScontroller("ADC",self.data_storage)
-##        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
+        self.fans_controller = FANScontroller("ADC",self.data_storage)
+        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_1,AI_2,AI_3,AI_4])
 
     def load_settings(self):
         pass

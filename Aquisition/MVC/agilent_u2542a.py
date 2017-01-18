@@ -155,7 +155,7 @@ class AgilentU2542A:
         if state:
             val = "ON"
         self.instrument.write("ROUT:ENAB {0},(@{1})".format(val,channel))
-        self.daq_init_channels()
+##        self.daq_init_channels()
         
     ##SET POLARITY FOR CHANNELS
     def daq_setpolarity(self,polarity, channels):
@@ -278,8 +278,8 @@ class AgilentU2542A:
         self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channels)))
 
     def dig_write_channel(self,data,channel):
-        print(data)
-        print(channel)
+##        print(data)
+##        print(channel)
         self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,channel))
                               
     def dig_write_bit_channels(self,value,bit,channels):
@@ -289,7 +289,7 @@ class AgilentU2542A:
         
     def dig_write_bit_channel(self,value,bit,channel):
         msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,channel)
-        print("writing value {0} to bit{1}".format(value,bit))
+##        print("writing value {0} to bit{1}".format(value,bit))
         self.instrument.write(msg)
 
     def adc_set_voltage_range(self,rang,channels):
