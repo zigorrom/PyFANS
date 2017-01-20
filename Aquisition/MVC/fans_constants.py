@@ -1,5 +1,6 @@
 from n_enum import enum
 from agilent_u2542a import *
+from agilent_u2542a_constants import *
 
 PGA_GAINS = enum("x1","x10","x100")
 FILTER_CUTOFF_FREQUENCIES = enum(*["f{0}k".format(i) for i in range(0,160,10)])

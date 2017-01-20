@@ -101,16 +101,39 @@ class AgilentU2542A:
     def daq_reset(self):
         self.instrument.write("*RST")
         self.instrument.write("*CLS")
+
     ##ENABLE CHANNELS
-    def daq_enable_channels(self, channels):
+    def daq_set_enable_channels(self, channel_names):
+        
+        self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_names)))
+
+    def daq_enable_ai_channels(self, channels):
+
+        channel_list = [AI_CHANNELS[i] for i in AI_CHANNELS.indexes]
+        
         self.instrument.write("ROUT:ENAB OFF,(@101:104)")
-        self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channels)))
+        self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_list)))
         self.daq_init_channels()
 
-    def daq_set_channel_enable(self, state, channel):
+    
+
+    def daq_enable_ao_channels(self, channels):
+
+        channel_list = [AO_CHANNELS[i] for i in AO_CHANNELS.indexes]
+
+        
+
+                               
+
+    def daq_set_ai_channes_enable(self,state,channels):
+        pass
+
+    def daq_set_ai_channel_enable(self, state, channel):
         val = "OFF"
         if state:
             val = "ON"
+
+        
         self.instrument.write("ROUT:ENAB {0},(@{1})".format(val,channel))
 ##        self.daq_init_channels()
         
@@ -303,7 +326,7 @@ def main():
             counter = 0
             d.daq_reset()
             d.daq_setup(500000,50000)
-            d.daq_enable_channels([AI_1,AI_2,AI_3,AI_4])
+            d.daq_enable_channels([AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
             d.daq_run()
             print("started")
             init_time = time.time()
