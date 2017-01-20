@@ -2,6 +2,7 @@
 import time
 from fans_constants import *
 from agilent_u2542a import *
+from agilent_u2542a_constants import *
 from node_configuration import Configuration
 from multiprocessing import Process, Event, JoinableQueue
 from acquisition_process import Acquisition,AcquisitionProcess
@@ -14,10 +15,20 @@ class FANS_controller:
 
         self.data_queue = None
         self.config = configuration
+
+        ## INITIALIZE VALUES FOR OUTPUT CHANNELS
+        self.ao_channel_params = {
+                AO_1: get_ao_channel_default_params(),
+                AO_2: get_ao_channel_default_params()
+            }
+
+        
 ##        print(self.config.get_root_node())
 ##        self.config = Configuration()
 ##        print(self.config.get_root_node())
-        
+        self.initialize_hardware()
+
+    def initialize_hardware(self):
         ## CALL DIG DAQ HARDWARE INITIALIZATION
         self._init_daq_dig_channels()
 
@@ -153,12 +164,12 @@ class FANS_controller:
     def _set_output_channels(self,ao1_channel,ao2_channel):
         ao1_enable = 1<<3
         ao2_enable = 1<<7
-        print("ao1_enable {0:08b}".format(ao1_enable))
-        print("ao2_enable {0:08b}".format(ao2_enable))
+##        print("ao1_enable {0:08b}".format(ao1_enable))
+##        print("ao2_enable {0:08b}".format(ao2_enable))
         channels_enab = ao1_enable | ao2_enable
-        print("enable {0:08b}".format(channels_enab))
+##        print("enable {0:08b}".format(channels_enab))
         channels = (ao2_channel<<4)|ao1_channel
-        print("channels {0:08b}".format(channels))
+##        print("channels {0:08b}".format(channels))
         val_to_write = channels_enab|channels
         print("value to write {0:08b}".format(val_to_write))
         self.device.dig_write_channel(val_to_write,DIG_1)
@@ -172,7 +183,7 @@ class FANS_controller:
         
     
 
-    def _set_fans_ao_channel_params(self, polarity ):
+    def _set_fans_ao_channel_params(self, enable, polarity, channel ):
         pass
 
 

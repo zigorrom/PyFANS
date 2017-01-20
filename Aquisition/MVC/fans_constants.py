@@ -1,4 +1,5 @@
 from n_enum import enum
+from agilent_u2542a import *
 
 PGA_GAINS = enum("x1","x10","x100")
 FILTER_CUTOFF_FREQUENCIES = enum(*["f{0}k".format(i) for i in range(0,160,10)])
@@ -43,7 +44,9 @@ def get_fans_ai_channel_default_params():
 def get_ao_channel_default_params():
     return {
         'selected_output':0,
-        'voltage':0
+        'voltage':0,
+        'polarity': Bipolar
+        
             }
 
 
