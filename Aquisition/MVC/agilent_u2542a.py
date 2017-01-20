@@ -130,32 +130,29 @@ class AgilentU2542A:
         channel_list = [AO_CHANNELS[i] for i in AO_CHANNELS.indexes]
         self.daq_set_enable_channels(state, channel_list)
                                
-
-##    
-##
-##    def daq_set_ai_channel_enable(self, state, channel):
-##        val = "OFF"
-##        if state:
-##            val = "ON"
-##
-##        
-##        self.instrument.write("ROUT:ENAB {0},(@{1})".format(val,channel))
-####        self.daq_init_channels()
         
     ##SET POLARITY FOR CHANNELS
-    ## polarity: type 
+    ## polarity: type POLARITIES
+    ## channels: type list of channels from AI_CHANNELS
     def daq_setpolarity(self,polarity, channels):
-        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channels)))
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
+
     ##SET UNIPOLAR TO CHANNELS
     def daq_set_unipolar(self,channels):
-        self.daq_setpolarity(Unipolar,channels)
+        self.daq_setpolarity(POLARITIES.UNIP,channels)
+        
     ##SET BIPOLAR TO CHANNELS
     def daq_set_bipolar(self,channels):
-        self.daq_setpolarity(Bipolar,channels)
+        self.daq_setpolarity(POLARITIES.BIP,channels)
 
-
+    ##SET RANGE FOR CHANNELS
+    ## range: type DAQ_RANGES
+    ## channels: type list of channels from AI_CHANNELS
     def daq_set_range(self,rang,channels):
-        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rang,channels))
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        rng = DAQ_RANGES[rang]
+        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,channels))
         
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     def daq_init_channels(self):
@@ -332,7 +329,7 @@ def main():
             counter = 0
             d.daq_reset()
             d.daq_setup(500000,50000)
-            d.daq_enable_channels([AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+            d.daq_set_enable_ai_channels(STATES.ON,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
             d.daq_run()
             print("started")
             init_time = time.time()
