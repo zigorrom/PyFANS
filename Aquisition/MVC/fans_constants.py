@@ -16,6 +16,8 @@ AO_DAC_LETCH_PULS_BIT = 3
 
 AI_BOX_CHANNELS = enum(*["ai_ch_{0}".format(i) for i in range(1,9)])
 
+AO_CHANNELS = enum("AO_1","AO_2")
+
 BOX_AI_CHANNELS_MAP = {1: {"channel": AI_CHANNELS.AI_1,"mode": AI_MODES.AC},
                        2: {"channel": AI_CHANNELS.AI_2,"mode": AI_MODES.AC},
                        3: {"channel": AI_CHANNELS.AI_3,"mode": AI_MODES.AC},

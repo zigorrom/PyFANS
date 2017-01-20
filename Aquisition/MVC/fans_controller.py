@@ -1,4 +1,5 @@
 ##from n_enum import enum
+import time
 from fans_constants import *
 from agilent_u2542a import *
 from node_configuration import Configuration
@@ -22,9 +23,13 @@ class FANS_controller:
 
         ## CALL DAQ HARDWARE INITIALIZATION
         self._init_daq_ai_channels()
-
+        self._init_daq_ao_channels()
+        
         ## CALL FANS HARDWARE INITIALIZATION
         self._init_fans_ai_channels()
+        self._init_fans_ao_channels()
+
+        
 
 
     def fans_reset(self):
@@ -61,7 +66,7 @@ class FANS_controller:
             ## create dummy variables
             ## need to replace by real values
             
-            mode = AI_MODES.AC
+            mode = AI_MODES.DC
             cs_hold = CS_HOLD.OFF
             filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f100k
             filter_gain = FILTER_GAINS.x1
@@ -131,14 +136,52 @@ class FANS_controller:
 ##    ANALOG OUTPUT SECTION
 ##    
     def _init_daq_ao_channels(self):
-        pass
-    
+        for ch in range(len(AO_CHANNELS.names)):
+            polarity = Bipolar
+            enable = STATE_ON
+            self._set_daq_ao_channel_params(enable,polarity,ch)
+        ## set polarity
+        ## set enable
+       
+        
+    def _set_daq_ao_channel_params(self, ao_enable, ao_polarity, ao_channel):
+        channel = ao_all_channels[ao_channel]
+        self.device.daq_set_channel_enable(ao_enable,channel)
+        self.device.dac_set_polarity(ao_polarity, [channel])
+        
+       
+    def _set_output_channels(self,ao1_channel,ao2_channel):
+        ao1_enable = 1<<3
+        ao2_enable = 1<<7
+        print("ao1_enable {0:08b}".format(ao1_enable))
+        print("ao2_enable {0:08b}".format(ao2_enable))
+        channels_enab = ao1_enable | ao2_enable
+        print("enable {0:08b}".format(channels_enab))
+        channels = (ao2_channel<<4)|ao1_channel
+        print("channels {0:08b}".format(channels))
+        val_to_write = channels_enab|channels
+        print("value to write {0:08b}".format(val_to_write))
+        self.device.dig_write_channel(val_to_write,DIG_1)
+        self._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIG_4)
+        
+        
     def _init_fans_ao_channels(self):
+        ## set fans output for hardware channel
+        self._set_output_channels(0,1)
+        
+        
+    
+
+    def _set_fans_ao_channel_params(self, polarity ):
         pass
 
-    def _set_fans_ao_channel_params(self):
-        pass
 
+    def output_voltage(self, voltage):
+        ## ON
+        self.device.dac_source_voltage(voltage,ao_all_channels)
+##        time.sleep(20)
+##        ## OFF
+##        self.device.dac_source_voltage(0,ao_all_channels)
     
 ##
 ##    DIGITAL OUTPUT SECTION
@@ -160,21 +203,22 @@ def main():
 ##    cfg = Configuration()
     f = FANS_controller("ADC")#,configuration = cfg)
     f.init_acquisition(500000,50000,[AI_1,AI_2,AI_3,AI_4])
-    f.start_acquisition()
-##    sleep(1)
-    try:
-        c = 0
-        while True:
-##            print(c)
-            c+=1
-##            sleep(1)
-            if not f.acquisition_alive():
-                break
-    except Exception as e:
-        print(str(e))
-    finally:       
-        print("stopping acquisition")
-        f.stop_acquisition()
+    f.output_voltage(0)
+##    f.start_acquisition()
+####    sleep(1)
+##    try:
+##        c = 0
+##        while True:
+####            print(c)
+##            c+=1
+####            sleep(1)
+##            if not f.acquisition_alive():
+##                break
+##    except Exception as e:
+##        print(str(e))
+##    finally:       
+##        print("stopping acquisition")
+##        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()
