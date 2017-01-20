@@ -92,6 +92,8 @@ class AgilentU2542A:
 
     ## SET POINTS PER SHOT
     ## SET SAMPLE RATE
+    ## srate of type int
+    ## points of type int
     def daq_setup(self, srate,points):
         self.instrument.write("ACQ:SRAT {0}".format(srate))
         self.instrument.write("ACQ:POIN {0}".format(points))
@@ -103,43 +105,47 @@ class AgilentU2542A:
         self.instrument.write("*CLS")
 
     ##ENABLE CHANNELS
-    def daq_set_enable_channels(self, channel_names):
-        
-        self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_names)))
+    ## state: type STATES
+    ## channel_names: list of strings corresponding to real names of channels
+    def daq_set_enable_channels(self, state, channel_names):
+        ## check if channel names exist
+        ## check state
+        self.instrument.write("ROUT:ENAB {0},(@{1})".format(STATES[state], ",".join(channel_names)))
 
-    def daq_enable_ai_channels(self, channels):
+    ## ENABLE ANALOG IN CHANNELS
+    ##  state: type STATES
+    ##  channels: list of channels from AI_CHANNELS
+    def daq_set_enable_ai_channels(self,state,channels):
+        ## check if channels are in the range of channels
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        self.daq_set_enable_channels(state, channel_list)
+        ## self.instrument.write("ROUT:ENAB OFF,(@101:104)")
+        ## self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_list)))
+        ## self.daq_init_channels()
 
-        channel_list = [AI_CHANNELS[i] for i in AI_CHANNELS.indexes]
-        
-        self.instrument.write("ROUT:ENAB OFF,(@101:104)")
-        self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_list)))
-        self.daq_init_channels()
-
-    
-
-    def daq_enable_ao_channels(self, channels):
-
+    ## ENABLE ANALOG IN CHANNELS
+    ##  state: type STATES
+    ##  channels: list of channels from AO_CHANNELS
+    def daq_set_enable_ao_channels(self,state,channels):
         channel_list = [AO_CHANNELS[i] for i in AO_CHANNELS.indexes]
-
-        
-
+        self.daq_set_enable_channels(state, channel_list)
                                
 
-    def daq_set_ai_channes_enable(self,state,channels):
-        pass
-
-    def daq_set_ai_channel_enable(self, state, channel):
-        val = "OFF"
-        if state:
-            val = "ON"
-
-        
-        self.instrument.write("ROUT:ENAB {0},(@{1})".format(val,channel))
-##        self.daq_init_channels()
+##    
+##
+##    def daq_set_ai_channel_enable(self, state, channel):
+##        val = "OFF"
+##        if state:
+##            val = "ON"
+##
+##        
+##        self.instrument.write("ROUT:ENAB {0},(@{1})".format(val,channel))
+####        self.daq_init_channels()
         
     ##SET POLARITY FOR CHANNELS
+    ## polarity: type 
     def daq_setpolarity(self,polarity, channels):
-        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(polarity,",".join(channels)))
+        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channels)))
     ##SET UNIPOLAR TO CHANNELS
     def daq_set_unipolar(self,channels):
         self.daq_setpolarity(Unipolar,channels)
