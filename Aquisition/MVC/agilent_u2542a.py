@@ -38,20 +38,26 @@ def Convertion(a):
 
 
 class AI_Channel:
+
+    ## CHANNEL INITIALIZATION
+    ## ch_name: type AI_CHANNELS
+    ## ch_range: type DAQ_RANGES
+    ## ch_polarity: type POLARITIES
+    ## ch_resolution: maxInt16 or maxInt16div2
     def __init__(self, ch_name, ch_enabled, ch_range, ch_polarity,ch_resolution = maxInt16):
 ##            sys.stdout = open("agi_"+str(os.getpid()) + ".txt", "w")
         try:
-            self.ch_name_idx = ai_all_channels.index(ch_name)
+            self.ch_name_idx = ch_name#ai_all_channels.index(ch_name)
             self.ch_enabled = ch_enabled      
-            self.ch_range_idx = ai_all_ranges.index(ch_range)
-            self.ch_polarity_idx = ai_all_polarities.index(ch_polarity)
+            self.ch_range_idx = ch_range#ai_all_ranges.index(ch_range)
+            self.ch_polarity_idx = ch_polarity
 ##                self.conv_func = ai_convertion_functions[self.ch_polarity_idx]
 ##                self.vect_conv_func = ai_vect_convertion_functions[self.ch_polarity_idx]
         except ValueError as e:
             print(str(e))
 
     def ai_name(self):
-        return ai_all_channels[self.ch_name_idx]
+        return AI_CHANNELS[self.ch_name_idx]
 
     def ai_is_enabled(self):
         return int(self.ch_enabled)>0
@@ -60,10 +66,10 @@ class AI_Channel:
         return self.ch_enabled
 
     def ai_range(self):
-        return ai_all_ranges[self.ch_range_idx]
+        return DAQ_RANGES[self.ch_range_idx]
 
     def ai_polarity(self):
-        return ai_all_polarities[self.ch_polarity_idx]
+        return POLARITIES[self.ch_polarity_idx]
 
     def from_tuple(tuple):
         return AI_Channel(tuple[0],tuple[1],tuple[2],tuple[3])
@@ -138,13 +144,13 @@ class AgilentU2542A:
         channel_list = [AI_CHANNELS[i] for i in channels]
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
 
-    ##SET UNIPOLAR TO CHANNELS
-    def daq_set_unipolar(self,channels):
-        self.daq_setpolarity(POLARITIES.UNIP,channels)
+##    ##SET UNIPOLAR TO CHANNELS
+##    def daq_set_unipolar(self,channels):
+##        self.daq_setpolarity(POLARITIES.UNIP,channels)
         
-    ##SET BIPOLAR TO CHANNELS
-    def daq_set_bipolar(self,channels):
-        self.daq_setpolarity(POLARITIES.BIP,channels)
+##    ##SET BIPOLAR TO CHANNELS
+##    def daq_set_bipolar(self,channels):
+##        self.daq_setpolarity(POLARITIES.BIP,channels)
 
     ##SET RANGE FOR CHANNELS
     ## range: type DAQ_RANGES
@@ -161,28 +167,26 @@ class AgilentU2542A:
         range_response = self.instrument.ask("ROUT:CHAN:RANG? {0}".format(channels))
         polarity_response = self.instrument.ask("ROUT:CHAN:POL? {0}".format(channels))
         enabled_response = self.instrument.ask("ROUT:ENAB? {0}".format(channels))
-        channel_range = range_response.split(',')
-        channel_polarity = polarity_response.split(',')
-        channel_enabled = enabled_response.split(',')
-        self.daq_channels = []
-        for i in range(4):
-            self.daq_channels.append(AI_Channel(ch_name = ai_all_channels[i], ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]))
-            print(self.daq_channels[i].ai_get_val_str())
+        channel_range = [DAQ_RANGES.values.index(rng) for rng in range_response.split(',')]
+        channel_polarity = [POLARITIES.values.index(pol) for pol in polarity_response.split(',') ]
+        channel_enabled = [STATES.value.index(en) for en in enabled_response.split(',')]
+        self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in range(AI_CHANNELS.indexes)]
+##        self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in range(AI_CHANNELS.indexes)]
+##            self.daq_channels.append()
+##            print(self.daq_channels[i].ai_get_val_str())
         self.enabled_ai_channels = self.daq_get_enabled_channels()
         n_enabled_ch = len(self.enabled_ai_channels)
         arr = np.arange(n_enabled_ch).reshape((n_enabled_ch,1))
         self.conversion_header = np.hstack((arr,np.asarray([ch.ai_get_valsIdx() for ch in self.enabled_ai_channels])))
         print( self.conversion_header )
+        
     ##GET ENABLED CHANNELS
     def daq_get_enabled_channels(self):### list( myBigList[i] for i in [87, 342, 217, 998, 500] )
-        result = []
-        for ch in self.daq_channels:
-            if ch.ai_is_enabled():
-                result.append(ch)        
-        return result
+        return [ch for ch in self.daq_channels if ch.ai_is_enabled()]
+
     ##RUN ACQUISITION
     def daq_run(self):
-        self.daq_init_channels()
+##        self.daq_init_channels()
         self.instrument.write("RUN")
 
     ##STOP ACQUISITION

@@ -19,3 +19,5 @@ dig_channel_bits = (8,8,4,4)
 DIGITAL_DIRECTIONS = enum("INP","OUTP")
 
 STATES = enum("OFF","ON")
+
+
