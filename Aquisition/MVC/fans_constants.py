@@ -2,14 +2,14 @@ from n_enum import enum
 from agilent_u2542a import *
 from agilent_u2542a_constants import *
 
-PGA_GAINS = enum("x1","x10","x100")
-FILTER_CUTOFF_FREQUENCIES = enum(*["f{0}k".format(i) for i in range(0,160,10)])
-FILTER_GAINS = enum(*["x{0}".format(i) for i in range(1,16)])
+PGA_GAINS = enum("1","10","100", name_prifix= "x")
+FILTER_CUTOFF_FREQUENCIES = enum(*["{0}".format(i) for i in range(0,160,10)], name_prefix="f")
+FILTER_GAINS = enum(*["{0}".format(i) for i in range(1,16)],name_prefix = "x")
 
 CS_HOLD = enum("ON", "OFF")
 
 AI_MODES = enum("DC","AC")
-AI_CHANNELS = enum("AI_1","AI_2","AI_3","AI_4")
+#AI_CHANNELS = enum("AI_1","AI_2","AI_3","AI_4")
 
 AI_SET_MODE_PULS_BIT = 0
 AI_SET_MODE_BIT = 1

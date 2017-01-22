@@ -145,6 +145,9 @@ class AgilentU2542A:
         channel_list = [AI_CHANNELS[i] for i in channels]
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
 
+    def daq_set_channel_polarity_(self,polarity,channel):
+        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],channel))
+    
 ##    ##SET UNIPOLAR TO CHANNELS
 ##    def daq_set_unipolar(self,channels):
 ##        self.daq_setpolarity(POLARITIES.UNIP,channels)
@@ -159,7 +162,11 @@ class AgilentU2542A:
     def daq_set_range(self,rang,channels):
         channel_list = [AI_CHANNELS[i] for i in channels]
         rng = DAQ_RANGES[rang]
-        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,channels))
+        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,",".join(channel_list)))
+
+    def daq_set_channel_range(self,rang, channel):
+        rng = DAQ_RANGES[rang]
+        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,AI_CHANNELS[channel])
         
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     ## reads range, polarity, and enable from device

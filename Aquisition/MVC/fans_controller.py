@@ -51,29 +51,31 @@ class FANS_controller:
 ##    ANALOG INPUT SECTION
 ##
     def _init_daq_ai_channels(self):
-        for channel in AI_CHANNELS.names:
-            en = STATE_ON
-            rng = Range_10
-            pol = Bipolar
-            ch = AI_CHANNELS.names.index(channel)
+        for channel in AI_CHANNELS.indexes:
+            en = STATES.ON
+            rng = DAQ_RANGES.RANGE_10
+            pol = POLARITIES.BIP
+            ch = channel
             self._set_daq_ai_channel_params(en,rng,pol,ch)
         ## 
         print("read back hardware params")
         self.device.daq_init_channels()
         
-
+    ## set parameters for daq hardware
+    ## ai_enabled: type STATES
+    ## ai_range: type DAQ_RANGES
+    ## ai_polarity: type POLARITIES
+    ## ai_channel: type AI_CHANNELS
     def _set_daq_ai_channel_params(self, ai_enabled, ai_range, ai_polarity, ai_channel):
+        self.device.daq_set_enable_ai_channels(ai_enabled,ai_channel)
+        self.device.daq_set_channel_range(ai_range, ai_channel)
+        self.device.daq_set_channel_polarity(ai_polarity,ai_channel)
 
-    ## issue with channel names
-        channel = ai_all_channels[ai_channel]
-        self.device.daq_set_channel_enable(ai_enabled,channel)
-        self.device.daq_set_range(ai_range, [channel])
-        self.device.daq_setpolarity(ai_polarity,[channel])
 
     def _init_fans_ai_channels(self):
         
         ## INITIALIZE FANS INPUT CHANNELS
-        for channel in range(len(AI_CHANNELS.names)):
+        for channel in AI_CHANNELS.indexes:
             ## create dummy variables
             ## need to replace by real values
             
@@ -92,21 +94,21 @@ class FANS_controller:
 ##        print(ai_channel)
         ## set channel selected
         ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
-        self.device.dig_write_channel(ai_channel, DIG_2)
+        self.device.dig_write_channel(ai_channel, DIGITAL_CHANNELS.DIG_502)
         ## set DC or AC position of relays
         ##print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
-        self.device.dig_write_bit_channel(ai_mode,AI_SET_MODE_BIT,DIG_4)#AI_MODE_VAL[mode]
-        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIG_4)
+        self.device.dig_write_bit_channel(ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
+        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
         
             
         ## set filter frequency and gain parameters
         filter_val = get_filter_value(ai_filter_gain,ai_filter_cutoff)
-        self.device.dig_write_channel(filter_val,DIG_1)
+        self.device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
 
         ## set pga params
         pga_val = get_pga_value(ai_pga_gain,ai_cs_hold)
-        self.device.dig_write_channel(pga_val, DIG_3)
-        self._pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIG_4)
+        self.device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
+        self._pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
             
         print("ch: {0} - set".format(ai_channel))
         
@@ -115,7 +117,7 @@ class FANS_controller:
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
         self.device.daq_setup(sample_rate,points_per_shot)
-        self.device.daq_enable_channels(channels)
+        self.device.daq_set_enable_ai_channels(channels)
 
     def start_acquisition(self):
         self.data_queue = JoinableQueue()
@@ -147,18 +149,18 @@ class FANS_controller:
 ##    ANALOG OUTPUT SECTION
 ##    
     def _init_daq_ao_channels(self):
-        for ch in range(len(AO_CHANNELS.names)):
-            polarity = Bipolar
-            enable = STATE_ON
+        for ch in AO_CHANNELS.indexes:
+            polarity = POLARITIES.BIP
+            enable = STATES.ON
             self._set_daq_ao_channel_params(enable,polarity,ch)
         ## set polarity
         ## set enable
        
         
     def _set_daq_ao_channel_params(self, ao_enable, ao_polarity, ao_channel):
-        channel = ao_all_channels[ao_channel]
-        self.device.daq_set_channel_enable(ao_enable,channel)
-        self.device.dac_set_polarity(ao_polarity, [channel])
+##        channel = ao_all_channels[ao_channel]
+        self.device.daq_set_enable_ao_channels(ao_enable,channel)
+        self.device.dac_set_polarity(ao_polarity, [ao_channel])
         
        
     def _set_output_channels(self,ao1_channel,ao2_channel):
@@ -172,8 +174,8 @@ class FANS_controller:
 ##        print("channels {0:08b}".format(channels))
         val_to_write = channels_enab|channels
         print("value to write {0:08b}".format(val_to_write))
-        self.device.dig_write_channel(val_to_write,DIG_1)
-        self._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIG_4)
+        self.device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
+        self._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
         
         
     def _init_fans_ao_channels(self):
