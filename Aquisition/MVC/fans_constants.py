@@ -2,7 +2,7 @@ from n_enum import enum
 from agilent_u2542a import *
 from agilent_u2542a_constants import *
 
-PGA_GAINS = enum("1","10","100", name_prifix= "x")
+PGA_GAINS = enum("1","10","100", name_prefix= "x")
 FILTER_CUTOFF_FREQUENCIES = enum(*["{0}".format(i) for i in range(0,160,10)], name_prefix="f")
 FILTER_GAINS = enum(*["{0}".format(i) for i in range(1,16)],name_prefix = "x")
 
@@ -18,17 +18,19 @@ AO_DAC_LETCH_PULS_BIT = 3
 
 AI_BOX_CHANNELS = enum(*["ai_ch_{0}".format(i) for i in range(1,9)])
 
-AO_CHANNELS = enum("AO_1","AO_2")
+##AO_CHANNELS = enum("AO_1","AO_2")
 
-BOX_AI_CHANNELS_MAP = {1: {"channel": AI_CHANNELS.AI_1,"mode": AI_MODES.AC},
-                       2: {"channel": AI_CHANNELS.AI_2,"mode": AI_MODES.AC},
-                       3: {"channel": AI_CHANNELS.AI_3,"mode": AI_MODES.AC},
-                       4: {"channel": AI_CHANNELS.AI_4,"mode": AI_MODES.AC},
-                       5: {"channel": AI_CHANNELS.AI_1,"mode": AI_MODES.DC},
-                       6: {"channel": AI_CHANNELS.AI_2,"mode": AI_MODES.DC},
-                       7: {"channel": AI_CHANNELS.AI_3,"mode": AI_MODES.DC},
-                       8: {"channel": AI_CHANNELS.AI_4,"mode": AI_MODES.DC}
+BOX_AI_CHANNELS_MAP = {1: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.AC},
+                       2: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.AC},
+                       3: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.AC},
+                       4: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.AC},
+                       5: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.DC},
+                       6: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.DC},
+                       7: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.DC},
+                       8: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.DC}
                        }
+
+BOX_AO_CHANNEL_MAP = dict((i , AO_CHANNELS.AO_201 if i<8 else AO_CHANNELS.AO_202)  for i in range(16))
 
 A0_BOX_CHANNELS = enum(*["ao_ch_{0}".format(i) for i in range(1,17)])
 
@@ -36,18 +38,22 @@ A0_BOX_CHANNELS = enum(*["ao_ch_{0}".format(i) for i in range(1,17)])
 def get_fans_ai_channel_default_params():
     return {
         'mode': AI_MODES.DC,
-        'filter_cutoff': FILTER_CUTOFF_FREQUENCIES.f100k,
+        'filter_cutoff': FILTER_CUTOFF_FREQUENCIES.f100,
         'filter_gain': FILTER_GAINS.x1,
         'pga_gain':PGA_GAINS.x1,
-        'cs_hold':CS_HOLD.ON
+        'cs_hold':CS_HOLD.ON,
+        'enabled' : STATES.ON,
+        'range': DAQ_RANGES.RANGE_10,
+        'polarity': POLARITIES.BIP
         }
 
-def get_ao_channel_default_params():
+def get_fans_ao_channel_default_params():
     return {
         'selected_output':0,
         'voltage':0,
-        'polarity': Bipolar
-        
+        'polarity': POLARITIES.BIP,
+        'range': DAQ_RANGES.RANGE_10,
+        'enabled': STATES.ON
             }
 
 
@@ -66,4 +72,6 @@ def get_pga_value(pga_gain, cs_hold):
     return val
 
 
-
+print(BOX_AO_CHANNEL_MAP)
+print(BOX_AO_CHANNEL_MAP[13])
+print(BOX_AO_CHANNEL_MAP[4])

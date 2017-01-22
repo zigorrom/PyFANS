@@ -130,32 +130,41 @@ class AgilentU2542A:
         ## self.instrument.write("ROUT:ENAB ON,(@{0})".format( ",".join(channel_list)))
         ## self.daq_init_channels()
 
+    def daq_set_enable_ai_channel(self,state,channel):
+        ai_channel = [AI_CHANNELS[channel]]
+        self.daq_set_enable_channels(state,ai_channel)
+
     ## ENABLE ANALOG IN CHANNELS
     ##  state: type STATES
     ##  channels: list of channels from AO_CHANNELS
     def daq_set_enable_ao_channels(self,state,channels):
         channel_list = [AO_CHANNELS[i] for i in AO_CHANNELS.indexes]
         self.daq_set_enable_channels(state, channel_list)
-                               
+
+    def daq_set_enable_ao_channel(self,state,channel):
+        ao_channel = [AO_CHANNELS[channel]]
+        self.daq_set_enable_channels(state, ao_channel)       
         
     ##SET POLARITY FOR CHANNELS
     ## polarity: type POLARITIES
     ## channels: type list of channels from AI_CHANNELS
-    def daq_setpolarity(self,polarity, channels):
+    def daq_set_ai_polarity(self,polarity, channels):
         channel_list = [AI_CHANNELS[i] for i in channels]
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
 
-    def daq_set_channel_polarity_(self,polarity,channel):
+    def daq_set_ai_channel_polarity(self, polarity, channel):
+        self.daq_set_ai_polarity(polarity,[channel])
+
+    def daq_set_ao_polarity(self,polarity, channels):
+        channel_list = [AO_CHANNELS[i] for i in channels]
+        self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
+
+    def daq_set_ao_channel_polarity(self, polarity, channel):
+        self.daq_set_ai_polarity(polarity,[channel])
+    
+    def daq_set_channel_polarity(self,polarity,channel):
         self.instrument.write("ROUT:CHAN:POL {0}, (@{1})".format(POLARITIES[polarity],channel))
     
-##    ##SET UNIPOLAR TO CHANNELS
-##    def daq_set_unipolar(self,channels):
-##        self.daq_setpolarity(POLARITIES.UNIP,channels)
-        
-##    ##SET BIPOLAR TO CHANNELS
-##    def daq_set_bipolar(self,channels):
-##        self.daq_setpolarity(POLARITIES.BIP,channels)
-
     ##SET RANGE FOR CHANNELS
     ## range: type DAQ_RANGES
     ## channels: type list of channels from AI_CHANNELS
@@ -166,7 +175,7 @@ class AgilentU2542A:
 
     def daq_set_channel_range(self,rang, channel):
         rng = DAQ_RANGES[rang]
-        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,AI_CHANNELS[channel])
+        self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,AI_CHANNELS[channel]))
         
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
     ## reads range, polarity, and enable from device
@@ -178,8 +187,8 @@ class AgilentU2542A:
         enabled_response = self.instrument.ask("ROUT:ENAB? {0}".format(channels))
         channel_range = [DAQ_RANGES.values.index(rng) for rng in range_response.split(',')]
         channel_polarity = [POLARITIES.values.index(pol) for pol in polarity_response.split(',') ]
-        channel_enabled = [STATES.value.index(en) for en in enabled_response.split(',')]
-        self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in range(AI_CHANNELS.indexes)]
+        channel_enabled = [en for en in enabled_response.split(',')]
+        self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in AI_CHANNELS.indexes]
         self.enabled_ai_channels = self.daq_get_enabled_channels()
         n_enabled_ch = len(self.enabled_ai_channels)
         arr = np.arange(n_enabled_ch).reshape((n_enabled_ch,1))
@@ -327,8 +336,11 @@ class AgilentU2542A:
         self.instrument.write("OUTPUT {0}".format(STATES[state]))
     
     def dac_source_voltage(self, value, channels):
+##        self.dac_set_output(STATES.OFF)
         channel_list = [AO_CHANNELS[i] for i in channels]
         self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,",".join(channel_list)))
+
+    
 
     def dac_set_polarity(self,polarity,channels):
         channel_list = [AO_CHANNELS[i] for i in channels]

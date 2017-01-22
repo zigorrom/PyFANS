@@ -32,6 +32,7 @@ class Acquisition(Process):
         
         try:
             d = AgilentU2542A(self.visa_resource)
+            d.daq_init_channels()
             counter = 0
             fs = self.sample_rate
             npoints = self.points_per_shot
