@@ -89,6 +89,7 @@ class AgilentU2542A:
         self.conversion_header = None
         self.daq_channels = []
 ##        print(self.daq_idn())
+
     def daq_idn(self):
         return self.instrument.ask("*IDN?")
 
@@ -161,9 +162,10 @@ class AgilentU2542A:
         self.instrument.write("ROUT:RANG {0}, (@{1})".format(rng,channels))
         
     ##READ PARAMETERS FROM DEVICE AND INITIALIZE SOFTWARE CHANNELS
+    ## reads range, polarity, and enable from device
     def daq_init_channels(self):
         
-        channels = "(@101:104)"
+        channels = "(@101:104)" 
         range_response = self.instrument.ask("ROUT:CHAN:RANG? {0}".format(channels))
         polarity_response = self.instrument.ask("ROUT:CHAN:POL? {0}".format(channels))
         enabled_response = self.instrument.ask("ROUT:ENAB? {0}".format(channels))
@@ -171,9 +173,6 @@ class AgilentU2542A:
         channel_polarity = [POLARITIES.values.index(pol) for pol in polarity_response.split(',') ]
         channel_enabled = [STATES.value.index(en) for en in enabled_response.split(',')]
         self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in range(AI_CHANNELS.indexes)]
-##        self.daq_channels = [AI_Channel(ch_name = i, ch_enabled=channel_enabled[i],ch_range = channel_range[i],ch_polarity = channel_polarity[i]) for i in range(AI_CHANNELS.indexes)]
-##            self.daq_channels.append()
-##            print(self.daq_channels[i].ai_get_val_str())
         self.enabled_ai_channels = self.daq_get_enabled_channels()
         n_enabled_ch = len(self.enabled_ai_channels)
         arr = np.arange(n_enabled_ch).reshape((n_enabled_ch,1))
@@ -181,21 +180,29 @@ class AgilentU2542A:
         print( self.conversion_header )
         
     ##GET ENABLED CHANNELS
+    ## returns the list of enabled channels
     def daq_get_enabled_channels(self):### list( myBigList[i] for i in [87, 342, 217, 998, 500] )
         return [ch for ch in self.daq_channels if ch.ai_is_enabled()]
 
     ##RUN ACQUISITION
+    ## starts the acquisition process
     def daq_run(self):
 ##        self.daq_init_channels()
         self.instrument.write("RUN")
 
     ##STOP ACQUISITION
+    ## stops the acquisition process
     def daq_stop(self):
         self.instrument.write("STOP")
+        
     ##GET ACQUISITION STATUS
+    ## gets status of acquisition
     def daq_get_status(self):
         return self.instrument.ask("WAV:STAT?")
+    
     ##CHECK IF DATA IS READY
+    ## check if data ready to read
+    ## if overloaded throws overload exception
     def daq_is_data_ready(self):
         r = self.instrument.ask("WAV:STAT?")
         if r== "DATA":
@@ -203,12 +210,15 @@ class AgilentU2542A:
         elif r == "OVER":
             raise Exception('overload')
         return False
+    
     ##READ RAW DATA
+    ## return raw data
     def daq_read_raw(self):
         self.instrument.write("WAV:DATA?")
         return self.instrument.read_raw()
 
     ##READ DATA AS FLOAT
+    ## returns array of converted data by channels
     def daq_read_data(self):
         self.instrument.write("WAV:DATA?")
         raw_data = self.instrument.read_raw()
@@ -226,23 +236,7 @@ class AgilentU2542A:
 ##        res_fft = np.apply_along_axis(signal.periodogram,1,narr,fs = 500000)
         return res
 
-##    def daq_single_channel_read_data(self):
-##        self.instrument.write("WAV:DATA?")
-##        raw_data = self.instrument.read_raw()
-##        len_from_header = int(raw_data[2:10])
-##        data = raw_data[10:]
-####        enabled_channels = self.enabled_ai_channels
-####        nchan = len(enabled_channels)
-####        print("nchan {0}".format(nchan))
-##        narr = np.fromstring(data, dtype = '<i2')
-##        print(len(narr))
-##        single_channel_data_len = int(narr.size/nchan)
-##        narr = np.hstack((self.conversion_header, narr.reshape((single_channel_data_len,nchan)).transpose()))
-##        print(len(narr))
-##        res = np.apply_along_axis(Convertion,1,narr)
-####        res_fft = np.apply_along_axis(signal.periodogram,1,narr,fs = 500000)
-##        return res
-
+    ## single shot acquisition
     def daq_single_shot_read_data(self):
         self.instrument.write("DIG")
         while self.instrument.ask("WAV:COMP?")=="NO":
@@ -257,68 +251,81 @@ class AgilentU2542A:
 ##
 ##  SET - MEASURE REGION
 ##    
-
+    
     def dig_set_direction(self,direction,channels):
-        self.instrument.write("CONF:DIG:DIR {0},(@{1})".format(direction, ",".join(channels)))
+        channel_list = [DIGITAL_CHANNELS[i] for i in channels]
+        self.instrument.write("CONF:DIG:DIR {0},(@{1})".format(DIGITAL_DIRECTIONS[direction], ",".join(channel_list)))
 
     def dig_write_channels(self,data,channels):
-        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channels)))
+        channel_list = [DIGITAL_CHANNELS[i] for i in channels]
+        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,",".join(channel_list)))
 
     def dig_write_channel(self,data,channel):
 ##        print(data)
 ##        print(channel)
-        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,channel))
+        self.instrument.write("SOUR:DIG:DATA {0},(@{1})".format(data,DIGITAL_CHANNELS[channel]))
                               
     def dig_write_bit_channels(self,value,bit,channels):
-        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,",".join(channels))
+        channel_list = [DIGITAL_CHANNELS[i] for i in channels]
+        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,",".join(channel_list))
         print(msg)
         self.instrument.write(msg)
         
     def dig_write_bit_channel(self,value,bit,channel):
-        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,channel)
+        msg =  "SOUR:DIG:DATA:BIT {0}, {1}, (@{2})".format(value,bit,DIGITAL_CHANNELS[channel])
 ##        print("writing value {0} to bit{1}".format(value,bit))
         self.instrument.write(msg)
 
+
+    def dig_measure(self,channels):
+        channel_list = [DIGITAL_CHANNELS[i] for i in channels]
+        vals = self.instrument.ask("MEAS:DIG? (@{0})".format(",".join(channel_list))).split(',')
+        if len(vals) != len(channel_list):
+            raise Exception("non equal lengths")
+        res = {ch: vals[ch] for ch in channel_list}
+        return res
+
+    def dig_bit_measure(self,bit,channels):
+        channel_list = [DIGITAL_CHANNELS[i] for i in channels]
+        vals = self.instrument.ask("MEAS:DIG:BIT? {0}, (@{1})".format(bit,",".join(channel_list))).split(',')
+        if len(vals) != len(channels):
+            raise Exception("non equal lengths")
+        res = {ch: vals[ch] for ch in channel_list}
+        return res
+
     def adc_set_voltage_range(self,rang,channels):
-        self.instrument.write("VOLT:RANG {0}, (@{1})".format(rang,",".join(channels)))
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        self.instrument.write("VOLT:RANG {0}, (@{1})".format(DAQ_RANGES[rang],",".join(channel_list)))
 
     def adc_set_voltage_polarity(self,pol,channels):
-        self.instrument.write("VOLT:POL {0}, (@{1})".format(pol,",".join(channels)))
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        self.instrument.write("VOLT:POL {0}, (@{1})".format(POLARITIES[pol],",".join(channel_list)))
 
     def adc_set_voltage_average(self,aver):
         self.instrument.write("VOLT:AVER {0}".format(aver))
     
     def adc_measure(self,channels):
-        vals = self.instrument.ask("MEAS? (@{0})".format(",".join(channels))).split(',')
-        if len(vals) != len(channels):
+        channel_list = [AI_CHANNELS[i] for i in channels]
+        vals = self.instrument.ask("MEAS? (@{0})".format(",".join(channel_list))).split(',')
+        if len(vals) != len(channel_list):
             raise Exception("non equal lengths")
-        res = { ch: val for ch in channels for val in vals }
+##        res = { ch: val for ch in channels for val in vals }
+        res = {ch: vals[ch] for ch in channel_list}
         return res
 
-    def dig_measure(self,channels):
-        vals = self.instrument.ask("MEAS:DIG? (@{0})".format(",".join(channels))).split(',')
-        if len(vals) != len(channels):
-            raise Exception("non equal lengths")
-        res = {ch: val for ch in channels for val in vals}
-        return res
-
-    def dig_bit_measure(self,bit,channels):
-        vals = self.instrument.ask("MEAS:DIG:BIT? {0}, (@{1})".format(bit,",".join(channels))).split(',')
-        if len(vals) != len(channels):
-            raise Exception("non equal lengths")
-        res = {ch: val for ch in channels for val in vals}
-        return res
+    
 
     
     def dac_set_output(self, state):
-        if state in states:
-            self.instrument.write("OUTPUT {0}".format(state))
+        self.instrument.write("OUTPUT {0}".format(STATES[state]))
     
     def dac_source_voltage(self, value, channels):
-        self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,",".join(channels)))
+        channel_list = [AO_CHANNELS[i] for i in channels]
+        self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,",".join(channel_list)))
 
     def dac_set_polarity(self,polarity,channels):
-        self.instrument.write("SOUR:VOLT:POL {0}, (@{1})".format(polarity,",".join(channels)))
+        channel_list = [AO_CHANNELS[i] for i in channels]
+        self.instrument.write("SOUR:VOLT:POL {0}, (@{1})".format(POLARITIES[polarity],",".join(channel_list)))
 
 ##
 ##  END SET - MEASURE REGION
