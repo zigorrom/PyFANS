@@ -106,7 +106,8 @@ def perform_analysis(fn, ns, s, e, sigma):
     
     n_files = len(data)
     n_files_counter = 0
-    for meas in data:
+    for i in range(s,e):
+        meas = data[i]
         n_files_counter += 1
         print("File: {0}/{1}".format(n_files_counter,n_files))
         short_filename = meas[MEAS_DATA_FN_COL]
