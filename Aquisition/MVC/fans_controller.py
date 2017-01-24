@@ -163,12 +163,20 @@ class FANS_controller:
         self.device.daq_set_ao_channel_polarity(ao_polarity, ao_channel)
         
        
-    def _set_output_channels(self,ao1_channel,ao2_channel):
-        ao1_enable = 1<<3
-        ao2_enable = 1<<7
+    def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
+        ao1_enable_bit_mask = 1<<3
+        ao1_disable_bit_mask = ~ao1_enable_bit_mask
+        ao2_enable_bit_mask = 1<<7
+        ao2_disable_bit_mask = ~ao2_enable_bit_mask
+        
 ##        print("ao1_enable {0:08b}".format(ao1_enable))
 ##        print("ao2_enable {0:08b}".format(ao2_enable))
-        channels_enab = ao1_enable | ao2_enable
+        channels_enab = ao1_enable_bit_mask | ao2_enable_bit_mask
+        if not ao1_enabled:
+            channels_enab = channels_enab&ao1_disable_bit_mask
+        if not ao2_enabled:
+            channels_enab = channels_enab&ao2_disable_bit_mask
+
 ##        print("enable {0:08b}".format(channels_enab))
         channels = (ao2_channel<<4)|ao1_channel
 ##        print("channels {0:08b}".format(channels))
@@ -180,7 +188,7 @@ class FANS_controller:
         
     def _init_fans_ao_channels(self):
         ## set fans output for hardware channel
-        self._set_output_channels(0,0)
+        self._set_output_channels(0,True,0,True)
         
         
     
@@ -188,17 +196,15 @@ class FANS_controller:
     def _set_fans_ao_channel_params(self, enable, polarity, channel ):
         pass
 
+    def fans_output_channel_voltage(self,voltage,channel):
+        self.device.dac_source_channel_voltage(voltage,channel)
 
-    def fans_output_voltage(self, voltage):#, box_ao_channels):
+    def fans_output_voltage(self, ao1_voltage, ao2_voltage ):#, box_ao_channels):
         ## ON
-##        if len(box_ao_channels)>len(AO_CHANNELS.indexes)
-##            raise Exception("too much channels to set voltage")
-##        
-##        daq_ao_channels = [BOX_AO_CHANNEL_MAP[i] for i in box_ao_channels]
-        
-        
 
-        self.device.dac_source_voltage(voltage,AO_CHANNELS.indexes)
+        
+        self.device.dac_source_channel_voltage(ao1_voltage,AO_CHANNELS.AO_201)
+        self.device.dac_source_channel_voltage(ao2_voltage,AO_CHANNELS.AO_202)
 ##        time.sleep(20)
 ##        ## OFF
 ##        self.device.dac_source_voltage(0,ao_all_channels)
@@ -212,6 +218,7 @@ class FANS_controller:
 ##        since we need them only to control the FANS box
         self.device.dig_set_direction(DIGITAL_DIRECTIONS.OUTP,DIGITAL_CHANNELS.indexes)
 
+
     def _pulse_digital_bit(self,bit,channel,pulse_width=0.005):
         self.device.dig_write_bit_channel(1,bit,channel)
         time.sleep(pulse_width)
@@ -223,15 +230,17 @@ def main():
 ##    cfg = Configuration()
     f = FANS_controller("ADC")#,configuration = cfg)
     f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
-    f.fans_output_voltage(0)
+    f.fans_output_voltage(0,0)
     time.sleep(2)
-    f.fans_output_voltage(6)
+    f.fans_output_voltage(6,-6)
     time.sleep(2)
-    f.fans_output_voltage(0)
+    f.fans_output_voltage(0,4)
     time.sleep(2)
-    f.fans_output_voltage(-6)
+    f.fans_output_voltage(-6,6)
     time.sleep(2)
-    f.fans_output_voltage(0)
+    f.fans_output_voltage(4,0)
+    time.sleep(2)
+    f.fans_output_voltage(0,0)
 ##    f.start_acquisition()
 ####    sleep(1)
 ##    try:
