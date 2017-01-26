@@ -16,6 +16,9 @@ class FANS_controller:
         self.data_queue = None
         self.config = configuration
 
+##        subscribe to all events in configuration changes
+
+
         ## INITIALIZE VALUES FOR OUTPUT CHANNELS
         self.ao_channel_params = dict((ch,get_fans_ao_channel_default_params()) for ch in AO_CHANNELS.indexes)
         self.ai_channel_params = dict((ch,get_fans_ai_channel_default_params()) for ch in AI_CHANNELS.indexes)

@@ -1,7 +1,7 @@
 import os
 ##from nXmlNodeSerializer
 from nodes import *
-
+from xml_serializer import XmlNodeSerializer
 configuration_filename = "config.xml"
 
 class Configuration(object):

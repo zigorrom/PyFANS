@@ -3,7 +3,7 @@ from xml_highlighter import XMLHighlighter
 from nodes import *
 import sys
 from node_configuration import Configuration 
-
+from xml_serializer import XmlNodeSerializer
 
 class SettingsModel(QtCore.QAbstractItemModel):
 
