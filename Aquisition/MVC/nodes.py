@@ -134,7 +134,8 @@ class LabelNode(Node):
         def fget(self): return self._label
         def fset(self,value): self._label = value
         return locals()
-    label= property(**label())
+    label= notifiable_property("label",**label())
+##    label= property(**label())
     
 
     def data(self,column):
@@ -168,8 +169,8 @@ class NumericNode(Node):
         def fget(self): return self._value
         def fset(self,val): self._value = val 
         return locals()
-    value = property(**value())
-    
+    value = notifiable_property("value",**value())
+##    value = property(**value()
 
     def data(self,column):
         r = super(NumericNode,self).data(column)
@@ -197,7 +198,8 @@ class CheckNode(Node):
         def fget(self): return self._checked
         def fset(self,value): self._checked = value
         return locals()
-    checked = property(**checked())
+    checked = notifiable_property("checked",**checked())
+##    checked = property(**checked())
 
     def data(self,column):
         r = super(CheckNode,self).data(column)
@@ -229,7 +231,8 @@ class ComboNode(Node):
         def fget(self):return self._selectedIndex
         def fset(self,value): self._selectedIndex = value
         return locals()
-    selectedIndex = property(**selectedIndex())
+    selectedIndex = notifiable_property("selected_index",**selectedIndex())
+##    selectedIndex = property(**selectedIndex())
 
 ##    def selectedValue():
 ##        def fget(self):return self._selectedValue
@@ -243,7 +246,8 @@ class ComboNode(Node):
         def fget(self): return self._case_list
         def fset(self,value): self._case_list = value
         return locals()
-    case_list = property(**case_list())
+    case_list = notifiable_property("case_list", **case_list())
+##    case_list = property(**case_list())
     
     
     def data(self,column):

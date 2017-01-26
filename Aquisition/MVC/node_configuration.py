@@ -180,9 +180,9 @@ def main():
     c = Configuration()
     root = c.get_root_node()
     print(root)
-    path = "ch1.enabled"
-    c.set_binding(path,"name",name_changed)
+    path = "input_settings.ch1.enabled"
 ##    c.set_binding(path,"name",name_changed)
+    c.set_binding(path,"name",name_changed)
     node = c.get_node_from_path(path)
 ##    node.addObserver("name",name_changed)
     print(node)
