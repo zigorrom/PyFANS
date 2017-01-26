@@ -165,14 +165,29 @@ class Configuration(object):
         ComboNode("function",parent=  och2)
 
         return rootNode
-    
+
+    def set_binding(self,path, property_name,callback):
+        node = self.get_node_from_path(path)
+        if node is not None:
+            node.addObserver(property_name,callback)
+
+            
+
+def name_changed(value):
+    print("from callback {0}".format(value))
 
 def main():
     c = Configuration()
     root = c.get_root_node()
     print(root)
     path = "ch1.enabled"
+    c.set_binding(path,"name",name_changed)
+##    c.set_binding(path,"name",name_changed)
     node = c.get_node_from_path(path)
+##    node.addObserver("name",name_changed)
+    print(node)
+    node.name = "asfgashfglkgkg"
+    print("_________")
     print(node)
 ##    if os.path.isfile(configuration_filename):
 ##        print("file exist")

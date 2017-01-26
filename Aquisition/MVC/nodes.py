@@ -1,8 +1,8 @@
 
-
+from binding import Observable,notifiable_property
            
-
-class Node(object):
+##class Node(object):
+class Node(Observable):
     def __init__(self, name = "unknown", parent=None):
         
         super(Node, self).__init__()
@@ -51,7 +51,8 @@ class Node(object):
         def fget(self):return self._name
         def fset(self,value):self._name = value
         return locals()
-    name = property(**name())
+    name = notifiable_property("name",**name())
+##    name = property(**name())
 
     def child(self, row):
         return self._children[row]

@@ -6,6 +6,7 @@
 
 class Observable(object):
     def __init__(self):
+##        print("init observable")
         self.__observers = {}
 
     def addObserver(self, methodName, observer):
@@ -18,15 +19,40 @@ class Observable(object):
                 o(*arg, **kw)
 
 
-def property_changed_event(prop):
-    def _modified_property(obj,*arg,**kw):
-        prop(obj,*arg,**kw)
-        obj._Observable.__fireCallbacks(prop.__name__,*arg,**kw)
+def notifiable_property(name = None ,fget = None, fset = None,fdel = None, doc = None):
+    def _mfset(self, value):
+        _name = name
+        if fget(self) != value:
+            fset(self,value)
+            self._Observable__fireCallbacks(_name,value)
+            
+    return property(fget,_mfset,fdel,doc)
 
-    return _modified_property
 
+class a(Observable):
+    def __init__(self):
+        Observable.__init__(self)
+        print("init a")
+        self.__name = "dkgfashgf"
 
-p = 
+    def name():
+        def fget(self): return self.__name
+        def fset(self,value): self.__name = value
+        return locals()
+    
+    name = notifiable_property("new name",**name())
 
     
+
+def cb(value):
+    print("from callback: {0}".format(value))
+    
+
+val = a()
+val.addObserver("new name",cb)
+print(val.name)
+val.name = "123123"
+print("check")
+val.name = "123123"
+
     
