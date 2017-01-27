@@ -90,7 +90,7 @@ class Configuration(object):
             return None
         root = self.rootNode
         relativeRoot = self._fing_current_node(root,path_list[0])
-        print(relativeRoot)
+        #print(relativeRoot)
             
         if relativeRoot is None:
             return None
@@ -103,6 +103,7 @@ class Configuration(object):
         return node
             
     
+        
     def _get_default_tree(self):
         rootNode = Node("Settings")
         ##Settings
@@ -123,6 +124,7 @@ class Configuration(object):
         ComboNode("range", case_list=['One','Two','Three'], parent = ch1)
         ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = ch1)
         ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  ch1)
+        
 
 
         ch2 = InChannelNode("ch2",inp_settings)
@@ -173,8 +175,9 @@ class Configuration(object):
 
             
 
-def name_changed(value):
-    print("from callback {0}".format(value))
+def name_changed(selfvalue):
+        
+        print("from callback {0}".format(value))
 
 def main():
     c = Configuration()

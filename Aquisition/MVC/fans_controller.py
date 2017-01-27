@@ -6,6 +6,8 @@ from agilent_u2542a_constants import *
 from node_configuration import Configuration
 from multiprocessing import Process, Event, JoinableQueue
 from acquisition_process import Acquisition,AcquisitionProcess
+from PyQt4 import QtCore, QtGui
+from settings import WndTutorial
 
 
 class FANS_controller:
@@ -17,6 +19,7 @@ class FANS_controller:
         self.config = configuration
 
 ##        subscribe to all events in configuration changes
+        self.initialize_configuration()
 
 
         ## INITIALIZE VALUES FOR OUTPUT CHANNELS
@@ -29,6 +32,16 @@ class FANS_controller:
 ##        self.config = Configuration()
 ##        print(self.config.get_root_node())
         self.initialize_hardware()
+
+
+    def ch_ch(self,value,sender):
+        print("value changed")
+        print(sender)
+        print(value)
+            
+
+    def initialize_configuration(self):
+        self.config.set_binding("input_settings.ch1.enabled","checked",self.ch_ch)
 
     def initialize_hardware(self):
         ## CALL DIG DAQ HARDWARE INITIALIZATION
@@ -230,20 +243,27 @@ class FANS_controller:
     
 
 def main():
-##    cfg = Configuration()
-    f = FANS_controller("ADC")#,configuration = cfg)
+    cfg = Configuration()
+    f = FANS_controller("ADC",configuration = cfg)
     f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
-    f.fans_output_voltage(0,0)
-    time.sleep(2)
-    f.fans_output_voltage(6,-6)
-    time.sleep(2)
-    f.fans_output_voltage(0,4)
-    time.sleep(2)
-    f.fans_output_voltage(-6,6)
-    time.sleep(2)
-    f.fans_output_voltage(4,0)
-    time.sleep(2)
-    f.fans_output_voltage(0,0)
+
+    app = QtGui.QApplication(sys.argv)
+    app.setStyle("cleanlooks")
+    
+    wnd = WndTutorial(configuration = cfg)
+    wnd.show()
+    sys.exit(app.exec_())
+##    f.fans_output_voltage(0,0)
+##    time.sleep(2)
+##    f.fans_output_voltage(6,-6)
+##    time.sleep(2)
+##    f.fans_output_voltage(0,4)
+##    time.sleep(2)
+##    f.fans_output_voltage(-6,6)
+##    time.sleep(2)
+##    f.fans_output_voltage(4,0)
+##    time.sleep(2)
+##    f.fans_output_voltage(0,0)
 ##    f.start_acquisition()
 ####    sleep(1)
 ##    try:

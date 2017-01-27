@@ -185,18 +185,22 @@ class WndTutorial(base,form):
         xml = s.serialize(self._rootNode)
         self.ui_xml.setPlainText(xml)
         node = s.deserialize(xml)
-        print("\n"*3)
-        print("AFTER DESERIALIZATION")
-        print(node)
+##        print("\n"*3)
+##        print("AFTER DESERIALIZATION")
+##        print(node)
 
         self.config.save_config()
             
         
 
-    def __init__(self,parent = None):
+    def __init__(self,configuration = None,parent = None):
         super(base,self).__init__(parent)
         self.setupUi(self)
-        self.config = Configuration()
+        if configuration is None:
+            self.config = Configuration()
+        else:
+            self.config = configuration
+            
         self._rootNode = self.config.get_root_node()
 
         self._proxyModel = QtGui.QSortFilterProxyModel(self)

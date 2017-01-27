@@ -24,7 +24,7 @@ def notifiable_property(name = None ,fget = None, fset = None,fdel = None, doc =
         _name = name
         if fget(self) != value:
             fset(self,value)
-            self._Observable__fireCallbacks(_name,value)
+            self._Observable__fireCallbacks(_name,value, sender = self)
             
     return property(fget,_mfset,fdel,doc)
 
@@ -44,15 +44,22 @@ class a(Observable):
 
     
 
-def cb(value):
+def cb(value,sender):
+    print(sender)
     print("from callback: {0}".format(value))
-    
 
-val = a()
-val.addObserver("new name",cb)
-print(val.name)
-val.name = "123123"
-print("check")
-val.name = "123123"
+def main():
+    val = a()
+    val.addObserver("new name",cb)
+    print(val.name)
+    val.name = "123123"
+    print("check")
+    val.name = "123123"
+
+
+
+
+if __name__ == "__main__":
+    main()
 
     

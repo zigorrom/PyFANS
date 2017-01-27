@@ -3,50 +3,50 @@
         <NUMERIC name="sample_rate" value="10"/>
         <NUMERIC name="points_per_shot" value="10"/>
         <CHECK name="homemade_amplifier" checked="0"/>
-        <COMBO name="pga_gain" selectedIndex="0" case_list="list[]"/>
-        <COMBO name="filter_gain" selectedIndex="0" case_list="list[]"/>
-        <COMBO name="filter_cutoff" selectedIndex="0" case_list="list[]"/>
+        <COMBO selectedIndex="0" case_list="list[]" name="pga_gain"/>
+        <COMBO selectedIndex="0" case_list="list[]" name="filter_gain"/>
+        <COMBO selectedIndex="0" case_list="list[]" name="filter_cutoff"/>
     </ACQUISITION_SETTINGS>
     <NODE name="input_settings">
         <IN_CHANNEL name="ch1">
             <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[One,Two,Three]"/>
-            <COMBO name="polarity" selectedIndex="0" case_list="list[Unipolar,Bipolar]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[Vds,Vlg,Vbg]"/>
+            <COMBO selectedIndex="0" case_list="list[One,Two,Three]" name="range"/>
+            <COMBO selectedIndex="0" case_list="list[Unipolar,Bipolar]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[Vds,Vlg,Vbg]" name="function"/>
         </IN_CHANNEL>
         <IN_CHANNEL name="ch2">
             <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[One,Two,Three]"/>
-            <COMBO name="polarity" selectedIndex="1" case_list="list[Unipolar,Bipolar]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[Vds,Vlg,Vbg]"/>
+            <COMBO selectedIndex="0" case_list="list[One,Two,Three]" name="range"/>
+            <COMBO selectedIndex="1" case_list="list[Unipolar,Bipolar]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[Vds,Vlg,Vbg]" name="function"/>
         </IN_CHANNEL>
         <IN_CHANNEL name="ch3">
             <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[One,Two,Three]"/>
-            <COMBO name="polarity" selectedIndex="0" case_list="list[Unipolar,Bipolar]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[Vds,Vlg,Vbg]"/>
+            <COMBO selectedIndex="0" case_list="list[One,Two,Three]" name="range"/>
+            <COMBO selectedIndex="0" case_list="list[Unipolar,Bipolar]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[Vds,Vlg,Vbg]" name="function"/>
         </IN_CHANNEL>
         <IN_CHANNEL name="ch4">
-            <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[One,Two,Three]"/>
-            <COMBO name="polarity" selectedIndex="0" case_list="list[Unipolar,Bipolar]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[Vds,Vlg,Vbg]"/>
+            <CHECK name="enabled" checked="1"/>
+            <COMBO selectedIndex="0" case_list="list[One,Two,Three]" name="range"/>
+            <COMBO selectedIndex="0" case_list="list[Unipolar,Bipolar]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[Vds,Vlg,Vbg]" name="function"/>
         </IN_CHANNEL>
     </NODE>
     <NODE name="out_settings">
         <OUT_CHANNEL name="och1">
             <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="polarity" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="out_pin" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[]"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="range"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="out_pin"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="function"/>
         </OUT_CHANNEL>
         <OUT_CHANNEL name="och2">
             <CHECK name="enabled" checked="0"/>
-            <COMBO name="range" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="polarity" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="out_pin" selectedIndex="0" case_list="list[]"/>
-            <COMBO name="function" selectedIndex="0" case_list="list[]"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="range"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="polarity"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="out_pin"/>
+            <COMBO selectedIndex="0" case_list="list[]" name="function"/>
         </OUT_CHANNEL>
     </NODE>
 </NODE>
