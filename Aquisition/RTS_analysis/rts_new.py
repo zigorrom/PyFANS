@@ -106,33 +106,143 @@ from itertools import zip_longest
 ##
 ##def perform_parse():
 ##    pass
+def remove_peeks(array, treshold = 1e-6):
+    L = len(array)
+    result = np.zeros(L)
+    for i in range(1,L-1):
+        point_aver = (array[i-1]+array[i+1])/2
+        if abs(point_aver - array[i])>treshold:
+            result[i] = point_aver
+    return result
 
+def create_window(name,length):
+    pass
 
+def get_level_by_amplitude(level_items, amplitude, treshold):
+    res = (None,0)
+    if not level_items:
+        return res
+
+    for i in range(len(level_items)):
+        if abs(level_items[i]["amp"]-amplitude)<treshold :
+            res = (level_items[i], i)
+
+    return res
+
+    
+def calculate_levels(current_arr,treshold, wnd):
+
+    L = len(current_arr)
+    wnd_len = len(wnd)
+    if wnd_len % 2 >0:
+        return 
+    half_wnd_len = int(wnd_len/2)
+
+    print("half wnd len {0}".format(half_wnd_len))
+    l_weights = wnd[:half_wnd_len]
+    r_weights = wnd[half_wnd_len:]
+    
+    result = np.zeros(L,dtype=np.uint8)
+    
+    left_avg = 0
+    right_arv = 0
+    prev_val = 0
+
+    level_items = []
+    
+
+    index_delay = 1
+    
+    for i in tqdm(range(half_wnd_len,L-half_wnd_len)):
+        left_avg = np.average(current_arr[i-half_wnd_len:i],weights=l_weights)
+        right_avg= np.average(current_arr[i:i+half_wnd_len],weights=r_weights)
+
+        item = None
+        index = 0
+        if abs(right_avg - left_avg) > treshold or abs(right_avg - prev_val) > treshold:
+            prev_val = right_avg
+            (item, index) = get_level_by_amplitude(level_items, prev_val, treshold)
+            if item:
+                item["amp"] = (item["amp"]+prev_val)/2
+                item["count"] += 1
+            else:
+                item = {"amp": prev_val,"count": 1}
+                index = len(level_items)
+                level_items.append(item)
+            
+        result[i+index_delay] = index
+
+##Check the shift
+##        if abs(right_avg - prev_val) > sigma:
+##            prev_val = right_avg
+    return (level_items,result)
+
+def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
+    if not isfile(fn):
+        print(fn)
+        print("No such file for analysis")
+        return
+
+    if len(wnd)>0:
+        print("using of custom window")
+    elif wnd_name and wnd_len >0:
+        print("using window {0}".format(wnd_name))
+        wnd = create_window(wnd_name,wnd_len)
+    else:
+        print("please select window and set its length")
+        return 
+
+    time, current = np.loadtxt(fn).transpose()
+    
+    if rempk:
+        print("removing peekups")
+        current = remove_peeks(current)
+    print("start analysis")
+    l = 10000
+    current = current[:l]
+    levels, result = calculate_levels(current,tr, wnd)
+    print(levels)
+    print(result)
+
+##    iterable = ([item["amp"],item["count"]] for item in levels)
+    arr = [[item["amp"],item["count"]] for item in levels]
+##    arr  = np.fromiter(iterable)
+    print(arr)
+    _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
+    np.savetxt(_histogram_filename,arr)
+##    print(current)
+        
+    
+##    print(locals())
+
+##def prepare_analysis():
+##    pass
+    
 
 def main():
     parser = argparse.ArgumentParser(description='Process timetrace and search transitions')
     parser.add_argument('fn', metavar='f', type=str, nargs='?', default = "",
                     help='The name of file where timetrace is stored')
-    parser.add_argument('-wnd_name', metavar='window name', type=str, nargs='?', default = "r",
+    parser.add_argument('-wnd_name', metavar='window name', type=str, nargs='?', default = None,
                     help='The name of window function to be applied')
 
-    parser.add_argument('-wnd_len', metavar='window length', type=int, nargs='?', default = 4,
+    parser.add_argument('-wnd_len', metavar='window length', type=int, nargs='?', default = 0,
                     help='The length of window function to be applied')
 
-    parser.add_argument('-wnd', metavar='custom window', type=float, nargs='+', default = 0,
+    parser.add_argument('-wnd', metavar='custom window', type=float, nargs='+', default = [],
                     help='Custom window coefficients')
 
-    parser.add_argument('-tr', metavar='transition treshold', type=float, nargs='?', default = 0.0,
+    parser.add_argument('-tr', metavar='transition treshold', type=float, nargs='?', default = 1e-6,
                     help='Treshold value for counting peaks')
     
-
     parser.add_argument('--rempk', action = 'store_true',default = False,  help='remove pickups')
     
-    
+    parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
+                    help='Treshold value for counting peaks')
 
-    args = parser.parse_args()
-    print(args)
-    
+    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
+##    print(args)
+    perform_analysis(**vars(args))
 
 if __name__ == "__main__":
     main()
