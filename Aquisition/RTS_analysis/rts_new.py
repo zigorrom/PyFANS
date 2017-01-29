@@ -300,7 +300,7 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
         print("removing peekups")
         current = remove_peeks(current)
     print("start analysis")
-    l = 10000
+    l = 200000
     dt = current[1]
     current = current[:l]
     time = time[:l]
