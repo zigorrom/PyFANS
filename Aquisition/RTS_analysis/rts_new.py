@@ -187,32 +187,95 @@ def calculate_levels(current_arr,treshold, wnd):
     return (level_items,result)
 
 
+def calc_times(calculated_amplitudes, level,dt):
+    calculated_amplitudes = calculated_amplitudes - level
+    length = len(calculated_amplitudes)
+    lower_time_list = []
+    higher_time_list = []
+    current_time =0 
+    for i in range(length-1):
+        if calculated_amplitudes[i]*calculated_amplitudes[i+1]<0:
+            if calculated_amplitudes[i]<calculated_amplitudes[i+1]:
+                lower_time_list.append(current_time)
+            else:
+                higher_time_list.append(current_time)
+            
+            current_time = 0
+        current_time += dt
+    time_list = list(zip_longest(lower_time_list,higher_time_list))
+    return time_list
 
-def k_means_levels_classification(data, estimated_k_levels):
-    amps, counts, index = data.transpose()
 
-    L = len(amps)
-    
+##def get_clusters(amplitudes, estimated_means):
+MAX_ITERATIONS = 100000
+def should_stop(oldCentroids, centroids, iterations):
+    if iterations>MAX_ITERATIONS: return True
+    return np.array_equal(oldCentroids,centroids)
+
+def get_random_centroids(data, k):
+    amps, counts, index = np.transpose(data)
     min_amp = min(amps)
     max_amp = max(amps)
-
-    estimated_means = np.linspace(min_amp,max_amp,estimated_k_levels)
+    return np.linspace(min_amp,max_amp,k)
     
+def get_labels(data,centroids):
+    amps, counts, index = np.transpose(data)
     
-##    cluster_indexes = np.zeros(L, dtype = np.int32)
-    clusters = [[] for i in range(estimated_k_levels)]
-
+    labels = np.zeros(len(data),dtype = int)
+##    k = len(centroids)
+    global_max_diff= abs(centroids[0]-centroids[-1])
     
-    min_distance = max_amp-min_amp
-    cluster_idx = 0
     for i, amplitude in enumerate(amps):
-        for j, mean in enumerate(estimated_k_levels):
+        min_distance = global_max_diff
+        centroid_idx = 0
+        for j, mean in enumerate(centroids):
             diff = abs(amplitude-mean)
             if diff < min_distance:
                 min_distance = diff
-                cluster_idx = j
+                centroid_idx = j
+        labels[i] = centroid_idx
+    return labels
 
-        clusters[i].append()
+
+def get_centroids(data,labels,k):
+    amps, counts, index = np.transpose(data)
+
+    count_arr = np.ones(k, dtype=int)
+    cumulative_arr = np.zeros(k)
+##    n_all_counts = np.sum(count_arr)
+
+    for i, centroid_idx in enumerate(labels):
+        count_arr[centroid_idx] += counts[i]
+        cumulative_arr[centroid_idx] += amps[i]*counts[i]
+
+    centroids = cumulative_arr/count_arr
+    return centroids
+    
+
+def k_means_levels_classification(data, k):
+    amps, counts, index = np.transpose(data)
+
+    centroids = get_random_centroids(data,k)
+    print("in k means centroids")
+    print(centroids)
+    iterations = 0
+    oldCentroids = None
+
+    while not should_stop(oldCentroids, centroids, iterations):
+
+        oldCentroids = centroids
+        iterations +=1
+
+        labels = get_labels(data, centroids)
+
+        centroids = get_centroids(data, labels,k)
+        print(centroids)
+        
+
+    dictionary_result = dict((idx, centroids[labels[i]]) for i,idx in enumerate(index))
+    return (centroids, dictionary_result)
+
+    
     
     
 
@@ -238,62 +301,40 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
         current = remove_peeks(current)
     print("start analysis")
     l = 10000
+    dt = current[1]
     current = current[:l]
     time = time[:l]
-    tr = 5e-6
+    tr = 1e-6
     levels, result = calculate_levels(current,tr, wnd)
     print(levels)
     print(result)
 
 ##    iterable = ([item["amp"],item["count"]] for item in levels)
-    arr = [[item["amp"],item["count"]] for item in levels]
+    arr = [[item["amp"],item["count"], item["idx"]] for item in levels]
 ##    arr  = np.fromiter(iterable)
-    amps, counts = np.transpose(arr)
+##    amps, counts = np.transpose(arr)
 
-    estimated_k_levels = 5
-    
+    estimated_k_levels = 2
+    centroids, k_values_dictionary = k_means_levels_classification(arr,estimated_k_levels)
+    print("k_values_dictionary")
+    print(k_values_dictionary)
 
-##    window_size =  len(amps)-1
-##    appearence_radius = 10*tr
-##    appearance_result = np.zeros(window_size)
-##    
-##    for i in range(window_size):
-##        values = list(map(lambda j: eps(amps,appearence_radius,i,j) ,range(window_size)))
-##        appearance_result[i] = np.sum(values)
-##    res = np.vstack((amps[:window_size],amps[1:window_size+1],appearance_result)).transpose()
-##
-##    _appearance_filename = join(dirname(fn),"{0}_appear.dat".format(basename(fn).split('.')[0]))
-##    np.savetxt(_appearance_filename,res)
-####    min_counts = min(counts)
-##    max_counts = max(counts)
-##    count_treshold = 0.4*(max_counts-min_counts)
-##    
-####    copy_counts = counts.copy()
-##    
-##    for i in range(1,len(counts)-1):
-##        point_aver = (counts[i-1]+counts[i+1])/2
-##        ## just check peaks down directional
-##        if point_aver - counts[i]>count_treshold:
-##            counts[i] = point_aver
-##
-##    arr = np.transpose([amps,counts])
     print(arr)
     _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_histogram_filename,arr)
 
-    iterable = (amps[i] for i in result)
+    iterable = (k_values_dictionary[i] for i in result)
     resulting_current = np.fromiter(iterable, np.float)
     _result_filename = join(dirname(fn),"{0}_rts.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_result_filename, np.vstack((time,current,resulting_current)).transpose())
-    
-##    print(current)
-        
-    
-##    print(locals())
 
-##def prepare_analysis():
-##    pass
-    
+    times = []
+    for a,b in zip(centroids[:-1],centroids[1:]):
+        level = (a+b)/2
+        times.extend(calc_times(resulting_current,level,dt))
+
+    _times_filename = join(dirname(fn),"{0}_times.dat".format(basename(fn).split('.')[0]))
+    np.savetxt(_times_filename, times)
 
 def main():
     parser = argparse.ArgumentParser(description='Process timetrace and search transitions')
