@@ -129,6 +129,12 @@ def get_level_by_amplitude(level_items, amplitude, treshold):
 
     return res
 
+def eps(current,appearence_radius,i,j):
+##    current,i = a
+    d = math.hypot(current[i]-current[j],current[i+1]-current[j+1])#euclidean_distance(current,i,j)
+    return 1 if d<=appearence_radius else 0
+
+vect_eps = np.vectorize(eps,otypes=[int])
     
 def calculate_levels(current_arr,treshold, wnd):
 
@@ -169,8 +175,8 @@ def calculate_levels(current_arr,treshold, wnd):
                 
                 
             else:
-                item = {"amp": prev_val,"count": 1}
                 prev_index = len(level_items)
+                item = {"amp": prev_val,"count": 1,"idx": prev_index}
                 level_items.append(item)
             
         result[i+index_delay] = prev_index
@@ -179,6 +185,36 @@ def calculate_levels(current_arr,treshold, wnd):
 ##        if abs(right_avg - prev_val) > sigma:
 ##            prev_val = right_avg
     return (level_items,result)
+
+
+
+def k_means_levels_classification(data, estimated_k_levels):
+    amps, counts, index = data.transpose()
+
+    L = len(amps)
+    
+    min_amp = min(amps)
+    max_amp = max(amps)
+
+    estimated_means = np.linspace(min_amp,max_amp,estimated_k_levels)
+    
+    
+##    cluster_indexes = np.zeros(L, dtype = np.int32)
+    clusters = [[] for i in range(estimated_k_levels)]
+
+    
+    min_distance = max_amp-min_amp
+    cluster_idx = 0
+    for i, amplitude in enumerate(amps):
+        for j, mean in enumerate(estimated_k_levels):
+            diff = abs(amplitude-mean)
+            if diff < min_distance:
+                min_distance = diff
+                cluster_idx = j
+
+        clusters[i].append()
+    
+    
 
 def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
     if not isfile(fn):
@@ -213,21 +249,34 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
     arr = [[item["amp"],item["count"]] for item in levels]
 ##    arr  = np.fromiter(iterable)
     amps, counts = np.transpose(arr)
-    
-    
-    min_counts = min(counts)
-    max_counts = max(counts)
-    count_treshold = 0.4*(max_counts-min_counts)
-    
-##    copy_counts = counts.copy()
-    
-    for i in range(1,len(counts)-1):
-        point_aver = (counts[i-1]+counts[i+1])/2
-        ## just check peaks down directional
-        if point_aver - counts[i]>count_treshold:
-            counts[i] = point_aver
 
-    arr = np.transpose([amps,counts])
+    estimated_k_levels = 5
+    
+
+##    window_size =  len(amps)-1
+##    appearence_radius = 10*tr
+##    appearance_result = np.zeros(window_size)
+##    
+##    for i in range(window_size):
+##        values = list(map(lambda j: eps(amps,appearence_radius,i,j) ,range(window_size)))
+##        appearance_result[i] = np.sum(values)
+##    res = np.vstack((amps[:window_size],amps[1:window_size+1],appearance_result)).transpose()
+##
+##    _appearance_filename = join(dirname(fn),"{0}_appear.dat".format(basename(fn).split('.')[0]))
+##    np.savetxt(_appearance_filename,res)
+####    min_counts = min(counts)
+##    max_counts = max(counts)
+##    count_treshold = 0.4*(max_counts-min_counts)
+##    
+####    copy_counts = counts.copy()
+##    
+##    for i in range(1,len(counts)-1):
+##        point_aver = (counts[i-1]+counts[i+1])/2
+##        ## just check peaks down directional
+##        if point_aver - counts[i]>count_treshold:
+##            counts[i] = point_aver
+##
+##    arr = np.transpose([amps,counts])
     print(arr)
     _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_histogram_filename,arr)
