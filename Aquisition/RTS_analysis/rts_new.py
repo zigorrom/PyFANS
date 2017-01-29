@@ -149,7 +149,8 @@ def calculate_levels(current_arr,treshold, wnd):
     prev_val = 0
 
     level_items = []
-    
+
+    prev_index =0
 
     index_delay = 1
     
@@ -158,19 +159,21 @@ def calculate_levels(current_arr,treshold, wnd):
         right_avg= np.average(current_arr[i:i+half_wnd_len],weights=r_weights)
 
         item = None
-        index = 0
+##        index = 0
         if abs(right_avg - left_avg) > treshold or abs(right_avg - prev_val) > treshold:
             prev_val = right_avg
-            (item, index) = get_level_by_amplitude(level_items, prev_val, treshold)
+            (item, prev_index) = get_level_by_amplitude(level_items, prev_val, treshold)
             if item:
                 item["amp"] = (item["amp"]+prev_val)/2
                 item["count"] += 1
+                
+                
             else:
                 item = {"amp": prev_val,"count": 1}
-                index = len(level_items)
+                prev_index = len(level_items)
                 level_items.append(item)
             
-        result[i+index_delay] = index
+        result[i+index_delay] = prev_index
 
 ##Check the shift
 ##        if abs(right_avg - prev_val) > sigma:
@@ -200,6 +203,8 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
     print("start analysis")
     l = 10000
     current = current[:l]
+    time = time[:l]
+    tr = 5e-6
     levels, result = calculate_levels(current,tr, wnd)
     print(levels)
     print(result)
@@ -207,9 +212,31 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
 ##    iterable = ([item["amp"],item["count"]] for item in levels)
     arr = [[item["amp"],item["count"]] for item in levels]
 ##    arr  = np.fromiter(iterable)
+    amps, counts = np.transpose(arr)
+    
+    
+    min_counts = min(counts)
+    max_counts = max(counts)
+    count_treshold = 0.4*(max_counts-min_counts)
+    
+##    copy_counts = counts.copy()
+    
+    for i in range(1,len(counts)-1):
+        point_aver = (counts[i-1]+counts[i+1])/2
+        ## just check peaks down directional
+        if point_aver - counts[i]>count_treshold:
+            counts[i] = point_aver
+
+    arr = np.transpose([amps,counts])
     print(arr)
     _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_histogram_filename,arr)
+
+    iterable = (amps[i] for i in result)
+    resulting_current = np.fromiter(iterable, np.float)
+    _result_filename = join(dirname(fn),"{0}_rts.dat".format(basename(fn).split('.')[0]))
+    np.savetxt(_result_filename, np.vstack((time,current,resulting_current)).transpose())
+    
 ##    print(current)
         
     
