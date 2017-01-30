@@ -142,7 +142,7 @@ def eps(current,appearence_radius,i,j):
 
 vect_eps = np.vectorize(eps,otypes=[int])
     
-def calculate_levels(current_arr,treshold, wnd):
+def calculate_levels(current_arr):#,treshold, wnd):
 
    
     L = len(current_arr)
@@ -151,12 +151,12 @@ def calculate_levels(current_arr,treshold, wnd):
     min_value = np.amin(current_arr)
     max_value = np.amax(current_arr)
     bin_width = 2 * iqr * math.pow(L,-1.0/3)
-    print("max = {0}".format(max_value))
-    print("min = {0}".format(min_value))
+##    print("max = {0}".format(max_value))
+##    print("min = {0}".format(min_value))
     
-    print("bin_width = {0}".format(bin_width))
+##    print("bin_width = {0}".format(bin_width))
     bin_number = int((max_value-min_value)/bin_width)
-    print("bin_number = {0}".format(bin_number))
+##    print("bin_number = {0}".format(bin_number))
     histogram_levels,step = np.linspace(min_value,max_value,num=bin_number+1,retstep=True)
     count_array = np.zeros(bin_number)
     index_array = np.arange(0,bin_number,dtype = int)
@@ -167,8 +167,7 @@ def calculate_levels(current_arr,treshold, wnd):
     result = np.zeros(len(current_arr),dtype=np.uint8)
     for i,val in enumerate(current_arr):
 ##        print("next index")
-        print(i)
-
+##        print(i)
         bin_idx = 0
         for j, bin_level in enumerate(histogram_levels):
 ##            print("val = {0}, level = {1}".format(val,bin_level))
@@ -310,22 +309,18 @@ def k_means_levels_classification(data, k):
     amps, counts, index = data #np.transpose(data)
 
     centroids = get_random_centroids(data,k)
-    print("in k means centroids")
-    print(centroids)
+##    print("in k means centroids")
+##    print(centroids)
     iterations = 0
     oldCentroids = None
 
     while not should_stop(oldCentroids, centroids, iterations):
-
         oldCentroids = centroids
         iterations +=1
-
         labels = get_labels(data, centroids)
-
         centroids = get_centroids(data, labels,k)
-        print(centroids)
+##        print(centroids)
         
-
     dictionary_result = dict((int(idx), centroids[labels[i]]) for i,idx in enumerate(index))
     return (centroids, dictionary_result)
 
@@ -333,93 +328,122 @@ def k_means_levels_classification(data, k):
     
     
 
-def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
+##def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
+def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx ):
     if not isfile(fn):
-        print(fn)
+##        print(fn)
         print("No such file for analysis")
         return
 
-    if len(wnd)>0:
-        print("using of custom window")
-    elif wnd_name and wnd_len >0:
-        print("using window {0}".format(wnd_name))
-        wnd = create_window(wnd_name,wnd_len)
-    else:
-        print("please select window and set its length")
-        return 
+##    if len(wnd)>0:
+##        print("using of custom window")
+##    elif wnd_name and wnd_len >0:
+##        print("using window {0}".format(wnd_name))
+##        wnd = create_window(wnd_name,wnd_len)
+##    else:
+##        print("please select window and set its length")
+##        return 
 
+    print("Start loading file")
     time, current = np.loadtxt(fn).transpose()
+    print("Done file loading")
     
-    if rempk:
-        print("removing peekups")
-        current = remove_peeks(current)
-    print("start analysis")
-    l = 200000
-    dt = current[1]
+    l = len(current)
+    if nsamples < l and nsamples >0:
+        l = nsamples
+##    if rempk:
+##        print("removing peekups")
+##        current = remove_peeks(current)
+    print("Start analysis")
+    
+    dt = time[1]
     current = current[:l]
     time = time[:l]
     tr = 1e-6
-
-    levels, result = calculate_levels(current,tr, wnd)
-    print(levels)
-    print(result)
+    estimated_k_levels = nlevels
+    print("Start histogram calculation")
+    levels, result = calculate_levels(current)#,tr, wnd)
+    print("Done histogram calculation")
+##    print(levels)
+##    print(result)
 
 ##    iterable = ([item["amp"],item["count"]] for item in levels)
 ##    arr = [[item["amp"],item["count"], item["idx"]] for item in levels]
 ##    arr  = np.fromiter(iterable)
 ##    amps, counts = np.transpose(arr)
 
-    estimated_k_levels = 2
-    centroids, k_values_dictionary = k_means_levels_classification(levels,estimated_k_levels)
-    print("k_values_dictionary")
-    print(k_values_dictionary)
-
+    print("Start histogram analysis")
+    centroids, k_values_dictionary = k_means_levels_classification(levels,estimated_k_levels)   
+##    print("k_values_dictionary")
+##    print(k_values_dictionary)
     arr = np.transpose(levels)
-    print(levels)
+##    print(levels)
 ##    print(arr)
-    _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
+    _histogram_filename = join(dirname(fn),"{0}_{1}.dat".format(basename(fn).split('.')[0],hist_pfx))
     np.savetxt(_histogram_filename,arr)
-
-    print("write resulting current")
+    print("Done histogram analysis")
     
+    print("Start current levels calculation")    
     iterable = (k_values_dictionary[i] for i in result)
     resulting_current = np.fromiter(iterable, np.float)
     resulting_current = remove_peakups_rts(resulting_current)
-    _result_filename = join(dirname(fn),"{0}_rts.dat".format(basename(fn).split('.')[0]))
+    _result_filename = join(dirname(fn),"{0}_{1}.dat".format(basename(fn).split('.')[0],tt_pfx))
     np.savetxt(_result_filename, np.vstack((time,current,resulting_current)).transpose())
+    print("Done current levels calculation")
 
+
+    print("Start of capture and emission times")
     times = []
     for a,b in zip(centroids[:-1],centroids[1:]):
         level = (a+b)/2
         times.extend(calc_times(resulting_current,level,dt))
-
-    print("times")
-    print(times)
-    _times_filename = join(dirname(fn),"{0}_times.dat".format(basename(fn).split('.')[0]))
+##    print("times")
+##    print(times)
+    _times_filename = join(dirname(fn),"{0}_{1}.dat".format(basename(fn).split('.')[0],times_pfx))
     np.savetxt(_times_filename, times)
+    print("Done times calculations")
+    print("Done calculations for file: {0}".format(fn))
+
+    
 
 def main():
     parser = argparse.ArgumentParser(description='Process timetrace and search transitions')
     parser.add_argument('fn', metavar='f', type=str, nargs='?', default = "",
                     help='The name of file where timetrace is stored')
-    parser.add_argument('-wnd_name', metavar='window name', type=str, nargs='?', default = None,
-                    help='The name of window function to be applied')
+##    parser.add_argument('-wnd_name', metavar='window name', type=str, nargs='?', default = None,
+##                    help='The name of window function to be applied')
+##
+##    parser.add_argument('-wnd_len', metavar='window length', type=int, nargs='?', default = 0,
+##                    help='The length of window function to be applied')
+##
+##    parser.add_argument('-wnd', metavar='custom window', type=float, nargs='+', default = [],
+##                    help='Custom window coefficients')
+##
+##    parser.add_argument('-tr', metavar='transition treshold', type=float, nargs='?', default = 1e-6,
+##                    help='Treshold value for counting peaks')
+##    
+##    parser.add_argument('--rempk', action = 'store_true',default = False,  help='remove pickups')
+##    
+##    parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
+##                    help='Treshold value for counting peaks')
+    parser.add_argument('-nsamples', metavar='sample number', type=int, nargs='?', default = -1,
+                    help='Amount of samples to be processed')
 
-    parser.add_argument('-wnd_len', metavar='window length', type=int, nargs='?', default = 0,
-                    help='The length of window function to be applied')
+    parser.add_argument('-nlevels', metavar='levels number', type=int, nargs='?', default = 2,
+                    help='Number of estimated levels')
 
-    parser.add_argument('-wnd', metavar='custom window', type=float, nargs='+', default = [],
-                    help='Custom window coefficients')
 
-    parser.add_argument('-tr', metavar='transition treshold', type=float, nargs='?', default = 1e-6,
-                    help='Treshold value for counting peaks')
-    
-    parser.add_argument('--rempk', action = 'store_true',default = False,  help='remove pickups')
-    
-    parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
-                    help='Treshold value for counting peaks')
-    
-    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
+    parser.add_argument('-times_pfx', metavar='postfix for processed level times file', type=str, nargs='?', default = "times",
+                    help='Postfix for the processed file')
+
+    parser.add_argument('-tt_pfx', metavar='postfix for processed timetrace file', type=str, nargs='?', default = "rts",
+                    help='Postfix for the processed file')
+        
+    parser.add_argument('-hist_pfx', metavar='postfix for processed histogram file', type=str, nargs='?', default = "hist",
+                    help='Postfix for the processed file')
+
+    args= parser.parse_args()    
+##    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    print(args)
     perform_analysis(**vars(args))
