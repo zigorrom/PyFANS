@@ -106,6 +106,12 @@ from itertools import zip_longest
 ##
 ##def perform_parse():
 ##    pass
+def remove_peakups_rts(timetrace):
+    for i in range(1,len(timetrace)-1):
+        if timetrace[i-1]==timetrace[i+1] and timetrace[i-1] != timetrace[i]:
+            timetrace[i] = timetrace[i-1]
+    return timetrace
+
 def remove_peeks(array, treshold = 1e-6):
     L = len(array)
     result = np.zeros(L)
@@ -138,53 +144,101 @@ vect_eps = np.vectorize(eps,otypes=[int])
     
 def calculate_levels(current_arr,treshold, wnd):
 
+   
     L = len(current_arr)
-    wnd_len = len(wnd)
-    if wnd_len % 2 >0:
-        return 
-    half_wnd_len = int(wnd_len/2)
-
-    print("half wnd len {0}".format(half_wnd_len))
-    l_weights = wnd[:half_wnd_len]
-    r_weights = wnd[half_wnd_len:]
+    iqr = iqr = np.subtract(*np.percentile(current_arr, [75, 25]))
+##    peak_to_peak = np.ptp*(current_arr)
+    min_value = np.amin(current_arr)
+    max_value = np.amax(current_arr)
+    bin_width = 2 * iqr * math.pow(L,-1.0/3)
+    print("max = {0}".format(max_value))
+    print("min = {0}".format(min_value))
     
-    result = np.zeros(L,dtype=np.uint8)
+    print("bin_width = {0}".format(bin_width))
+    bin_number = int((max_value-min_value)/bin_width)
+    print("bin_number = {0}".format(bin_number))
+    histogram_levels,step = np.linspace(min_value,max_value,num=bin_number+1,retstep=True)
+    count_array = np.zeros(bin_number)
+    index_array = np.arange(0,bin_number,dtype = int)
+    histogram_levels = histogram_levels[1:]
+    half_step = step/2
+    bin_centers = histogram_levels - half_step
+
+    result = np.zeros(len(current_arr),dtype=np.uint8)
+    for i,val in enumerate(current_arr):
+##        print("next index")
+        print(i)
+
+        bin_idx = 0
+        for j, bin_level in enumerate(histogram_levels):
+##            print("val = {0}, level = {1}".format(val,bin_level))
+            if val < bin_level:
+##                print("accepted {0}".format(j))
+                bin_idx = j
+                break
+        result[i] = bin_idx
+        count_array[bin_idx] += 1
+
+##    print(len(bin_centers))
+##    print(len(count_array))
+##    print(len(index_array))
     
-    left_avg = 0
-    right_arv = 0
-    prev_val = 0
-
-    level_items = []
-
-    prev_index =0
-
-    index_delay = 1
+    levels = np.vstack((bin_centers,count_array,index_array))
+    return (levels,result)
     
-    for i in tqdm(range(half_wnd_len,L-half_wnd_len)):
-        left_avg = np.average(current_arr[i-half_wnd_len:i],weights=l_weights)
-        right_avg= np.average(current_arr[i:i+half_wnd_len],weights=r_weights)
+        
 
-        item = None
-##        index = 0
-        if abs(right_avg - left_avg) > treshold or abs(right_avg - prev_val) > treshold:
-            prev_val = right_avg
-            (item, prev_index) = get_level_by_amplitude(level_items, prev_val, treshold)
-            if item:
-                item["amp"] = (item["amp"]+prev_val)/2
-                item["count"] += 1
-                
-                
-            else:
-                prev_index = len(level_items)
-                item = {"amp": prev_val,"count": 1,"idx": prev_index}
-                level_items.append(item)
-            
-        result[i+index_delay] = prev_index
+
+## OLD VERSION
+## ######################################################################################
+##
+##             L = len(current_arr)
+##    wnd_len = len(wnd)
+##    if wnd_len % 2 >0:
+##        return 
+##    half_wnd_len = int(wnd_len/2)
+##
+##    print("half wnd len {0}".format(half_wnd_len))
+##    l_weights = wnd[:half_wnd_len]
+##    r_weights = wnd[half_wnd_len:]
+##    
+##    result = np.zeros(L,dtype=np.uint8)
+##    left_avg = 0
+##    right_arv = 0
+##    prev_val = 0
+##
+##    level_items = []
+##
+##    prev_index =0
+##
+##    index_delay = 1
+##    
+##    for i in tqdm(range(half_wnd_len,L-half_wnd_len)):
+##        left_avg = np.average(current_arr[i-half_wnd_len:i],weights=l_weights)
+##        right_avg= np.average(current_arr[i:i+half_wnd_len],weights=r_weights)
+##
+##        item = None
+####        index = 0
+##        if abs(right_avg - left_avg) > treshold or abs(right_avg - prev_val) > treshold:
+##            prev_val = right_avg
+##            (item, prev_index) = get_level_by_amplitude(level_items, prev_val, treshold)
+##            if item:
+##                item["amp"] = (item["amp"]+prev_val)/2
+##                item["count"] += 1
+##                
+##                
+##            else:
+##                prev_index = len(level_items)
+##                item = {"amp": prev_val,"count": 1,"idx": prev_index}
+##                level_items.append(item)
+##            
+##        result[i+index_delay] = prev_index
+    ####################################################################################
 
 ##Check the shift
 ##        if abs(right_avg - prev_val) > sigma:
 ##            prev_val = right_avg
-    return (level_items,result)
+##    return (level_items,result)
 
 
 def calc_times(calculated_amplitudes, level,dt):
@@ -202,7 +256,7 @@ def calc_times(calculated_amplitudes, level,dt):
             
             current_time = 0
         current_time += dt
-    time_list = list(zip_longest(lower_time_list,higher_time_list))
+    time_list = list(zip_longest(lower_time_list,higher_time_list,fillvalue= 0))
     return time_list
 
 
@@ -213,15 +267,15 @@ def should_stop(oldCentroids, centroids, iterations):
     return np.array_equal(oldCentroids,centroids)
 
 def get_random_centroids(data, k):
-    amps, counts, index = np.transpose(data)
+    amps, counts, index = data #np.transpose(data)
     min_amp = min(amps)
     max_amp = max(amps)
     return np.linspace(min_amp,max_amp,k)
     
 def get_labels(data,centroids):
-    amps, counts, index = np.transpose(data)
+    amps, counts, index = data  #np.transpose(data)
     
-    labels = np.zeros(len(data),dtype = int)
+    labels = np.zeros(len(amps),dtype = int)
 ##    k = len(centroids)
     global_max_diff= abs(centroids[0]-centroids[-1])
     
@@ -238,7 +292,7 @@ def get_labels(data,centroids):
 
 
 def get_centroids(data,labels,k):
-    amps, counts, index = np.transpose(data)
+    amps, counts, index = data  #np.transpose(data)
 
     count_arr = np.ones(k, dtype=int)
     cumulative_arr = np.zeros(k)
@@ -253,7 +307,7 @@ def get_centroids(data,labels,k):
     
 
 def k_means_levels_classification(data, k):
-    amps, counts, index = np.transpose(data)
+    amps, counts, index = data #np.transpose(data)
 
     centroids = get_random_centroids(data,k)
     print("in k means centroids")
@@ -272,7 +326,7 @@ def k_means_levels_classification(data, k):
         print(centroids)
         
 
-    dictionary_result = dict((idx, centroids[labels[i]]) for i,idx in enumerate(index))
+    dictionary_result = dict((int(idx), centroids[labels[i]]) for i,idx in enumerate(index))
     return (centroids, dictionary_result)
 
     
@@ -305,26 +359,32 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
     current = current[:l]
     time = time[:l]
     tr = 1e-6
+
     levels, result = calculate_levels(current,tr, wnd)
     print(levels)
     print(result)
 
 ##    iterable = ([item["amp"],item["count"]] for item in levels)
-    arr = [[item["amp"],item["count"], item["idx"]] for item in levels]
+##    arr = [[item["amp"],item["count"], item["idx"]] for item in levels]
 ##    arr  = np.fromiter(iterable)
 ##    amps, counts = np.transpose(arr)
 
     estimated_k_levels = 2
-    centroids, k_values_dictionary = k_means_levels_classification(arr,estimated_k_levels)
+    centroids, k_values_dictionary = k_means_levels_classification(levels,estimated_k_levels)
     print("k_values_dictionary")
     print(k_values_dictionary)
 
-    print(arr)
+    arr = np.transpose(levels)
+    print(levels)
+##    print(arr)
     _histogram_filename = join(dirname(fn),"{0}_hist.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_histogram_filename,arr)
 
+    print("write resulting current")
+    
     iterable = (k_values_dictionary[i] for i in result)
     resulting_current = np.fromiter(iterable, np.float)
+    resulting_current = remove_peakups_rts(resulting_current)
     _result_filename = join(dirname(fn),"{0}_rts.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_result_filename, np.vstack((time,current,resulting_current)).transpose())
 
@@ -333,6 +393,8 @@ def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
         level = (a+b)/2
         times.extend(calc_times(resulting_current,level,dt))
 
+    print("times")
+    print(times)
     _times_filename = join(dirname(fn),"{0}_times.dat".format(basename(fn).split('.')[0]))
     np.savetxt(_times_filename, times)
 
@@ -356,8 +418,8 @@ def main():
     
     parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
                     help='Treshold value for counting peaks')
-
-    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
+    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
+##    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    print(args)
     perform_analysis(**vars(args))
 
