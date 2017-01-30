@@ -104,8 +104,13 @@ from itertools import zip_longest
 ##res = np.vstack((time[:L],current[:L],avg,amplitudes,amplitudes_avg)).transpose()
 ##write_levels(res)
 ##
+<<<<<<< HEAD
 def perform_parse():
     pass
+=======
+##def perform_parse():
+##    pass
+>>>>>>> origin/master
 
 
 
