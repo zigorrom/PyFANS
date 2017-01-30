@@ -418,6 +418,7 @@ def main():
     
     parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
                     help='Treshold value for counting peaks')
+    
     args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    print(args)
