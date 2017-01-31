@@ -7,10 +7,6 @@ t1,t2 = np.loadtxt(filename).transpose()
 t1_hist, t1_bin_edges = np.histogram(t1,bins = "fd")
 t2_hist, t2_bin_edges = np.histogram(t2,bins = "fd")
 
-
-
 print(t1_hist)
 
 print(t2_hist)
-
-
