@@ -57,6 +57,14 @@ namespace RTS_analysis
         private BackgroundWorker _backgroundWorker;
 
         private bool _processingInProgress;
+        public bool ProcessingInProgress
+        {
+            get { return _processingInProgress; }
+            private set 
+            {
+                SetField(ref _processingInProgress, value, "ProcessingInProgress");
+            }
+        }
 
         private OpenFileDialog _openFileDialog;
 
@@ -89,7 +97,7 @@ namespace RTS_analysis
 
                 },(param)=>
                     {
-                        return !_processingInProgress;
+                        return !ProcessingInProgress;
                     }
                     ));
             }
@@ -154,7 +162,7 @@ namespace RTS_analysis
                     StartProcessing();
                 }, (param) =>
                 {
-                    return !_processingInProgress;
+                    return !ProcessingInProgress;
                 }));
             } 
             private set { _processStartCommand = value; }
@@ -162,14 +170,15 @@ namespace RTS_analysis
 
         private void StartProcessing()
         {
-            _processingInProgress = true;
-            System.Diagnostics.Debug.Print("start processing");
+            
             if (Filenames.Count == 0)
             {
                 MessageBox.Show("Please select files for analysis");
             }
             else
             {
+                ProcessingInProgress = true;
+                System.Diagnostics.Debug.Print("start processing");
                 _backgroundWorker.RunWorkerAsync();
             }
         }
@@ -214,7 +223,7 @@ namespace RTS_analysis
                     StopAll();
                 }, (param) =>
                 {
-                    return _processingInProgress;
+                    return ProcessingInProgress;
                 }));
             }
             private set { _stopAllProcessCommands = value; }
@@ -223,9 +232,10 @@ namespace RTS_analysis
 
         private void StopAll()
         {
-            _processingInProgress = false;
+            ProcessingInProgress = false;
             System.Diagnostics.Debug.Print("stop all");
             _backgroundWorker.CancelAsync();
+            
         }
 
 
@@ -233,12 +243,46 @@ namespace RTS_analysis
 
         private void _backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            _processingInProgress = false;
+            ProcessingInProgress = false;
+            ProgressPercentage = 0;
+            MessageBox.Show("Calculations completed");
             //throw new NotImplementedException();
+        }
+
+        private int _progressPercantage;
+
+        public int ProgressPercentage
+        {
+            get { return _progressPercantage; }
+            set {
+                SetField(ref _progressPercantage, value, "ProgressPercentage");
+            }
+        }
+
+        private string _actionsLog;
+
+        public string ActionsLog
+        {
+            get { return _actionsLog; }
+            set { SetField(ref _actionsLog, value, "ActionLog"); }
+        }
+
+        private void AppendToLog(string text)
+        {
+            StringBuilder sb = new StringBuilder(ActionsLog);
+            
+            sb.AppendLine(text);
+            _actionsLog = sb.ToString();
+            OnPropertyChanged("ActionsLog");
+            
         }
 
         private void _backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            ProgressPercentage = e.ProgressPercentage;
+            string state = e.UserState.ToString();//String.Format("percentage completed: {0}\nstate:\n{1}\n",ProgressPercentage,e.UserState);
+            
+            AppendToLog(state);
             //throw new NotImplementedException();
         }
 
@@ -256,25 +300,24 @@ namespace RTS_analysis
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo();
                     startInfo.FileName = "python.exe";
-                    startInfo.Arguments = String.Format("rts_new.py {0} -nsamples {1} -nlevels {2}", Filenames[i], TotalSampleNumber, LevelsNumber);
+                    startInfo.Arguments = String.Format("rts_new.py {0} @nsamples {1} @nlevels {2}", Filenames[i], TotalSampleNumber, LevelsNumber);
                     startInfo.UseShellExecute = false;
                     startInfo.RedirectStandardOutput = true;
-                    startInfo.CreateNoWindow= true;
-                    using(Process process = Process.Start(startInfo))
+                    startInfo.CreateNoWindow = true;
+                    string state = String.Empty;
+                    using (Process process = Process.Start(startInfo))
                     {
-                        using(StreamReader reader = process.StandardOutput)
+                        using (StreamReader reader = process.StandardOutput)
                         {
-                            while(!reader.EndOfStream)
+                            while (!reader.EndOfStream)
                             {
-                                Debug.Print(reader.ReadLine());
+                                state = reader.ReadLine();
+                                worker.ReportProgress((int)(i * 100.0 / Filenames.Count), state);
+                                Debug.Print(state);
                             }
                         }
                     }
 
-
-
-                    worker.ReportProgress((int)(i * 100.0 / Filenames.Count));
-                    
                 }
             }
         }

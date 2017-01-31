@@ -305,10 +305,16 @@ def get_centroids(data,labels,k):
     return centroids
     
 
-def k_means_levels_classification(data, k):
+def k_means_levels_classification(data, k, estimated_means = None):
     amps, counts, index = data #np.transpose(data)
-
+    
     centroids = get_random_centroids(data,k)
+    if estimated_means:
+        print ("in estimated mean")
+        centroids = estimated_means
+        k = len(centroids)
+
+    print(centroids)
 ##    print("in k means centroids")
 ##    print(centroids)
     iterations = 0
@@ -329,12 +335,12 @@ def k_means_levels_classification(data, k):
     
 
 ##def perform_analysis(fn, wnd_name, wnd_len, wnd, tr, rempk,postfix ):
-def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx ):
+def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx, means ):
     if not isfile(fn):
 ##        print(fn)
         print("No such file for analysis")
         return
-
+    print("Filename: {0}".format(fn))
 ##    if len(wnd)>0:
 ##        print("using of custom window")
 ##    elif wnd_name and wnd_len >0:
@@ -361,6 +367,8 @@ def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx ):
     time = time[:l]
     tr = 1e-6
     estimated_k_levels = nlevels
+    
+    
     print("Start histogram calculation")
     levels, result = calculate_levels(current)#,tr, wnd)
     print("Done histogram calculation")
@@ -373,8 +381,10 @@ def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx ):
 ##    amps, counts = np.transpose(arr)
 
     print("Start histogram analysis")
-    centroids, k_values_dictionary = k_means_levels_classification(levels,estimated_k_levels)   
+    centroids, k_values_dictionary = k_means_levels_classification(levels,estimated_k_levels, means)   
 ##    print("k_values_dictionary")
+    print("obtained centroids")
+    print(centroids)
 ##    print(k_values_dictionary)
     arr = np.transpose(levels)
 ##    print(levels)
@@ -407,7 +417,7 @@ def perform_analysis(fn,nsamples,nlevels, tt_pfx, hist_pfx, times_pfx ):
     
 
 def main():
-    parser = argparse.ArgumentParser(description='Process timetrace and search transitions')
+    parser = argparse.ArgumentParser(description='Process timetrace and search transitions',prefix_chars = '@')
     parser.add_argument('fn', metavar='f', type=str, nargs='?', default = "",
                     help='The name of file where timetrace is stored')
 ##    parser.add_argument('-wnd_name', metavar='window name', type=str, nargs='?', default = None,
@@ -426,24 +436,28 @@ def main():
 ##    
 ##    parser.add_argument('-postfix', metavar='postfix for processed file', type=str, nargs='?', default = "rts",
 ##                    help='Treshold value for counting peaks')
-    parser.add_argument('-nsamples', metavar='sample number', type=int, nargs='?', default = -1,
+    parser.add_argument('@nsamples', metavar='sample number', type=int, nargs='?', default = -1,
                     help='Amount of samples to be processed')
 
-    parser.add_argument('-nlevels', metavar='levels number', type=int, nargs='?', default = 2,
+    parser.add_argument('@nlevels', metavar='levels number', type=int, nargs='?', default = 2,
                     help='Number of estimated levels')
 
 
-    parser.add_argument('-times_pfx', metavar='postfix for processed level times file', type=str, nargs='?', default = "times",
+    parser.add_argument('@times_pfx', metavar='postfix for processed level times file', type=str, nargs='?', default = "times",
                     help='Postfix for the processed file')
 
-    parser.add_argument('-tt_pfx', metavar='postfix for processed timetrace file', type=str, nargs='?', default = "rts",
+    parser.add_argument('@tt_pfx', metavar='postfix for processed timetrace file', type=str, nargs='?', default = "rts",
                     help='Postfix for the processed file')
         
-    parser.add_argument('-hist_pfx', metavar='postfix for processed histogram file', type=str, nargs='?', default = "hist",
+    parser.add_argument('@hist_pfx', metavar='postfix for processed histogram file', type=str, nargs='?', default = "hist",
                     help='Postfix for the processed file')
 
+    parser.add_argument('@means', metavar='the estimated means', type=float, nargs='+', default = None,
+                    help='Use this to improve the guess of the levels')
+
+
     args= parser.parse_args()    
-##    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
+##    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_18.dat @nlevels 7".split(" "))#@means -1.87e-4 1.9e-5 1.38e-4".split(" "))
 ##    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    print(args)
     perform_analysis(**vars(args))

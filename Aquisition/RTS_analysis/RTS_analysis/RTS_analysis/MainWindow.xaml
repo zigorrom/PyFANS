@@ -6,19 +6,20 @@
         Title="MainWindow" Height="350" Width="525">
     <Window.Resources>
         <Converters:ArithmeticConverter x:Key="ArithmeticConverter"/>
+        <Converters:TrueToVisibleConverter x:Key="VisibilityConverter"/>
     </Window.Resources>
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="158*"/>
-            <ColumnDefinition Width="101*"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Menu Margin="0,0,0.4,0.6" Grid.ColumnSpan="2">
             <MenuItem Header="File" >
@@ -32,7 +33,10 @@
                 <MenuItem Header="Stop all" Command="{Binding StopAllProcessCommands}"/>
             </MenuItem>
         </Menu>
-        <StatusBar Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0.2,0.4,-0.2"/>
+        <!--<StatusBar Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0.2,0.4,-0.2">-->
+        <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" Height="20" Visibility="{Binding ProcessingInProgress, Converter={StaticResource VisibilityConverter}, Mode=OneWay}" Value="{Binding ProgressPercentage}"  />
+
+        <!--</StatusBar>-->
         <StackPanel Grid.Column="1" Grid.Row="1">
             <Label Content="Number of samples "/>
             <TextBox TextWrapping="Wrap" Text="{Binding TotalSampleNumber, Converter={StaticResource ArithmeticConverter}}" />
@@ -57,12 +61,13 @@
                     <RichTextBox>
                         <FlowDocument>
                             <Paragraph>
-                                <Run Text="RichTextBox"/>
+                                <Run Text="{Binding ActionsLog}"/>
                             </Paragraph>
                         </FlowDocument>
                     </RichTextBox>
                 </Grid>
             </TabItem>
         </TabControl>
+
     </Grid>
 </Window>
