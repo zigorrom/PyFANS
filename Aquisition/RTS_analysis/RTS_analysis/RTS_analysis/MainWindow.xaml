@@ -1,32 +1,68 @@
-﻿<Window x:Class="RTS_analysis.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:RTS_analysis"
+        xmlns:Converters="clr-namespace:Microsoft.TeamFoundation.Controls.WPF.Converters;assembly=Microsoft.TeamFoundation.Controls" x:Class="RTS_analysis.MainWindow"
         Title="MainWindow" Height="350" Width="525">
+    <Window.Resources>
+        <Converters:ArithmeticConverter x:Key="ArithmeticConverter"/>
+    </Window.Resources>
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="158*"/>
+            <ColumnDefinition Width="101*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
-        <Menu Margin="0,0,0.4,0.2">
+        <Menu Margin="0,0,0.4,0.6" Grid.ColumnSpan="2">
             <MenuItem Header="File" >
-                <MenuItem Command="{Binding OpenFiles, Mode=OneWay}" Header="Open" HorizontalAlignment="Left" Width="139.2"/>
+                <MenuItem Command="{Binding OpenFiles, Mode=OneWay}" Header="Open"/>
                 <Separator HorizontalAlignment="Left" Width="139.2"/>
-                <MenuItem Header="Current Folder" ToolTip="{Binding WorkingDirectory}" HorizontalAlignment="Left" Width="139.2"/>
+                <MenuItem Header="Current Folder" ToolTip="{Binding WorkingDirectory}"/>
             </MenuItem>
-            <MenuItem Command="{Binding StartProcessing, Mode=OneWay}" Header="Process"/>
+            <MenuItem Header="Process">
+                <MenuItem Header="Start" Command="{Binding ProcessStartCommand}" />
+                <MenuItem Header="Stop current" Command="{Binding StopCurrentProcessCommand}"/>
+                <MenuItem Header="Stop all" Command="{Binding StopAllProcessCommands}"/>
+            </MenuItem>
         </Menu>
-        <StatusBar Grid.Row="2"/>
-        <ListView Grid.Row="1" ItemsSource="{Binding Filenames}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn/>
-                </GridView>
-            </ListView.View>
-        </ListView>
+        <StatusBar Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0.2,0.4,-0.2"/>
+        <StackPanel Grid.Column="1" Grid.Row="1">
+            <Label Content="Number of samples "/>
+            <TextBox TextWrapping="Wrap" Text="{Binding TotalSampleNumber, Converter={StaticResource ArithmeticConverter}}" />
+            <Label Content="Number of levels"/>
+            <TextBox TextWrapping="Wrap" Text="{Binding LevelsNumber, Converter={StaticResource ArithmeticConverter}}"/>
+        </StackPanel>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Filenames">
+                <Grid Background="#FFE5E5E5">
+                    <ListView SelectedIndex="{Binding SelectedFilename}" ItemsSource="{Binding Filenames}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn/>
+                            </GridView>
+                        </ListView.View>
+
+                    </ListView>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Log tab">
+                <Grid Background="#FFE5E5E5">
+                    <RichTextBox>
+                        <FlowDocument>
+                            <Paragraph>
+                                <Run Text="RichTextBox"/>
+                            </Paragraph>
+                        </FlowDocument>
+                    </RichTextBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
