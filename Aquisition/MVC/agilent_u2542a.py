@@ -320,13 +320,16 @@ class AgilentU2542A:
     def adc_set_voltage_average(self,aver):
         self.instrument.write("VOLT:AVER {0}".format(aver))
     
-    def adc_measure(self,channels):
+    def adc_measure(self,channels):  
         channel_list = [AI_CHANNELS[i] for i in channels]
         vals = self.instrument.ask("MEAS? (@{0})".format(",".join(channel_list))).split(',')
         if len(vals) != len(channel_list):
             raise Exception("non equal lengths")
+
+        values_iterable = (float(val) for val in vals)
 ##        res = { ch: val for ch in channels for val in vals }
-        res = {ch: vals[ch] for ch in channel_list}
+        res = dict(zip(channels,values_iterable))
+        #res = {ch: vals[ch] for ch in channel_list}
         return res
 
     

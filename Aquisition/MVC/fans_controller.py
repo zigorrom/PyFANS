@@ -104,7 +104,11 @@ class FANS_controller:
         ## END INITIALIZE FANS INPUT CHANNELS
         ## need to check which channels are for acquisition, for vds, for vlg, etc.
         
-    
+    def set_fans_ai_channel_mode(self,ai_mode,ai_channel):
+        self.device.dig_write_channel(ai_channel, DIGITAL_CHANNELS.DIG_502)
+        self.device.dig_write_bit_channel(ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
+        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+
     def _set_fans_ai_channel_params(self, ai_mode, ai_cs_hold, ai_filter_cutoff,ai_filter_gain, ai_pga_gain, ai_channel):
 ##        print(ai_channel)
         ## set channel selected
@@ -161,6 +165,17 @@ class FANS_controller:
     def acquisition_alive(self):
         return self.dac_proc.is_alive()
 
+    def analog_read(self,channels):
+        arg_type = type(channels)
+        if arg_type is tuple: channels = list(channels)
+        elif arg_type is not list: channels = [channels]
+        
+        channel_value_pairs = self.device.adc_measure(channels)
+        return channel_value_pairs
+
+    def analog_read_averaging(self,averaging):
+        return self.device.adc_set_voltage_average(averaging);
+
 ##
 ##    ANALOG OUTPUT SECTION
 ##    
@@ -206,29 +221,19 @@ class FANS_controller:
         ## set fans output for hardware channel
         self._set_output_channels(0,True,0,True)
         
-        
-    
 
     def _set_fans_ao_channel_params(self, enable, polarity, channel ):
-        pass
+        self._set_daq_ao_channel_params(enable,polarity,channel)
 
     def fans_output_channel_voltage(self,voltage,channel):
         self.device.dac_source_channel_voltage(voltage,channel)
 
     def fans_output_voltage_to_channels(self,voltage,channels):
         self.device.dac_source_voltage(voltage,channels)
-    #def fans_output_voltage_channel(self, voltage,channel):
-    #    self.device.dac_source_channel_voltage(ao1_voltage,channel)
-
+    
     def fans_output_voltage(self, ao1_voltage, ao2_voltage ):#, box_ao_channels):
-        ## ON
-
-        
         self.device.dac_source_channel_voltage(ao1_voltage,AO_CHANNELS.AO_201)
         self.device.dac_source_channel_voltage(ao2_voltage,AO_CHANNELS.AO_202)
-##        time.sleep(20)
-##        ## OFF
-##        self.device.dac_source_voltage(0,ao_all_channels)
     
 ##
 ##    DIGITAL OUTPUT SECTION
@@ -269,21 +274,21 @@ def main():
     f.fans_output_voltage(4,0)
     time.sleep(2)
     f.fans_output_voltage(0,0)
-##    f.start_acquisition()
-####    sleep(1)
-##    try:
-##        c = 0
-##        while True:
-####            print(c)
-##            c+=1
-####            sleep(1)
-##            if not f.acquisition_alive():
-##                break
-##    except Exception as e:
-##        print(str(e))
-##    finally:       
-##        print("stopping acquisition")
-##        f.stop_acquisition()
+    f.start_acquisition()
+##    sleep(1)
+    try:
+        c = 0
+        while True:
+##            print(c)
+            c+=1
+##            sleep(1)
+            if not f.acquisition_alive():
+                break
+    except Exception as e:
+        print(str(e))
+    finally:       
+        print("stopping acquisition")
+        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()
