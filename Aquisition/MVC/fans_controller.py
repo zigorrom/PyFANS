@@ -215,8 +215,10 @@ class FANS_controller:
     def fans_output_channel_voltage(self,voltage,channel):
         self.device.dac_source_channel_voltage(voltage,channel)
 
-    def fans_output_voltage_channel(self, voltage,channel):
-        self.device.dac_source_channel_voltage(ao1_voltage,channel)
+    def fans_output_voltage_to_channels(self,voltage,channels):
+        self.device.dac_source_voltage(voltage,channels)
+    #def fans_output_voltage_channel(self, voltage,channel):
+    #    self.device.dac_source_channel_voltage(ao1_voltage,channel)
 
     def fans_output_voltage(self, ao1_voltage, ao2_voltage ):#, box_ao_channels):
         ## ON
