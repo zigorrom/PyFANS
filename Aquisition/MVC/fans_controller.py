@@ -215,6 +215,9 @@ class FANS_controller:
     def fans_output_channel_voltage(self,voltage,channel):
         self.device.dac_source_channel_voltage(voltage,channel)
 
+    def fans_output_voltage_channel(self, voltage,channel):
+        self.device.dac_source_channel_voltage(ao1_voltage,channel)
+
     def fans_output_voltage(self, ao1_voltage, ao2_voltage ):#, box_ao_channels):
         ## ON
 
@@ -246,24 +249,24 @@ def main():
     cfg = Configuration()
     f = FANS_controller("ADC",configuration = cfg)
     f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
-
+    
     app = QtGui.QApplication(sys.argv)
     app.setStyle("cleanlooks")
     
     wnd = WndTutorial(configuration = cfg)
-    wnd.show()
-    sys.exit(app.exec_())
-##    f.fans_output_voltage(0,0)
-##    time.sleep(2)
-##    f.fans_output_voltage(6,-6)
-##    time.sleep(2)
-##    f.fans_output_voltage(0,4)
-##    time.sleep(2)
-##    f.fans_output_voltage(-6,6)
-##    time.sleep(2)
-##    f.fans_output_voltage(4,0)
-##    time.sleep(2)
-##    f.fans_output_voltage(0,0)
+##    wnd.show()
+##    sys.exit(app.exec_())
+    f.fans_output_voltage(0,0)
+    time.sleep(2)
+    f.fans_output_voltage(6,-6)
+    time.sleep(2)
+    f.fans_output_voltage(0,4)
+    time.sleep(2)
+    f.fans_output_voltage(-6,6)
+    time.sleep(2)
+    f.fans_output_voltage(4,0)
+    time.sleep(2)
+    f.fans_output_voltage(0,0)
 ##    f.start_acquisition()
 ####    sleep(1)
 ##    try:
