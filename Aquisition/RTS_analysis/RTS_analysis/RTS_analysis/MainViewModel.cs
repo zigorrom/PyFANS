@@ -289,36 +289,43 @@ namespace RTS_analysis
         private void _backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
-            for (int i = 0; i < Filenames.Count; i++)
-            {   
-                if(worker.CancellationPending == true)
+            try
+            {
+                
+                for (int i = 0; i < Filenames.Count; i++)
                 {
-                    e.Cancel = true;
-                    break;
-                }
-                else
-                {
-                    ProcessStartInfo startInfo = new ProcessStartInfo();
-                    startInfo.FileName = "python.exe";
-                    startInfo.Arguments = String.Format("rts_new.py {0} @nsamples {1} @nlevels {2}", Filenames[i], TotalSampleNumber, LevelsNumber);
-                    startInfo.UseShellExecute = false;
-                    startInfo.RedirectStandardOutput = true;
-                    startInfo.CreateNoWindow = true;
-                    string state = String.Empty;
-                    using (Process process = Process.Start(startInfo))
+                    if (worker.CancellationPending == true)
                     {
-                        using (StreamReader reader = process.StandardOutput)
+                        e.Cancel = true;
+                        break;
+                    }
+                    else
+                    {
+                        ProcessStartInfo startInfo = new ProcessStartInfo();
+                        startInfo.FileName = "python.exe";
+                        startInfo.Arguments = String.Format("rts_new.py {0} @nsamples {1} @nlevels {2}", Filenames[i], TotalSampleNumber, LevelsNumber);
+                        startInfo.UseShellExecute = false;
+                        startInfo.RedirectStandardOutput = true;
+                        startInfo.CreateNoWindow = true;
+                        string state = String.Empty;
+                        using (Process process = Process.Start(startInfo))
                         {
-                            while (!reader.EndOfStream)
+                            using (StreamReader reader = process.StandardOutput)
                             {
-                                state = reader.ReadLine();
-                                worker.ReportProgress((int)(i * 100.0 / Filenames.Count), state);
-                                Debug.Print(state);
+                                while (!reader.EndOfStream)
+                                {
+                                    state = reader.ReadLine();
+                                    worker.ReportProgress((int)(i * 100.0 / Filenames.Count), state);
+                                    Debug.Print(state);
+                                }
                             }
                         }
-                    }
 
+                    }
                 }
+            }catch(FileNotFoundException ex)
+            {
+                worker.ReportProgress(0, ex.ToString());
             }
         }
 
