@@ -1,9 +1,18 @@
 import time
+import math
 from fans_controller import FANS_controller
 from fans_constants import *
 from agilent_u2542a_constants import *
 from node_configuration import Configuration
 import numpy as np
+
+MIN_MOVING_VOLTAGE = 3
+MAX_MOVING_VOLTAGE = 6
+VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
+FD_CONST = 0.001
+
+def fermi_dirac_distribution(current_value, set_value):
+    return MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1)
 
 class fans_smu:
     def __init__(self, fans_controller):
@@ -46,8 +55,10 @@ class fans_smu:
 
     def analog_read(self,channels):
         return self.fans_controller.analog_read(channels)
-    
 
+##    def set_fans_voltage(self, voltage,channel):
+##        pass
+##    
 
 
 if __name__ == "__main__":
