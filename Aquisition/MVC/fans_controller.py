@@ -33,6 +33,8 @@ class FANS_controller:
 ##        print(self.config.get_root_node())
         self.initialize_hardware()
 
+        self.load_resistance = 100000
+
 
     def ch_ch(self,value,sender):
         print("value changed")

@@ -28,6 +28,7 @@
     <Compile Include="agilent_u2542a.py" />
     <Compile Include="agilent_u2542a_constants.py" />
     <Compile Include="binding.py" />
+    <Compile Include="data.py" />
     <Compile Include="fans_constants.py" />
     <Compile Include="fans_controller.py" />
     <Compile Include="fans_smu.py" />

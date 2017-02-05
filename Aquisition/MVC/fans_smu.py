@@ -11,7 +11,11 @@ MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = 0.001
 
-def fermi_dirac_distribution(current_value, set_value):
+FANS_VOLTAGE_SET_ERROR  = 0.001 #mV
+FANS_VOLTAGE_SET_MAXITER = 1000
+
+def voltage_setting_function(current_value, set_value):
+    # fermi-dirac-distribution
     return MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1)
 
 class fans_smu:
@@ -21,27 +25,36 @@ class fans_smu:
         self.ao_ch2_hardware_voltage = 0
         self.ao_ch1_enabled = True
         self.ao_ch2_enabled = True
-        self.fans_ao1_channel = 0
-        self.fans_ao2_channel = 0
+        self.fans_drain_source_set_channel = 0
+        self.fans_drain_source_set_channel = 0
         self._init_fans_ao_channels()
+        self.load_resistance = fans_controller.load_resistance
+
 
     def _init_fans_ao_channels(self):
-        self.fans_controller._set_output_channels(self.fans_ao1_channel,self.ao_ch1_enabled,self.fans_ao2_channel,self.ao_ch2_enabled)
+        self.fans_controller._set_output_channels(self.fans_drain_source_set_channel,self.ao_ch1_enabled,self.fans_drain_source_set_channel,self.ao_ch2_enabled)
 
     def init_smu_mode(self,channel):
         self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
-        self.fans_controller.analog_read_averaging(1000);
+        self.fans_controller.analog_read_averaging(1000)
+
+   
 
     def set_fans_ao_channels(self,ao1,ao1_en,ao2,ao2_en):
         self.ao_ch1_enabled = ao1_en
         self.ao_ch2_enabled = ao2_en
-        self.fans_ao1_channel = ao1
-        self.fans_ao2_channel = ao2
+        self.fans_drain_source_set_channel = ao1
+        self.fans_drain_source_set_channel = ao2
         self._init_fans_ao_channels()
 
-    def set_feedback_ai_channels(self,feedback_ch1,feedback_ch2):
-        self.feedback_ch1 = feedback_ch1
-        self.feedback_ch2 = feedback_ch2
+    def set_feedback_ai_channels(self,drain_source_feedback,gate_feedback,main_feedback):
+        self.fans_drain_source_feedback = drain_source_feedback
+        self.fans_gate_feedback = gate_feedback
+        self.fans_main_feedback = main_feedback
+
+    def set_fans_polarity_relay_outputs(self, drain_source_polarity_relay, gate_polarity_relay):
+        self.drain_source_polarity_relay = drain_source_polarity_relay
+        self.gate_polarity_relay = gate_polarity_relay
 
     def set_hardware_voltage(self,voltage, channel):
         self.fans_controller.fans_output_channel_voltage(voltage, channel)
@@ -55,6 +68,41 @@ class fans_smu:
 
     def analog_read(self,channels):
         return self.fans_controller.analog_read(channels)
+
+
+
+    def set_fans_voltage_for_channel(self,voltage,ai_feedback,ao_channel):
+        continue_setting = True
+        while continue_setting:    
+            curren_value = analog_read(ai_feedback)
+            value_to_set = voltage_setting_function(current_value,voltage)
+            #if
+
+            #self.set_hardware_voltage(value_to_set,ao_channel)
+            
+
+    
+
+    def set_drain_voltage(self,voltage):
+        self.set_fans_voltage_for_channel(voltage,self.fans_drain_source_feedback)
+
+
+
+    def set_gate_voltage(self, voltage):
+        self.set_fans_voltage_for_channel(voltage, self.fans_gate_feedback)
+    
+    
+    
+    #def read_drain_source_current(self):
+    #    pass    
+
+    def read_all_parameters(self):
+        ds_voltage, main_voltage, gate_voltage = self.analog_read([self.fans_drain_source_feedback,self.fans_main_feedback,self.fans_gate_feedback])
+        current = (main_voltage-ds_voltage)/self.load_resistance
+        resistance = ds_voltage/current
+        return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
+        
+
 
 ##    def set_fans_voltage(self, voltage,channel):
 ##        pass
