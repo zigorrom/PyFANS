@@ -26,10 +26,10 @@ def voltage_setting_function(current_value, set_value):
 
 # output channel - A0_BOX_CHANNELS
 # feedback_channel - AI_BOX_CHANNELS
-def generate_state_dictionary(output_channel, feedback_channel):
-    return {OUT_CH:output_channel, FEEDBACK_CH:feedback_channel}
+def generate_state_dictionary(enabled, output_channel, feedback_channel, polarity_relay_channel):
+    return {OUT_ENABLED_CH:enabled, OUT_CH:output_channel, FEEDBACK_CH:feedback_channel, POLARITY_RELAY_CH: polarity_relay_channel}
 
-OUT_CH, FEEDBACK_CH = [0,1]
+OUT_ENABLED_CH, OUT_CH, FEEDBACK_CH, POLARITY_RELAY_CH = [0,1,2,3]
 
 class fans_smu:
     def __init__(self, fans_controller):
@@ -37,44 +37,60 @@ class fans_smu:
         self.load_resistance = fans_controller.load_resistance
 
         self.state_dictionary = dict()
-        self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage] = generate_state_dictionary(0,0) # {OUT_CH:0, FEEDBACK_CH:1}
-        self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage]=generate_state_dictionary(0,0) #{OUT_CH:0, FEEDBACK_CH:1}
-        self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage]=generate_state_dictionary(0,0) #{OUT_CH:0, FEEDBACK_CH:1}
+        self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage] = generate_state_dictionary(True,0,0,0) # {OUT_CH:0, FEEDBACK_CH:1}
+        self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage]= generate_state_dictionary(True,None,0,0)
+        self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage]=generate_state_dictionary(True, 0,0,0) #{OUT_CH:0, FEEDBACK_CH:1}
 
-        self.ao_ch1_hardware_voltage = 0
-        self.ao_ch2_hardware_voltage = 0
-        self.ao_ch1_enabled = True
-        self.ao_ch2_enabled = True
-        self.fans_drain_source_set_channel = 0
-        self.fans_drain_source_set_channel = 0
+        #self.ao_ch1_hardware_voltage = 0
+        #self.ao_ch2_hardware_voltage = 0
+        #self.ao_ch1_enabled = True
+        #self.ao_ch2_enabled = True
+        #self.fans_drain_source_set_channel = 0
+        #self.fans_drain_source_set_channel = 0
         self._init_fans_ao_channels()
         
 
 
     def _init_fans_ao_channels(self):
-        self.fans_controller._set_output_channels(self.fans_drain_source_set_channel,self.ao_ch1_enabled,self.fans_drain_source_set_channel,self.ao_ch2_enabled)
+        #self.fans_controller._set_output_channels(self.fans_drain_source_set_channel,self.ao_ch1_enabled,self.fans_drain_source_set_channel,self.ao_ch2_enabled)
+        ao1_channel = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_CH]
+        ao1_enabled = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_ENABLED_CH]
+        ao2_channel = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_CH]
+        ao2_enabled = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_ENABLED_CH]
+        self.fans_controller._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)
 
-    def init_smu_mode(self,channel):
-        self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
-        self.fans_controller.analog_read_averaging(1000)
+    def init_smu_mode(self):
+        for ch in [FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_AI_FUNCTIONS.GateVoltage]:
+            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,self.state_dictionary[ch][FEEDBACK_CH])
+        #self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
+        #self.fans_controller.analog_read_averaging(1000)
 
    
+    def set_fans_ao_channel_for_function(self,function, ao_channel,enabled):
+        self.state_dictionary[funciton][OUT_CH] = ao_channel
+        self.state_dictionary[funciton][OUT_ENABLED_CH] = enabled
+      
+    def set_fans_ao_polarity_for_function(self,function, polarity):
+        self.state_dictionary[funciton][POLARITY_RELAY_CH] = polarity
 
-    def set_fans_ao_channels(self,ao1,ao1_en,ao2,ao2_en):
-        self.ao_ch1_enabled = ao1_en
-        self.ao_ch2_enabled = ao2_en
-        self.fans_drain_source_set_channel = ao1
-        self.fans_drain_source_set_channel = ao2
-        self._init_fans_ao_channels()
+    def set_fans_ao_feedback_for_function(self,function,feedback):
+        self.state_dictionary[funciton][FEEDBACK_CH] = feedback
 
-    def set_feedback_ai_channels(self,drain_source_feedback,gate_feedback,main_feedback):
-        self.fans_drain_source_feedback = drain_source_feedback
-        self.fans_gate_feedback = gate_feedback
-        self.fans_main_feedback = main_feedback
+    #def set_fans_ao_channels(self,ao1,ao1_en,ao2,ao2_en):
+    #    self.ao_ch1_enabled = ao1_en
+    #    self.ao_ch2_enabled = ao2_en
+    #    self.fans_drain_source_set_channel = ao1
+    #    self.fans_drain_source_set_channel = ao2
+    #    self._init_fans_ao_channels()
 
-    def set_fans_polarity_relay_outputs(self, drain_source_polarity_relay, gate_polarity_relay):
-        self.drain_source_polarity_relay = drain_source_polarity_relay
-        self.gate_polarity_relay = gate_polarity_relay
+    #def set_feedback_ai_channels(self,drain_source_feedback,gate_feedback,main_feedback):
+    #    self.fans_drain_source_feedback = drain_source_feedback
+    #    self.fans_gate_feedback = gate_feedback
+    #    self.fans_main_feedback = main_feedback
+
+    #def set_fans_polarity_relay_outputs(self, drain_source_polarity_relay, gate_polarity_relay):
+    #    self.drain_source_polarity_relay = drain_source_polarity_relay
+    #    self.gate_polarity_relay = gate_polarity_relay
 
     def set_hardware_voltage(self,voltage, channel):
         self.fans_controller.fans_output_channel_voltage(voltage, channel)
