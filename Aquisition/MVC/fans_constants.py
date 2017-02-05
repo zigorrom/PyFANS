@@ -34,6 +34,8 @@ BOX_AO_CHANNEL_MAP = dict((i , AO_CHANNELS.AO_201 if i<8 else AO_CHANNELS.AO_202
 
 A0_BOX_CHANNELS = enum(*["ao_ch_{0}".format(i) for i in range(1,17)])
 
+FANS_AI_FUNCTIONS = enum("DrainSourceVoltage","MainVoltage","GateVoltage")
+
 
 def get_fans_ai_channel_default_params():
     return {

@@ -26,6 +26,13 @@ def voltage_setting_function(current_value, set_value):
 class fans_smu:
     def __init__(self, fans_controller):
         self.fans_controller = fans_controller
+        self.load_resistance = fans_controller.load_resistance
+
+        self.state_dictionary = dict()
+        self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage] = {}
+        self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage]={}
+        self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage]={}
+
         self.ao_ch1_hardware_voltage = 0
         self.ao_ch2_hardware_voltage = 0
         self.ao_ch1_enabled = True
@@ -33,7 +40,7 @@ class fans_smu:
         self.fans_drain_source_set_channel = 0
         self.fans_drain_source_set_channel = 0
         self._init_fans_ao_channels()
-        self.load_resistance = fans_controller.load_resistance
+        
 
 
     def _init_fans_ao_channels(self):
