@@ -23,15 +23,23 @@ def voltage_setting_function(current_value, set_value):
     # fermi-dirac-distribution
     return MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1)
 
+
+# output channel - A0_BOX_CHANNELS
+# feedback_channel - AI_BOX_CHANNELS
+def generate_state_dictionary(output_channel, feedback_channel):
+    return {OUT_CH:output_channel, FEEDBACK_CH:feedback_channel}
+
+OUT_CH, FEEDBACK_CH = [0,1]
+
 class fans_smu:
     def __init__(self, fans_controller):
         self.fans_controller = fans_controller
         self.load_resistance = fans_controller.load_resistance
 
         self.state_dictionary = dict()
-        self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage] = {}
-        self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage]={}
-        self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage]={}
+        self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage] = generate_state_dictionary(0,0) # {OUT_CH:0, FEEDBACK_CH:1}
+        self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage]=generate_state_dictionary(0,0) #{OUT_CH:0, FEEDBACK_CH:1}
+        self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage]=generate_state_dictionary(0,0) #{OUT_CH:0, FEEDBACK_CH:1}
 
         self.ao_ch1_hardware_voltage = 0
         self.ao_ch2_hardware_voltage = 0
