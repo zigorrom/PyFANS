@@ -14,6 +14,11 @@ FD_CONST = 0.001
 FANS_VOLTAGE_SET_ERROR  = 0.001 #mV
 FANS_VOLTAGE_SET_MAXITER = 1000
 
+FANS_POLARITY_CHANGE_VOLTAGE = (-3,3)
+FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
+ 
+
+
 def voltage_setting_function(current_value, set_value):
     # fermi-dirac-distribution
     return MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1)
@@ -69,7 +74,8 @@ class fans_smu:
     def analog_read(self,channels):
         return self.fans_controller.analog_read(channels)
 
-
+    def set_fans_output_polarity(self,polarity):
+        pass
 
     def set_fans_voltage_for_channel(self,voltage,ai_feedback,ao_channel):
         continue_setting = True
