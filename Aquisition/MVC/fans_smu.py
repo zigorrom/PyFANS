@@ -109,11 +109,27 @@ class fans_smu:
         pass
 
     def set_fans_voltage_for_channel(self,voltage,ai_feedback,ao_channel):
-        continue_setting = True
-        while continue_setting:    
+        current_value = analog_read(ai_feedback)
+        if current_value*voltage<0:
+            set_result = self.set_fans_voltage_for_channel(0,ai_feedback,ao_channel)
+            if set_result:
+                polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
+                self.set_fans_output_polarity(polarity)
+
+
+        #continue_setting = True
+        counter = 0
+        while True: #continue_setting:    
             curren_value = analog_read(ai_feedback)
             value_to_set = voltage_setting_function(current_value,voltage)
-            #if
+            if abs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
+                return True
+            elif counter > FANS_VOLTAGE_SET_MAXITER:
+                return False
+
+            self.set_hardware_voltage(value_to_set,ao_channel)
+
+
 
             #self.set_hardware_voltage(value_to_set,ao_channel)
             
@@ -140,7 +156,12 @@ class fans_smu:
     #    pass    
 
     def read_all_parameters(self):
-        ds_voltage, main_voltage, gate_voltage = self.analog_read([self.fans_drain_source_feedback,self.fans_main_feedback,self.fans_gate_feedback])
+        drain_feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][FEEDBACK_CH]
+        gate_feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][FEEDBACK_CH]
+        main_feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.MainVoltage][FEEDBACK_CH]
+
+        # can be a problem with an order of arguments
+        ds_voltage, main_voltage, gate_voltage = self.analog_read([drain_feedback_ch,main_feedback_ch,gate_feedback_ch])
         current = (main_voltage-ds_voltage)/self.load_resistance
         resistance = ds_voltage/current
         return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
