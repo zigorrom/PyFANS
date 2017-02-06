@@ -121,12 +121,18 @@ class fans_smu:
     
 
     def set_drain_voltage(self,voltage):
-        self.set_fans_voltage_for_channel(voltage,self.fans_drain_source_feedback)
+        feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][FEEDBACK_CH]
+        output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_CH]
+        self.set_fans_voltage_for_channel(voltage,feedback_ch,output_ch)
+        #self.set_fans_voltage_for_channel(voltage,self.fans_drain_source_feedback)
 
 
 
     def set_gate_voltage(self, voltage):
-        self.set_fans_voltage_for_channel(voltage, self.fans_gate_feedback)
+        feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][FEEDBACK_CH]
+        output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_CH]
+        self.set_fans_voltage_for_channel(voltage,feedback_ch,output_ch)
+        #self.set_fans_voltage_for_channel(voltage, self.fans_gate_feedback)
     
     
     
