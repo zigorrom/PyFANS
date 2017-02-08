@@ -171,7 +171,7 @@ class FANS_controller:
         arg_type = type(channels)
         if arg_type is tuple: channels = list(channels)
         elif arg_type is not list: channels = [channels]
-        
+        channels.sort()
         channel_value_pairs = self.device.adc_measure(channels)
         return channel_value_pairs
 
@@ -207,6 +207,7 @@ class FANS_controller:
 
         self._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)
            
+
     def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
         ao1_enable_bit_mask = 1<<3
         ao1_disable_bit_mask = ~ao1_enable_bit_mask
