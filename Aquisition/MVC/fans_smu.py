@@ -66,6 +66,9 @@ class fans_smu:
         #self.fans_controller.analog_read_averaging(1000)
 
    
+
+
+   
     def set_fans_ao_channel_for_function(self,function, ao_channel,enabled):
         self.state_dictionary[funciton][OUT_CH] = ao_channel
         self.state_dictionary[funciton][OUT_ENABLED_CH] = enabled
@@ -105,8 +108,28 @@ class fans_smu:
     def analog_read(self,channels):
         return self.fans_controller.analog_read(channels)
 
+
+    def __start_polarity_change(self,function):
+        ao_ch = self.state_dictionary[function][OUT_CH]
+        switch_ch = self.state_dictionary[function][POLARITY_RELAY_CH]
+        
+        self.set_hardware_voltage(0,ao_ch)
+        self.fans_controller._set_output_channel(switch_ch,STATES.ON)
+        
+        #self.fans_controller._set_output_channels(
+    def __stop_polarity_change(self,function):
+        ao_ch = self.state_dictionary[function][OUT_CH]
+        out_ch = self.state_dictionary[function][POLARITY_RELAY_CH]
+        self.set_hardware_voltage(0,ao_ch)
+        self.fans_controller._set_output_channel(switch_ch,STATES.ON)
+
+
     def set_fans_output_polarity(self,polarity,function):
-        pass
+        self.__start_polarity_change(function)
+        hardware_ralay_ch = self.state_dictionary[function][OUT_CH]
+        self.set_hardware_voltage(polarity,hardware_relay_ch)
+        #self.set_hardware_voltage(0,hardware_relay_ch)
+        self.__stop_polarity_change(function)
 
 
     def set_fans_voltage_for_channel(self,voltage,function):

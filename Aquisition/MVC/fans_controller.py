@@ -195,7 +195,18 @@ class FANS_controller:
         self.device.daq_set_enable_ao_channel(ao_enable,ao_channel)
         self.device.daq_set_ao_channel_polarity(ao_polarity, ao_channel)
         
-       
+    def _set_output_channel(self,ao_channel,ao_enabled):
+        hardware_ao_ch = BOX_AO_CHANNEL_MAP[ao_channel]
+        self.ao_channel_params[hardware_ao_ch]["selected_output"] = ao_channel
+        self.ao_channel_params[hardware_ao_ch]["enabled"] = ao_enabled
+
+        ao1_channel = self.ao_channel_params[AO_CHANNELS.AO_201]["selected_output"]
+        ao1_enabled = self.ao_channel_params[AO_CHANNELS.AO_201]["enabled"]
+        ao2_channel = self.ao_channel_params[AO_CHANNELS.AO_202]["selected_output"]
+        ao2_enabled = self.ao_channel_params[AO_CHANNELS.AO_202]["enabled"]
+
+        self._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)
+           
     def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
         ao1_enable_bit_mask = 1<<3
         ao1_disable_bit_mask = ~ao1_enable_bit_mask
@@ -221,7 +232,11 @@ class FANS_controller:
         
     def _init_fans_ao_channels(self):
         ## set fans output for hardware channel
-        self._set_output_channels(0,True,0,True)
+        ao1_channel = self.ao_channel_params[AO_CHANNELS.AO_201]["selected_output"]
+        ao1_enabled = self.ao_channel_params[AO_CHANNELS.AO_201]["enabled"]
+        ao2_channel = self.ao_channel_params[AO_CHANNELS.AO_202]["selected_output"]
+        ao2_enabled = self.ao_channel_params[AO_CHANNELS.AO_202]["enabled"]
+        self._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)
         
 
     def _set_fans_ao_channel_params(self, enable, polarity, channel ):
