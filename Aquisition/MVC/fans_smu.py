@@ -105,22 +105,29 @@ class fans_smu:
     def analog_read(self,channels):
         return self.fans_controller.analog_read(channels)
 
-    def set_fans_output_polarity(self,polarity):
+    def set_fans_output_polarity(self,polarity,function):
         pass
 
-    def set_fans_voltage_for_channel(self,voltage,ai_feedback,ao_channel):
-        current_value = analog_read(ai_feedback)
+
+    def set_fans_voltage_for_channel(self,voltage,function):
+
+        ai_feedback = self.state_dictionary[function][FEEDBACK_CH]
+        output_ch = self.state_dictionary[function][OUT_CH]
+
+        current_value = self.analog_read(ai_feedback)
         if current_value*voltage<0:
             set_result = self.set_fans_voltage_for_channel(0,ai_feedback,ao_channel)
             if set_result:
                 polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
+                
                 self.set_fans_output_polarity(polarity)
-
+            else:
+                return set_result
 
         #continue_setting = True
         counter = 0
         while True: #continue_setting:    
-            curren_value = analog_read(ai_feedback)
+            curren_value = self.analog_read(ai_feedback)
             value_to_set = voltage_setting_function(current_value,voltage)
             if abs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
                 return True
@@ -137,17 +144,17 @@ class fans_smu:
     
 
     def set_drain_voltage(self,voltage):
-        feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][FEEDBACK_CH]
-        output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_CH]
-        self.set_fans_voltage_for_channel(voltage,feedback_ch,output_ch)
+        #feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][FEEDBACK_CH]
+        #output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_CH]
+        self.set_fans_voltage_for_channel(voltage,FANS_AI_FUNCTIONS.DrainSourceVoltage) #feedback_ch,output_ch)
         #self.set_fans_voltage_for_channel(voltage,self.fans_drain_source_feedback)
 
 
 
     def set_gate_voltage(self, voltage):
-        feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][FEEDBACK_CH]
-        output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_CH]
-        self.set_fans_voltage_for_channel(voltage,feedback_ch,output_ch)
+        #feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][FEEDBACK_CH]
+        #output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_CH]
+        self.set_fans_voltage_for_channel(voltage,FANS_AI_FUNCTIONS.GateVoltage) #feedback_ch,output_ch)
         #self.set_fans_voltage_for_channel(voltage, self.fans_gate_feedback)
     
     
