@@ -48,6 +48,7 @@ class fans_smu:
         #self.fans_drain_source_set_channel = 0
         #self.fans_drain_source_set_channel = 0
         self._init_fans_ao_channels()
+        self.init_smu_mode()
         
 
 
@@ -161,11 +162,13 @@ class fans_smu:
             curren_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
             print(current_value)
             value_to_set = voltage_setting_function(current_value,voltage)
+            print("value to set {0}".format(value_to_set))
             if abs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
                 return True
             elif counter > FANS_VOLTAGE_SET_MAXITER:
                 return False
 
+            counter += 1
             self.set_hardware_voltage(value_to_set,hardware_output_ch)
 
 
