@@ -21,7 +21,11 @@ FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
 
 def voltage_setting_function(current_value, set_value):
     # fermi-dirac-distribution
-    return MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1)
+    sign = 1
+    if current_value > set_value:
+        sign = -1
+
+    return sign*(MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1))
 
 
 # output channel - A0_BOX_CHANNELS
@@ -144,7 +148,7 @@ class fans_smu:
 
         hardware_feedback_ch = BOX_AI_CHANNELS_MAP[ai_feedback]["channel"]
         hardware_output_ch = BOX_AO_CHANNEL_MAP[output_ch]
-
+       
         current_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
         print(current_value)
         if current_value*voltage<0:
@@ -159,6 +163,7 @@ class fans_smu:
         #continue_setting = True
         counter = 0
         while True: #continue_setting:    
+            print(self.analog_read(AI_CHANNELS.indexes))
             curren_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
             print(current_value)
             value_to_set = voltage_setting_function(current_value,voltage)
@@ -176,11 +181,17 @@ class fans_smu:
             #self.set_hardware_voltage(value_to_set,ao_channel)
             
 
-    
+    def _start_setting_voltage(self,function):
+        box_ao_ch = self.state_dictionary[function][OUT_CH]
+        ao_ch = BOX_AO_CHANNEL_MAP[box_ao_ch]
+        #out_ch = self.state_dictionary[function][POLARITY_RELAY_CH]
+        self.set_hardware_voltage(0,ao_ch)
+        self.fans_controller._set_output_channel(box_ao_ch,STATES.ON)
 
     def set_drain_voltage(self,voltage):
         #feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][FEEDBACK_CH]
         #output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.DrainSourceVoltage][OUT_CH]
+        self._start_setting_voltage(FANS_AI_FUNCTIONS.DrainSourceVoltage)
         self.set_fans_voltage_for_channel(voltage,FANS_AI_FUNCTIONS.DrainSourceVoltage) #feedback_ch,output_ch)
         #self.set_fans_voltage_for_channel(voltage,self.fans_drain_source_feedback)
 
@@ -189,6 +200,7 @@ class fans_smu:
     def set_gate_voltage(self, voltage):
         #feedback_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][FEEDBACK_CH]
         #output_ch = self.state_dictionary[FANS_AI_FUNCTIONS.GateVoltage][OUT_CH]
+        self._start_setting_voltage(FANS_AI_FUNCTIONS.GateVoltage)
         self.set_fans_voltage_for_channel(voltage,FANS_AI_FUNCTIONS.GateVoltage) #feedback_ch,output_ch)
         #self.set_fans_voltage_for_channel(voltage, self.fans_gate_feedback)
     
@@ -220,8 +232,8 @@ if __name__ == "__main__":
     f = FANS_controller("ADC",configuration=cfg)
     smu = fans_smu(f)
     
-    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_1,STATES.ON)
-    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage, A0_BOX_CHANNELS.ao_ch_9,STATES.ON)
+    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_9,STATES.ON)
+    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage, A0_BOX_CHANNELS.ao_ch_1,STATES.ON)
 
     smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_4)
     smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage,A0_BOX_CHANNELS.ao_ch_12)
@@ -233,12 +245,16 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.GateVoltage, AI_BOX_CHANNELS.ai_ch_6)
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
 
-    #smu.set_drain_voltage(4)
-    #smu.set_drain_voltage(0)
+    try:
+        smu.set_drain_voltage(4)
+        smu.set_drain_voltage(0)
+    except:
+        pass
 
-    for i in range(100):
-        time.sleep(0.05)
-        print(smu.analog_read(AI_CHANNELS.indexes))
+    smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
+    #for i in range(100):
+    #    time.sleep(0.05)
+    #    print(smu.analog_read(AI_CHANNELS.indexes))
 
 
 
@@ -269,11 +285,24 @@ if __name__ == "__main__":
     #    sign = -sign
     
     #smu.init_smu_mode(AI_CHANNELS.AI_101)
-    f.set_fans_ai_channel_mode(AI_MODES.DC,AI_CHANNELS.AI_101)
-    sign = 1
-    for i in np.arange(0,-7,-0.2):
-        smu.set_hardware_voltage_channels(i, AO_CHANNELS.indexes)
-        time.sleep(0.01)
-        print(smu.analog_read(AI_CHANNELS.AI_101))
-    smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
+
+    #print("start setting")
+
+    ##f.set_fans_ai_channel_mode(AI_MODES.AC,AI_CHANNELS.AI_101)
+    #smu.set_hardware_voltage_channels(5, AO_CHANNELS.indexes)
+    #try:
+    #    for i in range(1000):    
+    #        time.sleep(0.05)
+    #        print(smu.analog_read(AI_CHANNELS.AI_101))
+    #except:
+    #    pass
+
+    #print("finish")
+
+    ##sign = 1
+    ##for i in np.arange(0,-7,-0.2):
+    ##    smu.set_hardware_voltage_channels(i, AO_CHANNELS.indexes)
+    ##    time.sleep(0.01)
+    ##    print(smu.analog_read(AI_CHANNELS.AI_101))
+    #smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
         

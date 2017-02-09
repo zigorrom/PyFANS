@@ -20,14 +20,14 @@ AI_BOX_CHANNELS = enum(*["ai_ch_{0}".format(i) for i in range(1,9)])
 
 ##AO_CHANNELS = enum("AO_1","AO_2")
 
-BOX_AI_CHANNELS_MAP = {1: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.AC},
-                       2: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.AC},
-                       3: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.AC},
-                       4: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.AC},
-                       5: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.DC},
-                       6: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.DC},
-                       7: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.DC},
-                       8: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.DC}
+BOX_AI_CHANNELS_MAP = {0: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.AC},
+                       1: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.AC},
+                       2: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.AC},
+                       3: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.AC},
+                       4: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.DC},
+                       5: {"channel": AI_CHANNELS.AI_102,"mode": AI_MODES.DC},
+                       6: {"channel": AI_CHANNELS.AI_103,"mode": AI_MODES.DC},
+                       7: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.DC}
                        }
 
 BOX_AO_CHANNEL_MAP = dict((i , AO_CHANNELS.AO_201 if i<8 else AO_CHANNELS.AO_202)  for i in range(16))

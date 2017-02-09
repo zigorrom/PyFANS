@@ -97,7 +97,7 @@ class FANS_controller:
             ## need to replace by real values
             
             mode = AI_MODES.DC
-            cs_hold = CS_HOLD.OFF
+            cs_hold = CS_HOLD.ON
             filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f100
             filter_gain = FILTER_GAINS.x1
             pga_gain = PGA_GAINS.x1
