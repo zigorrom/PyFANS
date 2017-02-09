@@ -62,7 +62,7 @@ class fans_smu:
 
     def init_smu_mode(self):
         for ch in [FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_AI_FUNCTIONS.GateVoltage, FANS_AI_FUNCTIONS.MainVoltage]:
-            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,self.state_dictionary[ch][FEEDBACK_CH])
+            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.AC,self.state_dictionary[ch][FEEDBACK_CH])
         #self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
         #self.fans_controller.analog_read_averaging(1000)
 
@@ -236,6 +236,13 @@ if __name__ == "__main__":
     #smu.set_drain_voltage(4)
     #smu.set_drain_voltage(0)
 
+    for i in range(100):
+        time.sleep(0.05)
+        print(smu.analog_read(AI_CHANNELS.indexes))
+
+
+
+
     #smu.set_fans_ao_channels(1,True,0,True)
     #smu.set_hardware_voltage_channels(1.5, AO_CHANNELS.indexes)
 
@@ -264,9 +271,9 @@ if __name__ == "__main__":
     #smu.init_smu_mode(AI_CHANNELS.AI_101)
     f.set_fans_ai_channel_mode(AI_MODES.DC,AI_CHANNELS.AI_101)
     sign = 1
-    for i in np.arange(0,7,0.2):
+    for i in np.arange(0,-7,-0.2):
         smu.set_hardware_voltage_channels(i, AO_CHANNELS.indexes)
-        time.sleep(0.05)
+        time.sleep(0.01)
         print(smu.analog_read(AI_CHANNELS.AI_101))
     smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
         
