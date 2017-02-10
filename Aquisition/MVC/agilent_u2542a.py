@@ -344,7 +344,7 @@ class AgilentU2542A:
         self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,",".join(channel_list)))
 
     def dac_source_channel_voltage(self,value,channel):
-        print("ao channel {0}".format(AO_CHANNELS[channel]))
+        #print("ao channel {0}".format(AO_CHANNELS[channel]))
         self.instrument.write("SOUR:VOLT {0}, (@{1})".format(value,AO_CHANNELS[channel]))
 
     def dac_set_polarity(self,polarity,channels):

@@ -9,10 +9,10 @@ import numpy as np
 MIN_MOVING_VOLTAGE = 3
 MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
-FD_CONST = 0.001
+FD_CONST = 1
 
-FANS_VOLTAGE_SET_ERROR  = 0.001 #mV
-FANS_VOLTAGE_SET_MAXITER = 1000
+FANS_VOLTAGE_SET_ERROR  = 0.020 #mV
+FANS_VOLTAGE_SET_MAXITER = 10000
 
 FANS_POLARITY_CHANGE_VOLTAGE = (-3,3)
 FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
@@ -20,12 +20,29 @@ FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
 
 
 def voltage_setting_function(current_value, set_value):
-    # fermi-dirac-distribution
-    sign = 1
-    if current_value > set_value:
-        sign = -1
 
-    return sign*(MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(math.exp((current_value-set_value)/FD_CONST)+1))
+
+    # fermi-dirac-distribution
+    sign = -1
+    if current_value <0:
+        if current_value > set_value:
+            sign = -1   
+        else:
+            sign = +1
+    else:
+        if current_value > set_value:
+            sign = +1
+        else:
+            sign = -1
+    
+    diff = math.fabs(current_value-set_value)
+    try:
+        exponent = math.exp(diff/FD_CONST)
+    except OverflowError:
+        exponent = float("inf")
+
+
+    return sign*(MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(exponent+1))
 
 
 # output channel - A0_BOX_CHANNELS
@@ -66,7 +83,7 @@ class fans_smu:
 
     def init_smu_mode(self):
         for ch in [FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_AI_FUNCTIONS.GateVoltage, FANS_AI_FUNCTIONS.MainVoltage]:
-            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.AC,self.state_dictionary[ch][FEEDBACK_CH])
+            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,self.state_dictionary[ch][FEEDBACK_CH])
         #self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
         #self.fans_controller.analog_read_averaging(1000)
 
@@ -134,9 +151,13 @@ class fans_smu:
     def set_fans_output_polarity(self,polarity,function):
         self.__start_polarity_change(function)
 
-        hardware_ralay_ch = self.state_dictionary[function][OUT_CH]
-        self.set_hardware_voltage(polarity,hardware_relay_ch)
-        self.set_hardware_voltage(0,hardware_relay_ch)
+        #hardware_relay_ch = self.state_dictionary[function][OUT_CH]
+
+        box_ao_ch = self.state_dictionary[function][POLARITY_RELAY_CH]
+        ao_ch = BOX_AO_CHANNEL_MAP[box_ao_ch]
+
+        self.set_hardware_voltage(polarity,ao_ch)
+        self.set_hardware_voltage(0,ao_ch)
         #self.set_hardware_voltage(0,hardware_relay_ch)
         self.__stop_polarity_change(function)
 
@@ -164,11 +185,11 @@ class fans_smu:
         counter = 0
         while True: #continue_setting:    
             print(self.analog_read(AI_CHANNELS.indexes))
-            curren_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
-            print(current_value)
+            current_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
+            #print(current_value)
             value_to_set = voltage_setting_function(current_value,voltage)
-            print("value to set {0}".format(value_to_set))
-            if abs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
+            #print("value to set {0}".format(value_to_set))
+            if math.fabs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
                 return True
             elif counter > FANS_VOLTAGE_SET_MAXITER:
                 return False
@@ -246,10 +267,12 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
 
     try:
-        smu.set_drain_voltage(4)
+        smu.set_drain_voltage(0.5)
+        smu.set_drain_voltage(-0.5)
         smu.set_drain_voltage(0)
-    except:
-        pass
+    except Exception as e:
+        raise
+        #print(str(e))
 
     smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
     #for i in range(100):
