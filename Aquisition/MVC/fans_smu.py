@@ -14,7 +14,7 @@ FD_CONST = 1
 FANS_VOLTAGE_SET_ERROR  = 0.020 #mV
 FANS_VOLTAGE_SET_MAXITER = 10000
 
-FANS_POLARITY_CHANGE_VOLTAGE = (-3,3)
+FANS_POLARITY_CHANGE_VOLTAGE = (-5,5)
 FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
  
 
@@ -256,8 +256,8 @@ if __name__ == "__main__":
     smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_9,STATES.ON)
     smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage, A0_BOX_CHANNELS.ao_ch_1,STATES.ON)
 
-    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_4)
-    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage,A0_BOX_CHANNELS.ao_ch_12)
+    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_12)
+    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage,A0_BOX_CHANNELS.ao_ch_4)
      
     smu.set_fans_ao_polarity_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_POSITIVE_POLARITY )
     smu.set_fans_ao_polarity_for_function(FANS_AI_FUNCTIONS.GateVoltage, FANS_POSITIVE_POLARITY)
@@ -267,9 +267,15 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
 
     try:
-        smu.set_drain_voltage(0.5)
-        smu.set_drain_voltage(-0.5)
-        smu.set_drain_voltage(0)
+        for i in range(10):
+            smu.set_fans_output_polarity(FANS_NEGATIVE_POLARITY,FANS_AI_FUNCTIONS.DrainSourceVoltage)
+            time.sleep(0.5)
+            smu.set_fans_output_polarity(FANS_POSITIVE_POLARITY,FANS_AI_FUNCTIONS.DrainSourceVoltage)
+            time.sleep(0.5)
+
+        #smu.set_drain_voltage(0.5)
+        #smu.set_drain_voltage(-0.5)
+        #smu.set_drain_voltage(0)
     except Exception as e:
         raise
         #print(str(e))
