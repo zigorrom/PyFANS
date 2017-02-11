@@ -157,6 +157,7 @@ class fans_smu:
         ao_ch = BOX_AO_CHANNEL_MAP[box_ao_ch]
 
         self.set_hardware_voltage(polarity,ao_ch)
+        time.sleep(0.5)
         self.set_hardware_voltage(0,ao_ch)
         #self.set_hardware_voltage(0,hardware_relay_ch)
         self.__stop_polarity_change(function)
