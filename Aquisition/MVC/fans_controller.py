@@ -23,7 +23,7 @@ class FANS_controller:
 
 
         ## INITIALIZE VALUES FOR OUTPUT CHANNELS
-        self.ao_channel_params = dict((ch,get_fans_ao_channel_default_params()) for ch in AO_CHANNELS.indexes)
+        self.ao_channel_params = dict((ch,get_fans_ao_channel_default_params(ch)) for ch in AO_CHANNELS.indexes)
         self.ai_channel_params = dict((ch,get_fans_ai_channel_default_params()) for ch in AI_CHANNELS.indexes)
         
         
@@ -195,41 +195,56 @@ class FANS_controller:
         self.device.daq_set_enable_ao_channel(ao_enable,ao_channel)
         self.device.daq_set_ao_channel_polarity(ao_polarity, ao_channel)
         
-    def _set_output_channel(self,ao_channel,ao_enabled):
+    def set_selected_output(self,ao_channel,ao_enabled):
         hardware_ao_ch = BOX_AO_CHANNEL_MAP[ao_channel]
         self.ao_channel_params[hardware_ao_ch]["selected_output"] = ao_channel
         self.ao_channel_params[hardware_ao_ch]["enabled"] = ao_enabled
 
-        ao1_channel = self.ao_channel_params[AO_CHANNELS.AO_201]["selected_output"]
-        ao1_enabled = self.ao_channel_params[AO_CHANNELS.AO_201]["enabled"]
-        ao2_channel = self.ao_channel_params[AO_CHANNELS.AO_202]["selected_output"]
-        ao2_enabled = self.ao_channel_params[AO_CHANNELS.AO_202]["enabled"]
+    def _set_output_channel(self,ao_channel,ao_enabled):
+        
+        self.set_selected_output(ao_channel,ao_enabled)
+        #hardware_ao_ch = BOX_AO_CHANNEL_MAP[ao_channel]
+        #self.ao_channel_params[hardware_ao_ch]["selected_output"] = ao_channel
+        #self.ao_channel_params[hardware_ao_ch]["enabled"] = ao_enabled
 
-        self._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)
-           
+        ao1_channel = self.ao_channel_params[AO_CHANNELS.AO_202]["selected_output"]
+        ao1_enabled = self.ao_channel_params[AO_CHANNELS.AO_202]["enabled"]
+        ao2_channel = self.ao_channel_params[AO_CHANNELS.AO_201]["selected_output"]
+        ao2_enabled = self.ao_channel_params[AO_CHANNELS.AO_201]["enabled"]
 
+        self._set_output_channels(ao1_channel,ao1_enabled,ao2_channel,ao2_enabled)     
+
+        ### ao1 - correcponds to AO_202, ao2 - corresponds to ao_201
     def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
-        ao1_enable_bit_mask = 1<<3
-        ao1_disable_bit_mask = ~ao1_enable_bit_mask
-        ao2_enable_bit_mask = 1<<7
-        ao2_disable_bit_mask = ~ao2_enable_bit_mask
-        
-##        print("ao1_enable {0:08b}".format(ao1_enable))
-##        print("ao2_enable {0:08b}".format(ao2_enable))
-        channels_enab = ao1_enable_bit_mask | ao2_enable_bit_mask
-        if not ao1_enabled:
-            channels_enab = channels_enab&ao1_disable_bit_mask
-        if not ao2_enabled:
-            channels_enab = channels_enab&ao2_disable_bit_mask
+        if ao1_channel<NUMBER_OF_SWITCH_CHANNELS and ao2_channel>= NUMBER_OF_SWITCH_CHANNELS and (ao2_channel % NUMBER_OF_SWITCH_CHANNELS) < NUMBER_OF_SWITCH_CHANNELS:
 
-##        print("enable {0:08b}".format(channels_enab))
-        channels = (ao2_channel<<4)|ao1_channel
-##        print("channels {0:08b}".format(channels))
-        val_to_write = channels_enab|channels
-        print("value to write {0:08b}".format(val_to_write))
-        self.device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
-        self._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+            ###
+            ###     bag with setting the enable bits
+            ###
+
+            ao1_enable_bit_mask = 1<<3
+            ao1_disable_bit_mask = ~ao1_enable_bit_mask
+            ao2_enable_bit_mask = 1<<7
+            ao2_disable_bit_mask = ~ao2_enable_bit_mask
         
+    ##        print("ao1_enable {0:08b}".format(ao1_enable))
+    ##        print("ao2_enable {0:08b}".format(ao2_enable))
+            channels_enab = ao1_enable_bit_mask | ao2_enable_bit_mask
+            if not ao1_enabled:
+                channels_enab = channels_enab&ao1_disable_bit_mask
+            if not ao2_enabled:
+                channels_enab = channels_enab&ao2_disable_bit_mask
+
+    ##        print("enable {0:08b}".format(channels_enab))
+            channels = (ao2_channel<<4)|ao1_channel
+    ##        print("channels {0:08b}".format(channels))
+            val_to_write = channels_enab|channels
+            print("value to write {0:08b}".format(val_to_write))
+            self.device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
+            self._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+        else:
+            raise Exception("Incorrect channel values")
+
         
     def _init_fans_ao_channels(self):
         ## set fans output for hardware channel

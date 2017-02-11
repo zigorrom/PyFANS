@@ -30,7 +30,11 @@ BOX_AI_CHANNELS_MAP = {0: {"channel": AI_CHANNELS.AI_101,"mode": AI_MODES.AC},
                        7: {"channel": AI_CHANNELS.AI_104,"mode": AI_MODES.DC}
                        }
 
-BOX_AO_CHANNEL_MAP = dict((i , AO_CHANNELS.AO_201 if i<8 else AO_CHANNELS.AO_202)  for i in range(16))
+
+
+NUMBER_OF_SWITCH_CHANNELS = 8
+
+BOX_AO_CHANNEL_MAP = dict((i , AO_CHANNELS.AO_202 if i<NUMBER_OF_SWITCH_CHANNELS else AO_CHANNELS.AO_201)  for i in range(16))
 
 A0_BOX_CHANNELS = enum(*["ao_ch_{0}".format(i) for i in range(1,17)])
 
@@ -49,9 +53,9 @@ def get_fans_ai_channel_default_params():
         'polarity': POLARITIES.BIP
         }
 
-def get_fans_ao_channel_default_params():
+def get_fans_ao_channel_default_params(HARDWARE_AO_CH):
     return {
-        'selected_output':0,
+        'selected_output':HARDWARE_AO_CH*NUMBER_OF_SWITCH_CHANNELS,
         'voltage':0,
         'polarity': POLARITIES.BIP,
         'range': DAQ_RANGES.RANGE_10,
