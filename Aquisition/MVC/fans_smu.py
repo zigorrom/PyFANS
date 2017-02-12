@@ -161,7 +161,7 @@ class fans_smu:
         hardware_feedback_ch = BOX_AI_CHANNELS_MAP[ai_feedback]["channel"]
         hardware_output_ch = BOX_AO_CHANNEL_MAP[output_ch]
        
-        prev_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
+        init_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
         #continue_setting = True
         #counter = 0
         fine_tuning = False
@@ -185,6 +185,24 @@ class fans_smu:
             value_to_set = voltage_setting_function(current_value,voltage)
             values["value_to_set"] = value_to_set
 
+
+            
+                
+
+            #sign = -1
+            #if current_value <0:
+            #    if current_value > set_value:
+            #        sign = -1   
+            #    else:
+            #        sign = +1
+            #else:
+            #    if current_value > set_value:
+            #        sign = +1
+            #    else:
+            #        sign = -1
+    
+
+            
             
             abs_distance = math.fabs(current_value - voltage)
             if abs_distance <FANS_VOLTAGE_FINE_TUNING_INTERVAL:
@@ -193,10 +211,22 @@ class fans_smu:
                 #self.__stabilize_voltage(voltage,function)
             
             
-            if abs_distance <FANS_VOLTAGE_SET_ERROR:
+            if abs_distance <FANS_VOLTAGE_SET_ERROR and fine_tuning:
                 self.set_hardware_voltage(0,hardware_output_ch)
                 return True
             
+
+            if polarity_switched:
+                abs_value = math.fabs(value_to_set)
+                if voltage * current_value < 0:
+                    if voltage > 0:
+                        value_to_set = -abs_value
+                    else:
+                        value_to_set = abs_value
+                #else:
+                #    polarity_switched = False
+                
+                
             #elif counter > FANS_VOLTAGE_SET_MAXITER:
             #    self.set_hardware_voltage(0,hardware_output_ch)
             #    return False
@@ -291,11 +321,11 @@ if __name__ == "__main__":
 
     smu.init_smu_mode()
     smu._init_fans_ao_channels()
-
+    
     try:
         
         
-        for vds in np.arange(-0.5,0.5,0.1):
+        for vds in np.arange(-0.2,0.2,0.1):
             
             print("setting drain-source")
             smu.set_drain_voltage(vds)
@@ -306,13 +336,14 @@ if __name__ == "__main__":
             
             time.sleep(2)
 
+
         #print("up-down")
         #for vds in np.arange(1.5,-1.5,-0.2):
         #    smu.set_drain_voltage(vds)
         #    print(smu.read_all_parameters())
         #    time.sleep(2)
-        #smu.set_drain_voltage(0.5)
-        #smu.set_gate_voltage(-0.5)
+        smu.set_drain_voltage(-0.5)
+        smu.set_gate_voltage(-0.5)
         #smu.set_drain_voltage(-0.5)
         #smu.set_drain_voltage(0)
 
