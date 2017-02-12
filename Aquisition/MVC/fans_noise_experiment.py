@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui, uic
 import sys
 
-from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget
+from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
 #from data import *
 #from fans_controller import *
 
@@ -16,6 +16,7 @@ class fans_noise_experiment(fans_noise_experiment_base,fans_noise_experiment_for
 
     def setup_daq(self):
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot)
+        self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot)
         self.sample_rate = 500000
         self.points_per_shot = 50000
         

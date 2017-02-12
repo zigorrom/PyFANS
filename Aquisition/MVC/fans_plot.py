@@ -6,6 +6,43 @@ import pyqtgraph as pg
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
 
+class TimetracePlotWidget:
+    def __init__(self,layout):
+        if not isinstance(layout,pg.GraphicsLayoutWidget):
+            raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
+
+        self.layout = layout
+        self.main_curve = True
+        self.main_color = pg.mkColor("r")
+        self.create_plot()
+
+    def create_plot(self):
+        self.posLabel = self.layout.addLabel(row=0, col=0, justify="right")
+        self.plot = self.layout.addPlot(row=1, col=0)
+        self.plot.showGrid(x=True, y=True)
+##        self.plot.setLogMode(x=True, y=True)
+        self.plot.setLabel("left", "Voltage", units="V")
+        self.plot.setLabel("bottom", "Time", units="s")
+##        self.plot.setLimits(xMin=0, xMax=6, yMin = -20, yMax = -4)
+        self.plot.showButtons()
+        self.create_main_curve()
+
+    def create_main_curve(self):
+        """Create main spectrum curve"""
+        self.curve = self.plot.plot(pen=self.main_color)
+        self.curve.setZValue(900)
+
+    def update_plot(self, data_storage, force=False):
+        """Update main spectrum curve"""
+        if data_storage.timetrace_data is None:
+            return
+
+        if self.main_curve or force:
+            self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[0])
+            if force:
+                print("forced plot")
+                self.curve.setVisible(self.main_curve)
+
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
