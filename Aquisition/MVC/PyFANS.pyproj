@@ -22,6 +22,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="log.txt" />
+    <Content Include="Views\CheckWidget.ui" />
+    <Content Include="Views\ComboWidget.ui" />
+    <Content Include="Views\InChannelWidget - Copy.ui" />
+    <Content Include="Views\InChannelWidget.ui" />
+    <Content Include="Views\LabelWidget.ui" />
+    <Content Include="Views\main.ui" />
+    <Content Include="Views\NodeProperties.ui" />
+    <Content Include="Views\NumericWidget.ui" />
+    <Content Include="Views\PropertiesLayout.ui" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="acquisition_process.py" />
@@ -42,6 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\3.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
