@@ -11,7 +11,7 @@ MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = -0.1
 
-FANS_VOLTAGE_SET_ERROR  = 0.001 #mV
+FANS_VOLTAGE_SET_ERROR  = 0.004 #mV
 FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  
 
 FANS_VOLTAGE_SET_MAXITER = 10000
@@ -21,7 +21,7 @@ FANS_NEGATIVE_POLARITY,FANS_POSITIVE_POLARITY = FANS_POLARITY_CHANGE_VOLTAGE
  
 
 
-def voltage_setting_function(current_value, set_value):
+def voltage_setting_function(current_value, set_value, fine_tuning = False):
     # fermi-dirac-distribution
     sign = -1
     if current_value <0:
@@ -35,14 +35,18 @@ def voltage_setting_function(current_value, set_value):
         else:
             sign = -1
     
-    diff = math.fabs(current_value-set_value)
-    try:
-        exponent = math.exp(diff/FD_CONST)
-    except OverflowError:
-        exponent = float("inf")
-
-
-    return sign*(MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(exponent+1))
+    if fine_tuning:
+        #return MIN_MOVING_VOLTAGE
+        return sign*MIN_MOVING_VOLTAGE
+    else:
+        diff = math.fabs(current_value-set_value)
+        try:
+            exponent = math.exp(diff/FD_CONST)
+        except OverflowError:
+            exponent = float("inf")
+        
+        #return (MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(exponent+1))
+        return sign*(MIN_MOVING_VOLTAGE + VALUE_DIFFERENCE/(exponent+1))
 
 OUT_ENABLED_CH, OUT_CH, FEEDBACK_CH, POLARITY_RELAY_CH , CH_POLARITY = [0,1,2,3,4]
 # output channel - A0_BOX_CHANNELS
@@ -137,13 +141,8 @@ class fans_smu:
 
     def set_fans_output_polarity(self,polarity,function):
         self.__start_polarity_change(function)
-
-        #hardware_relay_ch = self.state_dictionary[function][OUT_CH]
-
         box_ao_ch = self.state_dictionary[function][POLARITY_RELAY_CH]
         ao_ch = BOX_AO_CHANNEL_MAP[box_ao_ch]
-
-        
         self.set_hardware_voltage(polarity,ao_ch)
         time.sleep(0.5)
         self.set_hardware_voltage(0,ao_ch)
@@ -151,6 +150,7 @@ class fans_smu:
         #self.set_hardware_voltage(0,hardware_relay_ch)
 
         self.__stop_polarity_change(function)
+
 
 
     def set_fans_voltage_for_channel(self,voltage,function):
@@ -161,36 +161,48 @@ class fans_smu:
         hardware_feedback_ch = BOX_AI_CHANNELS_MAP[ai_feedback]["channel"]
         hardware_output_ch = BOX_AO_CHANNEL_MAP[output_ch]
        
-        #current_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
-        #print(current_value)
-       
         prev_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
         #continue_setting = True
-        counter = 0
+        #counter = 0
+        fine_tuning = False
+        polarity_switched = False
+        
+
         while True: #continue_setting:    
             values = self.analog_read(AI_CHANNELS.indexes)
             current_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
 
-            if current_value*voltage<0:
+            if current_value*voltage<0 and not polarity_switched:
                 set_result = self.set_fans_voltage_for_channel(0,function)
                 if set_result:
                     polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
                     self.set_fans_output_polarity(polarity,function)
+                    polarity_switched = True
                 else:
                     return set_result
-            #print(current_value)
+
+            print((current_value,voltage))
             value_to_set = voltage_setting_function(current_value,voltage)
             values["value_to_set"] = value_to_set
-            #print(values)
-            #print("value to set {0}".format(value_to_set))
-            if math.fabs(current_value-voltage)<FANS_VOLTAGE_SET_ERROR:
+
+            
+            abs_distance = math.fabs(current_value - voltage)
+            if abs_distance <FANS_VOLTAGE_FINE_TUNING_INTERVAL:
+                fine_tuning = True
+                value_to_set = voltage_setting_function(current_value,voltage,True)
+                #self.__stabilize_voltage(voltage,function)
+            
+            
+            if abs_distance <FANS_VOLTAGE_SET_ERROR:
                 self.set_hardware_voltage(0,hardware_output_ch)
                 return True
-            elif counter > FANS_VOLTAGE_SET_MAXITER:
-                self.set_hardware_voltage(0,hardware_output_ch)
-                return False
+            
+            #elif counter > FANS_VOLTAGE_SET_MAXITER:
+            #    self.set_hardware_voltage(0,hardware_output_ch)
+            #    return False
 
-            counter += 1
+
+            #counter += 1
             self.set_hardware_voltage(value_to_set,hardware_output_ch)
 
 
@@ -241,8 +253,15 @@ class fans_smu:
         main_voltage = result[main_hardware_ch]
         gate_voltage = result[gate_hardware_ch]
 
-        current = (main_voltage-ds_voltage)/self.load_resistance
-        resistance = ds_voltage/current
+
+        ### fix divide by zero exception
+        try:
+            current = (main_voltage-ds_voltage)/self.load_resistance
+            resistance = ds_voltage/current
+        except ZeroDivisionError:
+            current = 0
+            resistance = 0
+        
         return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
         
 
@@ -274,13 +293,24 @@ if __name__ == "__main__":
     smu._init_fans_ao_channels()
 
     try:
-
+        
+        
         for vds in np.arange(-0.5,0.5,0.1):
+            
+            print("setting drain-source")
             smu.set_drain_voltage(vds)
+            print("setting gate")
+            smu.set_gate_voltage(vds)
+
             print(smu.read_all_parameters())
+            
+            time.sleep(2)
 
-
-
+        #print("up-down")
+        #for vds in np.arange(1.5,-1.5,-0.2):
+        #    smu.set_drain_voltage(vds)
+        #    print(smu.read_all_parameters())
+        #    time.sleep(2)
         #smu.set_drain_voltage(0.5)
         #smu.set_gate_voltage(-0.5)
         #smu.set_drain_voltage(-0.5)
