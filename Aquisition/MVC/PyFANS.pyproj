@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{88615012-01f1-43ad-ae1d-4377348eb129}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>settings.py</StartupFile>
+    <StartupFile>fans_noise_experiment.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -22,15 +22,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="log.txt" />
-    <Content Include="Views\CheckWidget.ui" />
-    <Content Include="Views\ComboWidget.ui" />
-    <Content Include="Views\InChannelWidget - Copy.ui" />
-    <Content Include="Views\InChannelWidget.ui" />
-    <Content Include="Views\LabelWidget.ui" />
-    <Content Include="Views\main.ui" />
-    <Content Include="Views\NodeProperties.ui" />
-    <Content Include="Views\NumericWidget.ui" />
-    <Content Include="Views\PropertiesLayout.ui" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="acquisition_process.py" />
@@ -40,6 +31,10 @@
     <Compile Include="data.py" />
     <Compile Include="fans_constants.py" />
     <Compile Include="fans_controller.py" />
+    <Compile Include="fans_noise_experiment.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="fans_plot.py" />
     <Compile Include="fans_smu.py" />
     <Compile Include="nodes.py" />
     <Compile Include="node_configuration.py" />
@@ -51,9 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\3.4" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Views\" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
