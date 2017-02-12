@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{88615012-01f1-43ad-ae1d-4377348eb129}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>fans_noise_experiment.py</StartupFile>
+    <StartupFile>fans_main_view.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -31,7 +31,7 @@
     <Compile Include="data.py" />
     <Compile Include="fans_constants.py" />
     <Compile Include="fans_controller.py" />
-    <Compile Include="fans_noise_experiment.py">
+    <Compile Include="fans_main_view.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="fans_plot.py" />

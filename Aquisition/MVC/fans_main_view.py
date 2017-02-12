@@ -5,10 +5,10 @@ from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidg
 #from data import *
 #from fans_controller import *
 
-fans_noise_experiment_base, fans_noise_experiment_form = uic.loadUiType("Views/FANS_noise_experiment.ui")
-class fans_noise_experiment(fans_noise_experiment_base,fans_noise_experiment_form):
+fans_main_view_base, fans_main_view_form = uic.loadUiType("Views/FANS_main_view.ui")
+class fans_main_view(fans_main_view_base,fans_main_view_form):
     def __init__(self,parent = None):
-        super(fans_noise_experiment_base,self).__init__(parent)
+        super(fans_main_view_base,self).__init__(parent)
         self.setupUi(self)
         self.load_settings()
         self.setup_daq()
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
 
-    wnd = fans_noise_experiment()
+    wnd = fans_main_view()
     wnd.show()
 
     sys.exit(app.exec_())

@@ -3,7 +3,7 @@ import time, sys
 from PyQt4 import QtCore
 import numpy as np
 
-from utils import smooth
+#from utils import smooth
 
 
 class HistoryBuffer:
@@ -245,7 +245,7 @@ class Test:
         self.data_size = data_size
         self.data = {"x": np.arange(data_size),
                      "y": None}
-        self.datastorage = DataStorage(max_history_size)
+        self.datastorage = DataHandler(max_history_size)
 
     def run_one(self):
         """Generate random data and update data storage"""
