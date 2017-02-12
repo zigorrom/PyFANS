@@ -290,29 +290,19 @@ if __name__ == "__main__":
     smu._init_fans_ao_channels()
     
     try:
-        
-        
-        for vds in np.arange(-0.2,0.2,0.1):
-            
-            print("setting drain-source")
-            smu.set_drain_voltage(vds)
-            print("setting gate")
-            smu.set_gate_voltage(vds)
+      for vds in np.arange(-0.2,0.2,0.1):
+          print("setting drain-source")
+          smu.set_drain_voltage(vds)
+          print("setting gate")
+          smu.set_gate_voltage(vds)
 
-            print(smu.read_all_parameters())
-            
-            time.sleep(2)
+          print(smu.read_all_parameters())
+           
+          time.sleep(2)
 
-
-        #print("up-down")
-        #for vds in np.arange(1.5,-1.5,-0.2):
-        #    smu.set_drain_voltage(vds)
-        #    print(smu.read_all_parameters())
-        #    time.sleep(2)
-        smu.set_drain_voltage(-0.5)
-        smu.set_gate_voltage(-0.5)
-        #smu.set_drain_voltage(-0.5)
-        #smu.set_drain_voltage(0)
+      smu.set_drain_voltage(-0.5)
+      smu.set_gate_voltage(-0.5)
+       
 
     except Exception as e:
         raise
