@@ -161,9 +161,7 @@ class fans_smu:
         hardware_feedback_ch = BOX_AI_CHANNELS_MAP[ai_feedback]["channel"]
         hardware_output_ch = BOX_AO_CHANNEL_MAP[output_ch]
        
-        init_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
-        #continue_setting = True
-        #counter = 0
+        prev_value = self.analog_read(hardware_feedback_ch)[hardware_feedback_ch]
         fine_tuning = False
         polarity_switched = False
         
@@ -185,37 +183,15 @@ class fans_smu:
             value_to_set = voltage_setting_function(current_value,voltage)
             values["value_to_set"] = value_to_set
 
-
-            
-                
-
-            #sign = -1
-            #if current_value <0:
-            #    if current_value > set_value:
-            #        sign = -1   
-            #    else:
-            #        sign = +1
-            #else:
-            #    if current_value > set_value:
-            #        sign = +1
-            #    else:
-            #        sign = -1
-    
-
-            
-            
             abs_distance = math.fabs(current_value - voltage)
             if abs_distance <FANS_VOLTAGE_FINE_TUNING_INTERVAL:
                 fine_tuning = True
                 value_to_set = voltage_setting_function(current_value,voltage,True)
-                #self.__stabilize_voltage(voltage,function)
-            
             
             if abs_distance <FANS_VOLTAGE_SET_ERROR and fine_tuning:
                 self.set_hardware_voltage(0,hardware_output_ch)
                 return True
             
-
             if polarity_switched:
                 abs_value = math.fabs(value_to_set)
                 if voltage * current_value < 0:
@@ -223,21 +199,12 @@ class fans_smu:
                         value_to_set = -abs_value
                     else:
                         value_to_set = abs_value
-                #else:
-                #    polarity_switched = False
                 
-                
-            #elif counter > FANS_VOLTAGE_SET_MAXITER:
-            #    self.set_hardware_voltage(0,hardware_output_ch)
-            #    return False
 
-
-            #counter += 1
             self.set_hardware_voltage(value_to_set,hardware_output_ch)
 
 
 
-            #self.set_hardware_voltage(value_to_set,ao_channel)
             
 
     def _start_setting_voltage(self,function):
