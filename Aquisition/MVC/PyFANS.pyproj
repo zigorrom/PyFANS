@@ -31,6 +31,9 @@
     <Compile Include="data.py" />
     <Compile Include="fans_constants.py" />
     <Compile Include="fans_controller.py" />
+    <Compile Include="fans_experiments.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="fans_main_view.py">
       <SubType>Code</SubType>
     </Compile>
