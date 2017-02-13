@@ -5,6 +5,8 @@ from fans_controller import FANS_controller
 from fans_smu import fans_smu
 import math
 from PyQt4 import QtCore
+from flask import Flask
+from flask.views import MethodView
 
 class fans_fet_noise_experiment:
     def __init__(self, fans_controller, fans_smu, configuration):
@@ -100,20 +102,51 @@ class fans_range(object):
 
 
 
+
+
+
+class TestClass():
+    def __init__(self):
+        self.value = "Hello world"
+
+    def get_value(self):
+        return self.value
+
+    
+
+class UserAPI(MethodView):
+    def __init__(self, test_value):
+        self.test = test_value
+    
+    def get(self):
+        return self.test.value
+
+       
+
+
+
+
 if __name__ == "__main__":
     #cfg = Configuration()
     #f = FANS_controller("ADC",configuration=cfg)
     #smu = fans_smu(f)
     #exp = fans_fet_noise_experiment(f,smu,cfg)
 
-    rng = fans_range(-2,2,0.002)
+    #rng = fans_range(-2,2,0.002)
     
-    l1 = np.linspace(0,0,200)
-    print(l1)
+    #l1 = np.linspace(0,0,200)
+    #print(l1)
 
-    l1 = np.linspace(2,-1,10)
-    print(l1)
+    #l1 = np.linspace(2,-1,10)
+    #print(l1)
 
-    l1 = np.linspace(0,2,0.35)
-    print(l1)
-    
+    #l1 = np.linspace(0,2,0.35)
+    #print(l1)
+
+
+    #t = TestClass()
+    #uapi = UserAPI(t)
+    #app = Flask(__name__)
+    #app.add_url_rule('/users/', view_func=uapi.as_view('users'))
+    #app.run()
+ 
