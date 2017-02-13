@@ -78,6 +78,9 @@ def get_pga_value(pga_gain, cs_hold):
     return val
 
 
-print(BOX_AO_CHANNEL_MAP)
-print(BOX_AO_CHANNEL_MAP[13])
-print(BOX_AO_CHANNEL_MAP[4])
+#print(BOX_AO_CHANNEL_MAP)
+#print(BOX_AO_CHANNEL_MAP[13])
+#print(BOX_AO_CHANNEL_MAP[4])
+
+if __name__ == "__main__":
+    pass

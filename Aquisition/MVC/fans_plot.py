@@ -23,6 +23,7 @@ class TimetracePlotWidget:
 ##        self.plot.setLogMode(x=True, y=True)
         self.plot.setLabel("left", "Voltage", units="V")
         self.plot.setLabel("bottom", "Time", units="s")
+        self.plot.setYRange(-0.5,0.5)
 ##        self.plot.setLimits(xMin=0, xMax=6, yMin = -20, yMax = -4)
         self.plot.showButtons()
         self.create_main_curve()
