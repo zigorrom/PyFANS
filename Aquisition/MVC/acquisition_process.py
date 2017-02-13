@@ -127,7 +127,7 @@ class AcquisitionProcess(QtCore.QThread):
                 print(data["d"])
 ##                parse(data.transpose(),counter)
 ##                parse(data,counter)
-##                data_storage.update(data)
+                data_storage.update(data)
 ##                d = data["d"].transpose()
 
 ##                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')

@@ -38,7 +38,7 @@ class TimetracePlotWidget:
             return
 
         if self.main_curve or force:
-            self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[0])
+            self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[3])
             if force:
                 print("forced plot")
                 self.curve.setVisible(self.main_curve)
@@ -74,10 +74,10 @@ class SpectrumPlotWidget:
         self.posLabel = self.layout.addLabel(row=0, col=0, justify="right")
         self.plot = self.layout.addPlot(row=1, col=0)
         self.plot.showGrid(x=True, y=True)
-##        self.plot.setLogMode(x=True, y=True)
+        self.plot.setLogMode(x=True, y=True)
         self.plot.setLabel("left", "Power", units="V^2Hz-1")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
-##        self.plot.setLimits(xMin=0, xMax=6, yMin = -20, yMax = -4)
+        self.plot.setLimits(xMin=0.1, yMin = -20, yMax = -4)
         self.plot.showButtons()
 
         self.create_persistence_curves()
@@ -162,7 +162,7 @@ class SpectrumPlotWidget:
             return
 
         if self.main_curve or force:
-            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[0])
+            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[3])
             if force:
                 print("forced plot")
                 self.curve.setVisible(self.main_curve)

@@ -15,6 +15,7 @@ class FANS_controller:
         self.visa_resource = visa_resource
         self.device = AgilentU2542A(visa_resource)
 
+        self.data_storage = data_storage
         self.data_queue = None
         self.config = configuration
 
@@ -98,7 +99,7 @@ class FANS_controller:
             
             mode = AI_MODES.DC
             cs_hold = CS_HOLD.ON
-            filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f100
+            filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f50
             filter_gain = FILTER_GAINS.x1
             pga_gain = PGA_GAINS.x1
 ##            time.sleep(1)
@@ -148,8 +149,9 @@ class FANS_controller:
 
 ##        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
         self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
-        self.data_thread = AcquisitionProcess(None,self.data_queue)#self.data_storage,self.data_queue)
-        
+        #self.data_thread = AcquisitionProcess(None,self.data_queue)#self.data_storage,self.data_queue)
+        self.data_thread = AcquisitionProcess(self.data_storage,self.data_queue)
+
         self.dac_proc.start()
         self.data_thread.start()
         print("started")
@@ -296,17 +298,17 @@ def main():
     wnd = WndTutorial(configuration = cfg)
 ##    wnd.show()
 ##    sys.exit(app.exec_())
-    f.fans_output_voltage(0,0)
-    time.sleep(2)
-    f.fans_output_voltage(6,-6)
-    time.sleep(2)
-    f.fans_output_voltage(0,4)
-    time.sleep(2)
-    f.fans_output_voltage(-6,6)
-    time.sleep(2)
-    f.fans_output_voltage(4,0)
-    time.sleep(2)
-    f.fans_output_voltage(0,0)
+    #f.fans_output_voltage(0,0)
+    #time.sleep(2)
+    #f.fans_output_voltage(6,-6)
+    #time.sleep(2)
+    #f.fans_output_voltage(0,4)
+    #time.sleep(2)
+    #f.fans_output_voltage(-6,6)
+    #time.sleep(2)
+    #f.fans_output_voltage(4,0)
+    #time.sleep(2)
+    #f.fans_output_voltage(0,0)
     f.start_acquisition()
 ##    sleep(1)
     try:

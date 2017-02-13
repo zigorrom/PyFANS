@@ -93,7 +93,7 @@ class DataHandler(QtCore.QObject):
 
         self.timetrace_time = None
         # data['d']
-        self.timetrace_data = None#np.empty(points_per_shot,dtype=float)
+        self.timetrace_data = None #np.empty(points_per_shot,dtype=float)
         #data['f']
         self.frequency_bins = None
         #data['p']
