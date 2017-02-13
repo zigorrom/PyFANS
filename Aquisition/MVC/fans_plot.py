@@ -77,7 +77,13 @@ class SpectrumPlotWidget:
         self.plot.setLogMode(x=True, y=True)
         self.plot.setLabel("left", "Power", units="V^2Hz-1")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
-        self.plot.setLimits(xMin=0.1, yMin = -20, yMax = -4)
+        self.plot.setLimits(xMin=0.1,xMax = 7, yMin = -20, yMax = -4)
+        self.plot.setXRange(0.1,5)
+        self.plot.setYRange(-20,0.1)
+
+        #self.plot.setXRange(0.1,1000000)
+        #self.plot.setXRange(0.1,250000)
+        #self.plot.setXRange(0.1,150000)
         self.plot.showButtons()
 
         self.create_persistence_curves()
@@ -193,7 +199,7 @@ class SpectrumPlotWidget:
             return
 
         if self.average or force:
-            self.curve_average.setData(data_storage.frequency_bins, data_storage.average[0])
+            self.curve_average.setData(data_storage.frequency_bins, data_storage.average[3])
             if force:
                 print("forced average")
                 self.curve_average.setVisible(self.average)
