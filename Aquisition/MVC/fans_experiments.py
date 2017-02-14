@@ -56,8 +56,28 @@ class fans_fet_noise_experiment:
 RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
 NORMAL_RANGE_HANDLER, BACK_FORTH_RANGE_HANDLER, ZERO_START_RANGE_HANDLER, ZERO_START_BACK_FORTH = RANGE_HANDLERS
 
+class range_handler():
+    def __init__(self,start,stop,len,repeats):
+        pass
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pass
+
+
+
+
+class normal_range_handler():
+    def __init__(self,start,stop,len,repeats):
+        pass
+
+
+
+
 class fans_range(object):
-    def __init__(self,start, stop, len = -1, handler = NORMAL_RANGE_HANDLER):
+    def __init__(self,start, stop, len = -1, repeats = 1, handler = NORMAL_RANGE_HANDLER):
         self._start = start
         self._stop = stop
         self._step = step
@@ -66,23 +86,32 @@ class fans_range(object):
 
         self.__min_value = self._start
         self.__max_value = self._stop
-        self.start_index = 0
+        self._current_idx = 0
 
         if self._start > self._stop:
             self.__min_value = self._stop
             self.__max_value = self._start
-            self.start_index = -1
+            self._current_idx = -1
 
-        self.__values = np.linspace(self._start,self._stop,len,endpoint= True, retstep = True)
         
-        self.current_idx = 0
 
         if handler == NORMAL_RANGE_HANDLER:
-            pass
+            self._values,self._step = np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
+                
+            
         elif handler == BACK_FORTH_RANGE_HANDLER:
-            pass
+            self._values, self._step = np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
+
+        elif self._start*self._stop >= 0:
+            raise ValueError("inapropriate range handler for selected value range")
+
         elif handler == ZERO_START_RANGE_HANDLER:
+            value_difference = math.fabs(self._start - self._stop)
+            self.step 
+            
+            #self._values, self._step =  np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
             pass
+
         elif handler == ZERO_START_BACK_FORTH:
             pass
         
@@ -127,6 +156,7 @@ class UserAPI(MethodView):
 
 
 if __name__ == "__main__":
+    pass
     #cfg = Configuration()
     #f = FANS_controller("ADC",configuration=cfg)
     #smu = fans_smu(f)
