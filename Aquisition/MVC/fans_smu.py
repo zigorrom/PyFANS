@@ -292,7 +292,7 @@ if __name__ == "__main__":
     smu._init_fans_ao_channels()
     
     try:
-      for vds in np.arange(-0.2,0.2,0.1):
+      for vds in np.arange(-0.5,0.5,0.1):
           print("setting drain-source")
           smu.set_drain_voltage(vds)
           print("setting gate")

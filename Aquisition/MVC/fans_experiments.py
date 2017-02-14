@@ -56,127 +56,124 @@ class fans_fet_noise_experiment:
 RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
 NORMAL_RANGE_HANDLER, BACK_FORTH_RANGE_HANDLER, ZERO_START_RANGE_HANDLER, ZERO_START_BACK_FORTH = RANGE_HANDLERS
 
-class range_handler():
-    def __init__(self,start,stop,len,repeats):
-        pass
+class float_range:
+    def __init__(self, start, stop, step = 1, len = -1):
+        self.__start = start
+        self.__stop = stop
+        value_difference = math.fabs(self.__stop - self.__start)
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        pass
-
-
-
-
-class normal_range_handler():
-    def __init__(self,start,stop,len,repeats):
-        pass
-
-
-
-
-class fans_range(object):
-    def __init__(self,start, stop, len = -1, repeats = 1, handler = NORMAL_RANGE_HANDLER):
-        self._start = start
-        self._stop = stop
-        self._step = step
-        self._direction = 1 if stop > start else -1
-
-
-        self.__min_value = self._start
-        self.__max_value = self._stop
-        self._current_idx = 0
-
-        if self._start > self._stop:
-            self.__min_value = self._stop
-            self.__max_value = self._start
-            self._current_idx = -1
-
-        
-
-        if handler == NORMAL_RANGE_HANDLER:
-            self._values,self._step = np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
-                
-            
-        elif handler == BACK_FORTH_RANGE_HANDLER:
-            self._values, self._step = np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
-
-        elif self._start*self._stop >= 0:
-            raise ValueError("inapropriate range handler for selected value range")
-
-        elif handler == ZERO_START_RANGE_HANDLER:
-            value_difference = math.fabs(self._start - self._stop)
-            self.step 
-            
-            #self._values, self._step =  np.linspace(self.__min_value,self.__max_value,len,endpoint= True, retstep = True)
-            pass
-
-        elif handler == ZERO_START_BACK_FORTH:
-            pass
-        
-        #self.current = start
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.current > self.high:
-            raise StopIteration
+        if len > 0:
+            self.__length = len
+            self.__step = value_difference / self.__length
+        elif step > 0:
+            self.__length = math.floor(value_difference / step)+1
+            self.__step = value_difference / self.__length
         else:
-            self.current += 1
-            return self.current
+            raise AttributeError("length or step is not set correctly")
+        
+    @property
+    def start(self):
+        return self.__start
+
+    @property       
+    def stop(self):
+        return self.__stop
+
+    @property
+    def step(self):
+        return self.__step
+
+    @property
+    def length(self):
+        return self.__length
+
+POSITIVE_DIRECTION, NEGATIVE_DIRECTION = (1,-1)       
+class range_handler():
+    def __init__(self, value_range, n_repeats):
+        if not isinstance(value_range, float_range):
+            raise TypeError("range parameter is of wrong type!")
+        if n_repeats < 1:
+            raise ValueError("n_repeats should be greater than one")
+
+        self.__range = value_range
+        self.__repeats = n_repeats
+
+        self.__direction = POSITIVE_DIRECTION
+        self.__comparison_function = self.__positive_comparator
+
+        self.define_direction(self.__range.start,self.__range.stop)
+        
     
-
-
-
-
-
-
-
-class TestClass():
-    def __init__(self):
-        self.value = "Hello world"
-
-    def get_value(self):
-        return self.value
-
+    @property
+    def comparison_function(self):
+        return self.__comparison_function
     
+    @property
+    def number_of_repeats(self):
+        return self.__repeats
 
-class UserAPI(MethodView):
-    def __init__(self, test_value):
-        self.test = test_value
+    @property
+    def woking_range(self):
+        return self.__range
     
-    def get(self):
-        return self.test.value
+    @property
+    def direction(self):
+        return self.__direction
+    
+    def increment_value(self, value_to_increment):
+        return value_to_increment + self.__direction * self.__range.step
+        
+    def define_direction(self, start_value, stop_value):
+        if stop_value > start_value:
+            self.__direction = POSITIVE_DIRECTION
+            self.__comparison_function = self.__positive_comparator
+        else:
+            self.__direction = NEGATIVE_DIRECTION
+            self.__comparison_function = self.__negative_comparator
 
-       
+    def __positive_comparator(self, val1,val2):
+        if val2 > val1:
+            return True
+        return False
+
+    def __negative_comparator(self,val1,val2):
+        if val2 < val1:
+            return True
+        return False
+
+    def __iter__(self):
+        return self
+
+class normal_range_handler(range_handler):
+    def __init__(self,start,stop,step,len=-1,repeats = 1):
+        super().__init__(float_range(start,stop,step,len),repeats)
+        self.__current_value = start
+        self.__current_round = 0
+
+    def __reset(self):
+        self.__current_value = self.woking_range.start
+
+    def __next__(self):
+        if not self.comparison_function(self.__current_value, self.woking_range.stop):
+            self.__current_round += 1
+            self.__reset()
+        
+        if self.__current_round >= self.number_of_repeats:
+            print(self.__current_round)
+            raise StopIteration        
+
+        value = self.__current_value
+        self.__current_value = self.increment_value(value)
+        return value
 
 
+        
 
 
 if __name__ == "__main__":
-    pass
-    #cfg = Configuration()
-    #f = FANS_controller("ADC",configuration=cfg)
-    #smu = fans_smu(f)
-    #exp = fans_fet_noise_experiment(f,smu,cfg)
-
-    #rng = fans_range(-2,2,0.002)
+    nrng = normal_range_handler(-2,2,0.2, repeats = 2)
+    for i,item in enumerate(nrng):
+        print("i = {0}; item = {1}".format(i,item))
     
-    #l1 = np.linspace(0,0,200)
-    #print(l1)
 
-    #l1 = np.linspace(2,-1,10)
-    #print(l1)
-
-    #l1 = np.linspace(0,2,0.35)
-    #print(l1)
-
-
-    #t = TestClass()
-    #uapi = UserAPI(t)
-    #app = Flask(__name__)
-    #app.add_url_rule('/users/', view_func=uapi.as_view('users'))
-    #app.run()
- 
+    
