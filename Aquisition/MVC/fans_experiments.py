@@ -5,8 +5,6 @@ from fans_controller import FANS_controller
 from fans_smu import fans_smu
 import math
 from PyQt4 import QtCore
-from flask import Flask
-from flask.views import MethodView
 
 class fans_fet_noise_experiment:
     def __init__(self, fans_controller, fans_smu, configuration):
@@ -64,10 +62,10 @@ class float_range:
 
         if len > 0:
             self.__length = len
-            self.__step = value_difference / self.__length
+            self.__step = value_difference / (self.__length - 1)
         elif step > 0:
-            self.__length = math.floor(value_difference / step)+1
-            self.__step = value_difference / self.__length
+            self.__length = math.floor(value_difference / step)
+            self.__step = value_difference / (self.__length - 1)
         else:
             raise AttributeError("length or step is not set correctly")
         
@@ -95,6 +93,8 @@ class range_handler():
         if n_repeats < 1:
             raise ValueError("n_repeats should be greater than one")
 
+        
+
         self.__range = value_range
         self.__repeats = n_repeats
 
@@ -120,6 +120,11 @@ class range_handler():
     def direction(self):
         return self.__direction
     
+    def reset(self):
+        self.__current_value = self.woking_range.start
+
+     
+
     def increment_value(self, value_to_increment):
         return value_to_increment + self.__direction * self.__range.step
         
@@ -132,12 +137,12 @@ class range_handler():
             self.__comparison_function = self.__negative_comparator
 
     def __positive_comparator(self, val1,val2):
-        if val2 > val1:
+        if val2 >= val1:
             return True
         return False
 
     def __negative_comparator(self,val1,val2):
-        if val2 < val1:
+        if val2 <= val1:
             return True
         return False
 
@@ -145,35 +150,78 @@ class range_handler():
         return self
 
 class normal_range_handler(range_handler):
-    def __init__(self,start,stop,step,len=-1,repeats = 1):
+    def __init__(self,start,stop,step=1,len=-1,repeats = 1):
         super().__init__(float_range(start,stop,step,len),repeats)
         self.__current_value = start
         self.__current_round = 0
 
-    def __reset(self):
-        self.__current_value = self.woking_range.start
-
     def __next__(self):
         if not self.comparison_function(self.__current_value, self.woking_range.stop):
             self.__current_round += 1
-            self.__reset()
+            self.reset()
         
         if self.__current_round >= self.number_of_repeats:
-            print(self.__current_round)
             raise StopIteration        
 
+        #print("current round: {0}".format(self.__current_round))
+        value = self.__current_value
+        self.__current_value = self.increment_value(value)
+        return value
+
+class back_forth_range_handler(range_handler):
+    def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
+        super().__init__(float_range(start,stop,step,len), repeats) 
+        self.__current_value = start
+        self.__current_round = 0
+        self.__left_value = self.woking_range.start
+        self.__right_value = self.woking_range.stop
+        self.__change_dir_point = 0
+
+        
+    def __next__(self):
+        if not self.comparison_function(self.__current_value, self.__right_value):
+            value = self.__left_value
+            self.__left_value = self.__right_value
+            self.__right_value = value
+            self.define_direction(self.__left_value,self.__right_value)
+            self.__change_dir_point += 1
+            if self.__change_dir_point == 2:
+                self.__change_dir_point = 0
+                self.__current_round += 1
+                self.reset()
+                
+
+        if self.__current_round >= self.number_of_repeats:
+            raise StopIteration        
+
+        #print("current round: {0}".format(self.__current_round))
         value = self.__current_value
         self.__current_value = self.increment_value(value)
         return value
 
 
-        
+class zero_start_range_handler(range_handler):
+    def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
+        if start * stop >= 0:
+            raise ValueError("Zero start range handler interval should cross zero")
+        super().__init__(float_range(start,stop,step,len), repeats)
 
+
+    def __next__(self):
+        pass
+
+
+def print_enum(enumeration):
+    for i,item in enumerate(enumeration):
+        print("i = {0}; item = {1}".format(i,item))
 
 if __name__ == "__main__":
-    nrng = normal_range_handler(-2,2,0.2, repeats = 2)
-    for i,item in enumerate(nrng):
-        print("i = {0}; item = {1}".format(i,item))
+    #nrng = normal_range_handler(-2,2, len= 11, repeats = 2)
+    #print_enum(nrng)
     
 
+    bfrng = back_forth_range_handler(-2,2,len=11)
+    print_enum(bfrng)
+        
+    bfrng = zero_start_range_handler(-2,2,len=11)
     
