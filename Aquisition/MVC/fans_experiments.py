@@ -16,10 +16,18 @@ class fans_fet_noise_experiment:
         self._experiment_data_filename = "MeasurData"
         self._file_extention = ".dat"
         self._working_directory = os.getcwd()
+        self._simulate_experiment = False
         #self.initialize_experiment()
 
+    @property
+    def simulate_experiment(self):
+        return self._simulate_experiment
+    
+    @simulate_experiment.setter
+    def simulate_experiment(self,value):
+        self._simulate_experiment = value
 
-
+    
     def initialize_experiment(self, independent_function, gate_range, drain_source_range):
         if independent_function == FANS_AI_FUNCTIONS.DrainSourceVoltage:
             self._inner_range_generator = enumerate(drain_source_range)
@@ -65,7 +73,7 @@ class fans_fet_noise_experiment:
     def __report_progress(self, progress):
         pass
 
-    def perform_experiment(self):
+    def __perform_experiment(self):
         self._fans_smu.init_smu_mode()
         for i,outer_value in self._outer_range_generator:
             self._outer_value_setter(outer_value)
@@ -73,7 +81,11 @@ class fans_fet_noise_experiment:
                 self._inner_value_setter(inner_value)    
                 print(self._fans_smu.read_all_parameters())
 
-    
+    def __simulate_experiment(self):
+        pass
+
+
+
 
 RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
 NORMAL_RANGE_HANDLER, BACK_FORTH_RANGE_HANDLER, ZERO_START_RANGE_HANDLER, ZERO_START_BACK_FORTH = RANGE_HANDLERS
@@ -283,7 +295,7 @@ if __name__ == "__main__":
 
         exp = fans_fet_noise_experiment(f,smu,cfg)
         exp.initialize_experiment(FANS_AI_FUNCTIONS.GateVoltage,gate_range,drain_range)
-        exp.perform_experiment()
+        #exp.perform_experiment()
 
     except Exception as e:
         raise
