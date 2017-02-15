@@ -6,13 +6,14 @@ from agilent_u2542a_constants import *
 from node_configuration import Configuration
 import numpy as np
 
-MIN_MOVING_VOLTAGE = 3
+MIN_MOVING_VOLTAGE = 1
 MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = -0.1
 
-FANS_VOLTAGE_SET_ERROR  = 0.004 #mV
+FANS_VOLTAGE_SET_ERROR  = 0.0005  #mV
 FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  
+FANS_ZERO_VOLTAGE_INTERVAL = 0.004
 
 FANS_VOLTAGE_SET_MAXITER = 10000
 
@@ -165,6 +166,9 @@ class fans_smu:
         fine_tuning = False
         polarity_switched = False
         
+        VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL else FANS_VOLTAGE_SET_ERROR
+        VoltageTuningInterval = 5*VoltageSetError
+
 
         while True: #continue_setting:    
             values = self.analog_read(AI_CHANNELS.indexes)
@@ -184,11 +188,11 @@ class fans_smu:
             values["value_to_set"] = value_to_set
 
             abs_distance = math.fabs(current_value - voltage)
-            if abs_distance <FANS_VOLTAGE_FINE_TUNING_INTERVAL:
+            if abs_distance < VoltageTuningInterval: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
                 fine_tuning = True
                 value_to_set = voltage_setting_function(current_value,voltage,True)
             
-            if abs_distance <FANS_VOLTAGE_SET_ERROR and fine_tuning:
+            if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
                 self.set_hardware_voltage(0,hardware_output_ch)
                 return True
             
@@ -289,7 +293,7 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
 
     smu.init_smu_mode()
-    smu._init_fans_ao_channels()
+    #smu._init_fans_ao_channels()
     
     try:
       for vds in np.arange(-0.5,0.5,0.1):

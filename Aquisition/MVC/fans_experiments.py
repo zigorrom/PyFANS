@@ -2,6 +2,7 @@ import os
 import numpy as np
 from node_configuration import Configuration
 from fans_controller import FANS_controller
+from fans_constants import FANS_AI_FUNCTIONS
 from fans_smu import fans_smu
 import math
 from PyQt4 import QtCore
@@ -15,18 +16,29 @@ class fans_fet_noise_experiment:
         self._experiment_data_filename = "MeasurData"
         self._file_extention = ".dat"
         self._working_directory = os.getcwd()
-
         self.initialize_experiment()
 
 
-    def initialize_experiment(self):
-        pass
+
+    def initialize_experiment(self, independent_function, gate_range, drain_source_range):
+        if independent_function == FANS_AI_FUNCTIONS.DrainSourceVoltage:
+            self._inner_range_generator = enumerate(drain_source_range)
+            self._outer_range_generator = enumerate(gate_range)
+
+        elif independent_function == FANS_AI_FUNCTIONS.GateVoltage:
+            self._inner_range_generator = enumerate(gate_range)
+            self._outer_range_generator = enumerate(drain_source_range)
+
+        else:
+            raise ValueError("wrong independent variable was set")
+
 
     def start_experiment(self):
         pass
 
     def stop_experiment(self):
         pass
+
 
     def set_drain_source_voltage_range(self):
         pass
@@ -46,10 +58,13 @@ class fans_fet_noise_experiment:
     def set_points_per_shot(self, points_per_shot):
         pass
 
+    def __perform_experiment(self):
+        self._fans_smu
+        for i,outer_value in self._outer_range_generator:
+            for j,inner_value in self._inner_range_generator:
+                pass
+
     
-
-
-
 
 RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
 NORMAL_RANGE_HANDLER, BACK_FORTH_RANGE_HANDLER, ZERO_START_RANGE_HANDLER, ZERO_START_BACK_FORTH = RANGE_HANDLERS
@@ -194,9 +209,14 @@ class back_forth_range_handler(range_handler):
         if self.__current_round >= self.number_of_repeats:
             raise StopIteration        
 
-        #print("current round: {0}".format(self.__current_round))
         value = self.__current_value
-        self.__current_value = self.increment_value(value)
+        if self.__change_dir_point == 1:
+            value = self.increment_value(self.__current_value)
+            self.__current_value = self.increment_value(value)
+        else:
+            self.__current_value = self.increment_value(value)
+            
+        
         return value
 
 
@@ -210,16 +230,17 @@ class zero_start_range_handler(range_handler):
     def __next__(self):
         pass
 
+class zero_start_back_borth(range_handler):
+    def __init__(self, value_range, n_repeats):
+        if start * stop >= 0:
+            raise ValueError("Zero start range handler interval should cross zero")
+        return super().__init__(float_range(start,stop,step,len), n_repeats) 
 
 def print_enum(enumeration):
     for i,item in enumerate(enumeration):
         print("i = {0}; item = {1}".format(i,item))
 
 if __name__ == "__main__":
-    #nrng = normal_range_handler(-2,2, len= 11, repeats = 2)
-    #print_enum(nrng)
-    
-
     bfrng = back_forth_range_handler(-2,2,len=11)
     print_enum(bfrng)
         
