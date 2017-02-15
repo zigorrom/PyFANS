@@ -6,13 +6,22 @@ from agilent_u2542a_constants import *
 from node_configuration import Configuration
 import numpy as np
 
-MIN_MOVING_VOLTAGE = 1
+MIN_MOVING_VOLTAGE = 0.5
 MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = -0.1
 
-FANS_VOLTAGE_SET_ERROR  = 0.0005  #mV
-FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  
+FANS_VOLTAGE_SET_ERROR  = 0.0001  #mV
+FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  #### set here function for interval selection
+
+A1 = 0.006
+A2 = 0.002
+X0 = 0.01
+p = 3
+
+FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION = lambda error: A2 + (A1 - A2)/(1+math.pow(error/X0,p))
+
+
 FANS_ZERO_VOLTAGE_INTERVAL = 0.004
 
 FANS_VOLTAGE_SET_MAXITER = 10000
@@ -167,7 +176,10 @@ class fans_smu:
         polarity_switched = False
         
         VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL else FANS_VOLTAGE_SET_ERROR
-        VoltageTuningInterval = 5*VoltageSetError
+        VoltageTuningInterval =  FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)   #5*VoltageSetError
+        print("Voltage set error = {0}, Voltage Tuning Interval = {1}".format(VoltageSetError,VoltageTuningInterval))
+        
+        time.sleep(1)
 
 
         while True: #continue_setting:    
