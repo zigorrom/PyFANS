@@ -2,8 +2,8 @@ import os
 import numpy as np
 from node_configuration import Configuration
 from fans_controller import FANS_controller
-from fans_constants import FANS_AI_FUNCTIONS
-from fans_smu import fans_smu
+from fans_constants import *   # FANS_AI_FUNCTIONS,A0_BOX_CHANNELS
+from fans_smu import fans_smu,FANS_POSITIVE_POLARITY
 import math
 from PyQt4 import QtCore
 
@@ -16,7 +16,7 @@ class fans_fet_noise_experiment:
         self._experiment_data_filename = "MeasurData"
         self._file_extention = ".dat"
         self._working_directory = os.getcwd()
-        self.initialize_experiment()
+        #self.initialize_experiment()
 
 
 
@@ -24,10 +24,14 @@ class fans_fet_noise_experiment:
         if independent_function == FANS_AI_FUNCTIONS.DrainSourceVoltage:
             self._inner_range_generator = enumerate(drain_source_range)
             self._outer_range_generator = enumerate(gate_range)
+            self._inner_value_setter = self._fans_smu.set_drain_voltage
+            self._outer_value_setter = self._fans_smu.set_gate_voltage
 
         elif independent_function == FANS_AI_FUNCTIONS.GateVoltage:
             self._inner_range_generator = enumerate(gate_range)
             self._outer_range_generator = enumerate(drain_source_range)
+            self._inner_value_setter = self._fans_smu.set_gate_voltage
+            self._outer_value_setter = self._fans_smu.set_drain_voltage
 
         else:
             raise ValueError("wrong independent variable was set")
@@ -58,11 +62,16 @@ class fans_fet_noise_experiment:
     def set_points_per_shot(self, points_per_shot):
         pass
 
-    def __perform_experiment(self):
-        self._fans_smu
+    def __report_progress(self, progress):
+        pass
+
+    def perform_experiment(self):
+        self._fans_smu.init_smu_mode()
         for i,outer_value in self._outer_range_generator:
+            self._outer_value_setter(outer_value)
             for j,inner_value in self._inner_range_generator:
-                pass
+                self._inner_value_setter(inner_value)    
+                print(self._fans_smu.read_all_parameters())
 
     
 
@@ -243,8 +252,40 @@ def print_enum(enumeration):
 
 
 if __name__ == "__main__":
-    bfrng = back_forth_range_handler(-2,2,len=11)
-    print_enum(bfrng)
+    #bfrng = back_forth_range_handler(-2,2,len=11)
+    #print_enum(bfrng)
         
-    bfrng = zero_start_range_handler(-2,2,len=11)
+    #bfrng = zero_start_range_handler(-2,2,len=11)
     
+    cfg = Configuration()
+    f = FANS_controller("ADC",configuration=cfg)
+    smu = fans_smu(f)
+    
+    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_1,STATES.ON)
+    #smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_10,STATES.ON)
+    smu.set_fans_ao_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage, A0_BOX_CHANNELS.ao_ch_9,STATES.ON)
+
+    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_4)
+    #smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, A0_BOX_CHANNELS.ao_ch_11)
+    smu.set_fans_ao_relay_channel_for_function(FANS_AI_FUNCTIONS.GateVoltage,A0_BOX_CHANNELS.ao_ch_12)
+     
+    smu.set_fans_ao_polarity_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_POSITIVE_POLARITY )
+    smu.set_fans_ao_polarity_for_function(FANS_AI_FUNCTIONS.GateVoltage, FANS_POSITIVE_POLARITY)
+
+    smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.DrainSourceVoltage, AI_BOX_CHANNELS.ai_ch_5)
+    smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.GateVoltage, AI_BOX_CHANNELS.ai_ch_6)
+    smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
+
+    try:
+
+        gate_range = normal_range_handler(-0.15,0.15,0.1)
+        drain_range = normal_range_handler(-0.15,0.15,0.1)
+
+        exp = fans_fet_noise_experiment(f,smu,cfg)
+        exp.initialize_experiment(FANS_AI_FUNCTIONS.GateVoltage,gate_range,drain_range)
+        exp.perform_experiment()
+
+    except Exception as e:
+        raise
+    finally:
+        smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)

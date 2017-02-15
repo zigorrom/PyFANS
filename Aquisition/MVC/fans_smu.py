@@ -177,7 +177,7 @@ class fans_smu:
         
         VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL else FANS_VOLTAGE_SET_ERROR
         VoltageTuningInterval =  FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)   #5*VoltageSetError
-        print("Voltage set error = {0}, Voltage Tuning Interval = {1}".format(VoltageSetError,VoltageTuningInterval))
+        #print("Voltage set error = {0}, Voltage Tuning Interval = {1}".format(VoltageSetError,VoltageTuningInterval))
         
         time.sleep(1)
 
@@ -195,7 +195,7 @@ class fans_smu:
                 else:
                     return set_result
 
-            print((current_value,voltage))
+            print((FANS_AI_FUNCTIONS[function], current_value,voltage))
             value_to_set = voltage_setting_function(current_value,voltage)
             values["value_to_set"] = value_to_set
 
