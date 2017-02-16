@@ -5,6 +5,7 @@ from fans_controller import FANS_controller
 from fans_constants import *   # FANS_AI_FUNCTIONS,A0_BOX_CHANNELS
 from fans_smu import fans_smu,FANS_POSITIVE_POLARITY
 import math
+from copy import deepcopy
 from PyQt4 import QtCore
 
 class fans_fet_noise_experiment:
@@ -17,6 +18,8 @@ class fans_fet_noise_experiment:
         self._file_extention = ".dat"
         self._working_directory = os.getcwd()
         self._simulate_experiment = False
+        self._experiment_initialized = False
+        self._experiment_running = False
         #self.initialize_experiment()
 
     @property
@@ -29,11 +32,13 @@ class fans_fet_noise_experiment:
 
     
     def initialize_experiment(self, independent_function, gate_range, drain_source_range):
+        self._experiment_initialized = True
         if independent_function == FANS_AI_FUNCTIONS.DrainSourceVoltage:
             self._inner_range_generator = enumerate(drain_source_range)
             self._outer_range_generator = enumerate(gate_range)
             self._inner_value_setter = self._fans_smu.set_drain_voltage
             self._outer_value_setter = self._fans_smu.set_gate_voltage
+            
 
         elif independent_function == FANS_AI_FUNCTIONS.GateVoltage:
             self._inner_range_generator = enumerate(gate_range)
@@ -42,14 +47,24 @@ class fans_fet_noise_experiment:
             self._outer_value_setter = self._fans_smu.set_drain_voltage
 
         else:
+            self._experiment_initialized = False
             raise ValueError("wrong independent variable was set")
 
 
     def start_experiment(self):
-        pass
+        if not self._experiment_initialized:
+            raise AssertionError("Experiment was not initialized")
+        experiment_execution_function = self.__perform_experiment
+        if self._simulate_experiment:
+            experiment_execution_function = self.__simulate_experiment
+        self._experiment_running = True
+        experiment_execution_function()
 
     def stop_experiment(self):
-        pass
+        if not self._experiment_running:
+            return
+
+
 
 
     def set_drain_source_voltage_range(self):
@@ -72,8 +87,18 @@ class fans_fet_noise_experiment:
 
     def __report_progress(self, progress):
         pass
+    
+    ## EITHER DO THE DEEP COPY OR THE DEFINE FULL RESET ON THE ITERATORS
+    def __get_outer_iterator(self):
+        return  deepcopy(self._outer_range_generator)
+
+    def __get_inner_iterator(self):
+        return deepcopy(self._inner_range_generator)
+
+    ## ***********************************
 
     def __perform_experiment(self):
+
         self._fans_smu.init_smu_mode()
         for i,outer_value in self._outer_range_generator:
             self._outer_value_setter(outer_value)
@@ -82,7 +107,14 @@ class fans_fet_noise_experiment:
                 print(self._fans_smu.read_all_parameters())
 
     def __simulate_experiment(self):
-        pass
+        
+        outer_range = self.__get_outer_iterator()
+        for i,outer_value in outer_range:
+            inner_range = self.__get_inner_iterator()
+            for j,inner_value in inner_range:
+                time.sleep(0.5)
+                print("outer voltage {0}, inner voltage {1}".format(outer_value,inner_value))
+                
 
 
 
@@ -123,14 +155,14 @@ class float_range:
 
 POSITIVE_DIRECTION, NEGATIVE_DIRECTION = (1,-1)       
 class range_handler():
-    def __init__(self, value_range, n_repeats):
+    def __init__(self, value_range, n_repeats, round_n_digits = -1):
         if not isinstance(value_range, float_range):
             raise TypeError("range parameter is of wrong type!")
         if n_repeats < 1:
             raise ValueError("n_repeats should be greater than one")
 
         
-
+        self.__round_n_digits = round_n_digits
         self.__range = value_range
         self.__repeats = n_repeats
 
@@ -162,7 +194,11 @@ class range_handler():
      
 
     def increment_value(self, value_to_increment):
-        return value_to_increment + self.__direction * self.__range.step
+        result = value_to_increment + self.__direction * self.__range.step
+        if self.__round_n_digits>0:
+            result = round(result,self.__round_n_digits)
+
+        return result
         
     def define_direction(self, start_value, stop_value):
         if stop_value > start_value:
@@ -187,7 +223,7 @@ class range_handler():
 
 class normal_range_handler(range_handler):
     def __init__(self,start,stop,step=1,len=-1,repeats = 1):
-        super().__init__(float_range(start,stop,step,len),repeats)
+        super().__init__(float_range(start,stop,step,len),repeats,6)
         self.__current_value = start
         self.__current_round = 0
 
@@ -206,7 +242,7 @@ class normal_range_handler(range_handler):
 
 class back_forth_range_handler(range_handler):
     def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
-        super().__init__(float_range(start,stop,step,len), repeats) 
+        super().__init__(float_range(start,stop,step,len), repeats, 6) 
         self.__current_value = start
         self.__current_round = 0
         self.__left_value = self.woking_range.start
@@ -240,12 +276,11 @@ class back_forth_range_handler(range_handler):
         
         return value
 
-
 class zero_start_range_handler(range_handler):
     def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
         if start * stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
-        super().__init__(float_range(start,stop,step,len), repeats)
+        super().__init__(float_range(start,stop,step,len), repeats, 6)
 
 
     def __next__(self):
@@ -255,13 +290,11 @@ class zero_start_back_borth(range_handler):
     def __init__(self, value_range, n_repeats):
         if start * stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
-        return super().__init__(float_range(start,stop,step,len), n_repeats) 
+        return super().__init__(float_range(start,stop,step,len), n_repeats, 6) 
 
 def print_enum(enumeration):
     for i,item in enumerate(enumeration):
         print("i = {0}; item = {1}".format(i,item))
-
-
 
 if __name__ == "__main__":
     #bfrng = back_forth_range_handler(-2,2,len=11)
@@ -290,11 +323,13 @@ if __name__ == "__main__":
 
     try:
 
-        gate_range = normal_range_handler(-0.15,0.15,0.1)
-        drain_range = normal_range_handler(-0.15,0.15,0.1)
+        gate_range = normal_range_handler(-0.5,0.5,0.1)
+        drain_range = normal_range_handler(-0.5,0.5,0.1)
 
         exp = fans_fet_noise_experiment(f,smu,cfg)
         exp.initialize_experiment(FANS_AI_FUNCTIONS.GateVoltage,gate_range,drain_range)
+        exp.simulate_experiment = True
+        exp.start_experiment()
         #exp.perform_experiment()
 
     except Exception as e:

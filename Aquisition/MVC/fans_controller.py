@@ -165,6 +165,7 @@ class FANS_controller:
         self.data_queue.join()
         self.data_thread.stop()
         print("joined thread")
+        self.data_storage.stop_acuqisition()
 
     def acquisition_alive(self):
         return self.dac_proc.is_alive()

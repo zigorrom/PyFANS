@@ -72,7 +72,7 @@ class DataHandler(QtCore.QObject):
         self.smooth_window = "hanning"
         self.display_channel = display_channel
 
-        
+        #self._timetrace_file = open("timetrace.dat","ab")
         self.init_values(sample_rate, points_per_shot)
         
         # Use only one worker thread because it is not faster
@@ -100,9 +100,11 @@ class DataHandler(QtCore.QObject):
         self.psd_data = None
 
 ##        http://stackoverflow.com/questions/25143066/python-numpy-array-of-arrays
-        
-        
-                                       
+    
+    def stop_acuqisition(self):
+        pass
+        #self._timetrace_file.close()
+
     def reset(self):
         """Reset all data"""
         self.wait()
@@ -116,8 +118,6 @@ class DataHandler(QtCore.QObject):
         self.peak_hold_max = None
         self.peak_hold_min = None
 
-        
-
     def start_task(self, fn, *args, **kwargs):
         """Run function asynchronously in worker thread"""
         task = Task(fn, *args, **kwargs)
@@ -130,8 +130,6 @@ class DataHandler(QtCore.QObject):
     def update(self, data):
         """Update data storage"""
         self.average_counter += 1
-        
-        
 ##        self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
 
@@ -146,9 +144,7 @@ class DataHandler(QtCore.QObject):
         self.current_time = new_time
         print(self.timetrace_time)
         self.timetrace_data = data['d']
-
         self.frequency_bins = data['f']
-
         self.psd_data = data['p']
         
 ##        self.y = data["y"]#[self.display_channel]
@@ -157,7 +153,7 @@ class DataHandler(QtCore.QObject):
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
-
+        #self.start_task(self.write_to_file,data)
 ##    def update_history(self, data):
 ##        """Update spectrum measurements history"""
 ##        if self.history is None:
@@ -165,6 +161,8 @@ class DataHandler(QtCore.QObject):
 ##
 ##        self.history.append(data["y"])
 ##        self.history_updated.emit(self)
+    def write_to_file(self,data):
+        np.savetxt(self._timetrace_file,data['d'])
 
     def update_average(self, data):
         """Update average data"""
