@@ -11,7 +11,7 @@ MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = -0.1
 
-FANS_VOLTAGE_SET_ERROR  = 0.0001  #mV
+FANS_VOLTAGE_SET_ERROR  = 0.001  #mV
 FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  #### set here function for interval selection
 
 A1 = 0.006
@@ -22,7 +22,7 @@ p = 3
 FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION = lambda error: A2 + (A1 - A2)/(1+math.pow(error/X0,p))
 
 
-FANS_ZERO_VOLTAGE_INTERVAL = 0.004
+FANS_ZERO_VOLTAGE_INTERVAL = 0.1#0.005
 
 FANS_VOLTAGE_SET_MAXITER = 10000
 
@@ -175,9 +175,16 @@ class fans_smu:
         fine_tuning = False
         polarity_switched = False
         
-        VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL else FANS_VOLTAGE_SET_ERROR
-        VoltageTuningInterval =  FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)   #5*VoltageSetError
-        #print("Voltage set error = {0}, Voltage Tuning Interval = {1}".format(VoltageSetError,VoltageTuningInterval))
+        VoltageSetError = FANS_VOLTAGE_SET_ERROR
+        VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+
+        if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL :
+            VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL
+            VoltageTuningInterval =  VoltageTuningInterval+VoltageSetError     #5*VoltageSetError   
+
+        #VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL else FANS_VOLTAGE_SET_ERROR
+        #VoltageTuningInterval =  FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)   #5*VoltageSetError
+        print("Voltage set error = {0}, Voltage Tuning Interval = {1}".format(VoltageSetError,VoltageTuningInterval))
         
         time.sleep(1)
 
@@ -308,18 +315,23 @@ if __name__ == "__main__":
     #smu._init_fans_ao_channels()
     
     try:
-      for vds in np.arange(-0.5,0.5,0.1):
-          print("setting drain-source")
-          smu.set_drain_voltage(vds)
-          print("setting gate")
-          smu.set_gate_voltage(vds)
+      #smu.set_drain_voltage(0)
+      #smu.set_gate_voltage(0)
+      #smu.set_drain_voltage(0.3)
+      smu.set_drain_voltage(-0.1)
+      smu.set_drain_voltage(-3)
+      #for vds in np.arange(-1.5,-5,-0.1):
+      #    #print("setting drain-source")
+      #    #smu.set_drain_voltage(vds)
+      #    print("setting gate")
+      #    smu.set_gate_voltage(vds)
+      #    res = smu.read_all_parameters()
+      #    #print(smu.read_all_parameters())
+      #    print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
+      #    time.sleep(2)
 
-          print(smu.read_all_parameters())
-           
-          time.sleep(2)
-
-      smu.set_drain_voltage(-0.5)
-      smu.set_gate_voltage(-0.5)
+      #smu.set_drain_voltage(-0.5)
+      #smu.set_gate_voltage(-0.5)
        
 
     except Exception as e:
