@@ -321,6 +321,7 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.GateVoltage, AI_BOX_CHANNELS.ai_ch_6)
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_7 )
 
+    f._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f10,FILTER_GAINS.x16, PGA_GAINS.x100, AI_CHANNELS.AI_104)
     try:
 
         gate_range = normal_range_handler(-0.5,0.5,0.1)
@@ -328,7 +329,7 @@ if __name__ == "__main__":
 
         exp = fans_fet_noise_experiment(f,smu,cfg)
         exp.initialize_experiment(FANS_AI_FUNCTIONS.GateVoltage,gate_range,drain_range)
-        exp.simulate_experiment = True
+        #exp.simulate_experiment = True
         exp.start_experiment()
         #exp.perform_experiment()
 

@@ -4,17 +4,19 @@ import sys
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
 from data import DataHandler
 from fans_controller import FANS_controller
+from fans_constants import *
 from agilent_u2542a_constants import AI_CHANNELS
 from node_configuration import Configuration
 
 fans_main_view_base, fans_main_view_form = uic.loadUiType("Views/FANS_main_view.ui")
 class fans_main_view(fans_main_view_base,fans_main_view_form):
-    def __init__(self,parent = None):
+    def __init__(self,configuration = None, parent = None):
         super(fans_main_view_base,self).__init__(parent)
         self.setupUi(self)
         self.load_settings()
         self.setup_daq()
         
+    #def setup_fans_system(self,fans_controller, fans_smu)
 
     def setup_daq(self):
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot)
@@ -32,6 +34,8 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         #self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
 
         self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
+        for channel in AI_CHANNELS.indexes:
+            self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f50,FILTER_GAINS.x15, PGA_GAINS.x100, channel)
         self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
 
     def load_settings(self):
