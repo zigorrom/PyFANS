@@ -19,8 +19,8 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
     #def setup_fans_system(self,fans_controller, fans_smu)
 
     def setup_daq(self):
-        self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot)
-        self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot)
+        self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
+        self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
         self.sample_rate = 500000
         self.points_per_shot = 50000
         
@@ -36,10 +36,10 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
         
         for channel in AI_CHANNELS.indexes:
-            self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f20,FILTER_GAINS.x1, PGA_GAINS.x100, channel)
+            self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f150,FILTER_GAINS.x1, PGA_GAINS.x100, channel)
 
         
-        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot, [AI_CHANNELS.AI_104]) #[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
 
     def load_settings(self):
         pass

@@ -139,6 +139,7 @@ class FANS_controller:
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
         self.device.daq_setup(sample_rate,points_per_shot)
+        self.device.daq_set_enable_ai_channels(STATES.OFF, AI_CHANNELS.indexes)
         self.device.daq_set_enable_ai_channels(STATES.ON,channels)
 ##        self.device.daq_init_channels()
 

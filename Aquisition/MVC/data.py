@@ -71,7 +71,7 @@ class DataHandler(QtCore.QObject):
         self.smooth_length = 11
         self.smooth_window = "hanning"
         self.display_channel = display_channel
-
+        #self.__visualize_index = visualize_index
         #self._timetrace_file = open("timetrace.dat","ab")
         self.init_values(sample_rate, points_per_shot)
         

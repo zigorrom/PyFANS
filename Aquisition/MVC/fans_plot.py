@@ -7,10 +7,10 @@ import pyqtgraph as pg
 pg.setConfigOptions(antialias=True)
 
 class TimetracePlotWidget:
-    def __init__(self,layout):
+    def __init__(self,layout, visualize_index = None):
         if not isinstance(layout,pg.GraphicsLayoutWidget):
             raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
-
+        self.__visualize_index = visualize_index
         self.layout = layout
         self.main_curve = True
         self.main_color = pg.mkColor("r")
@@ -39,7 +39,7 @@ class TimetracePlotWidget:
             return
 
         if self.main_curve or force:
-            self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[3])
+            self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[self.__visualize_index])
             if force:
                 print("forced plot")
                 self.curve.setVisible(self.main_curve)
@@ -47,12 +47,12 @@ class TimetracePlotWidget:
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
-    def __init__(self, layout):
+    def __init__(self, layout, visualize_index = None):
         if not isinstance(layout, pg.GraphicsLayoutWidget):
             raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
 
         self.layout = layout
-
+        self.__visualize_index = visualize_index
         self.main_curve = True
         self.main_color = pg.mkColor("y")
         self.persistence = False
@@ -169,7 +169,7 @@ class SpectrumPlotWidget:
             return
 
         if self.main_curve or force:
-            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[3])
+            self.curve.setData(data_storage.frequency_bins, data_storage.psd_data[self.__visualize_index])
             if force:
                 print("forced plot")
                 self.curve.setVisible(self.main_curve)
@@ -180,7 +180,7 @@ class SpectrumPlotWidget:
             return
 
         if self.peak_hold_max or force:
-            self.curve_peak_hold_max.setData(data_storage.frequency_bins, data_storage.peak_hold_max[0])
+            self.curve_peak_hold_max.setData(data_storage.frequency_bins, data_storage.peak_hold_max[self.__visualize_index])
             if force:
                 self.curve_peak_hold_max.setVisible(self.peak_hold_max)
 
@@ -190,7 +190,7 @@ class SpectrumPlotWidget:
             return
 
         if self.peak_hold_min or force:
-            self.curve_peak_hold_min.setData(data_storage.frequency_bins, data_storage.peak_hold_min[0])
+            self.curve_peak_hold_min.setData(data_storage.frequency_bins, data_storage.peak_hold_min[self.__visualize_index])
             if force:
                 self.curve_peak_hold_min.setVisible(self.peak_hold_min)
 
@@ -200,7 +200,7 @@ class SpectrumPlotWidget:
             return
 
         if self.average or force:
-            self.curve_average.setData(data_storage.frequency_bins, data_storage.average[3])
+            self.curve_average.setData(data_storage.frequency_bins, data_storage.average[self.__visualize_index])
             if force:
                 print("forced average")
                 self.curve_average.setVisible(self.average)
