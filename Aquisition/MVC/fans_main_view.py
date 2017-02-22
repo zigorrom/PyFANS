@@ -21,7 +21,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
     def setup_daq(self):
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
         self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
-        self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot)
+        self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot,  self.histogramPlotLayout)
         self.sample_rate = 500000
         self.points_per_shot = 50000
         
