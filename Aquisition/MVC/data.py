@@ -71,7 +71,8 @@ class DataHandler(QtCore.QObject):
         self.smooth_length = 11
         self.smooth_window = "hanning"
         self.display_channel = display_channel
-        #self.__visualize_index = visualize_index
+        self.history = None
+        self.__visualize_index = 0
         #self._timetrace_file = open("timetrace.dat","ab")
         self.init_values(sample_rate, points_per_shot)
         
@@ -130,8 +131,9 @@ class DataHandler(QtCore.QObject):
     def update(self, data):
         """Update data storage"""
         self.average_counter += 1
-##        self.start_task(self.update_history, data.copy())
+        self.start_task(self.update_history, data.copy())
         self.start_task(self.update_data, data)
+        
 
     def update_data(self, data):
         """Update main spectrum data (and possibly apply smoothing)"""
@@ -147,20 +149,28 @@ class DataHandler(QtCore.QObject):
         self.frequency_bins = data['f']
         self.psd_data = data['p']
         
-##        self.y = data["y"]#[self.display_channel]
         self.data_updated.emit(self)
-
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
         #self.start_task(self.write_to_file,data)
-##    def update_history(self, data):
-##        """Update spectrum measurements history"""
-##        if self.history is None:
-##            self.history = HistoryBuffer(len(data["y"]), self.max_history_size)
-##
-##        self.history.append(data["y"])
-##        self.history_updated.emit(self)
+    
+    
+    def update_history(self, data):
+        """Update spectrum measurements history"""
+        if self.history is None:
+            length = len(data["p"][self.__visualize_index])
+            
+            print("in update history")
+            print(length)
+            print (data['p'])
+            self.history = HistoryBuffer(length, self.max_history_size)
+        
+        frequency_bins = data['f']
+        self.waterfallScale =  (frequency_bins[-1] - frequency_bins[0]) / len(frequency_bins)   #scale = (data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins)
+        self.history.append(data["p"][self.__visualize_index])
+        self.history_updated.emit(self)
+    
     def write_to_file(self,data):
         np.savetxt(self._timetrace_file,data['d'])
 

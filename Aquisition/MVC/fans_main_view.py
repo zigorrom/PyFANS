@@ -21,6 +21,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
     def setup_daq(self):
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
         self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
+        self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot)
         self.sample_rate = 500000
         self.points_per_shot = 50000
         
@@ -30,6 +31,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
         self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
         self.data_storage.data_updated.connect(self.timetracePlotWidget.update_plot)
+        self.data_storage.history_updated.connect(self.timeNoisePlotWidget.update_plot)
         #self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
         #self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
 

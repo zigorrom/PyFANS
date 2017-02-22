@@ -313,6 +313,8 @@ class WaterfallPlotWidget:
 
         self.plot.setYRange(-self.history_size, 0)
         self.plot.setLimits(xMin=0, yMax=0)
+        #self.plot.
+
         self.plot.showButtons()
         #self.plot.setAspectLocked(True)
         #self.plot.setDownsampling(mode="peak")
@@ -328,18 +330,24 @@ class WaterfallPlotWidget:
 
     def update_plot(self, data_storage):
         """Update waterfall plot"""
+        #print("updating waterfall plot ")
         self.counter += 1
 
         # Create waterfall image on first run
         if self.counter == 1:
             self.waterfallImg = pg.ImageItem()
-            self.waterfallImg.scale((data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins), 1)
+            scale = data_storage.waterfallScale #(data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins)
+            print("scale {0}".format(scale))
+            self.waterfallImg.scale(scale, 1)
+            self.waterfallImg.setLevels([1e-12,1e-14])
             self.plot.clear()
             self.plot.addItem(self.waterfallImg)
 
+        
         # Roll down one and replace leading edge with new data
         self.waterfallImg.setImage(data_storage.history.buffer[-self.counter:].T,
                                    autoLevels=False, autoRange=False)
+
 
         # Move waterfall image to always start at 0
         self.waterfallImg.setPos(
@@ -347,6 +355,8 @@ class WaterfallPlotWidget:
             -self.counter if self.counter < self.history_size else -self.history_size
         )
 
+        #print("updating waterfal plot")
+        #print(data_storage.history.buffer[-self.counter:].T)
         # Link histogram widget to waterfall image on first run
         # (must be done after first data is received or else levels would be wrong)
         if self.counter == 1 and self.histogram_layout:
