@@ -5,6 +5,8 @@ import pyqtgraph as pg
 
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
+pg.setConfigOption('background','w')
+pg.setConfigOption('foreground','k')
 
 class TimetracePlotWidget:
     def __init__(self,layout, visualize_index = None):
@@ -53,8 +55,9 @@ class SpectrumPlotWidget:
 
         self.layout = layout
         self.__visualize_index = visualize_index
+
         self.main_curve = True
-        self.main_color = pg.mkColor("y")
+        self.main_color = pg.mkColor("b")
         self.persistence = False
         self.persistence_length = 5
         self.persistence_decay = "exponential"
@@ -293,6 +296,8 @@ class WaterfallPlotWidget:
             raise ValueError("histogram_layout must be instance of pyqtgraph.GraphicsLayoutWidget")
 
         self.layout = layout
+       
+
         self.histogram_layout = histogram_layout
 
         self.history_size = 100

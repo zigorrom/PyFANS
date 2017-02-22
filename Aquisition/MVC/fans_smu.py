@@ -22,7 +22,7 @@ p = 3
 FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION = lambda error: A2 + (A1 - A2)/(1+math.pow(error/X0,p))
 
 
-FANS_ZERO_VOLTAGE_INTERVAL = 0.1#0.005
+FANS_ZERO_VOLTAGE_INTERVAL = 0.02#0.005
 
 FANS_VOLTAGE_SET_MAXITER = 10000
 
@@ -312,23 +312,23 @@ if __name__ == "__main__":
     smu.set_fans_ao_feedback_for_function(FANS_AI_FUNCTIONS.MainVoltage,AI_BOX_CHANNELS.ai_ch_3 )   #ai_ch7
 
     smu.init_smu_mode()
-    #smu._init_fans_ao_channels()
+    smu._init_fans_ao_channels()
     
     try:
       #smu.set_drain_voltage(0)
       #smu.set_gate_voltage(0)
       #smu.set_drain_voltage(0.3)
-      smu.set_drain_voltage(-0.1)
-      smu.set_drain_voltage(-3)
-      #for vds in np.arange(-1.5,-5,-0.1):
-      #    #print("setting drain-source")
-      #    #smu.set_drain_voltage(vds)
-      #    print("setting gate")
-      #    smu.set_gate_voltage(vds)
-      #    res = smu.read_all_parameters()
-      #    #print(smu.read_all_parameters())
-      #    print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
-      #    time.sleep(2)
+      #smu.set_drain_voltage(-0.1)
+      #smu.set_drain_voltage(-3)
+      for vds in np.arange(-1.5,-5,-0.1):
+          #print("setting drain-source")
+          smu.set_drain_voltage(vds)
+          print("setting gate")
+          smu.set_gate_voltage(vds)
+          res = smu.read_all_parameters()
+          #print(smu.read_all_parameters())
+          print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
+          time.sleep(2)
 
       #smu.set_drain_voltage(-0.5)
       #smu.set_gate_voltage(-0.5)
@@ -347,32 +347,3 @@ if __name__ == "__main__":
 
 
 
-
-
-
-    #f._set_output_channels(A0_BOX_CHANNELS.ao_ch_2,True,A0_BOX_CHANNELS.ao_ch_9,True)
-    #smu.set_hardware_voltage(6, AO_CHANNELS.AO_201)
-    #time.sleep(5)
-    #smu.set_hardware_voltage(0, AO_CHANNELS.AO_201)
-    #smu.set_hardware_voltage(6, AO_CHANNELS.AO_202)
-    #time.sleep(5)
-    #smu.set_hardware_voltage(0, AO_CHANNELS.AO_202)
-  
-
-
-
-    #sign = 1
-        #pol = FANS_NEGATIVE_POLARITY
-        #for i in range(10):
-        #    print("start of cycle")
-        #    print("set output voltage")
-        #    smu.set_hardware_voltage_channels(sign*6, AO_CHANNELS.indexes)
-        #    time.sleep(5)
-        #    print("set polarity")
-        #    smu.set_fans_output_polarity(pol,FANS_AI_FUNCTIONS.DrainSourceVoltage)
-        #    print("polarity is set")
-        #    time.sleep(5)
-        #    sign = -sign
-        #    pol = -pol
-        #    print("end of cycle")
-            
