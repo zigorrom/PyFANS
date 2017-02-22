@@ -320,18 +320,18 @@ if __name__ == "__main__":
       #smu.set_drain_voltage(0.3)
       #smu.set_drain_voltage(-0.1)
       #smu.set_drain_voltage(-3)
-      for vds in np.arange(-1.5,-5,-0.1):
-          #print("setting drain-source")
-          smu.set_drain_voltage(vds)
-          print("setting gate")
-          smu.set_gate_voltage(vds)
-          res = smu.read_all_parameters()
-          #print(smu.read_all_parameters())
-          print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
-          time.sleep(2)
+      #for vds in np.arange(-1.5,-5,-0.1):
+      #    #print("setting drain-source")
+      #    smu.set_drain_voltage(vds)
+      #    print("setting gate")
+      #    smu.set_gate_voltage(vds)
+      #    res = smu.read_all_parameters()
+      #    #print(smu.read_all_parameters())
+      #    print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
+      #    time.sleep(2)
 
-      #smu.set_drain_voltage(-0.5)
-      #smu.set_gate_voltage(-0.5)
+      smu.set_drain_voltage(-0.5)
+      smu.set_gate_voltage(-0.5)
        
 
     except Exception as e:
