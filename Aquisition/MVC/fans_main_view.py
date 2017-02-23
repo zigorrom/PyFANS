@@ -19,15 +19,16 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
     #def setup_fans_system(self,fans_controller, fans_smu)
 
     def setup_daq(self):
+        max_hist_size=  50
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
         self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
-        self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot,  self.histogramPlotLayout)
+        self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot,  self.histogramPlotLayout, max_history_size=max_hist_size)
         self.sample_rate = 500000
         self.points_per_shot = 50000
         
 
         self.configuration = Configuration()
-        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot)
+        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot, max_history_size=max_hist_size)
         self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
         self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
         self.data_storage.data_updated.connect(self.timetracePlotWidget.update_plot)
@@ -181,6 +182,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
 
 
 if __name__ == "__main__":
+    
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
