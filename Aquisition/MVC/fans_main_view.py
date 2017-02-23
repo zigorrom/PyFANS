@@ -182,6 +182,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
 
 
 if __name__ == "__main__":
+    
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")

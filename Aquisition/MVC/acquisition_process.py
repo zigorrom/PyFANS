@@ -60,7 +60,8 @@ class Acquisition(Process):
                         print(data)
                         freq, psd = periodogram(data,fs) 
 ##                        decimated_data = 
-                        block = {"t": t,
+                        block = {
+                                 "t": t,
                                  "d": data,
                                  "f": np.delete(freq,1,0),
                                  "p": np.delete(psd,1,1)
@@ -129,11 +130,8 @@ class AcquisitionProcess(QtCore.QThread):
 ##                parse(data,counter)
                 data_storage.update(data)
 ##                d = data["d"].transpose()
-
 ##                np.savetxt(file_tt,d,fmt='%e',delimiter='\t', newline='\r\n')
-
 ##                self.arr += data['p']
-                
 ##                p = np.vstack((data["f"], data["p"])).transpose()
 ##                np.savetxt(file_psd,p,fmt='%e',delimiter='\t', newline='\r\n')
 
