@@ -326,8 +326,10 @@ class WaterfallPlotWidget:
             self.histogram_layout.addItem(self.histogram)
             self.histogram.gradient.loadPreset("flame")
             #self.histogram.setHistogramRange(-50, 0)
-            self.histogram.setHistogramRange(0,1)
-            #self.histogram.setLevels(1e-11, 1e-9)
+            
+
+            self.histogram.setLevels(1e-12, 1e-11)
+            self.histogram.setHistogramRange(1e-12,1e-11)
 
     def update_plot(self, data_storage):
         """Update waterfall plot"""

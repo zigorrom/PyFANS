@@ -19,7 +19,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
     #def setup_fans_system(self,fans_controller, fans_smu)
 
     def setup_daq(self):
-        max_hist_size=  10
+        max_hist_size=  50
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
         self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
         self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot,  self.histogramPlotLayout, max_history_size=max_hist_size)
