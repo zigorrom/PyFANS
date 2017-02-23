@@ -249,6 +249,9 @@ class PropertiesEditor(propBase, propForm):
         self._checkEditor = CheckEditor(self)
         self._numericEditor = NumericEditor(self)
         self._inChannelEditor = InChannelEditor(self)
+        self._acquisitionEditor = QtGui.QListView(self)
+        self._delegate = AcquisitionViewDelegate()
+        self._acquisitionEditor.setItemDelegate(self._delegate)
 
         
         
@@ -258,6 +261,7 @@ class PropertiesEditor(propBase, propForm):
         self.layoutSpecs.addWidget(self._checkEditor)
         self.layoutSpecs.addWidget(self._numericEditor)
         self.layoutSpecs.addWidget(self._inChannelEditor)
+        self.layoutSpecs.addWidget(self._acquisitionEditor)
         
 
         self._labelEditor.setVisible(False)
@@ -265,6 +269,7 @@ class PropertiesEditor(propBase, propForm):
         self._checkEditor.setVisible(False)
         self._numericEditor.setVisible(False)
         self._inChannelEditor.setVisible(False)
+        self._acquisitionEditor.setVisible(False)
                
     """INPUTS: QModelIndex, QModelIndex"""
     def setSelection(self, current, old):
@@ -311,7 +316,9 @@ class PropertiesEditor(propBase, propForm):
             self._numericEditor.setVisible(False)
             self._inChannelEditor.setVisible(True)
             self._inChannelEditor.setSelection(current)
-            pass
+        elif typeInfo == "ACQUISITION_SETTINGS":
+            self._acquisitionEditor.setVisible(True)
+            
             
         else:
             self._labelEditor.setVisible(False)
@@ -332,6 +339,7 @@ class PropertiesEditor(propBase, propForm):
         self._checkEditor.setModel(proxyModel)
         self._numericEditor.setModel(proxyModel)
         self._inChannelEditor.setModel(proxyModel)
+        self._acquisitionEditor.setModel(proxyModel)
         
 
 
@@ -423,6 +431,10 @@ class CheckEditor(checkBase, checkForm):
         self._dataMapper.setRootIndex(parent)
         self._dataMapper.setCurrentModelIndex(current)
     
+        
+        
+
+
 
 comboBase, comboForm = uic.loadUiType("Views/ComboWidget.ui")
 class ComboEditor(comboBase, comboForm):
@@ -484,8 +496,55 @@ class InChannelEditor(inChannelBase, inChannelForm):
 ##        self._dataMapper.setRootIndex(parent)
 ##        self._dataMapper.setCurrentModelIndex(current)
     
+acquisitionSettingsBase, acquisitionSettingsForm = uic.loadUiType("Views/AcquisitionSettingsTemplate.ui")
+class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm):
+    def __init__(self, parent = None):
+        super(acquisitionSettingsBase,self).__init__(parent)
+        self.setupUi(self)
+        self._dataMapper = QtGui.QDataWidgetMapper()
+        
+        self._nodeEditor = NodeEditor(self)
+        self._labelEditor = LabelEditor(self)
+        self._comboEditor = ComboEditor(self)
+        self._checkEditor = CheckEditor(self)
+        self._numericEditor = NumericEditor(self)
+
+        self.layoutNode.addWidget(self._nodeEditor)
+        self.layoutNode.addWidget(self._labelEditor)
+        self.layoutNode.addWidget(self._comboEditor)
+        self.layoutNode.addWidget(self._checkEditor)
+        self.layoutNode.addWidget(self._numericEditor)
+
+            
 
 
+
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+        
+        self._dataMapper.addMapping(self.ui_name,0)
+        self._dataMapper.addMapping(self.ui_combo,2)
+
+
+
+
+    def setSelection(self,current):
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
+
+
+class AcquisitionViewDelegate(QtGui.QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        
+        item_var = index.data( QtCore.Qt.DisplayRole)
+        item = item_var
+        print("from delegate")
+        
+        opts = AcquisitionSettingsEditor()
+        #QtGui.QApplication.style().drawControl(QtGui.QStyle.PE_Widget, opts
+        print(item)
+        
 
 
 if __name__ == '__main__':
@@ -498,6 +557,8 @@ if __name__ == '__main__':
 
     t = Node
     
+    
+
     
 ##    l2 = [[for cls in v.__mro__] for v in lst]
 ##    print(l2)
