@@ -288,7 +288,7 @@ class SpectrumPlotWidget:
 
 class WaterfallPlotWidget:
     """Waterfall plot"""
-    def __init__(self, layout, histogram_layout=None):
+    def __init__(self, layout, histogram_layout=None,max_history_size = 10):
         if not isinstance(layout, pg.GraphicsLayoutWidget):
             raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
 
@@ -300,7 +300,7 @@ class WaterfallPlotWidget:
 
         self.histogram_layout = histogram_layout
 
-        self.history_size = 100
+        self.history_size = max_history_size
         self.counter = 0
 
         self.create_plot()
@@ -326,7 +326,8 @@ class WaterfallPlotWidget:
             self.histogram_layout.addItem(self.histogram)
             self.histogram.gradient.loadPreset("flame")
             #self.histogram.setHistogramRange(-50, 0)
-            #self.histogram.setLevels(-50, 0)
+            self.histogram.setHistogramRange(0,1)
+            #self.histogram.setLevels(1e-11, 1e-9)
 
     def update_plot(self, data_storage):
         """Update waterfall plot"""
@@ -339,7 +340,7 @@ class WaterfallPlotWidget:
             scale = data_storage.waterfallScale #(data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins)
             print("scale {0}".format(scale))
             self.waterfallImg.scale(scale, 1)
-            self.waterfallImg.setLevels([1e-12,1e-14])
+            #self.waterfallImg.setLevels([1e-12,1e-14])
             self.plot.clear()
             self.plot.addItem(self.waterfallImg)
 
