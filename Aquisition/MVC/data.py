@@ -73,7 +73,7 @@ class DataHandler(QtCore.QObject):
         self.display_channel = display_channel
         self.history = None
         self.__visualize_index = 0
-        #self._timetrace_file = open("timetrace.dat","ab")
+        self._timetrace_file = open("timetrace.dat","wb")
         self.init_values(sample_rate, points_per_shot)
         
         # Use only one worker thread because it is not faster
@@ -103,8 +103,7 @@ class DataHandler(QtCore.QObject):
 ##        http://stackoverflow.com/questions/25143066/python-numpy-array-of-arrays
     
     def stop_acuqisition(self):
-        pass
-        #self._timetrace_file.close()
+        self._timetrace_file.close()
 
     def reset(self):
         """Reset all data"""
@@ -153,7 +152,7 @@ class DataHandler(QtCore.QObject):
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
-        #self.start_task(self.write_to_file,data)
+        self.start_task(self.write_to_file,data)
     
     
     def update_history(self, data):
