@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>550</width>
-    <height>368</height>
+    <width>332</width>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,35 +17,21 @@
    <item row="0" column="0">
     <widget class="QLabel" name="ui_en_label">
      <property name="text">
-      <string>TextLabel</string>
+      <string>Enabled</string>
      </property>
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QLabel" name="ui_rang_label">
+    <widget class="QCheckBox" name="ui_enabled">
      <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
-    <widget class="QLabel" name="ui_pol_label">
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="3">
-    <widget class="QLabel" name="ui_func_label">
-     <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QCheckBox" name="ui_enabled">
+    <widget class="QLabel" name="ui_rang_label">
      <property name="text">
-      <string/>
+      <string>Range</string>
      </property>
     </widget>
    </item>
@@ -68,7 +54,14 @@
      </item>
     </widget>
    </item>
-   <item row="1" column="2">
+   <item row="2" column="0">
+    <widget class="QLabel" name="ui_pol_label">
+     <property name="text">
+      <string>Polarity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
     <widget class="QComboBox" name="ui_polarity">
      <item>
       <property name="text">
@@ -82,7 +75,14 @@
      </item>
     </widget>
    </item>
-   <item row="1" column="3">
+   <item row="3" column="0">
+    <widget class="QLabel" name="ui_func_label">
+     <property name="text">
+      <string>Function</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
     <widget class="QComboBox" name="ui_function">
      <item>
       <property name="text">

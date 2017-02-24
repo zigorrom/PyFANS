@@ -37,6 +37,9 @@
     <Compile Include="fans_main_view.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="fans_measurement_file_writer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="fans_models.py">
       <SubType>Code</SubType>
     </Compile>
@@ -46,6 +49,9 @@
     <Compile Include="node_configuration.py" />
     <Compile Include="n_enum.py" />
     <Compile Include="settings.py" />
+    <Compile Include="test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="xml_highlighter.py" />
     <Compile Include="xml_serializer.py" />
     <Compile Include="__init__.py" />
