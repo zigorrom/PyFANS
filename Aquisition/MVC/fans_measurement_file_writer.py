@@ -31,25 +31,25 @@ def main():
     #del store['s']
     #del store['wp']
     np.random.seed(1234)
-    times = 100000
+    times = 10
     index = pd.date_range('1/1/2000', periods=times)
     #df = pd.DataFrame(index=index,columns=['amplitude'])
     
     nsamples = 50000
     period = 1 #sec
     current_time = 0
-    df = pd.DataFrame(index=times, data=arr)
-        
+    df = pd.DataFrame()
+    
     for i in range(times):
         arr = np.random.random(nsamples)
         times = np.linspace(current_time, current_time+period, nsamples, False)
 
-        print(df)
-        
-        
-        current_time+=period
-        store.put('tables/t{0}'.format(i), df)
+        ser = pd.Series(data=arr,index=times)
+        df.append(ser,ignore_index=True)
 
+        current_time+=period
+        
+    print(df)
     
     #store['df'] = df
     
