@@ -25,28 +25,36 @@ class ExperimentWriter:
 
 def main():
     store = pd.HDFStore("store.h5")
+    print(store)
+    
+    #del store['df']
+    #del store['s']
+    #del store['wp']
     np.random.seed(1234)
-    times = 8
+    times = 100000
     index = pd.date_range('1/1/2000', periods=times)
-    df = pd.DataFrame(index=index,columns=['amplitude'])
+    #df = pd.DataFrame(index=index,columns=['amplitude'])
+    
     nsamples = 50000
     period = 1 #sec
     current_time = 0
+    df = pd.DataFrame(index=times, data=arr)
+        
     for i in range(times):
         arr = np.random.random(nsamples)
         times = np.linspace(current_time, current_time+period, nsamples, False)
 
-        s = pd.Series(arr,index=times)
-        df.append(s)
-
-
+        print(df)
+        
+        
+        current_time+=period
+        store.put('tables/t{0}'.format(i), df)
 
     
     #store['df'] = df
     
     
-    print(store)
-    print(store['df'])
+    
     
 
     
@@ -59,6 +67,7 @@ def main():
     #store.append('dftd',dftd,data_columns=True)
 
     #print(store.select('dftd',"C<'-3.5D'"))
+    print(store)
     store.close()
 
 if __name__ == "__main__":
