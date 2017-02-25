@@ -67,17 +67,27 @@ def main():
     print("result length = {0}".format(len(res)))
     print(res_freq)
     
-    plt.loglog(freq_1,first_range,'r', freq_2, second_range,'k', res_freq,res, 'g')
-    plt.show()
-
-
-
-
-
-
-    
+    #plt.loglog(freq_1,first_range,'r', freq_2, second_range,'k', res_freq,res, 'g')
+    #plt.show()
+    return (res_freq, res)
 
 if __name__ == "__main__":
-    print(timeit.Timer(main).timeit(number=1))
+
+    result = None
+    freq = None
+    n_repeats = 10000
+
+    for i in range(n_repeats):
+        if result is None:
+            freq,result = main()
+        else:
+            f,psd = main()
+            result = np.average((result,psd),axis=0,weights=(i, 1))        
+
+    plt.loglog(freq,result,'r')
+    plt.show()  
+
+
+    #print(timeit.Timer(main).timeit(number=1))
     
     #main()
