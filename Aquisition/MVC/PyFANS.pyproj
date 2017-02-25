@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{88615012-01f1-43ad-ae1d-4377348eb129}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>fans_measurement_file_writer.py</StartupFile>
+    <StartupFile>test_signal_processing.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -50,6 +50,9 @@
     <Compile Include="n_enum.py" />
     <Compile Include="settings.py" />
     <Compile Include="test.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="test_signal_processing.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="xml_highlighter.py" />
