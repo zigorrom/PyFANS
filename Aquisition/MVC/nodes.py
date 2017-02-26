@@ -318,16 +318,7 @@ class ComboNode(Node):
         def fset(self,value): self._selectedIndex = value
         return locals()
     selectedIndex = notifiable_property("selected_index",**selectedIndex())
-##    selectedIndex = property(**selectedIndex())
 
-##    def selectedValue():
-##        def fget(self):return self._selectedValue
-##        def fset(self,value): self._selectedValue = value
-##        return locals()
-##    selectedIndex = property(**selectedValue())
-    
-##    def case_list(self):
-##        return self._case_list
 
     def case_list():
         def fget(self): return self._case_list
@@ -364,23 +355,13 @@ class InChannelNode(Node):
         return locals()
     enabled = notifiable_property("enabled",**enabled())
 
-    #def enabled_label_prop():
-    #    def fget(self): return self._enabled.name
-    #    return locals()
-    #enabled_label = property(**enabled_label())
-
+    
     def selected_range():
         def fget(self): return self._range
         def fset(self,value): self._range = value
         return locals()
     selected_range = notifiable_property("range",**selected_range())
 
-    #def range_label():
-    #    def fget(self):return self._range.name
-    #    return locals()
-
-    #range_label = property(**range_label())
-        
         
     def selected_polarity():
         def fget(self): return self._polarity
@@ -388,11 +369,7 @@ class InChannelNode(Node):
         return locals()
     selected_polarity = notifiable_property("polarity",**selected_polarity())
 
-    #def polarity_label():
-    #    def fget(self): return self._polarity.name
-    #    return locals()
-    #polarity_label = property(**polarity_label())
-
+    
     def selected_function():
         def fget(self): return self._function
         def fset(self,value): self._function = value
@@ -400,11 +377,6 @@ class InChannelNode(Node):
     selected_function = notifiable_property("function",**selected_function())
     
     
-    #def function_label():
-    #    def fget(self):return self._function.name
-    #    return locals()
-    #function_label = property(**function_label())
-
     
     def typeInfo(self):
         return "IN_CHANNEL"
@@ -413,9 +385,7 @@ class InChannelNode(Node):
     def typeInfo(cls):
         return "IN_CHANNEL"
 
-    #def columnCount(self):
-    #    return 3
-
+    
     def data(self, column):
         r = super(InChannelNode,self).data(column)
         if column is 2:     r = self.enabled
@@ -464,6 +434,31 @@ class OutChannelNode(Node):
         def fset(self,value): self._function = value
         return locals()
     selected_function = notifiable_property("function",**selected_function())
+
+    def selected_output():
+        def fget(self): return self._output_pin
+        def fset(self,value): self._output_pin = value
+        return locals()
+
+    selected_output = notifiable_property("selected_output",**selected_output())
+
+
+    def data(self, column):
+        r = super(OutChannelNode,self).data(column)
+        if column is 2:     r = self.enabled
+        elif column is 3:   r = self.selected_range
+        elif column is 4:   r = self.selected_polarity
+        elif column is 5:   r = self.selected_function
+        elif column is 6:   r = self.selected_output
+        return r
+
+    def setData(self, column, value):
+        super(OutChannelNode,self).setData(column,value)
+        if column is 2:     self.enabled = value
+        elif column is 3:   self.selected_range = value
+        elif column is 4:   self.selected_polarity = value
+        elif column is 5:   self.selected_function =value
+        elif column is 6:   self.selected_output = value
 
     def typeInfo(self):
         return "OUT_CHANNEL"
