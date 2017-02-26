@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     result = None
     freq = None
-    n_repeats = 10000
+    n_repeats = 100
 
     for i in range(n_repeats):
         if result is None:

@@ -115,6 +115,93 @@ class Node(Observable):
     def resource(self):
         return None
 
+
+
+class AcquisitionSettingsNode(Node):
+    def __init__(self,name,parent=None):
+        super(AcquisitionSettingsNode,self).__init__(name,parent)
+        self._sample_rate = 500000
+        self._homemade_amplifier = True
+        self._amplifier = 1
+        self._pga_amplifier = 1
+        self._filter_gain = 1
+        self._filter_cutoff = 1
+##        self._sample_rate = NumericNode("sample_rate", parent = self)
+##        self._points_per_shot = NumericNode("points_per_shot", parent = self)
+##        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
+##        self._pga_gain = ComboNode("pga_gain",parent = self)
+##        self._filter_gain = ComboNode("filter_gain", parent = self)
+##        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
+
+    def sample_rate_prop():
+        def fget(self): return self._sample_rate
+        def fset(self,value): self._sample_rate = value
+        return locals()
+
+    sample_rate = notifiable_property("sample_rate",**sample_rate_prop())
+
+    def homemade_amplifier_prop():
+        def fget(self): return self._homemade_amplifier
+        def fset(self,value): self._homemade_amplifier = value
+        return locals()
+
+    homemade_amplifier = notifiable_property("homemade_amplifier",**homemade_amplifier_prop())
+
+    def amplifier_prop():
+        def fget(self): return self._amplifier
+        def fset(self,value): self._amplifier = value
+        return locals()
+
+    amplifier = notifiable_property("amplifier", **amplifier_prop())
+
+    def pga_amplifier_prop():
+        def fget(self): return self._pga_amplifier
+        def fset(self,value): self._pga_amplifier = value
+        return locals()
+
+    pga_amplifier = notifiable_property("pga_amplifier",**pga_amplifier_prop())
+
+    def filter_gain_prop():
+        def fget(self): return self._filter_gain
+        def fset(self,value): self._filter_gain = value
+        return locals()
+
+    filter_gain = notifiable_property("filter_gain", **filter_gain_prop())
+
+    def filter_cutoff_prop():
+        def fget(self): return self._filter_cutoff
+        def fset(self,value): self._filter_cutoff = value
+        return locals()
+
+    filter_cutoff = notifiable_property("filter_cutoff",**filter_cutoff_prop())
+
+    def typeInfo(self):
+        return "ACQUISITION_SETTINGS"
+
+    @classmethod
+    def typeInfo(cls):
+        return "ACQUISITION_SETTINGS"
+
+    def data(self,column):
+        r = super(AcquisitionSettingsNode,self).data(column)
+        if column is 2: r = self.sample_rate
+        elif column is 3: r = self.homemade_amplifier
+        elif column is 4: r = self.amplifier
+        elif column is 5: r = self.pga_amplifier
+        elif column is 6: r = self.filter_gain
+        elif column is 7: r = self.filter_cutoff
+        return r
+
+    def setData(self,column,value):
+        super(AcquisitionSettingsNode,self).setData(column,value)
+        if column is 2: self.sample_rate = value
+        elif column is 3: self.homemade_amplifier = value
+        elif column is 4: self.amplifier = value
+        elif column is 5: self.pga_amplifier = value
+        elif column is 6: self.filter_gain = value
+        elif column is 7: self.filter_cutoff = value
+
+
     
 
 class LabelNode(Node):
@@ -137,7 +224,6 @@ class LabelNode(Node):
     label= notifiable_property("label",**label())
 ##    label= property(**label())
     
-
     def data(self,column):
         r = super(LabelNode,self).data(column)
         if column is 2: r = self.label
@@ -242,6 +328,7 @@ class ComboNode(Node):
     
 ##    def case_list(self):
 ##        return self._case_list
+
     def case_list():
         def fget(self): return self._case_list
         def fset(self,value): self._case_list = value
@@ -265,67 +352,59 @@ class ComboNode(Node):
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
         super(InChannelNode,self).__init__(name,parent)
-##        self._enabled = CheckNode("enabled", parent = self)
-##        self._range = ComboNode("range", case_list=['One','Two','Three'], parent = self)
-##        self._polarity = ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
-##        self._function = ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
-
-##    def _recurseXml(self, doc, parent):
-##        node = doc.createElement(self.typeInfo())
-##        parent.appendChild(node)
-##
-##        for i in self._children:
-##            i._recurseXml(doc, node)
+        self._enabled = True#CheckNode("enabled", parent = self)
+        self._range = None #ComboNode("range", case_list=['One','Two','Three'], parent = self)
+        self._polarity = None#ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
+        self._function = None#ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
 
 
-##    def enabled():
-##        def fget(self):return self._enabled.checked
-##        def fset(self,value): self._enabled.checked = value
-##            
-##        return locals()
-##    enabled = property(**enabled())
-##
-##    def enabled_label():
-##        def fget(self): return self._enabled.name
-##        return locals()
-##    enabled_label = property(**enabled_label())
-##
-##    def selected_range():
-##        def fget(self): return self._range.selectedIndex
-##        def fset(self,value): self._range.selectedIndex = value
-##        return locals()
-##    selected_range = property(**selected_range())
-##
-##    def range_label():
-##        def fget(self):return self._range.name
-##        return locals()
-##
-##    range_label = property(**range_label())
-##        
-##        
-##    def selected_polarity():
-##        def fget(self): return self._polarity.selectedIndex
-##        def fset(self,value): self._polarity.selectedIndex = value
-##        return locals()
-##    selected_polarity = property(**selected_polarity())
-##
-##    def polarity_label():
-##        def fget(self): return self._polarity.name
-##        return locals()
-##    polarity_label = property(**polarity_label())
-##
-##    def selected_function():
-##        def fget(self): return self._function.selectedIndex
-##        def fset(self,value): self._function.selectedIndex = value
-##        return locals()
-##    selected_function = property(**selected_function())
-##    
-##    
-##    def function_label():
-##        def fget(self):return self._function.name
-##        return locals()
-##    function_label = property(**function_label())
-##
+    def enabled():
+        def fget(self):return self._enabled
+        def fset(self,value): self._enabled = value
+        return locals()
+    enabled = notifiable_property("enabled",**enabled())
+
+    #def enabled_label_prop():
+    #    def fget(self): return self._enabled.name
+    #    return locals()
+    #enabled_label = property(**enabled_label())
+
+    def selected_range():
+        def fget(self): return self._range
+        def fset(self,value): self._range = value
+        return locals()
+    selected_range = notifiable_property("range",**selected_range())
+
+    #def range_label():
+    #    def fget(self):return self._range.name
+    #    return locals()
+
+    #range_label = property(**range_label())
+        
+        
+    def selected_polarity():
+        def fget(self): return self._polarity
+        def fset(self,value): self._polarity= value
+        return locals()
+    selected_polarity = notifiable_property("polarity",**selected_polarity())
+
+    #def polarity_label():
+    #    def fget(self): return self._polarity.name
+    #    return locals()
+    #polarity_label = property(**polarity_label())
+
+    def selected_function():
+        def fget(self): return self._function
+        def fset(self,value): self._function = value
+        return locals()
+    selected_function = notifiable_property("function",**selected_function())
+    
+    
+    #def function_label():
+    #    def fget(self):return self._function.name
+    #    return locals()
+    #function_label = property(**function_label())
+
     
     def typeInfo(self):
         return "IN_CHANNEL"
@@ -334,37 +413,57 @@ class InChannelNode(Node):
     def typeInfo(cls):
         return "IN_CHANNEL"
 
-    def columnCount(self):
-        return 3
+    #def columnCount(self):
+    #    return 3
 
     def data(self, column):
         r = super(InChannelNode,self).data(column)
-##        if column is 2:     r = self.enabled
-##        elif column is 3:   r = self.selected_range
-##        elif column is 4:   r = self.selected_polarity
-##        elif column is 5:   r = self.selected_function
-##        elif column is 6:   r = self.enabled_label()
-##        elif column is 7:   r = self.range_label()
-##        elif column is 8:   r = self.polarity_label()
-##        elif column is 9:   r = self.function_label()
+        if column is 2:     r = self.enabled
+        elif column is 3:   r = self.selected_range
+        elif column is 4:   r = self.selected_polarity
+        elif column is 5:   r = self.selected_function
         return r
 
     def setData(self, column, value):
         super(InChannelNode,self).setData(column,value)
-##        if column is 2:     self.enabled = value
-##        elif column is 3:   self.selected_range = value
-##        elif column is 4:   self.selected_polarity = value
-##        elif column is 5:   self.selected_function =value
+        if column is 2:     self.enabled = value
+        elif column is 3:   self.selected_range = value
+        elif column is 4:   self.selected_polarity = value
+        elif column is 5:   self.selected_function =value
         
 
 class OutChannelNode(Node):
     def __init__(self,name,parent=None):
         super(OutChannelNode,self).__init__(name,parent)
-##        self._enabled = CheckNode(name+"_enabled", parent = self)
-##        self._range = ComboNode(name+"_range", parent = self)
-##        self._polarity = ComboNode(name+"_polarity",parent = self)
-##        self._output_pin = ComboNode(name+"_out_pin",parent = self)
-##        self._function = ComboNode(name+"_function",parent=  self)
+        self._enabled = True#CheckNode(name+"_enabled", parent = self)
+        self._range =  None#ComboNode(name+"_range", parent = self)
+        self._polarity = None#ComboNode(name+"_polarity",parent = self)
+        self._output_pin = None#ComboNode(name+"_out_pin",parent = self)
+        self._function = None#ComboNode(name+"_function",parent=  self)
+
+    def enabled():
+        def fget(self):return self._enabled
+        def fset(self,value): self._enabled = value
+        return locals()
+    enabled = notifiable_property("enabled",**enabled())
+
+    def selected_range():
+        def fget(self): return self._range
+        def fset(self,value): self._range = value
+        return locals()
+    selected_range = notifiable_property("range",**selected_range())
+
+    def selected_polarity():
+        def fget(self): return self._polarity
+        def fset(self,value): self._polarity= value
+        return locals()
+    selected_polarity = notifiable_property("polarity",**selected_polarity())
+
+    def selected_function():
+        def fget(self): return self._function
+        def fset(self,value): self._function = value
+        return locals()
+    selected_function = notifiable_property("function",**selected_function())
 
     def typeInfo(self):
         return "OUT_CHANNEL"
@@ -374,21 +473,5 @@ class OutChannelNode(Node):
         return "OUT_CHANNEL"
 
 
-class AcquisitionSettingsNode(Node):
-    def __init__(self,name,parent=None):
-        super(AcquisitionSettingsNode,self).__init__(name,parent)
-##        self._sample_rate = NumericNode("sample_rate", parent = self)
-##        self._points_per_shot = NumericNode("points_per_shot", parent = self)
-##        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
-##        self._pga_gain = ComboNode("pga_gain",parent = self)
-##        self._filter_gain = ComboNode("filter_gain", parent = self)
-##        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
-
-    def typeInfo(self):
-        return "ACQUISITION_SETTINGS"
-
-    @classmethod
-    def typeInfo(cls):
-        return "ACQUISITION_SETTINGS"
 
 
