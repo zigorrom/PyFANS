@@ -238,19 +238,51 @@ propBase, propForm = uic.loadUiType("Views/PropertiesLayout.ui")
 """PROPERTIESEDITOR"""
 class PropertiesEditor(propBase, propForm):
     
+    def __addControl(self, typeInfo, control):
+        self._controls[typeInfo] = control
+        self.layoutSpecs.addWidget(control)
+
+    def _setAllControlsVisibility(self, visible):
+        for k,v in self._controls.items():
+            v.setVisible(visible)
+    
+    def _setControlVisibility(self, typeInfo, visible):
+        self._controls[typeInfo].setVisible(visible)
+
+    def _setSelectionForType(self, typeInfo, current):
+        self._controls[typeInfo].setSelection(current)
+
+    def _setModelForControls(self,proxyModel):
+        for k,v in self._controls.items():
+            v.setModel(proxyModel)
+
     def __init__(self, parent = None):
         super(propBase, self).__init__(parent)
         self.setupUi(self)
-
         self._proxyModel = None
+        self._controls = dict()
+
+        #self.__addControl("NODE", NodeEditor(self))
+        self.__addControl("LABEL", LabelEditor(self))
+        self.__addControl("COMBO", ComboEditor(self))
+        self.__addControl("CHECK", CheckEditor(self))
+        self.__addControl("NUMERIC", NumericEditor(self))
+        self.__addControl("IN_CHANNEL", InChannelEditor(self))
+        self.__addControl("OUT_CHANNEL", OutChannelEditor(self))
+        self.__addControl("ACQUISITION_SETTINGS", AcquisitionSettingsEditor(self))
         
         self._nodeEditor = NodeEditor(self)
-        self._labelEditor = LabelEditor(self)
-        self._comboEditor = ComboEditor(self)
-        self._checkEditor = CheckEditor(self)
-        self._numericEditor = NumericEditor(self)
-        self._inChannelEditor = InChannelEditor(self)
-        self._acquisitionEditor = AcquisitionSettingsEditor(self)
+        self.layoutNode.addWidget(self._nodeEditor)
+
+        self._setAllControlsVisibility(False)
+
+        #self._labelEditor = LabelEditor(self)
+        #self._comboEditor = ComboEditor(self)
+        #self._checkEditor = CheckEditor(self)
+        #self._numericEditor = NumericEditor(self)
+        #self._inChannelEditor = InChannelEditor(self)
+        #self._outChannelEditot = OutChannelEditor(self)
+        #self._acquisitionEditor = AcquisitionSettingsEditor(self)
 
         #self._acquisitionEditor = QtGui.QListView(self)
         #self._delegate = AcquisitionViewDelegate()
@@ -258,22 +290,24 @@ class PropertiesEditor(propBase, propForm):
 
         
         
-        self.layoutNode.addWidget(self._nodeEditor)
-        self.layoutSpecs.addWidget(self._labelEditor)
-        self.layoutSpecs.addWidget(self._comboEditor)
-        self.layoutSpecs.addWidget(self._checkEditor)
-        self.layoutSpecs.addWidget(self._numericEditor)
-        self.layoutSpecs.addWidget(self._inChannelEditor)
-        self.layoutSpecs.addWidget(self._acquisitionEditor)
+        
+        #self.layoutSpecs.addWidget(self._labelEditor)
+        #self.layoutSpecs.addWidget(self._comboEditor)
+        #self.layoutSpecs.addWidget(self._checkEditor)
+        #self.layoutSpecs.addWidget(self._numericEditor)
+        #self.layoutSpecs.addWidget(self._inChannelEditor)
+        #self.layoutSpecs.addWidget(self._acquisitionEditor)
+        #self.layoutSpecs.addWidget(self._outChannelEditot)
         #self.layoutSpecs.addWidget(self._acquisitionEditor)
         
 
-        self._labelEditor.setVisible(False)
-        self._comboEditor.setVisible(False)
-        self._checkEditor.setVisible(False)
-        self._numericEditor.setVisible(False)
-        self._inChannelEditor.setVisible(False)
-        self._acquisitionEditor.setVisible(False)
+        #self._labelEditor.setVisible(False)
+        #self._comboEditor.setVisible(False)
+        #self._checkEditor.setVisible(False)
+        #self._numericEditor.setVisible(False)
+        #self._inChannelEditor.setVisible(False)
+        #self._acquisitionEditor.setVisible(False)
+        #self._outChannelEditot.setVisible(False)
         #self._acquisitionEditor.setVisible(False)
                
     """INPUTS: QModelIndex, QModelIndex"""
@@ -285,78 +319,111 @@ class PropertiesEditor(propBase, propForm):
         
         if node is not None:
             typeInfo = node.typeInfo()
-            
-        if typeInfo == "LABEL":
-            self._labelEditor.setVisible(True)
-            self._comboEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(False)
-            self._labelEditor.setSelection(current)
-        elif typeInfo == "COMBO":
-            self._comboEditor.setVisible(True)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(False)
-            self._comboEditor.setSelection(current)
-        elif typeInfo == "CHECK":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(True)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(False)
-            self._checkEditor.setSelection(current)
-        elif typeInfo == "NUMERIC":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(True)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(False)
-            self._numericEditor.setSelection(current)
-        elif typeInfo == "IN_CHANNEL":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(True)
-            self._acquisitionEditor.setVisible(False)
-            self._inChannelEditor.setSelection(current)
-        elif typeInfo == "ACQUISITION_SETTINGS":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(True)
-            self._acquisitionEditor.setSelection(current)
-            pass
-            
-        else:
-            self._labelEditor.setVisible(False)
-            self._comboEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._acquisitionEditor.setVisible(False)
-            
+        
+        self._setAllControlsVisibility(False)
+        if typeInfo is not "NODE":
+            self._setControlVisibility(typeInfo, True)
+            self._setSelectionForType(typeInfo, current)
+
         self._nodeEditor.setSelection(current)
+        
+            
+        #if typeInfo == "LABEL":
+        #    self._labelEditor.setVisible(True)
+        #    self._comboEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._labelEditor.setSelection(current)
+        #elif typeInfo == "COMBO":
+        #    self._comboEditor.setVisible(True)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._comboEditor.setSelection(current)
+        #elif typeInfo == "CHECK":
+        #    self._comboEditor.setVisible(False)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(True)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._checkEditor.setSelection(current)
+        #elif typeInfo == "NUMERIC":
+        #    self._comboEditor.setVisible(False)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(True)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._numericEditor.setSelection(current)
+        #elif typeInfo == "IN_CHANNEL":
+        #    self._comboEditor.setVisible(False)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(True)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._inChannelEditor.setSelection(current)
+        #elif typeInfo == "OUT_CHANNEL":
+        #    self._comboEditor.setVisible(False)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(True)
+        #    self._outChannelEditot.setSelection(current)
+            
+
+
+        #elif typeInfo == "ACQUISITION_SETTINGS":
+        #    self._comboEditor.setVisible(False)
+        #    self._labelEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(True)
+        #    self._outChannelEditot.setVisible(False)
+        #    self._acquisitionEditor.setSelection(current)
+        #    pass
+            
+        #else:
+        #    self._labelEditor.setVisible(False)
+        #    self._comboEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+
+            
+        
     
     def setModel(self, proxyModel):
         
         self._proxyModel = proxyModel
         
         self._nodeEditor.setModel(proxyModel)
-        self._labelEditor.setModel(proxyModel)
-        self._comboEditor.setModel(proxyModel)
-        self._checkEditor.setModel(proxyModel)
-        self._numericEditor.setModel(proxyModel)
-        self._inChannelEditor.setModel(proxyModel)
-        self._acquisitionEditor.setModel(proxyModel)
+
+        self._setModelForControls(proxyModel)
+
+
+        #self._labelEditor.setModel(proxyModel)
+        #self._comboEditor.setModel(proxyModel)
+        #self._checkEditor.setModel(proxyModel)
+        #self._numericEditor.setModel(proxyModel)
+        #self._inChannelEditor.setModel(proxyModel)
+        #self._outChannelEditot.setModel(proxyModel)
+        #self._acquisitionEditor.setModel(proxyModel)
         #self._acquisitionEditor.setModel(proxyModel)
         
 
@@ -493,6 +560,32 @@ class ComboEditor(comboBase, comboForm):
 #        opts.initFrom(combobox)
 #        QtGui.QApplication.style().drawControl(QtGui.QStyle.CC_ComboBox,opts,painter)
 
+
+outChannelBase, outChannelForm = uic.loadUiType("Views/OutChannelWidget.ui")
+class OutChannelEditor(outChannelBase, outChannelForm):
+     def __init__(self,parent = None):
+         super(outChannelBase, self).__init__(parent)
+         self.setupUi(self)
+         self._dataMapper = QtGui.QDataWidgetMapper(self)
+         
+
+     def setModel(self,proxyModel):
+         self._proxyModel = proxyModel
+         self._dataMapper.setModel(proxyModel.sourceModel())
+         self._dataMapper.addMapping(self.ui_enabled,2)
+         self._dataMapper.addMapping(self.ui_range,3)
+         self._dataMapper.addMapping(self.ui_polarity,4)
+         self._dataMapper.addMapping(self.ui_function,5)
+         self._dataMapper.addMapping(self.ui_out_pin,6)
+
+     def setSelection(self, current):
+         parent = current.parent()
+         self._dataMapper.setRootIndex(parent)
+         self._dataMapper.setCurrentModelIndex(current)
+       
+
+        
+   
 
 #inChannelBase, inChannelForm = uic.loadUiType("Views/InChannelWidget - Copy.ui")
 inChannelBase, inChannelForm = uic.loadUiType("Views/InChannelWidget.ui")

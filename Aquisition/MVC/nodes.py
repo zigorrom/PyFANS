@@ -439,7 +439,6 @@ class OutChannelNode(Node):
         def fget(self): return self._output_pin
         def fset(self,value): self._output_pin = value
         return locals()
-
     selected_output = notifiable_property("selected_output",**selected_output())
 
 
