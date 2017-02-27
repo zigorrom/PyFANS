@@ -99,7 +99,7 @@ class fans_smu:
 
     def init_smu_mode(self):
         for ch in [FANS_AI_FUNCTIONS.DrainSourceVoltage, FANS_AI_FUNCTIONS.GateVoltage, FANS_AI_FUNCTIONS.MainVoltage]:
-            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.AC,self.state_dictionary[ch][FEEDBACK_CH])
+            self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,self.state_dictionary[ch][FEEDBACK_CH])
         #self.fans_controller.set_fans_ai_channel_mode(AI_MODES.DC,channel)
         #self.fans_controller.analog_read_averaging(1000)
 
@@ -318,21 +318,21 @@ if __name__ == "__main__":
       #smu.set_drain_voltage(0)
       #smu.set_gate_voltage(0)
       #smu.set_drain_voltage(0.3)
-      smu.set_drain_voltage(-0.1)
+      #smu.set_drain_voltage(-0.1)
       
-      for vds in np.arange(5,-5,-0.2):
-          #print("setting drain-source")
-          smu.set_drain_voltage(vds)
-          print("setting gate")
-          smu.set_gate_voltage(vds)
-          res = smu.read_all_parameters()
-          #print(smu.read_all_parameters())
-          print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
-          time.sleep(2)
+      #for vds in np.arange(5,-5,-0.2):
+      #    #print("setting drain-source")
+      #    smu.set_drain_voltage(vds)
+      #    print("setting gate")
+      #    smu.set_gate_voltage(vds)
+        
+      #    print("Vgs = {0}; Id = {1}".format(res["Vgs"],res["Ids"]))
+      #    time.sleep(2)
 
-      #smu.set_drain_voltage(-0.5)
-      #smu.set_gate_voltage(-0.5)
-       
+      #smu.set_drain_voltage(-0.2)
+      #smu.set_gate_voltage(-4)
+      #res = smu.read_all_parameters()
+      print(smu.read_all_parameters())
 
     except Exception as e:
         raise
