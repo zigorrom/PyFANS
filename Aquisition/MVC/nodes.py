@@ -126,54 +126,48 @@ class AcquisitionSettingsNode(Node):
         self._pga_amplifier = 1
         self._filter_gain = 1
         self._filter_cutoff = 1
-##        self._sample_rate = NumericNode("sample_rate", parent = self)
-##        self._points_per_shot = NumericNode("points_per_shot", parent = self)
-##        self._homemade_amplifier = CheckNode("homemade_amplifier", parent = self)
-##        self._pga_gain = ComboNode("pga_gain",parent = self)
-##        self._filter_gain = ComboNode("filter_gain", parent = self)
-##        self._filter_cutoff = ComboNode("filter_cutoff",parent = self)
 
-    def sample_rate_prop():
+    def sample_rate():
         def fget(self): return self._sample_rate
         def fset(self,value): self._sample_rate = value
         return locals()
 
-    sample_rate = notifiable_property("sample_rate",**sample_rate_prop())
+    sample_rate = notifiable_property("sample_rate",**sample_rate())
 
-    def homemade_amplifier_prop():
+    def homemade_amplifier():
         def fget(self): return self._homemade_amplifier
         def fset(self,value): self._homemade_amplifier = value
         return locals()
 
-    homemade_amplifier = notifiable_property("homemade_amplifier",**homemade_amplifier_prop())
+    homemade_amplifier = notifiable_property("homemade_amplifier",**homemade_amplifier())
 
-    def amplifier_prop():
+    def amplifier():
         def fget(self): return self._amplifier
         def fset(self,value): self._amplifier = value
         return locals()
 
-    amplifier = notifiable_property("amplifier", **amplifier_prop())
+    amplifier = notifiable_property("amplifier", **amplifier())
 
-    def pga_amplifier_prop():
+    def pga_amplifier():
         def fget(self): return self._pga_amplifier
         def fset(self,value): self._pga_amplifier = value
         return locals()
 
-    pga_amplifier = notifiable_property("pga_amplifier",**pga_amplifier_prop())
+    pga_amplifier = notifiable_property("pga_amplifier",**pga_amplifier())
 
-    def filter_gain_prop():
+    def filter_gain():
         def fget(self): return self._filter_gain
         def fset(self,value): self._filter_gain = value
         return locals()
 
-    filter_gain = notifiable_property("filter_gain", **filter_gain_prop())
+    filter_gain = notifiable_property("filter_gain", **filter_gain())
 
-    def filter_cutoff_prop():
+    def filter_cutoff():
         def fget(self): return self._filter_cutoff
         def fset(self,value): self._filter_cutoff = value
         return locals()
 
-    filter_cutoff = notifiable_property("filter_cutoff",**filter_cutoff_prop())
+    filter_cutoff = notifiable_property("filter_cutoff",**filter_cutoff())
 
     def typeInfo(self):
         return "ACQUISITION_SETTINGS"

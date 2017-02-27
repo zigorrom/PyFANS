@@ -31,7 +31,14 @@ def main():
     fill_value = 0
 
     for i in range(n):
+        t = np.linspace(0, 1, nsamples, endpoint=False)
         arr = np.random.random(nsamples)
+        #arr = arr + 0.01*signal.square(2 * np.pi * 100 * t)
+        #sig = np.sin(2 * np.pi * t)
+        #arr = arr + signal.square(2 * np.pi * 30 * t, duty=(sig + 1)/2)
+        #arr = signal.square(2 * np.pi * 1 * t)
+        #arr = np.sin(2 * np.pi * t)
+        arr = arr + np.sin(np.pi*f1_max*t)
         aver_counter += 1 
         new_fill_value = fill_value+nsamples
         total_array[fill_value:new_fill_value] = arr

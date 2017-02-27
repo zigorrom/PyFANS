@@ -10,6 +10,113 @@ from PyQt4 import QtCore, QtGui
 from settings import WndTutorial
 
 
+
+#enabled
+#range
+#polarity
+#function
+#mode: ac/dc
+#cs_hold
+#filter_cutoff
+#filter_gain
+#pga_gain
+
+class FANS_AI_multichannel(FANS_AI_channel):
+    def __init__(self, name, parent_device):
+        super(FANS_AI_channel,self).__init__(name, parent_device)
+    
+
+
+class FANS_AI_channel:
+    def __init__(self, name, parent_device):
+        self._parent_device = parent_device
+
+    def __add__(self,other):
+        new_name = None # sum of all names
+        return FANS_AI_multichannel(new_name, self._parent_device) 
+
+    @property
+    def ai_name(self):
+        return self._name
+    
+    @ai_name.setter
+    def ai_name(self,value):
+        self._name = value
+
+    @property
+    def ai_enabled(self):
+        return self._enabled
+    
+    @ai_enabled.setter
+    def ai_enabled(self,value):
+        pass
+    
+    @property
+    def ai_range(self):
+        return self._range
+    
+    @ai_range.setter
+    def ai_range(self,value):
+        pass
+
+    @property
+    def ai_polarity(self):
+        return self._polarity
+    
+    @ai_polarity.setter
+    def ai_polarity(self,value):
+        pass
+    
+    @property
+    def ai_function(self):
+        return self._function
+    
+    @ai_function.setter
+    def ai_function(self,value):
+        pass
+    
+    @property
+    def ai_mode(self):
+        return self._mode
+    
+    @ai_mode.setter
+    def ai_mode(self,value):
+        pass
+    
+    @property
+    def ai_cs_hold(self):
+        return self._cs_hold
+    
+    @ai_cs_hold.setter
+    def ai_cs_hold(self,value):
+        pass
+
+    @property
+    def ai_filter_cutoff(self):
+        return self._filter_cutoff
+
+    @ai_filter_cutoff.setter
+    def ai_filter_cutoff(self,value):
+        pass
+
+    @property
+    def ai_filter_gain(self):
+        return self._filter_gain
+
+    @ai_filter_gain.setter
+    def ai_filter_gain(self,value):
+        pass
+    
+    @property
+    def ai_pga_gain(self):
+        return self._pga_gain
+
+    @ai_pga_gain.setter
+    def ai_pga_gain(self,value):
+        pass
+
+
+
 class FANS_controller:
     def __init__(self, visa_resource="ADC", data_storage=None, configuration = None):
         self.visa_resource = visa_resource
