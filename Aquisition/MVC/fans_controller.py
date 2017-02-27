@@ -21,15 +21,76 @@ from settings import WndTutorial
 #filter_gain
 #pga_gain
 
-class FANS_AI_multichannel(FANS_AI_channel):
-    def __init__(self, name, parent_device):
-        super(FANS_AI_channel,self).__init__(name, parent_device)
-    
 
+class FANS_AO_channel:
+    def __init__(self,name,parent_device):
+        self._parent_device = AgilentU2542A("")
+        self._name = name
+        self._range = None
+        self._polarity = None
+        self._function = None
+        self._output_pin = None
+
+    @property
+    def ao_name(self):
+        return self._name
+
+    #@name.setter
+    #def name(self,value):
+    #    self.name = value
+
+    @property
+    def ao_range(self):
+        return self._range
+
+    @ao_channel.setter
+    def ao_range(self,value):
+        self._range = value
+
+    @property
+    def ao_polarity(self):
+        return self._polarity
+
+    @ao_polarity.setter
+    def ao_polarity(self,value):
+        self._polarity = value
+
+    @property
+    def ao_function(self):
+        return self._function
+
+    @ao_function.setter
+    def ao_function(self, value):
+        self._function = value
+
+    @property
+    def ao_output_pin(self):
+        return self._output_pin
+
+    @ao_output_pin.setter
+    def ao_output_pin(self,value):
+        self._output_pin = value
+
+
+
+
+
+class FANS_AI_multichannel(FANS_AI_channel):
+    def __init__(self, names, parent_device):
+        super(FANS_AI_channel,self).__init__(names, parent_device)
 
 class FANS_AI_channel:
     def __init__(self, name, parent_device):
-        self._parent_device = parent_device
+        self._parent_device = AgilentU2542A("") #parent_device
+        self._name = name
+        self._range = None
+        self._polarity = None
+        self._function = None
+        self._mode = None
+        self._cs_hold = None
+        self._filter_cutoff = None
+        self.ai_filter_gain = None
+        self._pga_gain = None
 
     def __add__(self,other):
         new_name = None # sum of all names
@@ -39,9 +100,9 @@ class FANS_AI_channel:
     def ai_name(self):
         return self._name
     
-    @ai_name.setter
-    def ai_name(self,value):
-        self._name = value
+    #@ai_name.setter
+    #def ai_name(self,value):
+    #    self._name = value
 
     @property
     def ai_enabled(self):
@@ -49,7 +110,9 @@ class FANS_AI_channel:
     
     @ai_enabled.setter
     def ai_enabled(self,value):
-        pass
+        self._enabled = value
+        self._parent_device.daq_set_enable_ai_channel(self.ai_enabled,self.ai_name)
+
     
     @property
     def ai_range(self):
@@ -57,7 +120,8 @@ class FANS_AI_channel:
     
     @ai_range.setter
     def ai_range(self,value):
-        pass
+        self._range = value
+        self._parent_device.daq_set_channel_range(self.ai_range,self.ai_name)
 
     @property
     def ai_polarity(self):
@@ -65,7 +129,8 @@ class FANS_AI_channel:
     
     @ai_polarity.setter
     def ai_polarity(self,value):
-        pass
+        self._polarity = value
+        self._parent_device.daq_set_ai_channel_polarity(self.ai_polarity,self.ai_name)
     
     @property
     def ai_function(self):
@@ -73,7 +138,7 @@ class FANS_AI_channel:
     
     @ai_function.setter
     def ai_function(self,value):
-        pass
+        self._function = value
     
     @property
     def ai_mode(self):
@@ -81,7 +146,7 @@ class FANS_AI_channel:
     
     @ai_mode.setter
     def ai_mode(self,value):
-        pass
+        self._mode = value
     
     @property
     def ai_cs_hold(self):
@@ -89,7 +154,7 @@ class FANS_AI_channel:
     
     @ai_cs_hold.setter
     def ai_cs_hold(self,value):
-        pass
+        self._cs_hold = value
 
     @property
     def ai_filter_cutoff(self):
@@ -97,7 +162,7 @@ class FANS_AI_channel:
 
     @ai_filter_cutoff.setter
     def ai_filter_cutoff(self,value):
-        pass
+        self._filter_cutoff = value
 
     @property
     def ai_filter_gain(self):
@@ -105,7 +170,7 @@ class FANS_AI_channel:
 
     @ai_filter_gain.setter
     def ai_filter_gain(self,value):
-        pass
+        self._filter_gain = value
     
     @property
     def ai_pga_gain(self):
@@ -113,7 +178,7 @@ class FANS_AI_channel:
 
     @ai_pga_gain.setter
     def ai_pga_gain(self,value):
-        pass
+        self._pga_gain = value
 
 
 

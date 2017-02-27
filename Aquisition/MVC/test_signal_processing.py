@@ -33,7 +33,7 @@ def main():
     for i in range(n):
         t = np.linspace(0, 1, nsamples, endpoint=False)
         arr = np.random.random(nsamples)
-        #arr = arr + 0.01*signal.square(2 * np.pi * 100 * t)
+        arr = arr + 0.1*signal.square(2 * np.pi * 100 * t)
         #sig = np.sin(2 * np.pi * t)
         #arr = arr + signal.square(2 * np.pi * 30 * t, duty=(sig + 1)/2)
         #arr = signal.square(2 * np.pi * 1 * t)
@@ -92,6 +92,7 @@ if __name__ == "__main__":
             result = np.average((result,psd),axis=0,weights=(i, 1))        
 
     plt.loglog(freq,result,'r')
+    #plt.semilogy(freq,result,'r')
     plt.show()  
 
 
