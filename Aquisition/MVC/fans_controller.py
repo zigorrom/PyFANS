@@ -10,6 +10,207 @@ from PyQt4 import QtCore, QtGui
 from settings import WndTutorial
 
 
+
+#enabled
+#range
+#polarity
+#function
+#mode: ac/dc
+#cs_hold
+#filter_cutoff
+#filter_gain
+#pga_gain
+
+
+class FANS_AO_channel:
+    def __init__(self,name,parent_device):
+        self._parent_device = AgilentU2542A("")
+        self._name = name
+        self._range = None
+        self._polarity = None
+        self._function = None
+        self._output_pin = None
+
+    @property
+    def ao_name(self):
+        return self._name
+
+    #@name.setter
+    #def name(self,value):
+    #    self.name = value
+
+    @property
+    def ao_range(self):
+        return self._range
+
+    @ao_channel.setter
+    def ao_range(self,value):
+        self._range = value
+        self._parent_device.daq_set_channel_range(self.ao_range,self.ao_name)
+
+    @property
+    def ao_polarity(self):
+        return self._polarity
+
+    @ao_polarity.setter
+    def ao_polarity(self,value):
+        self._polarity = value
+        self._parent_device.daq_set_ao_channel_polarity(self.ao_polarity,self.ao_name)
+
+    @property
+    def ao_function(self):
+        return self._function
+
+    @ao_function.setter
+    def ao_function(self, value):
+        self._function = value
+
+    @property
+    def ao_output_pin(self):
+        return self._output_pin
+
+    @ao_output_pin.setter
+    def ao_output_pin(self,value):
+        self._output_pin = value
+
+
+
+
+
+
+class FANS_AI_multichannel(FANS_AI_channel):
+    def __init__(self, names, parent_device):
+        super(FANS_AI_channel,self).__init__(names, parent_device)
+
+class FANS_AI_channel:
+    def __init__(self, name, parent_device):
+        self._parent_device = AgilentU2542A("") #parent_device
+        self._name = name
+        self._range = None
+        self._polarity = None
+        self._function = None
+        self._mode = None
+        self._cs_hold = None
+        self._filter_cutoff = None
+        self.ai_filter_gain = None
+        self._pga_gain = None
+
+    def __add__(self,other):
+        new_name = None # sum of all names
+        return FANS_AI_multichannel(new_name, self._parent_device) 
+
+    def _set_fans_ai_channel_params(self):
+##        print(ai_channel)
+        ## set channel selected
+        ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
+        self.device.dig_write_channel(self.ai_name, DIGITAL_CHANNELS.DIG_502)
+        ## set DC or AC position of relays
+        ##print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
+        self.device.dig_write_bit_channel(self.ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
+        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+        
+            
+        ## set filter frequency and gain parameters
+        filter_val = get_filter_value(self.ai_filter_gain,ai_filter_cutoff)
+        self.device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
+
+        ## set pga params
+        pga_val = get_pga_value(self.ai_pga_gain,self.ai_cs_hold)
+        self.device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
+        self._pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+    
+
+    @property
+    def ai_name(self):
+        return self._name
+    
+    #@ai_name.setter
+    #def ai_name(self,value):
+    #    self._name = value
+
+    @property
+    def ai_enabled(self):
+        return self._enabled
+    
+    @ai_enabled.setter
+    def ai_enabled(self,value):
+        self._enabled = value
+        self._parent_device.daq_set_enable_ai_channel(self.ai_enabled,self.ai_name)
+
+    
+    @property
+    def ai_range(self):
+        return self._range
+    
+    @ai_range.setter
+    def ai_range(self,value):
+        self._range = value
+        self._parent_device.daq_set_channel_range(self.ai_range,self.ai_name)
+
+    @property
+    def ai_polarity(self):
+        return self._polarity
+    
+    @ai_polarity.setter
+    def ai_polarity(self,value):
+        self._polarity = value
+        self._parent_device.daq_set_ai_channel_polarity(self.ai_polarity,self.ai_name)
+    
+    @property
+    def ai_function(self):
+        return self._function
+    
+    @ai_function.setter
+    def ai_function(self,value):
+        self._function = value
+    
+    @property
+    def ai_mode(self):
+        return self._mode
+    
+    @ai_mode.setter
+    def ai_mode(self,value):
+        self._mode = value
+        self._set_fans_ai_channel_params()
+    
+    @property
+    def ai_cs_hold(self):
+        return self._cs_hold
+    
+    @ai_cs_hold.setter
+    def ai_cs_hold(self,value):
+        self._cs_hold = value
+        self._set_fans_ai_channel_params()
+
+    @property
+    def ai_filter_cutoff(self):
+        return self._filter_cutoff
+
+    @ai_filter_cutoff.setter
+    def ai_filter_cutoff(self,value):
+        self._filter_cutoff = value
+        self._set_fans_ai_channel_params()
+
+    @property
+    def ai_filter_gain(self):
+        return self._filter_gain
+
+    @ai_filter_gain.setter
+    def ai_filter_gain(self,value):
+        self._filter_gain = value
+        self._set_fans_ai_channel_params()
+    
+    @property
+    def ai_pga_gain(self):
+        return self._pga_gain
+
+    @ai_pga_gain.setter
+    def ai_pga_gain(self,value):
+        self._pga_gain = value
+        self._set_fans_ai_channel_params()
+
+
+
 class FANS_controller:
     def __init__(self, visa_resource="ADC", data_storage=None, configuration = None):
         self.visa_resource = visa_resource

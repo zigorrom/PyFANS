@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui, QtXml,uic
 from xml_highlighter import XMLHighlighter
 from nodes import *
+from fans_constants import *
 import sys
 from node_configuration import Configuration 
 from xml_serializer import XmlNodeSerializer
@@ -237,39 +238,45 @@ propBase, propForm = uic.loadUiType("Views/PropertiesLayout.ui")
 """PROPERTIESEDITOR"""
 class PropertiesEditor(propBase, propForm):
     
+    def __addControl(self, typeInfo, control):
+        self._controls[typeInfo] = control
+        self.layoutSpecs.addWidget(control)
+
+    def _setAllControlsVisibility(self, visible):
+        for k,v in self._controls.items():
+            v.setVisible(visible)
+    
+    def _setControlVisibility(self, typeInfo, visible):
+        self._controls[typeInfo].setVisible(visible)
+
+    def _setSelectionForType(self, typeInfo, current):
+        self._controls[typeInfo].setSelection(current)
+
+    def _setModelForControls(self,proxyModel):
+        for k,v in self._controls.items():
+            v.setModel(proxyModel)
+
     def __init__(self, parent = None):
         super(propBase, self).__init__(parent)
         self.setupUi(self)
-
         self._proxyModel = None
+        self._controls = dict()
+
+        #self.__addControl("NODE", NodeEditor(self))
+        self.__addControl("LABEL", LabelEditor(self))
+        self.__addControl("COMBO", ComboEditor(self))
+        self.__addControl("CHECK", CheckEditor(self))
+        self.__addControl("NUMERIC", NumericEditor(self))
+        self.__addControl("IN_CHANNEL", InChannelEditor(self))
+        self.__addControl("OUT_CHANNEL", OutChannelEditor(self))
+        self.__addControl("ACQUISITION_SETTINGS", AcquisitionSettingsEditor(self))
         
         self._nodeEditor = NodeEditor(self)
-        self._labelEditor = LabelEditor(self)
-        self._comboEditor = ComboEditor(self)
-        self._checkEditor = CheckEditor(self)
-        self._numericEditor = NumericEditor(self)
-        self._inChannelEditor = InChannelEditor(self)
-        #self._acquisitionEditor = QtGui.QListView(self)
-        #self._delegate = AcquisitionViewDelegate()
-        #self._acquisitionEditor.setItemDelegate(self._delegate)
-
-        
-        
         self.layoutNode.addWidget(self._nodeEditor)
-        self.layoutSpecs.addWidget(self._labelEditor)
-        self.layoutSpecs.addWidget(self._comboEditor)
-        self.layoutSpecs.addWidget(self._checkEditor)
-        self.layoutSpecs.addWidget(self._numericEditor)
-        self.layoutSpecs.addWidget(self._inChannelEditor)
-        #self.layoutSpecs.addWidget(self._acquisitionEditor)
-        
 
-        self._labelEditor.setVisible(False)
-        self._comboEditor.setVisible(False)
-        self._checkEditor.setVisible(False)
-        self._numericEditor.setVisible(False)
-        self._inChannelEditor.setVisible(False)
-        #self._acquisitionEditor.setVisible(False)
+        self._setAllControlsVisibility(False)
+
+        
                
     """INPUTS: QModelIndex, QModelIndex"""
     def setSelection(self, current, old):
@@ -280,67 +287,36 @@ class PropertiesEditor(propBase, propForm):
         
         if node is not None:
             typeInfo = node.typeInfo()
-            
-        if typeInfo == "LABEL":
-            self._labelEditor.setVisible(True)
-            self._comboEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._labelEditor.setSelection(current)
-        elif typeInfo == "COMBO":
-            self._comboEditor.setVisible(True)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._comboEditor.setSelection(current)
-        elif typeInfo == "CHECK":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(True)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            self._checkEditor.setSelection(current)
-        elif typeInfo == "NUMERIC":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(True)
-            self._inChannelEditor.setVisible(False)
-            self._numericEditor.setSelection(current)
-        elif typeInfo == "IN_CHANNEL":
-            self._comboEditor.setVisible(False)
-            self._labelEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(True)
-            self._inChannelEditor.setSelection(current)
-        elif typeInfo == "ACQUISITION_SETTINGS":
-            #self._acquisitionEditor.setVisible(True)
-            pass
-            
-        else:
-            self._labelEditor.setVisible(False)
-            self._comboEditor.setVisible(False)
-            self._checkEditor.setVisible(False)
-            self._numericEditor.setVisible(False)
-            self._inChannelEditor.setVisible(False)
-            
+        
+        self._setAllControlsVisibility(False)
+        if typeInfo is not "NODE":
+            self._setControlVisibility(typeInfo, True)
+            self._setSelectionForType(typeInfo, current)
+
         self._nodeEditor.setSelection(current)
+        
+           
+        #else:
+        #    self._labelEditor.setVisible(False)
+        #    self._comboEditor.setVisible(False)
+        #    self._checkEditor.setVisible(False)
+        #    self._numericEditor.setVisible(False)
+        #    self._inChannelEditor.setVisible(False)
+        #    self._acquisitionEditor.setVisible(False)
+        #    self._outChannelEditot.setVisible(False)
+
+            
+        
     
     def setModel(self, proxyModel):
         
         self._proxyModel = proxyModel
         
         self._nodeEditor.setModel(proxyModel)
-        self._labelEditor.setModel(proxyModel)
-        self._comboEditor.setModel(proxyModel)
-        self._checkEditor.setModel(proxyModel)
-        self._numericEditor.setModel(proxyModel)
-        self._inChannelEditor.setModel(proxyModel)
-        #self._acquisitionEditor.setModel(proxyModel)
-        
+
+        self._setModelForControls(proxyModel)
+
+
 
 
         
@@ -455,7 +431,6 @@ class ComboEditor(comboBase, comboForm):
     def setSelection(self,current):
         node = self._proxyModel.sourceModel().getNode(current)
         self.ui_combo.clear()
-##        self.ui_combo.addItems(node.case_list())
         self.ui_combo.addItems(node.case_list)
         parent = current.parent()
         
@@ -463,106 +438,85 @@ class ComboEditor(comboBase, comboForm):
         self._dataMapper.setCurrentModelIndex(current)
         
 
-#class ComboBoxItemDelegate(QtGui.QStyledItemDelegate):
-#    def paint(self, painter, option, index):
-#        item = index.data(QtCore.Qt.DisplayRole)
-        
-        
-#        combobox = ComboEditor()
-#        print(index)
-#        print("from combobox delegate")
-#        opts = QtGui.QStyleOptionComboBox()
-#        opts.initFrom(combobox)
-#        QtGui.QApplication.style().drawControl(QtGui.QStyle.CC_ComboBox,opts,painter)
 
+outChannelBase, outChannelForm = uic.loadUiType("Views/OutChannelWidget.ui")
+class OutChannelEditor(outChannelBase, outChannelForm):
+     def __init__(self,parent = None):
+         super(outChannelBase, self).__init__(parent)
+         self.setupUi(self)
+         self._dataMapper = QtGui.QDataWidgetMapper(self)
+         
 
-#inChannelBase, inChannelForm = uic.loadUiType("Views/InChannelWidget - Copy.ui")
+     def setModel(self,proxyModel):
+         self._proxyModel = proxyModel
+         self._dataMapper.setModel(proxyModel.sourceModel())
+         self._dataMapper.addMapping(self.ui_enabled,2)
+         self._dataMapper.addMapping(self.ui_range,3)
+         self._dataMapper.addMapping(self.ui_polarity,4)
+         self._dataMapper.addMapping(self.ui_function,5)
+         self._dataMapper.addMapping(self.ui_out_pin,6)
+
+     def setSelection(self, current):
+         parent = current.parent()
+         self._dataMapper.setRootIndex(parent)
+         self._dataMapper.setCurrentModelIndex(current)
+       
+
 inChannelBase, inChannelForm = uic.loadUiType("Views/InChannelWidget.ui")
 class InChannelEditor(inChannelBase, inChannelForm):
     def __init__(self,parent = None):
         super(inChannelBase,self).__init__(parent)
         self.setupUi(self)
-        
-        #self._itemDelegate = ComboBoxItemDelegate()
         self._dataMapper = QtGui.QDataWidgetMapper(self)
         
 
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
-        #self.ui_tableView.setModel(proxyModel.sourceModel())
         self._dataMapper.setModel(proxyModel.sourceModel())
-         #self.ui_tableView.setItemDelegateForColumn(2,self._itemDelegate)
-##        self.ui_tableView.setItemDelegate
-        
-##        self._dataMapper.addMapping(self.ui_tableView,2)
-##
         self._dataMapper.addMapping(self.ui_enabled,2)
         self._dataMapper.addMapping(self.ui_range,3)
         self._dataMapper.addMapping(self.ui_polarity,4)
         self._dataMapper.addMapping(self.ui_function,5)
-##
-##        self._dataMapper.addMapping(self.ui_en_label,6,"text")
-##        self._dataMapper.addMapping(self.ui_rang_label,7,"text")
-##        self._dataMapper.addMapping(self.ui_pol_label,8,"text")
-##        self._dataMapper.addMapping(self.ui_func_label,9,"text")
         
     
     def setSelection(self,current):
         parent = current.parent()
-        #self.ui_tableView.setRootIndex(current)#parent)
-##        self.ui_tableView.setCurrentModelIndex(current)
         self._dataMapper.setRootIndex(parent)
         self._dataMapper.setCurrentModelIndex(current)
     
-#acquisitionSettingsBase, acquisitionSettingsForm = uic.loadUiType("Views/AcquisitionSettingsTemplate.ui")
-#class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm):
-#    def __init__(self, parent = None):
-#        super(acquisitionSettingsBase,self).__init__(parent)
-#        self.setupUi(self)
-#        self._dataMapper = QtGui.QDataWidgetMapper()
+acquisitionSettingsBase, acquisitionSettingsForm = uic.loadUiType("Views/AcquisitionSettings.ui")
+class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm):
+    def __init__(self, parent = None):
+        super(acquisitionSettingsBase,self).__init__(parent)
+        self.setupUi(self)
+        self.amplifier.addItems(["1","2","5"])
+        self.pgaGain.addItems(PGA_GAINS.names)
+        self.filterGain.addItems(FILTER_GAINS.names)
+        self.filterCutoff.addItems(FILTER_CUTOFF_FREQUENCIES.names)
+
+
+
+        self._dataMapper = QtGui.QDataWidgetMapper()
+
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
         
-#        self._nodeEditor = NodeEditor(self)
-#        self._labelEditor = LabelEditor(self)
-#        self._comboEditor = ComboEditor(self)
-#        self._checkEditor = CheckEditor(self)
-#        self._numericEditor = NumericEditor(self)
-
-#        self.layoutNode.addWidget(self._nodeEditor)
-#        self.layoutNode.addWidget(self._labelEditor)
-#        self.layoutNode.addWidget(self._comboEditor)
-#        self.layoutNode.addWidget(self._checkEditor)
-#        self.layoutNode.addWidget(self._numericEditor)
-
-            
+        self._dataMapper.addMapping(self.sampleRate,2)
+        self._dataMapper.addMapping(self.homemadeAmplifier,3)
+        self._dataMapper.addMapping(self.amplifier,4)
+        self._dataMapper.addMapping(self.pgaGain,5)
+        self._dataMapper.addMapping(self.filterGain,6)
+        self._dataMapper.addMapping(self.filterCutoff,7)
 
 
 
-    #def setModel(self, proxyModel):
-    #    self._proxyModel = proxyModel
-    #    self._dataMapper.setModel(proxyModel.sourceModel())
-        
-    #    self._dataMapper.addMapping(self.ui_name,0)
-    #    self._dataMapper.addMapping(self.ui_combo,2)
+    def setSelection(self,current):
+        parent = current.parent()
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
 
-
-
-
-    #def setSelection(self,current):
-    #    self._dataMapper.setRootIndex(parent)
-    #    self._dataMapper.setCurrentModelIndex(current)
-
-
-#class AcquisitionViewDelegate(QtGui.QStyledItemDelegate):
-#    def paint(self, painter, option, index):
-        
-#        item_var = index.data( QtCore.Qt.DisplayRole)
-#        item = item_var
-#        print("from delegate")
-        
-        
-#        print(item)
-        
 
 
 if __name__ == '__main__':
@@ -575,16 +529,5 @@ if __name__ == '__main__':
 
     t = Node
     
-    
-
-    
-##    l2 = [[for cls in v.__mro__] for v in lst]
-##    print(l2)
-##    
-##    classes = a.__class__.__mro__
-##    for cls in classes:
-##        for k,v in cls.__dict__.items():            
-##            if isinstance(v,property):
-##                print("PROPERTY NAME: {0}".format(k))
     
     sys.exit(app.exec_())
