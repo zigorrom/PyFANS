@@ -78,22 +78,68 @@ def main():
     #plt.show()
     return (res_freq, res)
 
+
+
+def analyze_timetrace():
+    fname = "F:\\Noise data_000.dat"
+    
+    n = 10
+    nsamples = 50000
+    fs = 500000
+    new_fs = 10000
+
+    f1_max = 3000
+
+    total_array = np.zeros(fs)
+
+    second_range = None
+    first_range = None
+    freq_2 = None
+    freq_1 = None
+    aver_counter = 0
+    fill_value = 0
+
+    arr = np.zeros(nsamples)
+
+    counter = 0
+    general_counter = 0
+    with open(fname) as timetrace:
+        print(timetrace.readline())
+        print(timetrace.readline())
+        for line in timetrace:
+            time,volt = line.split('\t')
+            arr[counter]= float(volt)
+            counter += 1
+            if counter == nsamples:
+                counter = 0
+
+                #perform small fft
+                pass
+        
+            if general_counter == fs:
+                general_counter = 0
+                #perform big fft
+                pass
+
+
 if __name__ == "__main__":
+    analyze_timetrace()
 
-    result = None
-    freq = None
-    n_repeats = 100
 
-    for i in range(n_repeats):
-        if result is None:
-            freq,result = main()
-        else:
-            f,psd = main()
-            result = np.average((result,psd),axis=0,weights=(i, 1))        
+    #result = None
+    #freq = None
+    #n_repeats = 100
 
-    plt.loglog(freq,result,'r')
-    #plt.semilogy(freq,result,'r')
-    plt.show()  
+    #for i in range(n_repeats):
+    #    if result is None:
+    #        freq,result = main()
+    #    else:
+    #        f,psd = main()
+    #        result = np.average((result,psd),axis=0,weights=(i, 1))        
+
+    #plt.loglog(freq,result,'r')
+    ##plt.semilogy(freq,result,'r')
+    #plt.show()  
 
 
     #print(timeit.Timer(main).timeit(number=1))
