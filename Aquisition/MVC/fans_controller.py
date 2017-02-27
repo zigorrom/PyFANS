@@ -46,6 +46,7 @@ class FANS_AO_channel:
     @ao_channel.setter
     def ao_range(self,value):
         self._range = value
+        self._parent_device.daq_set_channel_range(self.ao_range,self.ao_name)
 
     @property
     def ao_polarity(self):
@@ -54,6 +55,7 @@ class FANS_AO_channel:
     @ao_polarity.setter
     def ao_polarity(self,value):
         self._polarity = value
+        self._parent_device.daq_set_ao_channel_polarity(self.ao_polarity,self.ao_name)
 
     @property
     def ao_function(self):
@@ -70,6 +72,7 @@ class FANS_AO_channel:
     @ao_output_pin.setter
     def ao_output_pin(self,value):
         self._output_pin = value
+
 
 
 
@@ -95,6 +98,27 @@ class FANS_AI_channel:
     def __add__(self,other):
         new_name = None # sum of all names
         return FANS_AI_multichannel(new_name, self._parent_device) 
+
+    def _set_fans_ai_channel_params(self):
+##        print(ai_channel)
+        ## set channel selected
+        ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
+        self.device.dig_write_channel(self.ai_name, DIGITAL_CHANNELS.DIG_502)
+        ## set DC or AC position of relays
+        ##print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
+        self.device.dig_write_bit_channel(self.ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
+        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+        
+            
+        ## set filter frequency and gain parameters
+        filter_val = get_filter_value(self.ai_filter_gain,ai_filter_cutoff)
+        self.device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
+
+        ## set pga params
+        pga_val = get_pga_value(self.ai_pga_gain,self.ai_cs_hold)
+        self.device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
+        self._pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+    
 
     @property
     def ai_name(self):
@@ -147,6 +171,7 @@ class FANS_AI_channel:
     @ai_mode.setter
     def ai_mode(self,value):
         self._mode = value
+        self._set_fans_ai_channel_params()
     
     @property
     def ai_cs_hold(self):
@@ -155,6 +180,7 @@ class FANS_AI_channel:
     @ai_cs_hold.setter
     def ai_cs_hold(self,value):
         self._cs_hold = value
+        self._set_fans_ai_channel_params()
 
     @property
     def ai_filter_cutoff(self):
@@ -163,6 +189,7 @@ class FANS_AI_channel:
     @ai_filter_cutoff.setter
     def ai_filter_cutoff(self,value):
         self._filter_cutoff = value
+        self._set_fans_ai_channel_params()
 
     @property
     def ai_filter_gain(self):
@@ -171,6 +198,7 @@ class FANS_AI_channel:
     @ai_filter_gain.setter
     def ai_filter_gain(self,value):
         self._filter_gain = value
+        self._set_fans_ai_channel_params()
     
     @property
     def ai_pga_gain(self):
@@ -179,6 +207,7 @@ class FANS_AI_channel:
     @ai_pga_gain.setter
     def ai_pga_gain(self,value):
         self._pga_gain = value
+        self._set_fans_ai_channel_params()
 
 
 
