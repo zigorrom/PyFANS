@@ -1,15 +1,120 @@
 from datetime import timedelta
-import pandas as pd
+#import pandas as pd
 import numpy as np
 from numpy.random import randn
 
-class ExperimentWriter:
-    def __init__(self):
-        self._workingFolder = ""
-        self._measurement_data_file = None
-        self._data_file = None
+from os.path import isfile, join
+from os import getcwd
 
-    #def create_experiment(self, ):
+
+class NoiseExperimentWriter:
+    def __init__(self, working_folder = ""):
+        self._workingFolder = working_folder
+        if not working_folder:
+            self._workingFolder = getcwd()
+        
+        print(self.working_directory)
+
+        self._measurement_file_extention = "dat"
+        self._measurement_file_postfix = "meas"
+
+        self._timetrace_file_extention = "dat"
+        self._timetrace_file_postfix = "timetrace"
+
+        self._noise_file_extention = "dat"
+        self._noise_file_postifix = "noise"
+
+        self._measurement_data_file = None
+        self._timetrace_file = None
+        self._noise_file = None
+
+    
+    #def __enter__(self):
+    #    pass
+        
+    #def __exit__(self, type, value, traceback):
+    #    self.close_experiment()
+
+
+    @property
+    def working_directory(self):
+        return self._workingFolder
+
+    @working_directory.setter
+    def working_directory(self,value):
+        self._workingFolder = value
+
+    @property
+    def experiment_opened(self):
+        return not self._measurement_data_file.closed
+
+    @property
+    def measurement_opened(self):
+        return not (self._noise_file.closed or self._timetrace_file.closed)
+
+    def _generate_filename(self, path, name, postfix,extention):
+        return join(path, "{0}_{1}.{2}".format(name,postfix,extention))
+
+    def open_experiment(self, experiment_name):
+        dir = self.working_directory
+        meas_fname = self._generate_filename(dir, experiment_name, self._measurement_file_postfix, self._measurement_file_extention)
+        self._measurement_data_file = open(meas_fname,"ab")
+
+    def close_experiment(self):
+        self.close_measurement()
+        if not self._measurement_data_file.closed:
+            self._measurement_data_file.close()
+
+    def open_measurement(self, measurement_name, *args,**kwargs):
+        dir = self.working_directory
+        noise_fname = self._generate_filename(dir, measurement_name, self._noise_file_postifix,self._noise_file_extention)
+        timetrace_fname = self._generate_filename(dir, measurement_name, self._timetrace_file_postfix, self._timetrace_file_extention)
+
+        if isfile(noise_fname):
+            raise FileExistsError("File already exists: {0}".format(noise_fname))
+        if isfile(timetrace_fname):
+            raise FileExistsError("File already exists: {0}".format(timetrace_fname))
+
+        self._noise_file = open(noise_fname, "ab")
+        self._timetrace_file = open(timetrace_fname, "ab")
+        self.__write_measurement_data(*args,**kwargs)
+
+
+    def close_measurement(self):
+        if not self._noise_file.closed:
+            self._noise_file.close()
+
+        if not self._timetrace_file.closed:
+            self._timetrace_file.close()
+
+
+    def __write_measurement_data(self,*args,**kwargs):
+        print(args)
+        print(kwargs)
+
+    def write_timetrace_data(self,timetrace):
+        shape = np.shape(timetrace)
+        if len(shape) != 2:
+            raise ValueError("Timetrace should be a time - value pair")
+
+        l, pair = shape
+        if pair != 2:
+            raise ValueError("Timetrace should be a time - value pair")
+
+        np.savetxt(self._timetrace_file, timetrace)
+
+
+    def write_noise_data(self, noise):
+        shape = np.shape(noise)
+        if len(shape) != 2:
+            raise ValueError("Noise should be a frequency - value pair")
+
+        l, pair = shape
+        if pair != 2:
+            raise ValueError("Noise should be a noise - value pair")
+
+        np.savetxt(self._noise_file, noise)
+    
         
 
 
@@ -24,34 +129,48 @@ class ExperimentWriter:
 
 
 def main():
-    store = pd.HDFStore("store.h5")
-    print(store)
     
-    #del store['df']
-    #del store['s']
-    #del store['wp']
-    np.random.seed(1234)
-    times = 10
-    index = pd.date_range('1/1/2000', periods=times)
-    #df = pd.DataFrame(index=index,columns=['amplitude'])
     
-    nsamples = 50000
-    period = 1 #sec
-    current_time = 0
-    df = pd.DataFrame()
-    
-    for i in range(times):
-        arr = np.random.random(nsamples)
-        times = np.linspace(current_time, current_time+period, nsamples, False)
+    writer = NoiseExperimentWriter()
+    writer.open_experiment("experiment")
+    writer.open_measurement("meas","asdasdad", petro = "asdasd")
+    writer.write_timetrace_data(np.ones((100,2)))
+    writer.write_noise_data(np.ones((100,2)))
+    writer.close_experiment()
 
-        ser = pd.Series(data=arr,index=times)
-        df.append(ser,ignore_index=True)
 
-        current_time+=period
+
+
+
+
+    #store = pd.HDFStore("store.h5")
+    #print(store)
+    
+    ##del store['df']
+    ##del store['s']
+    ##del store['wp']
+    #np.random.seed(1234)
+    #times = 10
+    #index = pd.date_range('1/1/2000', periods=times)
+    ##df = pd.DataFrame(index=index,columns=['amplitude'])
+    
+    #nsamples = 50000
+    #period = 1 #sec
+    #current_time = 0
+    #df = pd.DataFrame()
+    
+    #for i in range(times):
+    #    arr = np.random.random(nsamples)
+    #    times = np.linspace(current_time, current_time+period, nsamples, False)
+
+    #    ser = pd.Series(data=arr,index=times)
+    #    df.append(ser,ignore_index=True)
+
+    #    current_time+=period
         
-    print(df)
+    #print(df)
     
-    #store['df'] = df
+    ##store['df'] = df
     
     
     
@@ -67,8 +186,8 @@ def main():
     #store.append('dftd',dftd,data_columns=True)
 
     #print(store.select('dftd',"C<'-3.5D'"))
-    print(store)
-    store.close()
+    #print(store)
+    #store.close()
 
 if __name__ == "__main__":
     main()

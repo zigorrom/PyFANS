@@ -91,19 +91,19 @@ class FANS_AI_channel:
         self.ai_filter_cutoff = filter_cutoff
         self.ai_filter_gain = filter_gain
         self.ai_pga_gain = pga_gain
-        self._set_fans_ai_channel_params()
+        self.set_fans_ai_channel_params()
 
     def __add__(self,other):
         new_name = None # sum of all names
         return FANS_AI_multichannel(new_name, self._parent_device) 
 
-    def start_editing_parameters():
-        pass
+    #def start_editing_parameters():
+    #    pass
 
-    def stop_editing_parameter():
-        pass 
+    #def stop_editing_parameter():
+    #    pass 
 
-    def _set_fans_ai_channel_params(self):
+    def set_fans_ai_channel_params(self):
 ##        print(ai_channel)
         ## set channel selected
         ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
@@ -212,6 +212,8 @@ class FANS_AI_channel:
     def ai_pga_gain(self,value):
         self._pga_gain = value
         #self._set_fans_ai_channel_params()
+
+
 
 
 
