@@ -80,6 +80,7 @@ def main():
 
 
 
+
 def analyze_timetrace():
     fname = "F:\\Noise data_000.dat"
     
@@ -89,6 +90,9 @@ def analyze_timetrace():
     new_fs = 10000
 
     f1_max = 3000
+    decimation_factor = int( fs/new_fs)
+    new_fs = int(fs/decimation_factor)
+
 
     total_array = np.zeros(fs)
 
@@ -96,33 +100,76 @@ def analyze_timetrace():
     first_range = None
     freq_2 = None
     freq_1 = None
-    aver_counter = 0
+    f1_aver_counter = 0
+    f2_aver_counter = 0
     fill_value = 0
 
-    arr = np.zeros(fs)
+    #arr = np.zeros(fs)
 
     counter = 0
-    
+    line_counter = 0
     with open(fname) as timetrace:
         print(timetrace.readline())
         print(timetrace.readline())
         for line in timetrace:
             time,volt = line.split('\t')
-            arr[counter]= float(volt)
+            total_array[counter+fill_value]= float(volt)
+            line_counter += 1
+            #print(line_counter)
             counter += 1
             if counter == nsamples:
-                fill_value = counter
+                counter = 0
+                f2_aver_counter += 1
+                new_fill_value = fill_value+nsamples
+                arr = total_array[fill_value:new_fill_value]
+                fill_value = new_fill_value % fs
+                if second_range is None:
+                    freq_2, second_range = periodogram(arr, fs)
+                else:
+                    f, psd = periodogram(arr, fs)
+                    #np.average((self.average, data['p']), axis=0, weights=(self.average_counter - 1, 1))
+                    second_range = np.average((second_range,psd),axis=0,weights=(f2_aver_counter - 1, 1))   
 
+                
 
                 #perform small fft
-                pass
+               
         
-            if counter == fs:
-                counter = 0
+            if line_counter%fs ==0:
                 fill_value = 0
-                
+                decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",zero_phase=True)
+                #print("decimated length = {0}".format(len(decimated)))
+                #print(decimated)
+                f1_aver_counter += 1
+                print(f1_aver_counter)
+                if first_range is None:
+                    freq_1, first_range = periodogram(decimated, new_fs)
+                else:
+                    f,psd = periodogram(decimated,new_fs)
+                    first_range = np.average((first_range,psd),axis=0,weights=(f1_aver_counter - 1, 1))   
+    
+
+        df1 = freq_1[1]
+        df2 = freq_2[1]
+
+
+
+        freq1_idx = math.floor(f1_max/df1)+1
+        freq2_idx = math.ceil(f1_max/df2)+1
+
+        #print(freq_1)
+        #print(first_range)
+        #print(freq_2)
+        #print(second_range)
+
+        res_freq  = np.hstack((freq_1[1:freq1_idx],freq_2[freq2_idx:]))
+        res = np.hstack((first_range[1:freq1_idx],second_range[freq2_idx:]))
+        #print("result length = {0}".format(len(res)))
+        #print(res_freq)
+        plt.loglog(res_freq,res,'r')
+        plt.show()
                 #perform big fft
-                pass
+                
 
 
 if __name__ == "__main__":
