@@ -43,7 +43,7 @@ class FANS_AO_channel:
     def ao_range(self):
         return self._range
 
-    @ao_channel.setter
+    @ao_range.setter
     def ao_range(self,value):
         self._range = value
         self._parent_device.daq_set_channel_range(self.ao_range,self.ao_name)
@@ -78,55 +78,59 @@ class FANS_AO_channel:
 
 
 
-class FANS_AI_multichannel(FANS_AI_channel):
-    def __init__(self, names, parent_device):
-        super(FANS_AI_channel,self).__init__(names, parent_device)
 
 class FANS_AI_channel:
-    def __init__(self, name, parent_device):
-        self._parent_device = AgilentU2542A("") #parent_device
-        self._name = name
-        self._range = None
-        self._polarity = None
-        self._function = None
-        self._mode = None
-        self._cs_hold = None
-        self._filter_cutoff = None
-        self.ai_filter_gain = None
-        self._pga_gain = None
+    def __init__(self, name, parent_device, range = DAQ_RANGES.RANGE_10, polarity = POLARITIES.BIP, mode = AI_MODES.DC, cs_hold = CS_HOLD.OFF, filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f150, filter_gain = FILTER_GAINS.x1, pga_gain = PGA_GAINS.x1):
+        self._parent_device = parent_device
+        self.ai_name = name
+        self.ai_range = range
+        self.ai_polarity = polarity
+        self.ai_function = None
+        self.ai_mode = mode
+        self.ai_cs_hold = cs_hold
+        self.ai_filter_cutoff = filter_cutoff
+        self.ai_filter_gain = filter_gain
+        self.ai_pga_gain = pga_gain
+        self._set_fans_ai_channel_params()
 
     def __add__(self,other):
         new_name = None # sum of all names
         return FANS_AI_multichannel(new_name, self._parent_device) 
 
+    def start_editing_parameters():
+        pass
+
+    def stop_editing_parameter():
+        pass 
+
     def _set_fans_ai_channel_params(self):
 ##        print(ai_channel)
         ## set channel selected
         ##print("seelct channel {0:08b}".format(AI_ChannelSelector[ch]))
-        self.device.dig_write_channel(self.ai_name, DIGITAL_CHANNELS.DIG_502)
+        self._parent_device.dig_write_channel(self.ai_name, DIGITAL_CHANNELS.DIG_502)
         ## set DC or AC position of relays
         ##print("mode value {0:08b}".format(AI_MODE_VAL[mode]))
-        self.device.dig_write_bit_channel(self.ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
-        self._pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+        self._parent_device.dig_write_bit_channel(self.ai_mode,AI_SET_MODE_BIT,DIGITAL_CHANNELS.DIG_504)#AI_MODE_VAL[mode]
+        self._parent_device.pulse_digital_bit(AI_SET_MODE_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
         
             
         ## set filter frequency and gain parameters
-        filter_val = get_filter_value(self.ai_filter_gain,ai_filter_cutoff)
-        self.device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
+        filter_val = get_filter_value(self.ai_filter_gain,self.ai_filter_cutoff)
+        self._parent_device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
 
         ## set pga params
         pga_val = get_pga_value(self.ai_pga_gain,self.ai_cs_hold)
-        self.device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
-        self._pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+        self._parent_device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
+        self._parent_device.pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
     
 
     @property
     def ai_name(self):
         return self._name
     
-    #@ai_name.setter
-    #def ai_name(self,value):
-    #    self._name = value
+    @ai_name.setter
+    def ai_name(self,value):
+        self._name = value
 
     @property
     def ai_enabled(self):
@@ -171,7 +175,7 @@ class FANS_AI_channel:
     @ai_mode.setter
     def ai_mode(self,value):
         self._mode = value
-        self._set_fans_ai_channel_params()
+        #self._set_fans_ai_channel_params()
     
     @property
     def ai_cs_hold(self):
@@ -180,7 +184,7 @@ class FANS_AI_channel:
     @ai_cs_hold.setter
     def ai_cs_hold(self,value):
         self._cs_hold = value
-        self._set_fans_ai_channel_params()
+        #self._set_fans_ai_channel_params()
 
     @property
     def ai_filter_cutoff(self):
@@ -189,7 +193,7 @@ class FANS_AI_channel:
     @ai_filter_cutoff.setter
     def ai_filter_cutoff(self,value):
         self._filter_cutoff = value
-        self._set_fans_ai_channel_params()
+        #self._set_fans_ai_channel_params()
 
     @property
     def ai_filter_gain(self):
@@ -198,7 +202,7 @@ class FANS_AI_channel:
     @ai_filter_gain.setter
     def ai_filter_gain(self,value):
         self._filter_gain = value
-        self._set_fans_ai_channel_params()
+        #self._set_fans_ai_channel_params()
     
     @property
     def ai_pga_gain(self):
@@ -207,8 +211,13 @@ class FANS_AI_channel:
     @ai_pga_gain.setter
     def ai_pga_gain(self,value):
         self._pga_gain = value
-        self._set_fans_ai_channel_params()
+        #self._set_fans_ai_channel_params()
 
+
+
+class FANS_AI_multichannel(FANS_AI_channel):
+    def __init__(self, names, parent_device):
+        super(FANS_AI_channel,self).__init__(names, parent_device)
 
 
 class FANS_controller:
@@ -491,42 +500,53 @@ class FANS_controller:
     
 
 def main():
-    cfg = Configuration()
-    f = FANS_controller("ADC",configuration = cfg)
-    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+    device = AgilentU2542A("ADC")
+    channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.AC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.AC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.AC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_104, device, mode = AI_MODES.AC)
     
-    app = QtGui.QApplication(sys.argv)
-    app.setStyle("cleanlooks")
+    #channel.ai_filter_cutoff = 
     
-    wnd = WndTutorial(configuration = cfg)
-##    wnd.show()
-##    sys.exit(app.exec_())
-    #f.fans_output_voltage(0,0)
-    #time.sleep(2)
-    #f.fans_output_voltage(6,-6)
-    #time.sleep(2)
-    #f.fans_output_voltage(0,4)
-    #time.sleep(2)
-    #f.fans_output_voltage(-6,6)
-    #time.sleep(2)
-    #f.fans_output_voltage(4,0)
-    #time.sleep(2)
-    #f.fans_output_voltage(0,0)
-    f.start_acquisition()
-##    sleep(1)
-    try:
-        c = 0
-        while True:
-##            print(c)
-            c+=1
-##            sleep(1)
-            if not f.acquisition_alive():
-                break
-    except Exception as e:
-        print(str(e))
-    finally:       
-        print("stopping acquisition")
-        f.stop_acquisition()
+
+
+# UNCOMMENT THIS TO TEST FUNCTIONONALITY
+#    cfg = Configuration()
+#    f = FANS_controller("ADC",configuration = cfg)
+#    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+    
+#    app = QtGui.QApplication(sys.argv)
+#    app.setStyle("cleanlooks")
+    
+#    wnd = WndTutorial(configuration = cfg)
+###    wnd.show()
+###    sys.exit(app.exec_())
+#    #f.fans_output_voltage(0,0)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(6,-6)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(0,4)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(-6,6)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(4,0)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(0,0)
+#    f.start_acquisition()
+###    sleep(1)
+#    try:
+#        c = 0
+#        while True:
+###            print(c)
+#            c+=1
+###            sleep(1)
+#            if not f.acquisition_alive():
+#                break
+#    except Exception as e:
+#        print(str(e))
+#    finally:       
+#        print("stopping acquisition")
+#        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()

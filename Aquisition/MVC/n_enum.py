@@ -15,6 +15,8 @@ def enum( *enumerated,name_prefix = ""):
     enums["indexes"] = tuple(i)
     enums["names"] = tuple(g)
     enums["values"] = enumerated
+    enums["default_value"] = enumerated[0]
+    enums["default_name"] = enums["names"][0]
 ##    enums["__init__"] = lambda self:  #init
     enums["__getitem__"] = lambda self, i: self.values[i] #getitem
 ##    print(enums)
@@ -27,7 +29,8 @@ def main():
     print(AI_CHANNELS.values)
     print(AI_CHANNELS.AI_104)
     print(AI_CHANNELS[AI_CHANNELS.AI_104])
-   
+    print(AI_CHANNELS.default_value)
+    print(AI_CHANNELS.default_name)
 
 if __name__== "__main__":
     main()

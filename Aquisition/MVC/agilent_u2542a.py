@@ -309,6 +309,13 @@ class AgilentU2542A:
         res = {ch: vals[ch] for ch in channel_list}
         return res
 
+    def pulse_digital_bit(self,bit,channel,pulse_width=0.005):
+        self.dig_write_bit_channel(1,bit,channel)
+        time.sleep(pulse_width)
+        self.dig_write_bit_channel(0,bit,channel)
+    
+    
+    
     def adc_set_voltage_range(self,rang,channels):
         channel_list = [AI_CHANNELS[i] for i in channels]
         self.instrument.write("VOLT:RANG {0}, (@{1})".format(DAQ_RANGES[rang],",".join(channel_list)))

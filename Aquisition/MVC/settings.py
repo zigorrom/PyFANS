@@ -2,6 +2,7 @@ from PyQt4 import QtCore, QtGui, QtXml,uic
 from xml_highlighter import XMLHighlighter
 from nodes import *
 from fans_constants import *
+from agilent_u2542a_constants import *
 import sys
 from node_configuration import Configuration 
 from xml_serializer import XmlNodeSerializer
@@ -468,7 +469,12 @@ class InChannelEditor(inChannelBase, inChannelForm):
         super(inChannelBase,self).__init__(parent)
         self.setupUi(self)
         self._dataMapper = QtGui.QDataWidgetMapper(self)
-        
+        self.ui_range.clear()
+        self.ui_range.addItems(DAQ_RANGES.names)
+        self.ui_polarity.clear()
+        self.ui_polarity.addItems(POLARITIES.names)
+        self.ui_function.clear()
+        self.ui_function.addItems(FANS_AI_FUNCTIONS.names)
 
 
     def setModel(self, proxyModel):
@@ -490,6 +496,7 @@ class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm
     def __init__(self, parent = None):
         super(acquisitionSettingsBase,self).__init__(parent)
         self.setupUi(self)
+       
         self.amplifier.addItems(["1","2","5"])
         self.pgaGain.addItems(PGA_GAINS.names)
         self.filterGain.addItems(FILTER_GAINS.names)
