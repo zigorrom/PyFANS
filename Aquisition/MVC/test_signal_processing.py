@@ -99,10 +99,10 @@ def analyze_timetrace():
     aver_counter = 0
     fill_value = 0
 
-    arr = np.zeros(nsamples)
+    arr = np.zeros(fs)
 
     counter = 0
-    general_counter = 0
+    
     with open(fname) as timetrace:
         print(timetrace.readline())
         print(timetrace.readline())
@@ -111,13 +111,16 @@ def analyze_timetrace():
             arr[counter]= float(volt)
             counter += 1
             if counter == nsamples:
-                counter = 0
+                fill_value = counter
+
 
                 #perform small fft
                 pass
         
-            if general_counter == fs:
-                general_counter = 0
+            if counter == fs:
+                counter = 0
+                fill_value = 0
+                
                 #perform big fft
                 pass
 
