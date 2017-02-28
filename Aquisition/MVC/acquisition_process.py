@@ -26,9 +26,9 @@ class Acquisition(Process):
     def stop(self):
         self.exit.set()
 
-    def run(self):
-        sys.stdout = open("log.txt", "w")
-        data_queue = self.data_queue
+    #def run(self):
+    #    sys.stdout = open("log.txt", "w")
+    #    data_queue = self.data_queue
         
 #        try:
 #            d = AgilentU2542A(self.visa_resource)
@@ -149,7 +149,70 @@ class Acquisition(Process):
 #            d.daq_stop()
 ###            data_queue.close()
 #            print("finished") 
-    
+    def perform_psd(self, data, out_data, fs, fill_value, nsamples):
+
+        pass
+
+    def run_new(self):
+        sys.stdout = open("log.txt", "w")
+        data_queue = self.data_queue
+        
+        try:
+            d = AgilentU2542A(self.visa_resource)
+            d.daq_init_channels()
+            counter = 0
+            fs = self.sample_rate
+            npoints = self.points_per_shot
+            max_count = self.total_samples
+            
+            d.daq_run()
+            print("started")
+            init_time = time.time()
+            
+
+            #functions for reducing dot anmount in cycle below
+            need_exit = self.exit.is_set
+            is_data_ready = d.daq_is_data_ready
+            read_data = d.daq_read_data
+            
+            
+            while (not need_exit()) and counter < max_count:
+                try:
+                    if is_data_ready():
+                        
+                        t = time.time()-init_time
+                        data = read_data()
+                        
+                        
+                        
+                        #freq, psd = periodogram(data,fs) 
+##                        decimated_data = 
+                        block = None
+                        #block = {
+                        #         "t": t,
+                        #         "d": data,
+                        #         "f": np.delete(freq,1,0),
+                        #         "p": np.delete(psd,1,1)
+                        #         }
+                        data_queue.put(block)
+                        
+                        
+                except Exception as e:
+                    err = str(e)
+                    print(err)
+                    if err== 'overload':
+                        counter = max_count
+                        break
+                                    
+        except Exception as e:
+            print ("exception"+str(e))
+        finally:
+            d.daq_stop()
+##            data_queue.close()
+            print("finished")
+
+
+
 
         #Previous version
     def run(self):
