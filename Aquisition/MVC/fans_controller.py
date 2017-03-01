@@ -75,9 +75,16 @@ class FANS_AO_channel:
 
 
 
-#class FANS_AO_Channel_Switch:
-#    def __init__(self, parent_device):
+class FANS_AO_Channel_Switch:
+    def __init__(self, parent_device):
+        self._parent_device = parent_device
 
+    def switch_channel(self, ao_channel, fans_ao_channel):
+        pass
+
+
+
+    
 
 
 
