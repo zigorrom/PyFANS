@@ -1,13 +1,13 @@
 <NODE name="Settings">
-    <ACQUISITION_SETTINGS filter_gain="x6" name="acquisition_settings" homemade_amplifier="1" filter_cutoff="f70" amplifier="5" sample_rate="500000" pga_amplifier="x10"/>
+    <ACQUISITION_SETTINGS sample_rate="500000" filter_cutoff="f70" amplifier="5" name="acquisition_settings" pga_amplifier="x10" homemade_amplifier="1" filter_gain="x6"/>
     <NODE name="input_settings">
-        <IN_CHANNEL name="ch1" enabled="1" selected_polarity="BIP" selected_range="RANGE_10" selected_function="DrainSourceVoltage"/>
-        <IN_CHANNEL name="ch2" enabled="1" selected_polarity="BIP" selected_range="RANGE_10" selected_function="MainVoltage"/>
-        <IN_CHANNEL name="ch3" enabled="1" selected_polarity="" selected_range="One" selected_function="f1"/>
-        <IN_CHANNEL name="ch4" enabled="1" selected_polarity="Unipolar" selected_range="" selected_function="f2"/>
+        <IN_CHANNEL selected_function="DrainSourceVoltage" name="ch1" enabled="1" selected_polarity="BIP" selected_range="RANGE_10"/>
+        <IN_CHANNEL selected_function="MainVoltage" name="ch2" enabled="1" selected_polarity="BIP" selected_range="RANGE_10"/>
+        <IN_CHANNEL selected_function="f1" name="ch3" enabled="1" selected_polarity="" selected_range="One"/>
+        <IN_CHANNEL selected_function="f2" name="ch4" enabled="1" selected_polarity="Unipolar" selected_range=""/>
     </NODE>
     <NODE name="out_settings">
-        <OUT_CHANNEL name="och1" enabled="1" selected_output="" selected_polarity="" selected_range="Two" selected_function=""/>
-        <OUT_CHANNEL name="och2" enabled="1" selected_output="" selected_polarity="" selected_range="" selected_function="f2"/>
+        <OUT_CHANNEL selected_function="" selected_output="" name="och1" enabled="1" selected_polarity="" selected_range="Two"/>
+        <OUT_CHANNEL selected_function="f2" selected_output="" name="och2" enabled="1" selected_polarity="" selected_range=""/>
     </NODE>
 </NODE>

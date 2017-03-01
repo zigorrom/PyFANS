@@ -317,8 +317,8 @@ if __name__ == "__main__":
     try:
       #smu.set_drain_voltage(0)
       #smu.set_gate_voltage(0)
-      #smu.set_drain_voltage(0.3)
-      #smu.set_drain_voltage(-0.1)
+      smu.set_drain_voltage(0.3)
+      smu.set_drain_voltage(-0.1)
       
       #for vds in np.arange(5,-5,-0.2):
       #    #print("setting drain-source")

@@ -153,63 +153,63 @@ class Acquisition(Process):
 
         pass
 
-    def run_new(self):
-        sys.stdout = open("log.txt", "w")
-        data_queue = self.data_queue
+#    def run_new(self):
+#        sys.stdout = open("log.txt", "w")
+#        data_queue = self.data_queue
         
-        try:
-            d = AgilentU2542A(self.visa_resource)
-            d.daq_init_channels()
-            counter = 0
-            fs = self.sample_rate
-            npoints = self.points_per_shot
-            max_count = self.total_samples
+#        try:
+#            d = AgilentU2542A(self.visa_resource)
+#            d.daq_init_channels()
+#            counter = 0
+#            fs = self.sample_rate
+#            npoints = self.points_per_shot
+#            max_count = self.total_samples
             
-            d.daq_run()
-            print("started")
-            init_time = time.time()
+#            d.daq_run()
+#            print("started")
+#            init_time = time.time()
             
 
-            #functions for reducing dot anmount in cycle below
-            need_exit = self.exit.is_set
-            is_data_ready = d.daq_is_data_ready
-            read_data = d.daq_read_data
+#            #functions for reducing dot anmount in cycle below
+#            need_exit = self.exit.is_set
+#            is_data_ready = d.daq_is_data_ready
+#            read_data = d.daq_read_data
             
             
-            while (not need_exit()) and counter < max_count:
-                try:
-                    if is_data_ready():
+#            while (not need_exit()) and counter < max_count:
+#                try:
+#                    if is_data_ready():
                         
-                        t = time.time()-init_time
-                        data = read_data()
-                        
-                        
-                        
-                        #freq, psd = periodogram(data,fs) 
-##                        decimated_data = 
-                        block = None
-                        #block = {
-                        #         "t": t,
-                        #         "d": data,
-                        #         "f": np.delete(freq,1,0),
-                        #         "p": np.delete(psd,1,1)
-                        #         }
-                        data_queue.put(block)
+#                        t = time.time()-init_time
+#                        data = read_data()
                         
                         
-                except Exception as e:
-                    err = str(e)
-                    print(err)
-                    if err== 'overload':
-                        counter = max_count
-                        break
+                        
+#                        #freq, psd = periodogram(data,fs) 
+###                        decimated_data = 
+#                        block = None
+#                        #block = {
+#                        #         "t": t,
+#                        #         "d": data,
+#                        #         "f": np.delete(freq,1,0),
+#                        #         "p": np.delete(psd,1,1)
+#                        #         }
+#                        data_queue.put(block)
+                        
+                        
+#                except Exception as e:
+#                    err = str(e)
+#                    print(err)
+#                    if err== 'overload':
+#                        counter = max_count
+#                        break
                                     
-        except Exception as e:
-            print ("exception"+str(e))
-        finally:
-            d.daq_stop()
-##            data_queue.close()
-            print("finished")
+#        except Exception as e:
+#            print ("exception"+str(e))
+#        finally:
+#            d.daq_stop()
+###            data_queue.close()
+#            print("finished")
 
 
 
@@ -313,8 +313,8 @@ class AcquisitionProcess(QtCore.QThread):
                 print("wait for data")
                 data = data_queue.get(timeout=1)
                 data_queue.task_done()
-                print("data received")
-                print(data["d"])
+                #print("data received")
+                #print(data["d"])
 ##                parse(data.transpose(),counter)
 ##                parse(data,counter)
                 data_storage.update(data)

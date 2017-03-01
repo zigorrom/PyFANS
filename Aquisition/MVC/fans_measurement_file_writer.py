@@ -103,7 +103,7 @@ class NoiseExperimentWriter:
         l, pair = shape
         if pair != 2:
             raise ValueError("Timetrace should be a time - value pair")
-        print(timetrace)
+        #print(timetrace)
         np.savetxt(self._timetrace_file, timetrace)
 
 
@@ -115,7 +115,7 @@ class NoiseExperimentWriter:
         l, pair = shape
         if pair != 2:
             raise ValueError("Noise should be a noise - value pair")
-        print(noise)
+        #print(noise)
         np.savetxt(self._noise_file, noise)
     
 

@@ -173,23 +173,23 @@ def analyze_timetrace():
 
 
 if __name__ == "__main__":
-    analyze_timetrace()
+    #analyze_timetrace()
 
 
-    #result = None
-    #freq = None
-    #n_repeats = 100
+    result = None
+    freq = None
+    n_repeats = 100
 
-    #for i in range(n_repeats):
-    #    if result is None:
-    #        freq,result = main()
-    #    else:
-    #        f,psd = main()
-    #        result = np.average((result,psd),axis=0,weights=(i, 1))        
+    for i in range(n_repeats):
+        if result is None:
+            freq,result = main()
+        else:
+            f,psd = main()
+            result = np.average((result,psd),axis=0,weights=(i, 1))        
 
-    #plt.loglog(freq,result,'r')
-    ##plt.semilogy(freq,result,'r')
-    #plt.show()  
+    plt.loglog(freq,result,'r')
+    #plt.semilogy(freq,result,'r')
+    plt.show()  
 
 
     #print(timeit.Timer(main).timeit(number=1))

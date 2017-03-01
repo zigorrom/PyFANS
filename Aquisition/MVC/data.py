@@ -156,7 +156,7 @@ class DataHandler(QtCore.QObject):
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
-        self.start_task(self.write_to_file,self.timetrace_time,self.timetrace_data)
+        self.start_task(self.write_to_file,self.timetrace_time.copy(),self.timetrace_data.copy())
     
     
     def update_history(self, data):
@@ -165,8 +165,8 @@ class DataHandler(QtCore.QObject):
             length = len(data["p"][self.__visualize_index])
             
             print("in update history")
-            print(length)
-            print (data['p'])
+            #print(length)
+            #print (data['p'])
             self.history = HistoryBuffer(length, self.max_history_size)
         
         frequency_bins = data['f']

@@ -76,7 +76,8 @@ class FANS_AO_channel:
 
 
 #class FANS_AO_Channel_Switch:
-#    def __init__(self):
+#    def __init__(self, parent_device):
+
 
 
 
@@ -504,53 +505,53 @@ class FANS_controller:
     
 
 def main():
-    device = AgilentU2542A("ADC")
-    channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.AC)
-    channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.AC)
-    channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.AC)
-    channel = FANS_AI_channel(AI_CHANNELS.AI_104, device, mode = AI_MODES.AC)
+    #device = AgilentU2542A("ADC")
+    #channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.AC)
+    #channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.AC)
+    #channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.AC)
+    #channel = FANS_AI_channel(AI_CHANNELS.AI_104, device, mode = AI_MODES.AC)
     
     #channel.ai_filter_cutoff = 
     
 
 
 # UNCOMMENT THIS TO TEST FUNCTIONONALITY
-#    cfg = Configuration()
-#    f = FANS_controller("ADC",configuration = cfg)
-#    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+    cfg = Configuration()
+    f = FANS_controller("ADC",configuration = cfg)
+    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
     
-#    app = QtGui.QApplication(sys.argv)
-#    app.setStyle("cleanlooks")
+    app = QtGui.QApplication(sys.argv)
+    app.setStyle("cleanlooks")
     
-#    wnd = WndTutorial(configuration = cfg)
-###    wnd.show()
-###    sys.exit(app.exec_())
-#    #f.fans_output_voltage(0,0)
-#    #time.sleep(2)
-#    #f.fans_output_voltage(6,-6)
-#    #time.sleep(2)
-#    #f.fans_output_voltage(0,4)
-#    #time.sleep(2)
-#    #f.fans_output_voltage(-6,6)
-#    #time.sleep(2)
-#    #f.fans_output_voltage(4,0)
-#    #time.sleep(2)
-#    #f.fans_output_voltage(0,0)
-#    f.start_acquisition()
-###    sleep(1)
-#    try:
-#        c = 0
-#        while True:
-###            print(c)
-#            c+=1
-###            sleep(1)
-#            if not f.acquisition_alive():
-#                break
-#    except Exception as e:
-#        print(str(e))
-#    finally:       
-#        print("stopping acquisition")
-#        f.stop_acquisition()
+    wnd = WndTutorial(configuration = cfg)
+##    wnd.show()
+##    sys.exit(app.exec_())
+    #f.fans_output_voltage(0,0)
+    #time.sleep(2)
+    #f.fans_output_voltage(6,-6)
+    #time.sleep(2)
+    #f.fans_output_voltage(0,4)
+    #time.sleep(2)
+    #f.fans_output_voltage(-6,6)
+    #time.sleep(2)
+    #f.fans_output_voltage(4,0)
+    #time.sleep(2)
+    #f.fans_output_voltage(0,0)
+    f.start_acquisition()
+##    sleep(1)
+    try:
+        c = 0
+        while True:
+##            print(c)
+            c+=1
+##            sleep(1)
+            if not f.acquisition_alive():
+                break
+    except Exception as e:
+        print(str(e))
+    finally:       
+        print("stopping acquisition")
+        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()
