@@ -124,7 +124,7 @@ class NoiseExperimentWriter:
 def main():
     
     
-    writer = NoiseExperimentWriter("D:\\TestData")
+    writer = NoiseExperimentWriter("F:\\TestData")
     writer.open_experiment("experiment")
     
     for n_meas in range(10):

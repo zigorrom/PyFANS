@@ -82,7 +82,7 @@ class DataHandler(QtCore.QObject):
         # Use only one worker thread because it is not faster
         # with more threads (and memory consumption is much higher)
         self.threadpool = QtCore.QThreadPool()
-        self.threadpool.setMaxThreadCount(10) #1
+        self.threadpool.setMaxThreadCount(1) #1
 
         self.reset()
 
