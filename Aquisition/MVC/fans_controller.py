@@ -75,6 +75,8 @@ class FANS_AO_channel:
 
 
 
+#class FANS_AO_Channel_Switch:
+#    def __init__(self):
 
 
 

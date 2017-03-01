@@ -64,7 +64,7 @@ class DataHandler(QtCore.QObject):
     peak_hold_max_updated = QtCore.pyqtSignal(object)
     peak_hold_min_updated = QtCore.pyqtSignal(object)
 
-    def __init__(self, max_history_size=100, display_channel = 0, sample_rate = 500000, points_per_shot = 50000, parent=None):
+    def __init__(self, max_history_size=100, display_channel = 0, sample_rate = 500000, points_per_shot = 50000, writer = None ,parent=None):
         super().__init__(parent)
         self.max_history_size = max_history_size
         self.smooth = False
@@ -73,7 +73,10 @@ class DataHandler(QtCore.QObject):
         self.display_channel = display_channel
         self.history = None
         self.__visualize_index = 0
-        self._timetrace_file = open("timetrace.dat","wb")
+
+        self._writer = writer
+
+        #self._timetrace_file = open("timetrace.dat","wb")
         self.init_values(sample_rate, points_per_shot)
         
         # Use only one worker thread because it is not faster
@@ -103,7 +106,8 @@ class DataHandler(QtCore.QObject):
 ##        http://stackoverflow.com/questions/25143066/python-numpy-array-of-arrays
     
     def stop_acuqisition(self):
-        self._timetrace_file.close()
+        pass
+        #self._timetrace_file.close()
 
     def reset(self):
         """Reset all data"""
@@ -152,7 +156,7 @@ class DataHandler(QtCore.QObject):
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
-        self.start_task(self.write_to_file,data)
+        self.start_task(self.write_to_file,self.timetrace_time,self.timetrace_data)
     
     
     def update_history(self, data):
@@ -170,8 +174,11 @@ class DataHandler(QtCore.QObject):
         self.history.append(data["p"][self.__visualize_index])
         self.history_updated.emit(self)
     
-    def write_to_file(self,data):
-        np.savetxt(self._timetrace_file,data['d'])
+    def write_to_file(self,time,data):
+        tt_data = np.transpose(np.vstack((time,data)))
+        
+        self._writer.write_timetrace_data(tt_data)
+        #np.savetxt(self._timetrace_file,data['d'])
 
     def update_average(self, data):
         """Update average data"""

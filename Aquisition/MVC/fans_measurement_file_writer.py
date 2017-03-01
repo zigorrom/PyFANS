@@ -58,7 +58,7 @@ class NoiseExperimentWriter:
     def open_experiment(self, experiment_name):
         dir = self.working_directory
         meas_fname = self._generate_filename(dir, experiment_name, self._measurement_file_postfix, self._measurement_file_extention)
-        self._measurement_data_file = open(meas_fname,"a")
+        self._measurement_data_file = open(meas_fname,"ab")
 
     def close_experiment(self):
         self.close_measurement()
@@ -75,8 +75,8 @@ class NoiseExperimentWriter:
         if isfile(timetrace_fname):
             raise FileExistsError("File already exists: {0}".format(timetrace_fname))
 
-        self._noise_file = open(noise_fname, "a")
-        self._timetrace_file = open(timetrace_fname, "a")
+        self._noise_file = open(noise_fname, "ab")
+        self._timetrace_file = open(timetrace_fname, "ab")
         self.__write_measurement_data(measurement_name, *args,**kwargs)
 
 
@@ -90,7 +90,8 @@ class NoiseExperimentWriter:
 
     
     def __write_measurement_data(self,measurement_name, *args,**kwargs):
-        print("filename: {0}\n".format(  measurement_name), file= self._measurement_data_file)
+        self._measurement_data_file.write("filename: {0}\n".format(  measurement_name).encode('ascii'))
+        #print("filename: {0}\n".format(  measurement_name), file= self._measurement_data_file)
 
         #self._measurement_data_file.write("filename: {0}\n".format(  measurement_name))
 
@@ -102,7 +103,7 @@ class NoiseExperimentWriter:
         l, pair = shape
         if pair != 2:
             raise ValueError("Timetrace should be a time - value pair")
-
+        print(timetrace)
         np.savetxt(self._timetrace_file, timetrace)
 
 
@@ -114,32 +115,27 @@ class NoiseExperimentWriter:
         l, pair = shape
         if pair != 2:
             raise ValueError("Noise should be a noise - value pair")
-
+        print(noise)
         np.savetxt(self._noise_file, noise)
     
-        
-
-
-
-
-
-
-
-
-
 
 
 
 def main():
     
     
-    writer = NoiseExperimentWriter("F:\\TestData")
+    writer = NoiseExperimentWriter("D:\\TestData")
     writer.open_experiment("experiment")
-    writer.open_measurement("meas0","asdasdad", petro = "asdasd")
-    writer.write_timetrace_data(np.ones((100,2)))
-    writer.write_noise_data(np.ones((100,2)))
+    
+    for n_meas in range(10):
+        writer.open_measurement("meas_{0}".format(n_meas),"asdasdad", petro = "asdasd")
+        for x in range(10):
+            writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
+            writer.write_noise_data(np.ones((100,2), dtype = np.float))
+        
     writer.close_experiment()
 
+    
     
 
 

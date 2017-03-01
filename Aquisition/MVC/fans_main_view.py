@@ -8,6 +8,7 @@ from fans_controller import FANS_controller
 from fans_constants import *
 from agilent_u2542a_constants import AI_CHANNELS
 from node_configuration import Configuration
+from fans_measurement_file_writer import NoiseExperimentWriter
 
 fans_main_view_base, fans_main_view_form = uic.loadUiType("Views/FANS_main_view.ui")
 class fans_main_view(fans_main_view_base,fans_main_view_form):
@@ -29,7 +30,11 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         
 
         self.configuration = Configuration()
-        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot, max_history_size=max_hist_size)
+        self.meas_data_writer = NoiseExperimentWriter("D:\\TestData")
+        self.meas_data_writer.open_experiment("test_experiment")
+        self.meas_data_writer.open_measurement("meas1")
+
+        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot, max_history_size=max_hist_size, writer = self.meas_data_writer)
         self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
         self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
         self.data_storage.data_updated.connect(self.timetracePlotWidget.update_plot)
@@ -50,6 +55,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
 
     def closeEvent(self,event):
         print("closing")
+        self.meas_data_writer.close_experiment()
         self.save_settings()
 ## FILE MENU ITEM
     
