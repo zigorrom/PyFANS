@@ -30,7 +30,10 @@ class FANS_AO_channel:
         self._polarity = None
         self._function = None
         self._enabled = None
-        self._output_pin = None
+        if self.ao_name == AO_CHANNELS.AO_201:
+            self._output_pin = AO_BOX_CHANNELS.ao_ch_9
+        else:
+            self._output_pin = AO_BOX_CHANNELS.ao_ch_1
         self._voltage = 0
 
     @property
@@ -107,14 +110,14 @@ class FANS_AO_Channel_Switch:
         ao_channel = self._ao_channels[dev_channel]
         ao_channel.ao_output_pin = fans_ao_channel
         
-        ao1_channel = self._ao_channels[AO_CHANNELS.AO_202]
-        ao2_channel = self._ao_channels[AO_CHANNELS.AO_201]
+        ao1_channel = self._ao_channels[AO_CHANNELS.AO_201]
+        ao2_channel = self._ao_channels[AO_CHANNELS.AO_202]
 
         if ao1_channel.ao_output_pin is None:
-            ao1_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_1
+            ao1_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_9
 
         if ao2_channel.ao_output_pin is None:
-            ao2_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_8
+            ao2_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_1
 
         ao1_selected_out = AO_BOX_CHANNELS.ao_ch_1 if ao1_channel.ao_output_pin < 0 else ao1_channel.ao_output_pin
         ao2_selected_out = AO_BOX_CHANNELS.ao_ch_9 if ao2_channel.ao_output_pin < AO_BOX_CHANNELS.ao_ch_9 else ao2_channel.ao_output_pin
@@ -602,11 +605,23 @@ def main():
     ao_chan2 = FANS_AO_channel(AO_CHANNELS.AO_202, device)
 
     switch = FANS_AO_Channel_Switch(device, ao_chan1,ao_chan2)
-    for channel in AO_BOX_CHANNELS.indexes:
-        output = switch.select_channel(channel)
-        print(AO_CHANNELS[output.ao_name])
-        output.ao_voltage = 1
-        output.ao_voltage = 0
+
+    switch.select_channel(AO_BOX_CHANNELS.ao_ch_1)
+    switch.select_channel(AO_BOX_CHANNELS.ao_ch_9)
+
+    ao_chan1.ao_voltage = 1
+    ao_chan2.ao_voltage = 2
+
+    
+    ao_chan1.ao_voltage = 0
+    ao_chan2.ao_voltage = 0
+    
+    #for channel in AO_BOX_CHANNELS.indexes:
+    #    output = switch.select_channel(channel)
+    #    print(AO_CHANNELS[output.ao_name])
+    #    print(AO_BOX_CHANNELS[channel])
+    #    output.ao_voltage = 1
+    #    output.ao_voltage = 0
     #cfg = Configuration()
     #f = FANS_controller("ADC",configuration=cfg)
     #f._set_output_channels(AO_BOX_CHANNELS.ao_ch_1,True,AO_BOX_CHANNELS.ao_ch_9,False)
