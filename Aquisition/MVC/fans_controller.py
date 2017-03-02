@@ -119,51 +119,39 @@ class FANS_AO_Channel_Switch:
         if ao2_channel.ao_output_pin is None:
             ao2_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_1
 
-        ao1_selected_out = AO_BOX_CHANNELS.ao_ch_1 if ao1_channel.ao_output_pin < 0 else ao1_channel.ao_output_pin
-        ao2_selected_out = AO_BOX_CHANNELS.ao_ch_9 if ao2_channel.ao_output_pin < AO_BOX_CHANNELS.ao_ch_9 else ao2_channel.ao_output_pin
-
-        ao1_out_enabled = True # False if ao1_selected_out < 0 else True
-        ao2_out_enabled = True # False if ao2_selected_out < 0 else True
-
-        #ao1_out_enabled = False if ao1_selected_out is None else True
-        #ao2_out_enabled = False if ao2_selected_out is None else True
-
-        self._set_output_channels(ao1_selected_out, ao1_out_enabled, ao2_selected_out,ao2_out_enabled)
+        self._set_output_channels(ao1_channel.ao_output_pin, True, ao2_channel.ao_output_pin,True)
 
         return ao_channel
 
 
 
     def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
-        if ao1_channel<AO_BOX_CHANNELS.ao_ch_9 and ao2_channel> AO_BOX_CHANNELS.ao_ch_8 and (ao2_channel % (NUMBER_OF_SWITCH_CHANNELS-1)) < AO_BOX_CHANNELS.ao_ch_9:
+        if ao1_channel<AO_BOX_CHANNELS.ao_ch_9 or ao1_channel > AO_BOX_CHANNELS.ao_ch_16:
+            raise ValueError("Output channel for AO_201 is wrong")
+        if ao2_channel<AO_BOX_CHANNELS.ao_ch_1 or ao2_channel > AO_BOX_CHANNELS.ao_ch_8:
+            raise ValueError("Output channel for AO_202 is wrong")
 
-            ###
-            ###     bag with setting the enable bits
-            ###
-            ao2_channel = ao2_channel-AO_BOX_CHANNELS.ao_ch_9
+        ###
+        ###     bag with setting the enable bits
+        ###
+        ao1_channel = ao1_channel-AO_BOX_CHANNELS.ao_ch_9
+        ao1_enable_bit_mask = 1<<7
+        ao1_disable_bit_mask = ~ao1_enable_bit_mask
+        ao2_enable_bit_mask = 1<<3
+        ao2_disable_bit_mask = ~ao2_enable_bit_mask
+        channels_enab = ao1_enable_bit_mask | ao2_enable_bit_mask
+        if not ao1_enabled:
+            channels_enab = channels_enab&ao1_disable_bit_mask
+        if not ao2_enabled:
+            channels_enab = channels_enab&ao2_disable_bit_mask
 
-            ao1_enable_bit_mask = 1<<3
-            ao1_disable_bit_mask = ~ao1_enable_bit_mask
-            ao2_enable_bit_mask = 1<<7
-            ao2_disable_bit_mask = ~ao2_enable_bit_mask
-        
-    ##        print("ao1_enable {0:08b}".format(ao1_enable))
-    ##        print("ao2_enable {0:08b}".format(ao2_enable))
-            channels_enab = ao1_enable_bit_mask | ao2_enable_bit_mask
-            if not ao1_enabled:
-                channels_enab = channels_enab&ao1_disable_bit_mask
-            if not ao2_enabled:
-                channels_enab = channels_enab&ao2_disable_bit_mask
-
-    ##        print("enable {0:08b}".format(channels_enab))
-            channels = (ao2_channel<<4)|ao1_channel
-    ##        print("channels {0:08b}".format(channels))
-            val_to_write = channels_enab|channels
-            print("value to write {0:08b}".format(val_to_write))
-            self._parent_device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
-            self._parent_device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
-        else:
-            raise Exception("Incorrect channel values")
+        channels = (ao1_channel<<4)|ao2_channel
+##        print("channels {0:08b}".format(channels))
+        val_to_write = channels_enab|channels
+        print("value to write {0:08b}".format(val_to_write))
+        self._parent_device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
+        self._parent_device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+       
 
 
 
@@ -603,25 +591,36 @@ def main():
 
     ao_chan1 = FANS_AO_channel(AO_CHANNELS.AO_201, device)
     ao_chan2 = FANS_AO_channel(AO_CHANNELS.AO_202, device)
-
+    
     switch = FANS_AO_Channel_Switch(device, ao_chan1,ao_chan2)
+    out = switch.select_channel(AO_BOX_CHANNELS.ao_ch_1)
 
-    switch.select_channel(AO_BOX_CHANNELS.ao_ch_1)
-    switch.select_channel(AO_BOX_CHANNELS.ao_ch_9)
+    for i in np.arange(-10,10,0.5):
+        out.ao_voltage = i
+        time.sleep(1)
 
-    ao_chan1.ao_voltage = 1
-    ao_chan2.ao_voltage = 2
-
-    
-    ao_chan1.ao_voltage = 0
-    ao_chan2.ao_voltage = 0
-    
     #for channel in AO_BOX_CHANNELS.indexes:
     #    output = switch.select_channel(channel)
     #    print(AO_CHANNELS[output.ao_name])
     #    print(AO_BOX_CHANNELS[channel])
     #    output.ao_voltage = 1
     #    output.ao_voltage = 0
+    #val_to_write = 0xCC
+    #device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
+    #device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+    #ao_chan1.ao_voltage = 1
+    #ao_chan2.ao_voltage = 2
+
+    #switch.select_channel(AO_BOX_CHANNELS.ao_ch_1)
+    #switch.select_channel(AO_BOX_CHANNELS.ao_ch_9)
+
+    #ao_chan1.ao_voltage = 1
+    #ao_chan2.ao_voltage = 2
+
+    
+    #ao_chan1.ao_voltage = 0
+    #ao_chan2.ao_voltage = 0
+    
     #cfg = Configuration()
     #f = FANS_controller("ADC",configuration=cfg)
     #f._set_output_channels(AO_BOX_CHANNELS.ao_ch_1,True,AO_BOX_CHANNELS.ao_ch_9,False)
