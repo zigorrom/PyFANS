@@ -24,13 +24,14 @@ from settings import WndTutorial
 
 class FANS_AO_channel:
     def __init__(self,name,parent_device):
-        self._parent_device = AgilentU2542A("")
+        self._parent_device = parent_device
         self._name = name
         self._range = None
         self._polarity = None
         self._function = None
         self._enabled = None
-        #self._output_pin = None
+        self._output_pin = None
+        self._voltage = 0
 
     @property
     def ao_name(self):
@@ -68,6 +69,15 @@ class FANS_AO_channel:
         self._parent_device.daq_set_ao_channel_polarity(self.ao_polarity,self.ao_name)
 
     @property
+    def ao_voltage(self):
+        return self._voltage 
+
+    @ao_voltage.setter
+    def ao_voltage(self,value):
+        self._voltage = value
+        self._parent_device.dac_source_channel_voltage(value,self.ao_name)
+
+    @property
     def ao_function(self):
         return self._function
 
@@ -86,26 +96,48 @@ class FANS_AO_channel:
 
 
 class FANS_AO_Channel_Switch:
-    def __init__(self, parent_device, ao1_channel, ao2_channel):
+    def __init__(self, parent_device, *channels):
         self._parent_device = parent_device
-        self._ao_channels = {AO_CHANNELS.AO_201: ao1_channel, AO_CHANNELS.AO_202: ao2_channel}
+        self._ao_channels = {channel.ao_name: channel for channel in channels}
+        #self._ao_channels = {AO_CHANNELS.AO_201: ao1_channel, AO_CHANNELS.AO_202: ao2_channel}
         
 
     def select_channel(self, fans_ao_channel):
         dev_channel = BOX_AO_CHANNEL_MAP[fans_ao_channel]
         ao_channel = self._ao_channels[dev_channel]
         ao_channel.ao_output_pin = fans_ao_channel
+        
+        ao1_channel = self._ao_channels[AO_CHANNELS.AO_202]
+        ao2_channel = self._ao_channels[AO_CHANNELS.AO_201]
 
+        if ao1_channel.ao_output_pin is None:
+            ao1_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_1
 
+        if ao2_channel.ao_output_pin is None:
+            ao2_channel.ao_output_pin = AO_BOX_CHANNELS.ao_ch_8
+
+        ao1_selected_out = AO_BOX_CHANNELS.ao_ch_1 if ao1_channel.ao_output_pin < 0 else ao1_channel.ao_output_pin
+        ao2_selected_out = AO_BOX_CHANNELS.ao_ch_9 if ao2_channel.ao_output_pin < AO_BOX_CHANNELS.ao_ch_9 else ao2_channel.ao_output_pin
+
+        ao1_out_enabled = True # False if ao1_selected_out < 0 else True
+        ao2_out_enabled = True # False if ao2_selected_out < 0 else True
+
+        #ao1_out_enabled = False if ao1_selected_out is None else True
+        #ao2_out_enabled = False if ao2_selected_out is None else True
+
+        self._set_output_channels(ao1_selected_out, ao1_out_enabled, ao2_selected_out,ao2_out_enabled)
+
+        return ao_channel
 
 
 
     def _set_output_channels(self,ao1_channel,ao1_enabled,ao2_channel,ao2_enabled):
-        if ao1_channel<NUMBER_OF_SWITCH_CHANNELS and ao2_channel>= NUMBER_OF_SWITCH_CHANNELS and (ao2_channel % NUMBER_OF_SWITCH_CHANNELS) < NUMBER_OF_SWITCH_CHANNELS:
+        if ao1_channel<AO_BOX_CHANNELS.ao_ch_9 and ao2_channel> AO_BOX_CHANNELS.ao_ch_8 and (ao2_channel % (NUMBER_OF_SWITCH_CHANNELS-1)) < AO_BOX_CHANNELS.ao_ch_9:
 
             ###
             ###     bag with setting the enable bits
             ###
+            ao2_channel = ao2_channel-AO_BOX_CHANNELS.ao_ch_9
 
             ao1_enable_bit_mask = 1<<3
             ao1_disable_bit_mask = ~ao1_enable_bit_mask
@@ -126,7 +158,7 @@ class FANS_AO_Channel_Switch:
             val_to_write = channels_enab|channels
             print("value to write {0:08b}".format(val_to_write))
             self._parent_device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
-            self._parent_device._pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
+            self._parent_device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
         else:
             raise Exception("Incorrect channel values")
 
@@ -560,53 +592,69 @@ class FANS_controller:
     
 
 def main():
-    #device = AgilentU2542A("ADC")
-    #channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.AC)
-    #channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.AC)
-    #channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.AC)
-    #channel = FANS_AI_channel(AI_CHANNELS.AI_104, device, mode = AI_MODES.AC)
+    device = AgilentU2542A("ADC")
+    channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.DC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.DC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.DC)
+    channel = FANS_AI_channel(AI_CHANNELS.AI_104, device, mode = AI_MODES.DC)
+
+    ao_chan1 = FANS_AO_channel(AO_CHANNELS.AO_201, device)
+    ao_chan2 = FANS_AO_channel(AO_CHANNELS.AO_202, device)
+
+    switch = FANS_AO_Channel_Switch(device, ao_chan1,ao_chan2)
+    for channel in AO_BOX_CHANNELS.indexes:
+        output = switch.select_channel(channel)
+        print(AO_CHANNELS[output.ao_name])
+        output.ao_voltage = 1
+        output.ao_voltage = 0
+    #cfg = Configuration()
+    #f = FANS_controller("ADC",configuration=cfg)
+    #f._set_output_channels(AO_BOX_CHANNELS.ao_ch_1,True,AO_BOX_CHANNELS.ao_ch_9,False)
+    #f.fans_output_voltage(1,1)
+
+
     
     #channel.ai_filter_cutoff = 
-    
+    #switch = FANS_AO_Channel_Switch(device,
 
 
 # UNCOMMENT THIS TO TEST FUNCTIONONALITY
-    cfg = Configuration()
-    f = FANS_controller("ADC",configuration = cfg)
-    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+#    cfg = Configuration()
+#    f = FANS_controller("ADC",configuration = cfg)
+#    f.init_acquisition(500000,50000,[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
     
-    app = QtGui.QApplication(sys.argv)
-    app.setStyle("cleanlooks")
+#    app = QtGui.QApplication(sys.argv)
+#    app.setStyle("cleanlooks")
     
-    wnd = WndTutorial(configuration = cfg)
-##    wnd.show()
-##    sys.exit(app.exec_())
-    #f.fans_output_voltage(0,0)
-    #time.sleep(2)
-    #f.fans_output_voltage(6,-6)
-    #time.sleep(2)
-    #f.fans_output_voltage(0,4)
-    #time.sleep(2)
-    #f.fans_output_voltage(-6,6)
-    #time.sleep(2)
-    #f.fans_output_voltage(4,0)
-    #time.sleep(2)
-    #f.fans_output_voltage(0,0)
-    f.start_acquisition()
-##    sleep(1)
-    try:
-        c = 0
-        while True:
-##            print(c)
-            c+=1
-##            sleep(1)
-            if not f.acquisition_alive():
-                break
-    except Exception as e:
-        print(str(e))
-    finally:       
-        print("stopping acquisition")
-        f.stop_acquisition()
+#    wnd = WndTutorial(configuration = cfg)
+###    wnd.show()
+###    sys.exit(app.exec_())
+#    #f.fans_output_voltage(0,0)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(6,-6)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(0,4)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(-6,6)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(4,0)
+#    #time.sleep(2)
+#    #f.fans_output_voltage(0,0)
+#    f.start_acquisition()
+###    sleep(1)
+#    try:
+#        c = 0
+#        while True:
+###            print(c)
+#            c+=1
+###            sleep(1)
+#            if not f.acquisition_alive():
+#                break
+#    except Exception as e:
+#        print(str(e))
+#    finally:       
+#        print("stopping acquisition")
+#        f.stop_acquisition()
 
 if __name__ == "__main__":
     main()

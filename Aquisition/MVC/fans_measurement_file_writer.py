@@ -8,12 +8,15 @@ from os import getcwd
 
 
 class NoiseExperimentWriter:
-    def __init__(self, working_folder = ""):
+    def __init__(self, working_folder = "", noise_buffer_size = -1, timetrace_buffer_size = -1):
         self._workingFolder = working_folder
         if not working_folder:
             self._workingFolder = getcwd()
         
         print(self.working_directory)
+
+        self._noise_buffer_size = noise_buffer_size
+        self._timetrace_buffer_size = timetrace_buffer_size
 
         self._measurement_file_extention = "dat"
         self._measurement_file_postfix = "meas"
@@ -65,7 +68,7 @@ class NoiseExperimentWriter:
         if not self._measurement_data_file.closed:
             self._measurement_data_file.close()
 
-    def open_measurement(self, measurement_name, *args,**kwargs):
+    def open_measurement(self, measurement_name, async_writing = False, *args,**kwargs):
         dir = self.working_directory
         noise_fname = self._generate_filename(dir, measurement_name, self._noise_file_postifix,self._noise_file_extention)
         timetrace_fname = self._generate_filename(dir, measurement_name, self._timetrace_file_postfix, self._timetrace_file_extention)
@@ -75,9 +78,11 @@ class NoiseExperimentWriter:
         if isfile(timetrace_fname):
             raise FileExistsError("File already exists: {0}".format(timetrace_fname))
 
-        self._noise_file = open(noise_fname, "ab")
-        self._timetrace_file = open(timetrace_fname, "ab")
+        self._noise_file = open(noise_fname, "ab",buffering = self._noise_buffer_size)
+        self._timetrace_file = open(timetrace_fname, "ab", buffering = self._timetrace_buffer_size)
         self.__write_measurement_data(measurement_name, *args,**kwargs)
+        #if async_writing:
+        #    self._
 
 
     def close_measurement(self):
@@ -106,6 +111,9 @@ class NoiseExperimentWriter:
         #print(timetrace)
         np.savetxt(self._timetrace_file, timetrace)
 
+    def write_timetrace_async(self,timetrace):
+        pass
+
 
     def write_noise_data(self, noise):
         shape = np.shape(noise)
@@ -118,7 +126,8 @@ class NoiseExperimentWriter:
         #print(noise)
         np.savetxt(self._noise_file, noise)
     
-
+    def write_noise_async(self, noise):
+        pass
 
 
 def main():

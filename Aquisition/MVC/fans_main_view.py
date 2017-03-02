@@ -30,7 +30,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         
 
         self.configuration = Configuration()
-        self.meas_data_writer = NoiseExperimentWriter("D:\\TestData")
+        self.meas_data_writer = NoiseExperimentWriter("D:\\TestData", timetrace_buffer_size = self.points_per_shot*10)
         self.meas_data_writer.open_experiment("test_experiment")
         self.meas_data_writer.open_measurement("meas1")
 
