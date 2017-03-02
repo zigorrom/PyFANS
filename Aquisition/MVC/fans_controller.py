@@ -612,8 +612,6 @@ def main():
     #f._set_output_channels(AO_BOX_CHANNELS.ao_ch_1,True,AO_BOX_CHANNELS.ao_ch_9,False)
     #f.fans_output_voltage(1,1)
 
-
-    
     #channel.ai_filter_cutoff = 
     #switch = FANS_AO_Channel_Switch(device,
 
