@@ -21,20 +21,28 @@ from settings import WndTutorial
 #filter_gain
 #pga_gain
 
-
+##
+##  NEW VERSION
+##
 class FANS_AO_channel:
     def __init__(self,name,parent_device):
         self._parent_device = parent_device
         self._name = name
-        self._range = None
-        self._polarity = None
+        self._range = DAQ_RANGES.RANGE_10
+        self._polarity = POLARITIES.BIP
         self._function = None
-        self._enabled = None
+        self._enabled = STATES.ON
         if self.ao_name == AO_CHANNELS.AO_201:
             self._output_pin = AO_BOX_CHANNELS.ao_ch_9
         else:
             self._output_pin = AO_BOX_CHANNELS.ao_ch_1
         self._voltage = 0
+
+
+    def set_hardware_params(self):
+        self.ao_enabled = self.ao_enabled
+        self.ao_range = self.ao_range
+        self.ao_polarity = self.ao_polarity
 
     @property
     def ao_name(self):
@@ -96,8 +104,6 @@ class FANS_AO_channel:
     def ao_output_pin(self,value):
         self._output_pin = value
 
-
-
 class FANS_AO_Channel_Switch:
     def __init__(self, parent_device, *channels):
         self._parent_device = parent_device
@@ -151,14 +157,6 @@ class FANS_AO_Channel_Switch:
         print("value to write {0:08b}".format(val_to_write))
         self._parent_device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
         self._parent_device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
-       
-
-
-
-    
-
-
-
 
 class FANS_AI_channel:
     def __init__(self, name, parent_device, range = DAQ_RANGES.RANGE_10, polarity = POLARITIES.BIP, mode = AI_MODES.DC, cs_hold = CS_HOLD.OFF, filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f150, filter_gain = FILTER_GAINS.x1, pga_gain = PGA_GAINS.x1):
@@ -205,6 +203,12 @@ class FANS_AI_channel:
         self._parent_device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
         self._parent_device.pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
     
+
+    def set_hardware_params(self):
+        self.ai_enabled = self.ai_enabled
+        self.ai_range = self.ai_range
+        self.ai_polarity = self.ai_polarity
+        
 
     @property
     def ai_name(self):
@@ -293,19 +297,92 @@ class FANS_AI_channel:
     @ai_pga_gain.setter
     def ai_pga_gain(self,value):
         self._pga_gain = value
-        #self._set_fans_ai_channel_params()
-
-
-
-
 
 class FANS_AI_multichannel(FANS_AI_channel):
     def __init__(self, names, parent_device):
         super(FANS_AI_channel,self).__init__(names, parent_device)
 
+class FANS_AQUISITION_CONTROLLER:
+    def __init__(self, fans_controller):
+        self._fans_controller = fans_controller
+
+
+class FANS_CONTROLLER:
+    def __init__(self,visa_resource):
+        self._device = AgilentU2542A(visa_resource)
+        self.fans_reset()
+        self._ai_channels = {ch: FANS_AI_channel(ch, self.fans_device) for ch in AI_CHANNELS.indexes}
+        self._ao_channels = {ch: FANS_AO_channel(ch, self.fans_device) for ch in AO_CHANNELS.indexes}
+        self._ao_switch = FANS_AO_Channel_Switch(self.fans_device, *self._ao_channels.values())
+        self.initialize_hardware()
+
+    def initialize_hardware(self):
+        ## CALL DIG DAQ HARDWARE INITIALIZATION
+        self.__init_daq_dig_channels()
+
+        ## CALL DAQ HARDWARE INITIALIZATION
+        self.__init_ai_channels()
+        self.__init_ao_channels()
+        
+
+    def __init_daq_dig_channels(self):
+        self.fans_device.dig_set_direction(DIGITAL_DIRECTIONS.OUTP,DIGITAL_CHANNELS.indexes)
+
+    def __init_ai_channels(self):
+        for name, channel in self._ai_channels.items():
+            channel.set_hardware_params()
+            channel.set_fans_ai_channel_params()
+            
+
+    def __init_ao_channels(self):
+        for name, channel in self._ao_channels.items():
+            channel.set_hardware_params()
 
 
 
+    def set_configuration(self,configuration):
+        self._config = configuration
+        self.__apply_configuration()
+
+    def __apply_cofiguration(self):
+        pass
+
+    def set_data_storage(self,data_storage):
+        self._data_storage = data_storage
+    
+    def fans_reset(self):
+        self.fans_device.daq_reset()
+
+    @property
+    def fans_device(self):
+        return self._device
+
+    @property
+    def fans_ao_switch(self):
+        return self._ao_switch
+
+    def get_ai_channel(self, channel):
+        return self._ai_channels[channel]
+
+    def get_ao_channel(self,channel):
+        return self._ao_channels[channel]
+
+    def analog_read(self,channels):
+        arg_type = type(channels)
+        if arg_type is tuple: channels = list(channels)
+        elif arg_type is not list: channels = [channels]
+        channels.sort()
+        channel_value_pairs = self.fans_device.adc_measure(channels)
+        if len(channel_value_pairs) == 1:
+            return list(channel_value_pairs.values())[0]
+        return channel_value_pairs
+
+    def analog_read_averaging(self,averaging):
+        return self.fans_device.adc_set_voltage_average(averaging)
+
+##
+##  OLD VERSION
+##
 
 class FANS_controller:
     def __init__(self, visa_resource="ADC", data_storage=None, configuration = None):

@@ -65,53 +65,7 @@ def generate_state_dictionary(enabled, output_channel, feedback_channel, polarit
     return {OUT_ENABLED_CH:enabled, OUT_CH:output_channel, FEEDBACK_CH:feedback_channel, POLARITY_RELAY_CH: polarity_relay_channel, CH_POLARITY:FANS_POSITIVE_POLARITY}
 
 
-class FANS_CONTROLLER:
-    def __init__(self,visa_resource):
-        self._device = AgilentU2542A(visa_resource)
-        self.fans_reset()
-        self._ai_channels = {ch: FANS_AI_channel(ch, self.fans_device) for ch in AI_CHANNELS.indexes}
-        self._ao_channels = {ch: FANS_AO_channel(ch, self.fans_device) for ch in AO_CHANNELS.indexes}
-        self._ao_switch = FANS_AO_Channel_Switch(self.fans_device, *self._ao_channels.values())
 
-    def set_configuration(self,configuration):
-        self._config = configuration
-        self.__apply_configuration()
-
-    def __apply_cofiguration(self):
-        pass
-
-    def set_data_storage(self,data_storage):
-        self._data_storage = data_storage
-    
-    def fans_reset(self):
-        self.fans_device.daq_reset()
-
-    @property
-    def fans_device(self):
-        return self._device
-
-    @property
-    def fans_ao_switch(self):
-        return self._ao_switch
-
-    def get_ai_channel(self, channel):
-        return self._ai_channels[channel]
-
-    def get_ao_channel(self,channel):
-        return self._ao_channels[channel]
-
-    def analog_read(self,channels):
-        arg_type = type(channels)
-        if arg_type is tuple: channels = list(channels)
-        elif arg_type is not list: channels = [channels]
-        channels.sort()
-        channel_value_pairs = self.fans_device.adc_measure(channels)
-        if len(channel_value_pairs) == 1:
-            return list(channel_value_pairs.values())[0]
-        return channel_value_pairs
-
-    def analog_read_averaging(self,averaging):
-        return self.fans_device.adc_set_voltage_average(averaging);
     
 
 
@@ -214,10 +168,6 @@ class FANS_SMU:
     def init_smu_mode(self):
         # here use multichannel !!!
         ai_feedback = self._fans_controller.get_ai_channel(self.smu_drain_source_feedback)
-        print("test click")
-        ai_feedback.ai_mode = AI_MODES.AC
-        ai_feedback.set_fans_ai_channel_params()
-        time.sleep(1)
         ai_feedback.ai_mode = AI_MODES.DC
         ai_feedback.set_fans_ai_channel_params()
 
@@ -293,7 +243,7 @@ class FANS_SMU:
                         value_to_set = -abs_value
                     else:
                         value_to_set = abs_value
-            print("current: {0}; to set: {1}".format(current_value, value_to_set))    
+            print("current: {0}; goal: {1};to set: {2};".format(current_value,voltage, value_to_set))    
             output_channel.ao_voltage = value_to_set 
 
 
@@ -316,7 +266,7 @@ class FANS_SMU:
 
         ### fix divide by zero exception
         try:
-            current = (main_voltage-ds_voltage)/self.load_resistance
+            current = (main_voltage-ds_voltage)/self.smu_load_resistance
             resistance = ds_voltage/current
         except ZeroDivisionError:
             current = 0
@@ -325,7 +275,7 @@ class FANS_SMU:
         return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
 
 
-
+    
 class fans_smu:
     def __init__(self, fans_controller):
         self.fans_controller = fans_controller
@@ -543,12 +493,18 @@ class fans_smu:
             resistance = 0
         
         return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
-        
 
 
-##    def set_fans_voltage(self, voltage,channel):
-##        pass
-##    
+
+
+
+
+  
+
+
+#    def set_fans_voltage(self, voltage,channel):
+#        pass
+#    
 
 
 if __name__ == "__main__":
@@ -557,22 +513,31 @@ if __name__ == "__main__":
     smu = FANS_SMU(f, AO_BOX_CHANNELS.ao_ch_1, AO_BOX_CHANNELS.ao_ch_4, AI_CHANNELS.AI_101, AO_BOX_CHANNELS.ao_ch_9, AO_BOX_CHANNELS.ao_ch_12, AI_CHANNELS.AI_102, AI_CHANNELS.AI_103, 5000)
 
     
-        
-    
-    for i in AI_CHANNELS.indexes:
-        chan = f.get_ai_channel(i)
-        print(chan.ai_name)
-        chan.ai_mode = AI_MODES.AC
-        chan.set_fans_ai_channel_params()
+    #for i in AI_CHANNELS.indexes:
+    #    chan = f.get_ai_channel(i)
+    #    print(chan.ai_name)
+    #    chan.ai_mode = AI_MODES.AC
+    #    chan.set_fans_ai_channel_params()
 
-        time.sleep(1)
+    #    time.sleep(1)
 
-        chan.ai_mode = AI_MODES.DC
-        chan.set_fans_ai_channel_params()
+    #    chan.ai_mode = AI_MODES.DC
+    #    chan.set_fans_ai_channel_params()
 
     try:
-        smu.smu_set_drain_source_voltage(1)
-        print(smu.read_all_parameters())
+
+        for vds in np.arange(3,-3,-0.2):
+          print("setting drain-source")
+          smu.smu_set_drain_source_voltage(vds)
+          print("setting gate")
+          smu.smu_set_gate_voltage(vds)
+          print(smu.read_all_parameters())
+          
+          time.sleep(2)
+
+        print("finish")
+        #smu.smu_set_drain_source_voltage(-1)
+        #print(smu.read_all_parameters())
     except Exception as e:
         raise
         print(str(e))
@@ -629,11 +594,5 @@ if __name__ == "__main__":
     #    print(str(e))
     #finally:
     #    smu.set_hardware_voltage_channels(0, AO_CHANNELS.indexes)
-
-
-
-
-
-
 
 
