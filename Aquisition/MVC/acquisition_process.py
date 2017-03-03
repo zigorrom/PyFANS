@@ -93,15 +93,15 @@ class Acquisition(Process):
                             
                             
                         
-                        arr = total_array[:,fill_value:new_fill_value]
+                        total_array[:,fill_value:new_fill_value] = data
                         print("slice was taken")
                         print(arr)
                         fill_value = new_fill_value % fs
 
                         if second_range is None:
-                            freq_2, second_range = periodogram(arr, fs)
+                            freq_2, second_range = periodogram(data, fs)
                         else:
-                            f, psd = periodogram(arr, fs)
+                            f, psd = periodogram(data, fs)
                             #np.average((self.average, data['p']), axis=0, weights=(self.average_counter - 1, 1))
                             second_range = np.average((second_range,psd),axis=0,weights=(f2_aver_counter - 1, 1))   
 
@@ -121,14 +121,14 @@ class Acquisition(Process):
                             #counter += npoints
                             t = time.time()-init_time
 
-                            df1 = freq_1[1]
-                            df2 = freq_2[1]
+                            df1 = 1/fs
+                            df2 = 1/new_fs
 
                             freq1_idx = math.floor(f1_max/df1)+1
                             freq2_idx = math.ceil(f1_max/df2)+1
 
                             res_freq  = np.hstack((freq_1[1:freq1_idx],freq_2[freq2_idx:]))
-                            res = np.hstack((first_range[1:freq1_idx],second_range[freq2_idx:]))
+                            res = np.hstack((first_range[:,1:freq1_idx],second_range[:,freq2_idx:]))
 
 
                             #data = read_data()
@@ -382,12 +382,27 @@ def multiply_by_coef(a, counter):
     return res
 
 def main():
-    counter = Counter()
-    arr = np.ones((4,10)) #np.random.randn(4,10)
-    res_arr = np.random.randn(10)
-    np.apply_along_axis(fill_array,1, arr, res_arr, counter, 2,8)
-    print(arr)
-    print(res)
+
+    width = 4
+    len = 20
+    nsamp = 5
+    ds = int(len/nsamp)
+    total_arr = np.ones((width,len))
+    fill_val =0
+
+    for i in range(0,ds):
+        arr = np.ones((width,nsamp))*i
+        new_fill_val = fill_val + nsamp
+        total_arr[:,fill_val:new_fill_val] = arr
+        fill_val = new_fill_val
+     
+    print(total_arr)
+
+    #counter = Counter()
+    #arr = np.ones((4,10)) #np.random.randn(4,10)
+    #np.apply_along_axis(fill_array,1, arr, res_arr, counter, 2,8)
+    #print(arr)
+    #print(res)
     
     
 if __name__ == '__main__':
