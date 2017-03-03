@@ -164,6 +164,7 @@ class FANS_AI_channel:
     def __init__(self, name, parent_device, range = DAQ_RANGES.RANGE_10, polarity = POLARITIES.BIP, mode = AI_MODES.DC, cs_hold = CS_HOLD.OFF, filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f150, filter_gain = FILTER_GAINS.x1, pga_gain = PGA_GAINS.x1):
         self._parent_device = parent_device
         self.ai_name = name
+        self.ai_enabled = STATES.ON
         self.ai_range = range
         self.ai_polarity = polarity
         self.ai_function = None
