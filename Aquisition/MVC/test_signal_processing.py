@@ -175,7 +175,7 @@ def multichannel_acquisition():
     counter = 0
     fs = 500000
     npoints = 50000
-    max_count = fs*10  
+    max_count = fs*1000
     
     print("started")
     #init_time = time.time()
@@ -200,10 +200,10 @@ def multichannel_acquisition():
         f2_aver_counter += 1
         new_fill_value = fill_value+npoints
         data = np.random.randn(nchan,npoints)
-        print("data have been read")
+        #print("data have been read")
                         
         total_array[:,fill_value:new_fill_value] = data
-        print("slice was taken")
+        #print("slice was taken")
         
         fill_value = new_fill_value % fs
 
@@ -248,12 +248,12 @@ def multichannel_acquisition():
 
 if __name__ == "__main__":
     #analyze_timetrace()
-    res_freq, res = multichannel_acquisition()
-    print(res_freq)
-    print(res)
-    r1,r2,r3,r4 = res
-    plt.loglog(res_freq, r1,"r",res_freq, r2,"g",res_freq, r3,"b",res_freq, r4,"c")
-    plt.show()
+    #res_freq, res = multichannel_acquisition()
+    #print(res_freq)
+    #print(res)
+    #r1,r2,r3,r4 = res
+    #plt.loglog(res_freq, r1,"r",res_freq, r2,"g",res_freq, r3,"b",res_freq, r4,"c")
+    #plt.show()
 
     #result = None
     #freq = None
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     ##plt.semilogy(freq,result,'r')
     #plt.show()  
 
-
+    print(timeit.Timer(multichannel_acquisition).timeit(number=1))
     #print(timeit.Timer(main).timeit(number=1))
     
     #main()
