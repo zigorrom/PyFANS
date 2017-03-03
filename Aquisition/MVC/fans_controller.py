@@ -303,6 +303,9 @@ class FANS_AI_multichannel(FANS_AI_channel):
         super(FANS_AI_channel,self).__init__(names, parent_device)
 
 
+
+
+
 class FANS_controller:
     def __init__(self, visa_resource="ADC", data_storage=None, configuration = None):
         self.visa_resource = visa_resource
@@ -583,7 +586,7 @@ class FANS_controller:
     
 
 def main():
-    device = AgilentU2542A("ADC")
+    device = AgilentU2542A("USB0::0x0957::0x1718::TW52524501::INSTR")#"ADC")
     channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.DC)
     channel = FANS_AI_channel(AI_CHANNELS.AI_102, device, mode = AI_MODES.DC)
     channel = FANS_AI_channel(AI_CHANNELS.AI_103, device, mode = AI_MODES.DC)
@@ -595,16 +598,17 @@ def main():
     switch = FANS_AO_Channel_Switch(device, ao_chan1,ao_chan2)
     out = switch.select_channel(AO_BOX_CHANNELS.ao_ch_1)
 
-    for i in np.arange(-10,10,0.5):
-        out.ao_voltage = i
-        time.sleep(1)
+    #for i in np.arange(-10,10,0.5):
+    #    out.ao_voltage = i
+    #    time.sleep(1)
 
-    #for channel in AO_BOX_CHANNELS.indexes:
-    #    output = switch.select_channel(channel)
-    #    print(AO_CHANNELS[output.ao_name])
-    #    print(AO_BOX_CHANNELS[channel])
-    #    output.ao_voltage = 1
-    #    output.ao_voltage = 0
+    for channel in AO_BOX_CHANNELS.indexes:
+        output = switch.select_channel(channel)
+        print(AO_CHANNELS[output.ao_name])
+        print(AO_BOX_CHANNELS[channel])
+        output.ao_voltage = 1
+        time.sleep(5)
+        output.ao_voltage = 0
     #val_to_write = 0xCC
     #device.dig_write_channel(val_to_write,DIGITAL_CHANNELS.DIG_501)
     #device.pulse_digital_bit(AO_DAC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)

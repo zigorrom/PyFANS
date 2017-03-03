@@ -8,7 +8,7 @@ from os import getcwd
 
 
 class NoiseExperimentWriter:
-    def __init__(self, working_folder = "", noise_buffer_size = -1, timetrace_buffer_size = -1):
+    def __init__(self, working_folder = "", use_next_available_name = True, noise_buffer_size = -1, timetrace_buffer_size = -1):
         self._workingFolder = working_folder
         if not working_folder:
             self._workingFolder = getcwd()
@@ -31,12 +31,21 @@ class NoiseExperimentWriter:
         self._timetrace_file = None
         self._noise_file = None
 
+        self._use_next_available_name = use_next_available_name
     
     #def __enter__(self):
     #    pass
         
     #def __exit__(self, type, value, traceback):
     #    self.close_experiment()
+
+    @property
+    def use_next_available_filename(self):
+        return self._use_next_available_name
+
+    @use_next_available_filename.setter
+    def use_next_available_filename(self,value):
+        self._use_next_available_name = value
 
 
     @property
@@ -67,16 +76,30 @@ class NoiseExperimentWriter:
         self.close_measurement()
         if not self._measurement_data_file.closed:
             self._measurement_data_file.close()
+    
+
+
+    def __get_next_available_name(self,path, measurement_name, postfix,extention):
+        fname = self._generate_filename(path, measurement_name, postfix, extention)
+        counter = 0
+        while isfile(fname):
+            fname = self._generate_filename(path,"{0}_{1}".format(measurement_name,counter), postfix,extention)
+            counter += 1
+        return fname
+
 
     def open_measurement(self, measurement_name, async_writing = False, *args,**kwargs):
         dir = self.working_directory
         noise_fname = self._generate_filename(dir, measurement_name, self._noise_file_postifix,self._noise_file_extention)
         timetrace_fname = self._generate_filename(dir, measurement_name, self._timetrace_file_postfix, self._timetrace_file_extention)
-
-        if isfile(noise_fname):
-            raise FileExistsError("File already exists: {0}".format(noise_fname))
-        if isfile(timetrace_fname):
-            raise FileExistsError("File already exists: {0}".format(timetrace_fname))
+        if self.use_next_available_filename:
+            noise_fname = self.__get_next_available_name(dir, measurement_name, self._noise_file_postifix, self._noise_file_extention)
+            timetrace_fname = self.__get_next_available_name(dir, measurement_name, self._timetrace_file_postfix, self._timetrace_file_extention)
+        else:
+            if isfile(noise_fname):
+                raise FileExistsError("File already exists: {0}".format(noise_fname))
+            if isfile(timetrace_fname):
+                raise FileExistsError("File already exists: {0}".format(timetrace_fname))
 
         self._noise_file = open(noise_fname, "ab",buffering = self._noise_buffer_size)
         self._timetrace_file = open(timetrace_fname, "ab", buffering = self._timetrace_buffer_size)

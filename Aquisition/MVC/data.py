@@ -156,7 +156,7 @@ class DataHandler(QtCore.QObject):
         self.start_task(self.update_average, data)
         self.start_task(self.update_peak_hold_max, data)
         self.start_task(self.update_peak_hold_min, data)
-        self.start_task(self.write_to_file,self.timetrace_time.copy(),self.timetrace_data.copy())
+        #self.start_task(self.write_to_file,self.timetrace_time.copy(),self.timetrace_data.copy())
     
     
     def update_history(self, data):

@@ -1,6 +1,6 @@
 from PyQt4 import QtCore, QtGui, uic
 import sys
-import pyglet
+#import pyglet
 
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
 from data import DataHandler
@@ -30,7 +30,7 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         
 
         self.configuration = Configuration()
-        self.meas_data_writer = NoiseExperimentWriter("D:\\TestData", timetrace_buffer_size = self.points_per_shot*10)
+        self.meas_data_writer = NoiseExperimentWriter("F:\\TestData", timetrace_buffer_size = self.points_per_shot*10)
         self.meas_data_writer.open_experiment("test_experiment")
         self.meas_data_writer.open_measurement("meas1")
 
@@ -41,8 +41,9 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
         self.data_storage.history_updated.connect(self.timeNoisePlotWidget.update_plot)
         #self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
         #self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
-
-        self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
+        
+        #self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
+        self.fans_controller = FANS_controller("USB0::0x0957::0x1718::TW52524501::INSTR",self.data_storage,configuration=self.configuration)
         
         for channel in AI_CHANNELS.indexes:
             self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f150,FILTER_GAINS.x15, PGA_GAINS.x100, channel)
@@ -141,9 +142,9 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
 
     def stop(self):
         self.fans_controller.stop_acquisition()
-        music = pyglet.resource.media("stop.mp3")
-        music.play()
-        pyglet.app.run()
+        #music = pyglet.resource.media("stop.mp3")
+        #music.play()
+        #pyglet.app.run()
 
 
     @QtCore.pyqtSlot()
