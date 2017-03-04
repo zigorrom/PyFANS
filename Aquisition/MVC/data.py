@@ -172,6 +172,8 @@ class DataHandler(QtCore.QObject):
         frequency_bins = data['f']
         self.waterfallScale =  (frequency_bins[-1] - frequency_bins[0]) / len(frequency_bins)   #scale = (data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins)
         print("waterfall scale = {0}".format(self.waterfallScale))
+        #print(frequency_bins)
+        #print(data["p"][self.__visualize_index])
         self.history.append(data["p"][self.__visualize_index])
         self.history_updated.emit(self)
     

@@ -324,14 +324,16 @@ class WaterfallPlotWidget:
 
         # Setup histogram widget (for controlling waterfall plot levels and gradients)
         if self.histogram_layout:
-            self.histogram = pg.HistogramLUTItem()
+            self.histogram = pg.HistogramLUTItem(fillHistogram = False)
             self.histogram_layout.addItem(self.histogram)
             self.histogram.gradient.loadPreset("flame")
+            
+            #self.histogram.gradient.setOrientation("left")
             #self.histogram.setHistogramRange(-50, 0)
             
 
-            self.histogram.setLevels(1e-18, 1e-4)
-            self.histogram.setHistogramRange(1e-18,1e-4)
+            self.histogram.setLevels(1e-14, 1e-10)
+            self.histogram.setHistogramRange(1e-14,1e-10)
 
     def update_plot(self, data_storage):
         """Update waterfall plot"""
@@ -349,6 +351,7 @@ class WaterfallPlotWidget:
             self.plot.addItem(self.waterfallImg)
 
         
+
         # Roll down one and replace leading edge with new data
         self.waterfallImg.setImage(data_storage.history.buffer[-self.counter:].T,
                                    autoLevels=False, autoRange=False)
@@ -356,11 +359,11 @@ class WaterfallPlotWidget:
 
         # Move waterfall image to always start at 0
         self.waterfallImg.setPos(
-            data_storage.frequency_bins[0],
+            1,#data_storage.frequency_bins[0],
             -self.counter if self.counter < self.history_size else -self.history_size
         )
 
-        #print("updating waterfal plot")
+        print("updating waterfal plot")
         #print(data_storage.history.buffer[-self.counter:].T)
         # Link histogram widget to waterfall image on first run
         # (must be done after first data is received or else levels would be wrong)

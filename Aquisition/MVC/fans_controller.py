@@ -373,7 +373,18 @@ class FANS_AQUISITION_CONTROLLER:
     def daq_additional_amplifier_amplification(self,value):
         self._additional_amplifier_amplification = value
 
+    
+    def daq_init_acquisition(self):
+        pass
 
+    def daq_start_acquisition(self):
+        pass
+
+    def daq_stop_acquisition(self):
+        pass
+
+    def daq_acquisition_is_alive(self):
+        pass
 
 
 class FANS_CONTROLLER:
@@ -448,6 +459,7 @@ class FANS_CONTROLLER:
 
     def analog_read_averaging(self,averaging):
         return self.fans_device.adc_set_voltage_average(averaging)
+
 
 ##
 ##  OLD VERSION
