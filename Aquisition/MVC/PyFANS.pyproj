@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{88615012-01f1-43ad-ae1d-4377348eb129}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>test_signal_processing.py</StartupFile>
+    <StartupFile>fans_window.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -45,6 +45,9 @@
     </Compile>
     <Compile Include="fans_plot.py" />
     <Compile Include="fans_smu.py" />
+    <Compile Include="fans_window.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="nodes.py" />
     <Compile Include="node_configuration.py" />
     <Compile Include="n_enum.py" />

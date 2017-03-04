@@ -41,6 +41,8 @@ class TimetracePlotWidget:
             return
 
         if self.main_curve or force:
+            print("updating timetrace")
+            #print(data_storage.timetrace_data)
             self.curve.setData(data_storage.timetrace_time, data_storage.timetrace_data[self.__visualize_index])
             if force:
                 print("forced plot")
@@ -328,8 +330,8 @@ class WaterfallPlotWidget:
             #self.histogram.setHistogramRange(-50, 0)
             
 
-            self.histogram.setLevels(1e-12, 1e-11)
-            self.histogram.setHistogramRange(1e-12,1e-11)
+            self.histogram.setLevels(1e-18, 1e-4)
+            self.histogram.setHistogramRange(1e-18,1e-4)
 
     def update_plot(self, data_storage):
         """Update waterfall plot"""

@@ -1,6 +1,6 @@
 import time
 import math
-from fans_controller import FANS_controller, FANS_AI_channel,FANS_AO_channel,FANS_AO_Channel_Switch
+from fans_controller import FANS_controller, FANS_AI_channel,FANS_AO_channel,FANS_AO_Channel_Switch, FANS_CONTROLLER
 from fans_constants import *
 from agilent_u2542a_constants import *
 from node_configuration import Configuration
@@ -240,9 +240,9 @@ class FANS_SMU:
                 abs_value = math.fabs(value_to_set)
                 if voltage * current_value < 0:
                     if voltage > 0:
-                        value_to_set = -abs_value
-                    else:
                         value_to_set = abs_value
+                    else:
+                        value_to_set = -abs_value
             print("current: {0}; goal: {1};to set: {2};".format(current_value,voltage, value_to_set))    
             output_channel.ao_voltage = value_to_set 
 
@@ -526,16 +526,22 @@ if __name__ == "__main__":
 
     try:
 
-        for vds in np.arange(3,-3,-0.2):
-          print("setting drain-source")
-          smu.smu_set_drain_source_voltage(vds)
-          print("setting gate")
-          smu.smu_set_gate_voltage(vds)
-          print(smu.read_all_parameters())
+        #for vds in np.arange(1,-1,-0.2):
+        #  print("setting drain-source")
+        #  smu.smu_set_drain_source_voltage(vds)
+        #  print("setting gate")
+        #  smu.smu_set_gate_voltage(vds)
+        #  print(smu.read_all_parameters())
           
-          time.sleep(2)
+        #  time.sleep(2)
+        smu.smu_set_drain_source_voltage(1)
+        smu.smu_set_gate_voltage(1)
+        smu.smu_set_drain_source_voltage(-1)
+        smu.smu_set_gate_voltage(-1)
 
-        print("finish")
+        smu.smu_set_drain_source_voltage(0)
+        smu.smu_set_gate_voltage(0)
+        #print("finish")
         #smu.smu_set_drain_source_voltage(-1)
         #print(smu.read_all_parameters())
     except Exception as e:

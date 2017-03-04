@@ -91,7 +91,7 @@ class DataHandler(QtCore.QObject):
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
         self.sampling_period = 1/sample_rate
-        self.time_length = points_per_shot/sample_rate
+        self.time_length = sample_rate/ sample_rate  #points_per_shot/sample_rate
         # data['t']
         self.current_time = 0
 
@@ -145,7 +145,7 @@ class DataHandler(QtCore.QObject):
 ##            data["y"] = self.smooth_data(data["y"])
 
         new_time = self.current_time+self.time_length
-        self.timetrace_time = np.linspace(self.current_time,new_time,self.points_per_shot,dtype = float)
+        self.timetrace_time = np.linspace(self.current_time,new_time,self.sample_rate,dtype = float)
         self.current_time = new_time
         print(self.timetrace_time)
         self.timetrace_data = data['d']
@@ -171,6 +171,7 @@ class DataHandler(QtCore.QObject):
         
         frequency_bins = data['f']
         self.waterfallScale =  (frequency_bins[-1] - frequency_bins[0]) / len(frequency_bins)   #scale = (data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins)
+        print("waterfall scale = {0}".format(self.waterfallScale))
         self.history.append(data["p"][self.__visualize_index])
         self.history_updated.emit(self)
     

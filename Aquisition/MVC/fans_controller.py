@@ -208,7 +208,12 @@ class FANS_AI_channel:
         self.ai_enabled = self.ai_enabled
         self.ai_range = self.ai_range
         self.ai_polarity = self.ai_polarity
-        
+
+    @property        
+    def ai_amplification(self):
+        if self.ai_mode == AI_MODES.AC:
+            return self.ai_filter_gain*self.ai_pga_gain
+        return 1
 
     @property
     def ai_name(self):
@@ -305,6 +310,70 @@ class FANS_AI_multichannel(FANS_AI_channel):
 class FANS_AQUISITION_CONTROLLER:
     def __init__(self, fans_controller):
         self._fans_controller = fans_controller
+        self._sample_rate = None
+        self._recording_time = None
+        self._noise_averaging = None
+        self._use_homemade_amplifier = False
+        self._homemade_amplifier_amplification = 178
+
+        self._use_additional_amplifier = False
+        self._additional_amplifier_amplification = 1
+
+
+    @property
+    def daq_sample_rate(self):
+        return self._sample_rate
+
+    @daq_sample_rate.setter
+    def daq_sample_rate(self,value):
+        self._sample_rate = value
+
+    @property
+    def daq_recording_time(self):
+        return self._recording_time
+
+    @daq_recording_time.setter
+    def daq_recording_time(self,value):
+        self._recording_time = value
+        
+    @property
+    def daq_noise_averaging(self):
+        return self._noise_averaging
+
+    @daq_noise_averaging.setter
+    def daq_noise_averaging(self,value):
+        self._noise_averaging = value
+
+    @property
+    def daq_use_homemade_amplifier(self):
+        self._use_homemade_amplifier
+    
+    @daq_use_homemade_amplifier.setter
+    def daq_use_homemade_amplifier(self,value):
+        self._use_homemade_amplifier = value
+
+    @property
+    def daq_homemade_amplifier_amplification(self):
+        return self._homemade_amplifier_amplification
+
+
+    @property
+    def daq_use_additional_amplifier(self):
+        return self._use_additional_amplifier 
+    
+    @daq_use_additional_amplifier.setter
+    def daq_use_additional_amplifier(self,value):
+        self._use_additional_amplifier = value
+        
+    @property
+    def daq_additional_amplifier_amplification(self):
+        return self._additional_amplifier_amplification
+
+    @daq_additional_amplifier_amplification.setter
+    def daq_additional_amplifier_amplification(self,value):
+        self._additional_amplifier_amplification = value
+
+
 
 
 class FANS_CONTROLLER:
