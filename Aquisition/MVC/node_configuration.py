@@ -5,9 +5,10 @@ from nodes import *
 from xml_serializer import XmlNodeSerializer
 configuration_filename = "config.xml"
 
-class Configuration(QtCore.QObject):
-    threadStarted = QtCore.pyqtSignal()
+class Configuration(object):
+    
     def __init__(self):
+
         self.rootNode = None
         fileExist = self._config_file_exist()
         if fileExist:
@@ -16,6 +17,8 @@ class Configuration(QtCore.QObject):
         else:
             print("default tree")
             self.rootNode = self._get_default_tree()
+        
+
         
     def get_root_node(self):
         return self.rootNode
@@ -135,8 +138,12 @@ def name_changed(value,sender):
         
         print("from callback {0}".format(value))
 
+def initialized():
+    print("initialized")
+
 def main():
     c = Configuration()
+    
     root = c.get_root_node()
     print(root)
     path = "input_settings.ch1"

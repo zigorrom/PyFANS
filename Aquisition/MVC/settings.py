@@ -526,16 +526,117 @@ class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm
         self._dataMapper.setCurrentModelIndex(current)
 
 
+channel_settings_base, channel_settings_form = uic.loadUiType("Views/AI_Channels_Settings.ui")
+class ChannelSettingsEditor(channel_settings_base,channel_settings_form):
+    def __init__(self,root_node, parent = None):
+        super(channel_settings_base,self).__init__(parent)
+        self.setupUi(self)
+        
+        self.ui_ai_channels = InChannelEditor(self)
+        self.ui_ao_channels = OutChannelEditor(self)
+        self.ui_editor_layout.addWidget(self.ui_ai_channels)
+        self.ui_editor_layout.addWidget(self.ui_ao_channels)
+
+
+        self._proxyModel = QtGui.QSortFilterProxyModel(self)
+        self._model = SettingsModel(root_node, self)
+
+        self._proxyModel.setSourceModel(self._model)
+        self._proxyModel.setDynamicSortFilter(True)
+        self._proxyModel.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        
+        self._proxyModel.setSortRole(SettingsModel.sortRole)
+        self._proxyModel.setFilterRole(SettingsModel.filterRole)
+        self._proxyModel.setFilterKeyColumn(0)
+        
+        #self.ui_channels_view.setModel(self._proxyModel)
+        self.setModel(self._proxyModel)
+        QtCore.QObject.connect(self.ui_channels_view.selectionModel(), QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.setSelection)
+
+        self.ui_ai_channels.setVisible(False)
+        self.ui_ao_channels.setVisible(False)
+
+
+    def setModel(self,proxyModel):
+        self.ui_channels_view.setModel(self._proxyModel)
+        self.ui_ai_channels.setModel(self._proxyModel)
+        self.ui_ao_channels.setModel(self._proxyModel)
+        
+    def setSelection(self,current,old):
+        current = self._proxyModel.mapToSource(current)
+        node = current.internalPointer()
+        if node is not None:
+            typeInfo = node.typeInfo()
+
+        if typeInfo is "IN_CHANNEL":
+            self.ui_ai_channels.setVisible(True)
+            self.ui_ao_channels.setVisible(False)
+            self.ui_ai_channels.setSelection(current)
+        elif typeInfo is "OUT_CHANNEL":
+            self.ui_ai_channels.setVisible(False)
+            self.ui_ao_channels.setVisible(True)
+            self.ui_ao_channels.setSelection(current)
+        else:
+            self.ui_ai_channels.setVisible(False)
+            self.ui_ao_channels.setVisible(False)
+
+
+
+ #def setSelection(self, current, old):
+
+ #       current = self._proxyModel.mapToSource(current)
+
+ #       node = current.internalPointer()
+        
+ #       if node is not None:
+ #           typeInfo = node.typeInfo()
+        
+ #       self._setAllControlsVisibility(False)
+ #       if typeInfo is not "NODE":
+ #           self._setControlVisibility(typeInfo, True)
+ #           self._setSelectionForType(typeInfo, current)
+
+ #       self._nodeEditor.setSelection(current)
+        
+           
+ #       #else:
+ #       #    self._labelEditor.setVisible(False)
+ #       #    self._comboEditor.setVisible(False)
+ #       #    self._checkEditor.setVisible(False)
+ #       #    self._numericEditor.setVisible(False)
+ #       #    self._inChannelEditor.setVisible(False)
+ #       #    self._acquisitionEditor.setVisible(False)
+ #       #    self._outChannelEditot.setVisible(False)
+
+            
+        
+    
+ #   def setModel(self, proxyModel):
+        
+ #       self._proxyModel = proxyModel
+        
+ #       self._nodeEditor.setModel(proxyModel)
+
+ #       self._setModelForControls(proxyModel)
+
+
 
 if __name__ == '__main__':
     
     app = QtGui.QApplication(sys.argv)
     app.setStyle("cleanlooks")
     
-    wnd = WndTutorial()
-    wnd.show()
+    #wnd = WndTutorial()
+    #wnd.show()
 
-    t = Node
+    #t = Node
+    cfg = Configuration()
+    node = cfg.get_node_from_path("input_settings")
+    wnd = ChannelSettingsEditor(node)
+    wnd.show()
     
+    #node = cfg.get_node_from_path("out_settings")
+    #wnd = ChannelSettingsEditor(node)
+    #wnd.show()
     
     sys.exit(app.exec_())
