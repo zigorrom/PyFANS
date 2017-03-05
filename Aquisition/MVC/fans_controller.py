@@ -5,7 +5,7 @@ from agilent_u2542a import *
 from agilent_u2542a_constants import *
 from node_configuration import Configuration
 from multiprocessing import Process, Event, JoinableQueue
-from acquisition_process import Acquisition,AcquisitionProcess
+from acquisition_process import AcquisitionThread,ProcessingThread
 from PyQt4 import QtCore, QtGui
 from settings import WndTutorial
 
@@ -311,14 +311,30 @@ class FANS_AQUISITION_CONTROLLER:
     def __init__(self, fans_controller):
         self._fans_controller = fans_controller
         self._sample_rate = None
-        self._recording_time = None
+        self._points_per_shot = None
+        #self._recording_time = None
+        self._total_samples = None
         self._noise_averaging = None
+        
         self._use_homemade_amplifier = False
         self._homemade_amplifier_amplification = 178
 
         self._use_additional_amplifier = False
         self._additional_amplifier_amplification = 1
 
+        self._data_queue = None
+        self._data_handler = None
+        self._data_aquisition_thread = None
+        self._data_processing_thread = None
+
+
+    @property
+    def daq_points_per_shot(self):
+        return self._points_per_shot
+
+    @daq_points_per_shot.setter
+    def daq_points_per_shot(self,value):
+        self._points_per_shot = value
 
     @property
     def daq_sample_rate(self):
@@ -329,12 +345,13 @@ class FANS_AQUISITION_CONTROLLER:
         self._sample_rate = value
 
     @property
-    def daq_recording_time(self):
-        return self._recording_time
+    def daq_total_samples(self):
+        return self._total_samples
 
-    @daq_recording_time.setter
-    def daq_recording_time(self,value):
-        self._recording_time = value
+    @daq_total_samples.setter
+    def daq_total_samples(self,value):
+        self._total_samples = value
+        
         
     @property
     def daq_noise_averaging(self):
@@ -343,6 +360,7 @@ class FANS_AQUISITION_CONTROLLER:
     @daq_noise_averaging.setter
     def daq_noise_averaging(self,value):
         self._noise_averaging = value
+        
 
     @property
     def daq_use_homemade_amplifier(self):
@@ -355,7 +373,6 @@ class FANS_AQUISITION_CONTROLLER:
     @property
     def daq_homemade_amplifier_amplification(self):
         return self._homemade_amplifier_amplification
-
 
     @property
     def daq_use_additional_amplifier(self):
@@ -374,21 +391,56 @@ class FANS_AQUISITION_CONTROLLER:
         self._additional_amplifier_amplification = value
 
     
-    def daq_init_acquisition(self):
-        pass
+    def daq_init_acquisition(self, data_handler):
+        self._data_queue = JoinableQueue()
+        self._data_handler = data_handler
+        self._fans_controller.fans_setup_acquisition(self.daq_sample_rate, self.daq_points_per_shot)
+        ###
+        ###     ENABLE CHANNELS FOR ACQUISITION HERE
+        ###
+        
+        self._data_aquisition_thread = AcquisitionThread(self._fans_controller.fans_visa_resource,self._data_queue, self.daq_sample_rate, self.daq_points_per_shot, self.daq_total_samples)
+        self._data_processing_thread = ProcessingThread(self._data_handler, self._data_queue)
+
+
 
     def daq_start_acquisition(self):
-        pass
+        if not (self._data_aquisition_thread and self._data_processing_thread):
+            raise BaseException("Acquisition was not initialized")
+
+        self._data_aquisition_thread.start()
+        self._data_processing_thread.start()
+        
 
     def daq_stop_acquisition(self):
-        pass
+        if not (self._data_aquisition_thread and self._data_processing_thread):
+            raise BaseException("Acquisition was not initialized")
 
+        self._data_aquisition_thread.stop()
+        self._data_aquisition_thread.join()
+
+        self._data_queue.join()
+
+        self._data_processing_thread.stop()
+        self._data_processing_thread.join()
+
+    @property
     def daq_acquisition_is_alive(self):
         pass
 
 
+# 
+
+
+
+
+
+
 class FANS_CONTROLLER:
     def __init__(self,visa_resource):
+
+        ### Catch errors occured during initialization
+        self._visa_resource = visa_resource
         self._device = AgilentU2542A(visa_resource)
         self.fans_reset()
         self._ai_channels = {ch: FANS_AI_channel(ch, self.fans_device) for ch in AI_CHANNELS.indexes}
@@ -434,6 +486,10 @@ class FANS_CONTROLLER:
         self.fans_device.daq_reset()
 
     @property
+    def fans_visa_resource(self):
+        return self._visa_resource
+
+    @property
     def fans_device(self):
         return self._device
 
@@ -446,6 +502,9 @@ class FANS_CONTROLLER:
 
     def get_ao_channel(self,channel):
         return self._ao_channels[channel]
+
+    def fans_setup_acquisition(self,sample_rate,points_per_shot):
+        self.fans_device.daq_setup(sample_rate,points_per_shot)
 
     def analog_read(self,channels):
         arg_type = type(channels)
@@ -604,9 +663,9 @@ class FANS_controller:
         t = 2400 #600 #16*60*60
 
 ##        data_storage = DataHandler(sample_rate=fs,points_per_shot = self.points_per_shot)
-        self.dac_proc = Acquisition(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
+        self.dac_proc = AcquisitionThread(self.visa_resource,self.data_queue, fs, self.points_per_shot, t*fs)
         #self.data_thread = AcquisitionProcess(None,self.data_queue)#self.data_storage,self.data_queue)
-        self.data_thread = AcquisitionProcess(self.data_storage,self.data_queue)
+        self.data_thread = ProcessingThread(self.data_storage,self.data_queue)
 
         self.dac_proc.start()
         self.data_thread.start()

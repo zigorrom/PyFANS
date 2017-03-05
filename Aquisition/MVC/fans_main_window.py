@@ -1,62 +1,54 @@
 from PyQt4 import QtCore, QtGui, uic
 import sys
-#import pyglet
 
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
-from data import DataHandler
-from fans_controller import FANS_controller
-from fans_constants import *
-from agilent_u2542a_constants import AI_CHANNELS
-from node_configuration import Configuration
-from fans_measurement_file_writer import NoiseExperimentWriter
 
 fans_main_view_base, fans_main_view_form = uic.loadUiType("Views/FANS_main_view.ui")
-class fans_main_view(fans_main_view_base,fans_main_view_form):
+class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
     def __init__(self,configuration = None, parent = None):
         super(fans_main_view_base,self).__init__(parent)
         self.setupUi(self)
         self.load_settings()
+        self.setup_fans_ui()
         self.setup_daq()
         
-    #def setup_fans_system(self,fans_controller, fans_smu)
+        
 
-    def setup_daq(self):
+    def setup_fans_ui(self):
         max_hist_size=  50
         self.spectrumPlotWidget = SpectrumPlotWidget(self.noisePlot,0)
         self.timetracePlotWidget = TimetracePlotWidget(self.timetracePlot,0)
         self.timeNoisePlotWidget = WaterfallPlotWidget(self.timeNoisePlot,  self.histogramPlotLayout, max_history_size=max_hist_size)
-        self.sample_rate = 500000
-        self.points_per_shot = 50000
-        
 
-        self.configuration = Configuration()
-        self.meas_data_writer = NoiseExperimentWriter("F:\\TestData", timetrace_buffer_size = self.points_per_shot*10)
-        self.meas_data_writer.open_experiment("test_experiment")
-        self.meas_data_writer.open_measurement("meas1")
-
-        self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot, max_history_size=max_hist_size, writer = self.meas_data_writer)
-        self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
-        self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
-        self.data_storage.data_updated.connect(self.timetracePlotWidget.update_plot)
-        self.data_storage.history_updated.connect(self.timeNoisePlotWidget.update_plot)
-        #self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
-        #self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
-        
-        #self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
-        self.fans_controller = FANS_controller("USB0::0x0957::0x1718::TW52524501::INSTR",self.data_storage,configuration=self.configuration)
-        
-        for channel in AI_CHANNELS.indexes:
-            self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f150,FILTER_GAINS.x2, PGA_GAINS.x1, channel)
-
-        
-        self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot, [AI_CHANNELS.AI_104]) #[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
-
-    def load_settings(self):
+    def setup_daq(self):
         pass
+        #self.configuration = Configuration()
+        #self.meas_data_writer = NoiseExperimentWriter("F:\\TestData", timetrace_buffer_size = self.points_per_shot*10)
+        #self.meas_data_writer.open_experiment("test_experiment")
+        #self.meas_data_writer.open_measurement("meas1")
+
+        #self.data_storage = DataHandler(sample_rate=self.sample_rate,points_per_shot = self.points_per_shot, max_history_size=max_hist_size, writer = self.meas_data_writer)
+        #self.data_storage.data_updated.connect(self.spectrumPlotWidget.update_plot)
+        #self.data_storage.average_updated.connect(self.spectrumPlotWidget.update_average)
+        #self.data_storage.data_updated.connect(self.timetracePlotWidget.update_plot)
+        #self.data_storage.history_updated.connect(self.timeNoisePlotWidget.update_plot)
+        ##self.data_storage.peak_hold_max_updated.connect(self.spectrumPlotWidget.update_peak_hold_max)
+        ##self.data_storage.peak_hold_min_updated.connect(self.spectrumPlotWidget.update_peak_hold_min)
+        
+        ##self.fans_controller = FANS_controller("ADC",self.data_storage,configuration=self.configuration)
+        #self.fans_controller = FANS_controller("USB0::0x0957::0x1718::TW52524501::INSTR",self.data_storage,configuration=self.configuration)
+        
+        #for channel in AI_CHANNELS.indexes:
+        #    self.fans_controller._set_fans_ai_channel_params(AI_MODES.AC, CS_HOLD.OFF, FILTER_CUTOFF_FREQUENCIES.f150,FILTER_GAINS.x2, PGA_GAINS.x1, channel)
+
+        
+        #self.fans_controller.init_acquisition(self.sample_rate,self.points_per_shot, [AI_CHANNELS.AI_104]) #[AI_CHANNELS.AI_101,AI_CHANNELS.AI_102,AI_CHANNELS.AI_103,AI_CHANNELS.AI_104])
+
+    
 
     def closeEvent(self,event):
         print("closing")
-        self.meas_data_writer.close_experiment()
+        #self.meas_data_writer.close_experiment()
         self.save_settings()
 ## FILE MENU ITEM
     
@@ -196,11 +188,13 @@ class fans_main_view(fans_main_view_base,fans_main_view_form):
 if __name__ == "__main__":
     
     app = QtGui.QApplication(sys.argv)
+    
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
-
-    wnd = fans_main_view()
+    app.setStyleSheet("QMainWindow {background: 'white';}")
+    wnd = FANS_MAIN_WINDOW()
     wnd.show()
+    
 
     sys.exit(app.exec_())
 

@@ -1,10 +1,27 @@
 from datetime import timedelta
+#from PyQt4 import QtCore
+from multiprocessing import Process, Event, JoinableQueue
 #import pandas as pd
 import numpy as np
 from numpy.random import randn
 
 from os.path import isfile, join
 from os import getcwd
+
+class AsyncWriter(Process):
+    def __init__(self,data_queue ,parent = None):
+        self._data_queue = JoinableQueue()
+        self._exit = Event()
+    
+    def stop(self):
+        self._exit.set() 
+
+    def run(self):
+        data_queue = self._data_queue
+        need_exit = self._exit.is_set
+        while not need_exit():
+            pass
+
 
 
 class NoiseExperimentWriter:
@@ -164,6 +181,7 @@ def main():
         for x in range(10):
             writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
             writer.write_noise_data(np.ones((100,2), dtype = np.float))
+        writer.close_measurement()
         
     writer.close_experiment()
 

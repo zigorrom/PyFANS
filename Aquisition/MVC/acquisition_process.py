@@ -11,7 +11,7 @@ import math
 This class implements acquisition from hardware and fourier tranform
 Need to implement amount of samples to acquire    
 """
-class Acquisition(Process):
+class AcquisitionThread(Process):
     """sample_rate is acquisition sample rate, points per shot - how much points would be acquired each time, total samples = acquiring time*sample_rate"""
     def __init__(self, visa_resource, data_queue, sample_rate, points_per_shot, total_samples, ):# child_pipe):
         super().__init__()
@@ -203,7 +203,7 @@ class Acquisition(Process):
             print("finished") 
 
 
-class AcquisitionProcess(QtCore.QThread):
+class ProcessingThread(QtCore.QThread):
     threadStarted = QtCore.pyqtSignal()
     threadStopped = QtCore.pyqtSignal()
 
