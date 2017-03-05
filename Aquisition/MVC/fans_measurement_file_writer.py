@@ -1,6 +1,6 @@
 from datetime import timedelta
 #from PyQt4 import QtCore
-from multiprocessing import Process, Event, JoinableQueue
+from multiprocessing import Process, Event, JoinableQueue, Queue
 #import pandas as pd
 import numpy as np
 from numpy.random import randn
@@ -9,18 +9,33 @@ from os.path import isfile, join
 from os import getcwd
 
 class AsyncWriter(Process):
-    def __init__(self,data_queue ,parent = None):
+    def __init__(self,filename ,parent = None):
+        super().__init__()
+        self._file = open(filename, "ab")
         self._data_queue = JoinableQueue()
         self._exit = Event()
     
     def stop(self):
         self._exit.set() 
+        self.join()
+
+    def writeAsync(self, data):
+        self._data_queue.put(data)
 
     def run(self):
-        data_queue = self._data_queue
-        need_exit = self._exit.is_set
-        while not need_exit():
-            pass
+        try:
+            data_queue = self._data_queue
+            need_exit = self._exit.is_set
+            while not need_exit():
+                try:
+                    data = data_queue.get_nowait()
+                    self._data_queue.task_done()
+                except Queue.Empty:
+                    pass
+        except Exception as e:
+            print(str(e))
+        finally:
+            self._file.close()
 
 
 
@@ -173,20 +188,26 @@ class NoiseExperimentWriter:
 def main():
     
     
-    writer = NoiseExperimentWriter("F:\\TestData")
-    writer.open_experiment("experiment")
+    #writer = NoiseExperimentWriter("F:\\TestData")
+    #writer.open_experiment("experiment")
     
-    for n_meas in range(10):
-        writer.open_measurement("meas_{0}".format(n_meas),"asdasdad", petro = "asdasd")
-        for x in range(10):
-            writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
-            writer.write_noise_data(np.ones((100,2), dtype = np.float))
-        writer.close_measurement()
+    #for n_meas in range(10):
+    #    writer.open_measurement("meas_{0}".format(n_meas),"asdasdad", petro = "asdasd")
+    #    for x in range(10):
+    #        writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
+    #        writer.write_noise_data(np.ones((100,2), dtype = np.float))
+    #    writer.close_measurement()
         
-    writer.close_experiment()
+    #writer.close_experiment()
 
     
+    w = AsyncWriter("F:\\TestData\\test.txt")
+    #w.stop()
+    w.start()
+    for n_meas in range(10):
+        w.writeAsync(np.ones((100,2),dtype = np.float))
     
+    w.stop()
 
 
 
