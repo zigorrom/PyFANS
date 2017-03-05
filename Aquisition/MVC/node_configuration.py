@@ -1,10 +1,12 @@
 import os
+from PyQt4 import QtCore
 ##from nXmlNodeSerializer
 from nodes import *
 from xml_serializer import XmlNodeSerializer
 configuration_filename = "config.xml"
 
-class Configuration(object):
+class Configuration(QtCore.QObject):
+    threadStarted = QtCore.pyqtSignal()
     def __init__(self):
         self.rootNode = None
         fileExist = self._config_file_exist()
@@ -129,7 +131,7 @@ class Configuration(object):
 
             
 
-def name_changed(selfvalue):
+def name_changed(value,sender):
         
         print("from callback {0}".format(value))
 
@@ -137,15 +139,15 @@ def main():
     c = Configuration()
     root = c.get_root_node()
     print(root)
-    path = "input_settings.ch1.enabled"
+    path = "input_settings.ch1"
 ##    c.set_binding(path,"name",name_changed)
     c.set_binding(path,"name",name_changed)
     node = c.get_node_from_path(path)
 ##    node.addObserver("name",name_changed)
     print(node)
     node.name = "asfgashfglkgkg"
-    print("_________")
-    print(node)
+    #print("_________")
+    #print(node)
 ##    if os.path.isfile(configuration_filename):
 ##        print("file exist")
 ##    else:

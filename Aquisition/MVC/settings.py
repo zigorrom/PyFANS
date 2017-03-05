@@ -204,6 +204,7 @@ class WndTutorial(base,form):
             self.config = configuration
             
         self._rootNode = self.config.get_root_node()
+        print(self.config.get_node_from_path("input_settings.ch1"))
 
         self._proxyModel = QtGui.QSortFilterProxyModel(self)
         self._model = SettingsModel(self._rootNode, self)
