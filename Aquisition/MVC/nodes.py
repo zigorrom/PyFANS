@@ -1,6 +1,8 @@
 
 from binding import Observable,notifiable_property
-           
+from fans_constants import *
+from agilent_u2542a_constants import *           
+
 ##class Node(object):
 class Node(Observable):
     def __init__(self, name = "unknown", parent=None):
@@ -342,14 +344,14 @@ class ComboNode(Node):
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
         super(InChannelNode,self).__init__(name,parent)
-        self._enabled = True#CheckNode("enabled", parent = self)
-        self._range = None #ComboNode("range", case_list=['One','Two','Three'], parent = self)
-        self._polarity = None#ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
+        self._enabled = STATES.ON#CheckNode("enabled", parent = self)
+        self._range = DAQ_RANGES.RANGE_10 #ComboNode("range", case_list=['One','Two','Three'], parent = self)
+        self._polarity = POLARITIES.BIP#ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
         self._function = None#ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
-        self._mode = None
-        self._filter_cutoff =None
-        self._filter_gain = None
-        self._pga_gain = None
+        self._mode = AI_MODES.DC
+        self._filter_cutoff =FILTER_CUTOFF_FREQUENCIES.f150
+        self._filter_gain = FILTER_GAINS.x1
+        self._pga_gain = PGA_GAINS.x1
 
     def mode():
         def fget(self): return self._mode
@@ -361,19 +363,19 @@ class InChannelNode(Node):
         def fget(self): return self._filter_cutoff
         def fset(self,value): self._filter_cutoff = value
         return locals()
-    filter_cutoff = notifiable_property("mode",**filter_cutoff())
+    filter_cutoff = notifiable_property("filter_cutoff",**filter_cutoff())
 
     def filter_gain():
         def fget(self): return self._filter_gain
         def fset(self,value): self._filter_gain = value
         return locals()
-    filter_gain = notifiable_property("mode",**filter_gain())
+    filter_gain = notifiable_property("filter_gain",**filter_gain())
 
     def pga_gain():
         def fget(self): return self._pga_gain
         def fset(self,value): self._pga_gain = value
         return locals()
-    pga_gain = notifiable_property("mode",**pga_gain())
+    pga_gain = notifiable_property("pga_gain",**pga_gain())
 
 
     def enabled():

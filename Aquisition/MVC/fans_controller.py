@@ -7,7 +7,7 @@ from node_configuration import Configuration
 from multiprocessing import Process, Event, JoinableQueue
 from acquisition_process import AcquisitionThread,ProcessingThread
 from PyQt4 import QtCore, QtGui
-from settings import WndTutorial
+from settings import WndTutorial, ChannelSettingsEditor
 
 
 
@@ -40,10 +40,10 @@ class FANS_AO_channel:
         self._voltage = 0
 
 
-    def set_hardware_params(self):
-        self.ao_enabled = self.ao_enabled
-        self.ao_range = self.ao_range
-        self.ao_polarity = self.ao_polarity
+    #def set_hardware_params(self):
+    #    self.ao_enabled = self.ao_enabled
+    #    self.ao_range = self.ao_range
+    #    self.ao_polarity = self.ao_polarity
 
     def apply_configuration(self, configuration):
         path = ".".join("input_settings", AI_CHANNELS.names[self.name])
@@ -166,6 +166,7 @@ class FANS_AO_Channel_Switch:
 class FANS_AI_channel:
     def __init__(self, name, parent_device, range = DAQ_RANGES.RANGE_10, polarity = POLARITIES.BIP, mode = AI_MODES.DC, cs_hold = CS_HOLD.OFF, filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f150, filter_gain = FILTER_GAINS.x1, pga_gain = PGA_GAINS.x1):
         self._parent_device = parent_device
+        self._first_initialization = True
         self._channel_configuration = None
         self.ai_name = name
         self.ai_enabled = STATES.ON
@@ -177,6 +178,7 @@ class FANS_AI_channel:
         self.ai_filter_cutoff = filter_cutoff
         self.ai_filter_gain = filter_gain
         self.ai_pga_gain = pga_gain
+        self._first_initialization = False
         self.set_fans_ai_channel_params()
 
     def __add__(self,other):
@@ -189,15 +191,71 @@ class FANS_AI_channel:
     #def stop_editing_parameter():
     #    pass 
 
+    #def channel
+
+
+    def ui_enabled_changed(self,value,sender):
+        print("ui_enabled_changed")
+        self.ai_enabled = value
+
+    def ui_range_changed(self,value,sender):
+        print("ui_range_changed")
+        print(value)
+
+    def ui_polarity_changed(self,value,sender):
+        print("ui_polarity_changed")
+        print(value)
+
+    def ui_function_changed(self,value,sender):
+        print("ui_function_changed")
+        print(value)
+
+    def ui_mode_changed(self,value,sender):
+        print("ui_mode_changed")
+        print(value)
+        value = AI_MODES.names.index(value)
+        self.ai_mode = value
+        
+
+    def ui_filter_cutoff_changed(self,value,sender):
+        print("ui_filter_cutoff_changed")
+        print(value)
+    
+    def ui_filter_gain_changed(self,value,sender):
+        print("ui_filter_gain_changed")
+        print(value)
+
+    def ui_pga_gain_changed(self,value,sender):
+        print("ui_pga_gain_changed")
+        print(value)
+
     def apply_configuration(self,configuration):
         path = ".".join(["input_settings", AI_CHANNELS.names[self.ai_name]])
         self._channel_configuration = configuration.get_node_from_path(path)
+        
         self.ai_enabled = self._channel_configuration.enabled
+        configuration.set_binding(path,"enabled", self.ui_enabled_changed)
+        
         self.ai_range = self._channel_configuration.selected_range
+        configuration.set_binding(path,"range", self.ui_range_changed)
+
         self.ai_polarity = self._channel_configuration.selected_polarity
+        configuration.set_binding(path,"polarity", self.ui_polarity_changed)
+
         self.ai_function = self._channel_configuration.selected_function
+        configuration.set_binding(path,"function", self.ui_function_changed)
 
+        self.ai_mode = self._channel_configuration.mode
+        configuration.set_binding(path,"mode", self.ui_mode_changed)
 
+        self.ai_filter_cutoff = self._channel_configuration.filter_cutoff
+        configuration.set_binding(path,"filter_cutoff", self.ui_filter_cutoff_changed)
+
+        self.ai_filter_gain = self._channel_configuration.filter_gain
+        configuration.set_binding(path,"filter_gain", self.ui_filter_gain_changed)
+
+        self.ai_pga_gain = self._channel_configuration.pga_gain
+        configuration.set_binding(path,"pga_gain", self.ui_pga_gain_changed)
 
 
     def set_fans_ai_channel_params(self):
@@ -283,7 +341,8 @@ class FANS_AI_channel:
     @ai_mode.setter
     def ai_mode(self,value):
         self._mode = value
-        #self._set_fans_ai_channel_params()
+        if not self._first_initialization:
+            self.set_fans_ai_channel_params()
     
     @property
     def ai_cs_hold(self):
@@ -292,7 +351,8 @@ class FANS_AI_channel:
     @ai_cs_hold.setter
     def ai_cs_hold(self,value):
         self._cs_hold = value
-        #self._set_fans_ai_channel_params()
+        if not self._first_initialization:
+            self.set_fans_ai_channel_params()
 
     @property
     def ai_filter_cutoff(self):
@@ -301,7 +361,8 @@ class FANS_AI_channel:
     @ai_filter_cutoff.setter
     def ai_filter_cutoff(self,value):
         self._filter_cutoff = value
-        #self._set_fans_ai_channel_params()
+        if not self._first_initialization:
+            self.set_fans_ai_channel_params()
 
     @property
     def ai_filter_gain(self):
@@ -310,7 +371,8 @@ class FANS_AI_channel:
     @ai_filter_gain.setter
     def ai_filter_gain(self,value):
         self._filter_gain = value
-        #self._set_fans_ai_channel_params()
+        if not self._first_initialization:
+            self.set_fans_ai_channel_params()
     
     @property
     def ai_pga_gain(self):
@@ -319,6 +381,8 @@ class FANS_AI_channel:
     @ai_pga_gain.setter
     def ai_pga_gain(self,value):
         self._pga_gain = value
+        if not self._first_initialization:
+            self.set_fans_ai_channel_params()
 
 class FANS_AI_multichannel(FANS_AI_channel):
     def __init__(self, names, parent_device):
@@ -480,14 +544,16 @@ class FANS_CONTROLLER:
         self.fans_device.dig_set_direction(DIGITAL_DIRECTIONS.OUTP,DIGITAL_CHANNELS.indexes)
 
     def __init_ai_channels(self):
-        for name, channel in self._ai_channels.items():
-            channel.set_hardware_params()
-            channel.set_fans_ai_channel_params()
+        pass
+        #for name, channel in self._ai_channels.items():
+        #    channel.set_hardware_params()
+        #    channel.set_fans_ai_channel_params()
             
 
     def __init_ao_channels(self):
-        for name, channel in self._ao_channels.items():
-            channel.set_hardware_params()
+        pass
+        #for name, channel in self._ao_channels.items():
+        #    channel.set_hardware_params()
 
 
 
@@ -830,11 +896,17 @@ class FANS_controller:
     
 
 def test():
+    app = QtGui.QApplication(sys.argv)
+    app.setStyle("cleanlooks")
 
     cfg = Configuration()
     f = FANS_CONTROLLER("USB0::0x0957::0x1718::TW52524501::INSTR")
     f.set_configuration(cfg)
+    node = cfg.get_node_from_path("input_settings")
+    wnd = ChannelSettingsEditor(node)
+    wnd.show()
 
+    sys.exit(app.exec_())
 
 
 def main():

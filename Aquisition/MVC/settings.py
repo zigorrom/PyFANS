@@ -485,7 +485,7 @@ class InChannelEditor(inChannelBase, inChannelForm):
         self.ui_pga_gain.clear()
         self.ui_pga_gain.addItems(PGA_GAINS.names)
 
-
+        
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
