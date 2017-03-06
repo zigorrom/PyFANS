@@ -476,6 +476,15 @@ class InChannelEditor(inChannelBase, inChannelForm):
         self.ui_polarity.addItems(POLARITIES.names)
         self.ui_function.clear()
         self.ui_function.addItems(FANS_AI_FUNCTIONS.names)
+        self.ui_mode.clear()
+        self.ui_mode.addItems(AI_MODES.names)
+        self.ui_filter_cutoff.clear()
+        self.ui_filter_cutoff.addItems(FILTER_CUTOFF_FREQUENCIES.names)
+        self.ui_filter_gain.clear()
+        self.ui_filter_gain.addItems(FILTER_GAINS.names)
+        self.ui_pga_gain.clear()
+        self.ui_pga_gain.addItems(PGA_GAINS.names)
+
 
 
     def setModel(self, proxyModel):
@@ -485,6 +494,10 @@ class InChannelEditor(inChannelBase, inChannelForm):
         self._dataMapper.addMapping(self.ui_range,3)
         self._dataMapper.addMapping(self.ui_polarity,4)
         self._dataMapper.addMapping(self.ui_function,5)
+        self._dataMapper.addMapping(self.ui_mode,6)
+        self._dataMapper.addMapping(self.ui_filter_cutoff,7)
+        self._dataMapper.addMapping(self.ui_filter_gain,8)
+        self._dataMapper.addMapping(self.ui_pga_gain,9)
         
     
     def setSelection(self,current):

@@ -346,6 +346,34 @@ class InChannelNode(Node):
         self._range = None #ComboNode("range", case_list=['One','Two','Three'], parent = self)
         self._polarity = None#ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
         self._function = None#ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
+        self._mode = None
+        self._filter_cutoff =None
+        self._filter_gain = None
+        self._pga_gain = None
+
+    def mode():
+        def fget(self): return self._mode
+        def fset(self,value): self._mode = value
+        return locals()
+    mode = notifiable_property("mode",**mode())
+
+    def filter_cutoff():
+        def fget(self): return self._filter_cutoff
+        def fset(self,value): self._filter_cutoff = value
+        return locals()
+    filter_cutoff = notifiable_property("mode",**filter_cutoff())
+
+    def filter_gain():
+        def fget(self): return self._filter_gain
+        def fset(self,value): self._filter_gain = value
+        return locals()
+    filter_gain = notifiable_property("mode",**filter_gain())
+
+    def pga_gain():
+        def fget(self): return self._pga_gain
+        def fset(self,value): self._pga_gain = value
+        return locals()
+    pga_gain = notifiable_property("mode",**pga_gain())
 
 
     def enabled():
@@ -391,6 +419,10 @@ class InChannelNode(Node):
         elif column is 3:   r = self.selected_range
         elif column is 4:   r = self.selected_polarity
         elif column is 5:   r = self.selected_function
+        elif column is 6:   r = self.mode
+        elif column is 7:   r = self.filter_cutoff
+        elif column is 8:   r = self.filter_gain
+        elif column is 9:   r = self.pga_gain
         return r
 
     def setData(self, column, value):
@@ -398,7 +430,11 @@ class InChannelNode(Node):
         if column is 2:     self.enabled = value
         elif column is 3:   self.selected_range = value
         elif column is 4:   self.selected_polarity = value
-        elif column is 5:   self.selected_function =value
+        elif column is 5:   self.selected_function = value
+        elif column is 6:   self.mode = value
+        elif column is 7:   self.filter_cutoff = value
+        elif column is 8:   self.filter_gain = value
+        elif column is 9:   self.pga_gain = value
         
 
 class OutChannelNode(Node):
