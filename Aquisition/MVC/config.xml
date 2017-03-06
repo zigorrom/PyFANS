@@ -1,0 +1,13 @@
+<NODE name="Settings">
+    <ACQUISITION_SETTINGS sample_rate="500000" amplifier="1" pga_amplifier="1" filter_cutoff="1" homemade_amplifier="1" filter_gain="1" name="acquisition_settings"/>
+    <NODE name="input_settings">
+        <IN_CHANNEL mode="0" selected_polarity="0" selected_range="0" filter_cutoff="15" filter_gain="0" enabled="0" selected_function="0" name="AI_101" pga_gain="0"/>
+        <IN_CHANNEL mode="0" selected_polarity="0" selected_range="0" filter_cutoff="15" filter_gain="0" enabled="0" selected_function="0" name="AI_102" pga_gain="0"/>
+        <IN_CHANNEL mode="1" selected_polarity="0" selected_range="0" filter_cutoff="15" filter_gain="0" enabled="0" selected_function="0" name="AI_103" pga_gain="1"/>
+        <IN_CHANNEL mode="1" selected_polarity="0" selected_range="0" filter_cutoff="15" filter_gain="9" enabled="1" selected_function="0" name="AI_104" pga_gain="1"/>
+    </NODE>
+    <NODE name="out_settings">
+        <OUT_CHANNEL selected_output="0" selected_polarity="0" selected_range="0" enabled="1" selected_function="0" name="AO_201"/>
+        <OUT_CHANNEL selected_output="0" selected_polarity="0" selected_range="0" enabled="1" selected_function="0" name="AO_202"/>
+    </NODE>
+</NODE>

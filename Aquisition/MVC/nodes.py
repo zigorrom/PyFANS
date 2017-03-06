@@ -117,8 +117,6 @@ class Node(Observable):
     def resource(self):
         return None
 
-
-
 class AcquisitionSettingsNode(Node):
     def __init__(self,name,parent=None):
         super(AcquisitionSettingsNode,self).__init__(name,parent)
@@ -197,9 +195,6 @@ class AcquisitionSettingsNode(Node):
         elif column is 6: self.filter_gain = value
         elif column is 7: self.filter_cutoff = value
 
-
-    
-
 class LabelNode(Node):
     def __init__(self,name, label = "",parent=None):
         super(LabelNode,self).__init__(name,parent)
@@ -228,10 +223,6 @@ class LabelNode(Node):
     def setData(self,column,value):
         super(LabelNode,self).setData(column,value)
         if column is 2: self._label = value#.toPyObject())
-        
-
-    
-    
 
 class NumericNode(Node):
     def __init__(self,name,  value = 10,parent = None):
@@ -263,7 +254,6 @@ class NumericNode(Node):
         super(NumericNode,self).setData(column,value)
         if column is 2: self.value = value#.toPyObject())
     
-
 class CheckNode(Node):
     def __init__(self,name,checked = False, parent=None):
         super(CheckNode,self).__init__(name,parent)
@@ -292,7 +282,6 @@ class CheckNode(Node):
         super(CheckNode,self).setData(column,value)
         if column is 2: self.checked = value#.toPyObject())
 
-    
 class ComboNode(Node):
     def __init__(self,name,case_list = [] , parent=None):
         super(ComboNode,self).__init__(name,parent)
@@ -347,7 +336,7 @@ class InChannelNode(Node):
         self._enabled = STATES.ON#CheckNode("enabled", parent = self)
         self._range = DAQ_RANGES.RANGE_10 #ComboNode("range", case_list=['One','Two','Three'], parent = self)
         self._polarity = POLARITIES.BIP#ComboNode("polarity",case_list=['Unipolar','Bipolar'],parent = self)
-        self._function = None#ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
+        self._function = FANS_AI_FUNCTIONS.DrainSourceVoltage#ComboNode("function",case_list=['Vds','Vlg','Vbg'],parent=  self)
         self._mode = AI_MODES.DC
         self._filter_cutoff =FILTER_CUTOFF_FREQUENCIES.f150
         self._filter_gain = FILTER_GAINS.x1
@@ -355,53 +344,53 @@ class InChannelNode(Node):
 
     def mode():
         def fget(self): return self._mode
-        def fset(self,value): self._mode = value
+        def fset(self,value): self._mode = int(value)
         return locals()
     mode = notifiable_property("mode",**mode())
 
     def filter_cutoff():
         def fget(self): return self._filter_cutoff
-        def fset(self,value): self._filter_cutoff = value
+        def fset(self,value): self._filter_cutoff = int(value)
         return locals()
     filter_cutoff = notifiable_property("filter_cutoff",**filter_cutoff())
 
     def filter_gain():
         def fget(self): return self._filter_gain
-        def fset(self,value): self._filter_gain = value
+        def fset(self,value): self._filter_gain = int(value)
         return locals()
     filter_gain = notifiable_property("filter_gain",**filter_gain())
 
     def pga_gain():
         def fget(self): return self._pga_gain
-        def fset(self,value): self._pga_gain = value
+        def fset(self,value): self._pga_gain = int(value)
         return locals()
     pga_gain = notifiable_property("pga_gain",**pga_gain())
 
 
     def enabled():
         def fget(self):return self._enabled
-        def fset(self,value): self._enabled = value
+        def fset(self,value): self._enabled = int(value)
         return locals()
     enabled = notifiable_property("enabled",**enabled())
 
     
     def selected_range():
         def fget(self): return self._range
-        def fset(self,value): self._range = value
+        def fset(self,value): self._range = int(value)
         return locals()
     selected_range = notifiable_property("range",**selected_range())
 
         
     def selected_polarity():
         def fget(self): return self._polarity
-        def fset(self,value): self._polarity= value
+        def fset(self,value): self._polarity= int(value)
         return locals()
     selected_polarity = notifiable_property("polarity",**selected_polarity())
 
     
     def selected_function():
         def fget(self): return self._function
-        def fset(self,value): self._function = value
+        def fset(self,value): self._function = int(value)
         return locals()
     selected_function = notifiable_property("function",**selected_function())
     
@@ -442,39 +431,39 @@ class InChannelNode(Node):
 class OutChannelNode(Node):
     def __init__(self,name,parent=None):
         super(OutChannelNode,self).__init__(name,parent)
-        self._enabled = True#CheckNode(name+"_enabled", parent = self)
-        self._range =  None#ComboNode(name+"_range", parent = self)
-        self._polarity = None#ComboNode(name+"_polarity",parent = self)
-        self._output_pin = None#ComboNode(name+"_out_pin",parent = self)
-        self._function = None#ComboNode(name+"_function",parent=  self)
+        self._enabled = STATES.ON#CheckNode(name+"_enabled", parent = self)
+        self._range =  DAQ_RANGES.RANGE_10#ComboNode(name+"_range", parent = self)
+        self._polarity = POLARITIES.BIP#ComboNode(name+"_polarity",parent = self)
+        self._output_pin = 0#ComboNode(name+"_out_pin",parent = self)
+        self._function = FANS_AI_FUNCTIONS.DrainSourceVoltage#ComboNode(name+"_function",parent=  self)
 
     def enabled():
         def fget(self):return self._enabled
-        def fset(self,value): self._enabled = value
+        def fset(self,value): self._enabled = int(value)
         return locals()
     enabled = notifiable_property("enabled",**enabled())
 
     def selected_range():
         def fget(self): return self._range
-        def fset(self,value): self._range = value
+        def fset(self,value): self._range = int(value)
         return locals()
     selected_range = notifiable_property("range",**selected_range())
 
     def selected_polarity():
         def fget(self): return self._polarity
-        def fset(self,value): self._polarity= value
+        def fset(self,value): self._polarity= int(value)
         return locals()
     selected_polarity = notifiable_property("polarity",**selected_polarity())
 
     def selected_function():
         def fget(self): return self._function
-        def fset(self,value): self._function = value
+        def fset(self,value): self._function = int(value)
         return locals()
     selected_function = notifiable_property("function",**selected_function())
 
     def selected_output():
         def fget(self): return self._output_pin
-        def fset(self,value): self._output_pin = value
+        def fset(self,value): self._output_pin = int(value)
         return locals()
     selected_output = notifiable_property("selected_output",**selected_output())
 

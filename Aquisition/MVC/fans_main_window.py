@@ -2,14 +2,36 @@ from PyQt4 import QtCore, QtGui, uic
 import sys
 
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
+from settings import WndTutorial, ChannelSettingsEditor
+from node_configuration import Configuration
+from fans_controller import FANS_CONTROLLER,FANS_AQUISITION_CONTROLLER
+from data import DataHandler
+from fans_measurement_file_writer import NoiseExperimentWriter
 
 fans_main_view_base, fans_main_view_form = uic.loadUiType("Views/FANS_main_view.ui")
 class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
     def __init__(self,configuration = None, parent = None):
         super(fans_main_view_base,self).__init__(parent)
         self.setupUi(self)
-        self.load_settings()
         self.setup_fans_ui()
+        self._configuration = Configuration()
+        ### make to import visa resource from configuration
+        self._fans_controller = FANS_CONTROLLER("USB0::0x0957::0x1718::TW52524501::INSTR")
+        self._fans_controller.set_configuration(self._configuration)
+        self._data_handler = DataHandler(max_history_size = 50)
+        self._data_handler.data_updated.connect(self.spectrumPlotWidget.update_plot)
+        self._data_handler.average_updated.connect(self.spectrumPlotWidget.update_average)
+        self._data_handler.data_updated.connect(self.timetracePlotWidget.update_plot)
+        self._data_handler.history_updated.connect(self.timeNoisePlotWidget.update_plot)
+
+        self._fans_acquisition = FANS_AQUISITION_CONTROLLER(self._fans_controller)
+        self._fans_acquisition.daq_sample_rate = 500000
+        self._fans_acquisition.daq_points_per_shot = 50000
+        self._fans_acquisition.daq_total_samples = 50000000
+        
+        
+        
+        self.load_settings()
         self.setup_daq()
         
         
@@ -39,7 +61,7 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
         folder_name = QtGui.QFileDialog.getExistingDirectory(self, "Select Folder")
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
-
+        
         msg.setText("This is a message box")
         msg.setInformativeText("This is additional information")
         msg.setWindowTitle("MessageBox demo")
@@ -55,38 +77,37 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
 ## SETTINGS MENU ITEM
     
     @QtCore.pyqtSlot()
-    def on_actionSaveAll_2_triggered(self):
-        print("save all")
-
-    @QtCore.pyqtSlot()
-    def on_actionLoadAll_triggered(self):
-        print("load all")
-
-    @QtCore.pyqtSlot()
-    def on_actionChannelSettings_triggered(self):
-        dialog = ChannelSettings(self)
-        if dialog.exec_():
-           print("channel settings")
+    def on_actionInputSettings_triggered(self):
+        node = self._configuration.get_node_from_path("input_settings")
+        dialog = ChannelSettingsEditor(node)
+        dialog.exec_()
+        #dialog = ChannelSettings(self)
+        #if dialog.exec_():
+        #   print("channel settings")
+        print("channel settings")
 
 
     @QtCore.pyqtSlot()
     def on_actionOutputSettings_triggered(self):
-        dialog = OutputSettings(self)
-        if dialog.exec_():
-            print("output settings")    
+        node = self._configuration.get_node_from_path("out_settings")
+        dialog = ChannelSettingsEditor(node)
+        dialog.exec_()
+        #dialog = OutputSettings(self)
+        #if dialog.exec_():
+        print("output settings")    
         
 
     @QtCore.pyqtSlot()  
     def on_actionAcquisitionSettings_triggered(self):
-        dialog = AcquisitionSettings(self)
-        if dialog.exec_():
-            print("acquisition settings")
+        #dialog = AcquisitionSettings(self)
+        #if dialog.exec_():
+        print("acquisition settings")
 
     @QtCore.pyqtSlot()  
     def on_actionPowerSupplySettings_triggered(self):
-        dialog = PowerSupplySettings(self)
-        if dialog.exec_():
-            print("acquisition settings")
+        #dialog = PowerSupplySettings(self)
+        #if dialog.exec_():
+        print("acquisition settings")
         
     
 ## WINDOW MENU ITEM
@@ -100,10 +121,11 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
     def on_actionAbout_triggered(self):
         print("about")
 
-
 ##
     def start(self):
-        self.fans_controller.start_acquisition()
+        self._fans_acquisition.daq_init_acquisition(self._data_handler)
+        self._fans_acquisition.daq_start_acquisition()
+
         
     @QtCore.pyqtSlot()
     def on_startButton_clicked(self):
@@ -111,7 +133,7 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
         self.start()
 
     def stop(self):
-        self.fans_controller.stop_acquisition()
+        self._fans_acquisition.daq_stop_acquisition()
         #music = pyglet.resource.media("stop.mp3")
         #music.play()
         #pyglet.app.run()
@@ -127,17 +149,12 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
         print("single shot")
 
 
-    @QtCore.pyqtSlot()
-    def on_AddFrequencyRangeButton_clicked(self):
-        print("add frequency range")
-
-    @QtCore.pyqtSlot()
-    def on_DeleteFrequencyRangeButton_clicked(self):
-        print("delete frequency range")
+    
 
 
     def save_settings(self):
         print("savng settings")
+        self._configuration.save_config()
         self.saveWindowState()
 
     def load_settings(self):
@@ -164,16 +181,16 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
 
 
 if __name__ == "__main__":
-    
     app = QtGui.QApplication(sys.argv)
-    
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
     app.setStyleSheet("QMainWindow {background: 'white';}")
+
+
     wnd = FANS_MAIN_WINDOW()
     wnd.show()
     
 
     sys.exit(app.exec_())
-
+ 
 

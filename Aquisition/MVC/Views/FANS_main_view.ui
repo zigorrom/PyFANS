@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>822</width>
-    <height>674</height>
+    <height>687</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,7 @@
      <x>0</x>
      <y>0</y>
      <width>822</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -81,7 +81,7 @@
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="actionChannelSettings"/>
+    <addaction name="actionInputSettings"/>
     <addaction name="actionOutputSettings"/>
     <addaction name="actionAcquisitionSettings"/>
     <addaction name="actionPowerSupplySettings"/>
@@ -549,9 +549,9 @@
     <string>All</string>
    </property>
   </action>
-  <action name="actionChannelSettings">
+  <action name="actionInputSettings">
    <property name="text">
-    <string>Channel settings</string>
+    <string>Input settings</string>
    </property>
   </action>
   <action name="actionOutputSettings">

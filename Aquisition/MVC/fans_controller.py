@@ -40,14 +40,36 @@ class FANS_AO_channel:
         self._voltage = 0
 
 
-    #def set_hardware_params(self):
-    #    self.ao_enabled = self.ao_enabled
-    #    self.ao_range = self.ao_range
-    #    self.ao_polarity = self.ao_polarity
+    def ui_enabled_changed(self,value,setter):
+        #self.ao_enabled = STATES.ON if value else STATES.OFF
+        self.ao_enabled = value
+
+    def ui_range_changed(self,value,setter):
+        self.ao_range = value
+
+    def ui_polarity_changed(self,value,setter):
+        self.ao_polarity = value
+
+    def ui_function_changed(self,value,setter):
+        print("function is not changed")
+
 
     def apply_configuration(self, configuration):
-        path = ".".join("input_settings", AI_CHANNELS.names[self.name])
+        path = ".".join("out_settings", AO_CHANNELS.names[self.name])
         self._channel_configuration = configuration.get_node_from_path(path)
+
+        self.ao_enabled = self._channel_configuration.enabled
+        configuration.set_binding(path,"enabled", self.ui_enabled_changed)
+
+        self.ao_range = self._channel_configuration.selected_range
+        configuration.set_binding(path,"range", self.ui_range_changed)
+
+        self.ao_polarity = self._channel_configuration.selected_polarity
+        configuration.set_binding(path,"polarity", self.ui_polarity_changed)
+
+        self.ao_function = self._channel_configuration.selected_function
+        configuration.set_binding(path,"function", self.ui_function_changed)
+
 
     @property
     def ao_name(self):
@@ -196,15 +218,16 @@ class FANS_AI_channel:
 
     def ui_enabled_changed(self,value,sender):
         print("ui_enabled_changed")
+        #self.ai_enabled = STATES.ON if value else STATES.OFF
         self.ai_enabled = value
 
     def ui_range_changed(self,value,sender):
         print("ui_range_changed")
-        print(value)
+        self.ai_range = value
 
     def ui_polarity_changed(self,value,sender):
         print("ui_polarity_changed")
-        print(value)
+        self.ai_polarity = value
 
     def ui_function_changed(self,value,sender):
         print("ui_function_changed")
@@ -213,21 +236,23 @@ class FANS_AI_channel:
     def ui_mode_changed(self,value,sender):
         print("ui_mode_changed")
         print(value)
-        value = AI_MODES.names.index(value)
+        value = value
         self.ai_mode = value
         
 
     def ui_filter_cutoff_changed(self,value,sender):
         print("ui_filter_cutoff_changed")
-        print(value)
+        self.ai_filter_cutoff =value
     
     def ui_filter_gain_changed(self,value,sender):
         print("ui_filter_gain_changed")
-        print(value)
+        self.ai_filter_gain = value
+
 
     def ui_pga_gain_changed(self,value,sender):
         print("ui_pga_gain_changed")
-        print(value)
+        self.ai_pga_gain = value
+
 
     def apply_configuration(self,configuration):
         path = ".".join(["input_settings", AI_CHANNELS.names[self.ai_name]])
@@ -307,7 +332,6 @@ class FANS_AI_channel:
         self._enabled = value
         self._parent_device.daq_set_enable_ai_channel(self.ai_enabled,self.ai_name)
 
-    
     @property
     def ai_range(self):
         return self._range
@@ -505,19 +529,14 @@ class FANS_AQUISITION_CONTROLLER:
         self._data_queue.join()
 
         self._data_processing_thread.stop()
-        self._data_processing_thread.join()
+        #self._data_processing_thread.join()
+
+
+        
 
     @property
     def daq_acquisition_is_alive(self):
         pass
-
-
-# 
-
-
-
-
-
 
 class FANS_CONTROLLER:
     def __init__(self,visa_resource):
@@ -595,9 +614,11 @@ class FANS_CONTROLLER:
     def get_ao_channel(self,channel):
         return self._ao_channels[channel]
 
+
     def fans_setup_acquisition(self,sample_rate,points_per_shot):
         self.fans_device.daq_setup(sample_rate,points_per_shot)
 
+    
     def analog_read(self,channels):
         arg_type = type(channels)
         if arg_type is tuple: channels = list(channels)

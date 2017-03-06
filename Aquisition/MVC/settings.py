@@ -452,11 +452,11 @@ class OutChannelEditor(outChannelBase, outChannelForm):
      def setModel(self,proxyModel):
          self._proxyModel = proxyModel
          self._dataMapper.setModel(proxyModel.sourceModel())
-         self._dataMapper.addMapping(self.ui_enabled,2)
-         self._dataMapper.addMapping(self.ui_range,3)
-         self._dataMapper.addMapping(self.ui_polarity,4)
-         self._dataMapper.addMapping(self.ui_function,5)
-         self._dataMapper.addMapping(self.ui_out_pin,6)
+         self._dataMapper.addMapping(self.ui_enabled,2,"currentIndex")
+         self._dataMapper.addMapping(self.ui_range,3,"currentIndex")
+         self._dataMapper.addMapping(self.ui_polarity,4,"currentIndex")
+         self._dataMapper.addMapping(self.ui_function,5,"currentIndex")
+         self._dataMapper.addMapping(self.ui_out_pin,6,"currentIndex")
 
      def setSelection(self, current):
          parent = current.parent()
@@ -491,13 +491,13 @@ class InChannelEditor(inChannelBase, inChannelForm):
         self._proxyModel = proxyModel
         self._dataMapper.setModel(proxyModel.sourceModel())
         self._dataMapper.addMapping(self.ui_enabled,2)
-        self._dataMapper.addMapping(self.ui_range,3)
-        self._dataMapper.addMapping(self.ui_polarity,4)
-        self._dataMapper.addMapping(self.ui_function,5)
-        self._dataMapper.addMapping(self.ui_mode,6)
-        self._dataMapper.addMapping(self.ui_filter_cutoff,7)
-        self._dataMapper.addMapping(self.ui_filter_gain,8)
-        self._dataMapper.addMapping(self.ui_pga_gain,9)
+        self._dataMapper.addMapping(self.ui_range,3,"currentIndex")
+        self._dataMapper.addMapping(self.ui_polarity,4,"currentIndex")
+        self._dataMapper.addMapping(self.ui_function,5,"currentIndex")
+        self._dataMapper.addMapping(self.ui_mode,6,"currentIndex")
+        self._dataMapper.addMapping(self.ui_filter_cutoff,7,"currentIndex")
+        self._dataMapper.addMapping(self.ui_filter_gain,8,"currentIndex")
+        self._dataMapper.addMapping(self.ui_pga_gain,9,"currentIndex")
         
     
     def setSelection(self,current):
@@ -539,7 +539,7 @@ class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm
         self._dataMapper.setCurrentModelIndex(current)
 
 
-channel_settings_base, channel_settings_form = uic.loadUiType("Views/AI_Channels_Settings.ui")
+channel_settings_base, channel_settings_form = uic.loadUiType("Views/ChannelSettings.ui")
 class ChannelSettingsEditor(channel_settings_base,channel_settings_form):
     def __init__(self,root_node, parent = None):
         super(channel_settings_base,self).__init__(parent)

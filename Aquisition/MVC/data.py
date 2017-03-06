@@ -132,6 +132,7 @@ class DataHandler(QtCore.QObject):
         self.threadpool.waitForDone()
 
     def update(self, data):
+        print("update called")
         """Update data storage"""
         self.average_counter += 1
         self.start_task(self.update_history, data.copy())

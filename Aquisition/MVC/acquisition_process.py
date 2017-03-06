@@ -13,7 +13,7 @@ Need to implement amount of samples to acquire
 """
 class AcquisitionThread(Process):
     """sample_rate is acquisition sample rate, points per shot - how much points would be acquired each time, total samples = acquiring time*sample_rate"""
-    def __init__(self, visa_resource, data_queue, sample_rate, points_per_shot, total_samples, ):# child_pipe):
+    def __init__(self, visa_resource, data_queue, sample_rate, points_per_shot, total_samples):# child_pipe):
         super().__init__()
         self.exit = Event()
         self.visa_resource = visa_resource
@@ -22,6 +22,7 @@ class AcquisitionThread(Process):
         self.sample_rate = sample_rate
         self.points_per_shot = points_per_shot
         self.total_samples = total_samples
+        self.amplification = 178
         
     def stop(self):
         self.exit.set()
@@ -36,7 +37,7 @@ class AcquisitionThread(Process):
             d.daq_init_channels()
             nchan = len(d.enabled_ai_channels)
             counter = 0
-
+            amplification = self.amplification
             
 
             fs = self.sample_rate
@@ -55,7 +56,7 @@ class AcquisitionThread(Process):
             
             f1_max = 3000
             new_fs = 10000
-            decimation_factor = int( fs/new_fs)
+            decimation_factor = int(fs/new_fs)
             new_fs = int(fs/decimation_factor)
             total_array = np.zeros((nchan,fs))
 
@@ -82,7 +83,7 @@ class AcquisitionThread(Process):
                         
                         f2_aver_counter += 1
                         new_fill_value = fill_value+npoints
-                        data = read_data()
+                        data = read_data()/amplification
                         total_array[:,fill_value:new_fill_value] = data
                         fill_value = new_fill_value #% fs
                         print(data)
@@ -134,7 +135,9 @@ class AcquisitionThread(Process):
                         break
                                     
         except Exception as e:
+            
             print ("exception"+str(e))
+            raise
         finally:
             d.daq_stop()
 ##            data_queue.close()
