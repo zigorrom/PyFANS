@@ -9,6 +9,11 @@ class Observable(object):
 ##        print("init observable")
         self.__observers = {}
 
+    def refreshObservers(self):
+        for methodName, observers in self.__observers.items():
+            #find correcponding method and fire callbacks
+            pass
+
     def addObserver(self, methodName, observer):
         s = self.__observers.setdefault(methodName, set())
         s.add(observer)

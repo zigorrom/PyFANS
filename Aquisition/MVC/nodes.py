@@ -334,6 +334,11 @@ class ComboNode(Node):
 ##        if column is 2: self.selectedValue = self.enumeration.names[value]
 
 
+#mode: ac/dc
+#cs_hold
+#filter_cutoff
+#filter_gain
+#pga_gain
 class InChannelNode(Node):
     def __init__(self,name,parent=None):
         super(InChannelNode,self).__init__(name,parent)

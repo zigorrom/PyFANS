@@ -27,6 +27,7 @@ from settings import WndTutorial
 class FANS_AO_channel:
     def __init__(self,name,parent_device):
         self._parent_device = parent_device
+        self._channel_configuration = None
         self._name = name
         self._range = DAQ_RANGES.RANGE_10
         self._polarity = POLARITIES.BIP
@@ -43,6 +44,10 @@ class FANS_AO_channel:
         self.ao_enabled = self.ao_enabled
         self.ao_range = self.ao_range
         self.ao_polarity = self.ao_polarity
+
+    def apply_configuration(self, configuration):
+        path = ".".join("input_settings", AI_CHANNELS.names[self.name])
+        self._channel_configuration = configuration.get_node_from_path(path)
 
     @property
     def ao_name(self):
@@ -161,6 +166,7 @@ class FANS_AO_Channel_Switch:
 class FANS_AI_channel:
     def __init__(self, name, parent_device, range = DAQ_RANGES.RANGE_10, polarity = POLARITIES.BIP, mode = AI_MODES.DC, cs_hold = CS_HOLD.OFF, filter_cutoff = FILTER_CUTOFF_FREQUENCIES.f150, filter_gain = FILTER_GAINS.x1, pga_gain = PGA_GAINS.x1):
         self._parent_device = parent_device
+        self._channel_configuration = None
         self.ai_name = name
         self.ai_enabled = STATES.ON
         self.ai_range = range
@@ -182,6 +188,17 @@ class FANS_AI_channel:
 
     #def stop_editing_parameter():
     #    pass 
+
+    def apply_configuration(self,configuration):
+        path = ".".join(["input_settings", AI_CHANNELS.names[self.ai_name]])
+        self._channel_configuration = configuration.get_node_from_path(path)
+        self.ai_enabled = self._channel_configuration.enabled
+        self.ai_range = self._channel_configuration.selected_range
+        self.ai_polarity = self._channel_configuration.selected_polarity
+        self.ai_function = self._channel_configuration.selected_function
+
+
+
 
     def set_fans_ai_channel_params(self):
 ##        print(ai_channel)
@@ -327,6 +344,8 @@ class FANS_AQUISITION_CONTROLLER:
         self._data_aquisition_thread = None
         self._data_processing_thread = None
 
+    def apply_configuration(configuration):
+        pass
 
     @property
     def daq_points_per_shot(self):
@@ -476,8 +495,15 @@ class FANS_CONTROLLER:
         self._config = configuration
         self.__apply_configuration()
 
-    def __apply_cofiguration(self):
-        pass
+    def __apply_configuration(self):
+        for name, channel in self._ai_channels.items():
+            channel.apply_configuration(self._config)
+
+
+
+
+
+
 
     def set_data_storage(self,data_storage):
         self._data_storage = data_storage
@@ -803,6 +829,14 @@ class FANS_controller:
     
     
 
+def test():
+
+    cfg = Configuration()
+    f = FANS_CONTROLLER("USB0::0x0957::0x1718::TW52524501::INSTR")
+    f.set_configuration(cfg)
+
+
+
 def main():
     device = AgilentU2542A("USB0::0x0957::0x1718::TW52524501::INSTR")#"ADC")
     channel = FANS_AI_channel(AI_CHANNELS.AI_101, device, mode = AI_MODES.DC)
@@ -891,4 +925,5 @@ def main():
 #        f.stop_acquisition()
 
 if __name__ == "__main__":
-    main()
+    #main()
+    test()

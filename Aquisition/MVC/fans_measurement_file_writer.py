@@ -188,26 +188,26 @@ class NoiseExperimentWriter:
 def main():
     
     
-    #writer = NoiseExperimentWriter("F:\\TestData")
-    #writer.open_experiment("experiment")
+    writer = NoiseExperimentWriter("F:\\TestData")
+    writer.open_experiment("experiment")
     
-    #for n_meas in range(10):
-    #    writer.open_measurement("meas_{0}".format(n_meas),"asdasdad", petro = "asdasd")
-    #    for x in range(10):
-    #        writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
-    #        writer.write_noise_data(np.ones((100,2), dtype = np.float))
-    #    writer.close_measurement()
+    for n_meas in range(10):
+        writer.open_measurement("meas_{0}".format(n_meas),"asdasdad", petro = "asdasd")
+        for x in range(10):
+            writer.write_timetrace_data(np.ones((100,2),dtype = np.float))
+            writer.write_noise_data(np.ones((100,2), dtype = np.float))
+        writer.close_measurement()
         
-    #writer.close_experiment()
+    writer.close_experiment()
 
     
-    w = AsyncWriter("F:\\TestData\\test.txt")
-    #w.stop()
-    w.start()
-    for n_meas in range(10):
-        w.writeAsync(np.ones((100,2),dtype = np.float))
+    #w = AsyncWriter("F:\\TestData\\test.txt")
+    ##w.stop()
+    #w.start()
+    #for n_meas in range(10):
+    #    w.writeAsync(np.ones((100,2),dtype = np.float))
     
-    w.stop()
+    #w.stop()
 
 
 

@@ -1,8 +1,11 @@
 import os
 from PyQt4 import QtCore
+from agilent_u2542a_constants import *
+from fans_constants import *
 ##from nXmlNodeSerializer
 from nodes import *
 from xml_serializer import XmlNodeSerializer
+
 configuration_filename = "config.xml"
 
 class Configuration(object):
@@ -115,14 +118,14 @@ class Configuration(object):
         acq_settings = AcquisitionSettingsNode("acquisition_settings",parent = rootNode)
         
         inp_settings = Node("input_settings", parent = rootNode)
-        ch1 = InChannelNode("ch1",inp_settings)
-        ch2 = InChannelNode("ch2",inp_settings)
-        ch3 = InChannelNode("ch3",inp_settings)
-        ch4 = InChannelNode("ch4",inp_settings)
+        ch1 = InChannelNode(AI_CHANNELS.names[AI_CHANNELS.AI_101],inp_settings)
+        ch2 = InChannelNode(AI_CHANNELS.names[AI_CHANNELS.AI_102],inp_settings)
+        ch3 = InChannelNode(AI_CHANNELS.names[AI_CHANNELS.AI_103],inp_settings)
+        ch4 = InChannelNode(AI_CHANNELS.names[AI_CHANNELS.AI_104],inp_settings)
 
         out_settings = Node("out_settings", parent = rootNode)
-        och1 = OutChannelNode("och1",out_settings)
-        och2 = OutChannelNode("och2",out_settings)
+        och1 = OutChannelNode(AO_CHANNELS.names[AO_CHANNELS.AO_201],out_settings)
+        och2 = OutChannelNode(AO_CHANNELS.names[AO_CHANNELS.AO_202],out_settings)
         
 
         return rootNode
