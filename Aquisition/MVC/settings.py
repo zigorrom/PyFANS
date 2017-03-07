@@ -595,6 +595,13 @@ class ChannelSettingsEditor(channel_settings_base,channel_settings_form):
 
 
 
+voltage_settings_base, voltage_settings_form = uic.loadUiType("Views/VoltageSettings.ui")
+class VoltageSettingsEditor(voltage_settings_base, voltage_settings_form ):
+    def __init__(self, parent= None):
+        super(voltage_settings_base, self).__init__(parent)
+        self.setupUi(self)
+
+
  #def setSelection(self, current, old):
 
  #       current = self._proxyModel.mapToSource(current)
