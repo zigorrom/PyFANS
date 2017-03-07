@@ -6,7 +6,7 @@ PGA_GAINS = enum("1","10","100", name_prefix= "x")
 FILTER_CUTOFF_FREQUENCIES = enum(*["{0}".format(i) for i in range(0,160,10)], name_prefix="f")
 FILTER_GAINS = enum(*["{0}".format(i) for i in range(1,16)],name_prefix = "x")
 
-CS_HOLD = enum("ON", "OFF")
+CS_HOLD = enum("OFF", "ON")
 
 AI_MODES = enum("DC","AC")
 #AI_CHANNELS = enum("AI_1","AI_2","AI_3","AI_4")
@@ -74,7 +74,7 @@ def get_pga_value(pga_gain, cs_hold):
 ##    if(pga_gain in PGA_GAINS) and (cs_hold in CS_HOLD):
 ##    pg = PGA_GAINS[pga_gain]
 ##    cs = CS_HOLD[cs_hold]
-    val = cs_hold & pga_gain
+    val = (cs_hold<<2) | pga_gain
     return val
 
 

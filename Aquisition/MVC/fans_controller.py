@@ -296,13 +296,15 @@ class FANS_AI_channel:
             
         ## set filter frequency and gain parameters
         filter_val = get_filter_value(self.ai_filter_gain,self.ai_filter_cutoff)
+        print("filter value {0:08b}".format(filter_val))
         self._parent_device.dig_write_channel(filter_val,DIGITAL_CHANNELS.DIG_501)
 
         ## set pga params
         pga_val = get_pga_value(self.ai_pga_gain,self.ai_cs_hold)
+        print("pga value {0:08b}".format(pga_val))
         self._parent_device.dig_write_channel(pga_val, DIGITAL_CHANNELS.DIG_503)
         self._parent_device.pulse_digital_bit(AI_ADC_LETCH_PULS_BIT,DIGITAL_CHANNELS.DIG_504)
-    
+        
 
     def set_hardware_params(self):
         self.ai_enabled = self.ai_enabled

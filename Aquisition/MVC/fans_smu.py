@@ -525,22 +525,23 @@ if __name__ == "__main__":
     #    chan.set_fans_ai_channel_params()
 
     try:
-
-        #for vds in np.arange(1,-1,-0.2):
-        #  print("setting drain-source")
-        #  smu.smu_set_drain_source_voltage(vds)
-        #  print("setting gate")
-        #  smu.smu_set_gate_voltage(vds)
-        #  print(smu.read_all_parameters())
+        smu.smu_set_drain_source_voltage(0.1)
+        for vg in np.arange(0,3,0.2):
+          print("setting gate")
+          smu.smu_set_gate_voltage(vg)
+          print(smu.read_all_parameters())
           
         #  time.sleep(2)
-        smu.smu_set_drain_source_voltage(1)
-        smu.smu_set_gate_voltage(1)
-        smu.smu_set_drain_source_voltage(-1)
-        smu.smu_set_gate_voltage(-1)
 
-        smu.smu_set_drain_source_voltage(0)
-        smu.smu_set_gate_voltage(0)
+        #smu.smu_set_drain_source_voltage(1)
+        #smu.smu_set_gate_voltage(1)
+        #smu.smu_set_drain_source_voltage(-1)
+        #smu.smu_set_gate_voltage(-1)
+
+        #smu.smu_set_drain_source_voltage(0)
+        #smu.smu_set_gate_voltage(0)
+
+
         #print("finish")
         #smu.smu_set_drain_source_voltage(-1)
         #print(smu.read_all_parameters())
