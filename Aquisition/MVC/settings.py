@@ -204,7 +204,7 @@ class WndTutorial(base,form):
             self.config = configuration
             
         self._rootNode = self.config.get_root_node()
-        print(self.config.get_node_from_path("input_settings.ch1"))
+        #print(self.config.get_node_from_path("input_settings.ch1"))
 
         self._proxyModel = QtGui.QSortFilterProxyModel(self)
         self._model = SettingsModel(self._rootNode, self)
@@ -272,6 +272,7 @@ class PropertiesEditor(propBase, propForm):
         self.__addControl("IN_CHANNEL", InChannelEditor(self))
         self.__addControl("OUT_CHANNEL", OutChannelEditor(self))
         self.__addControl("ACQUISITION_SETTINGS", AcquisitionSettingsEditor(self))
+        self.__addControl("VOLTAGE_SETTINGS",VoltageSettingsEditor(self))
         
         self._nodeEditor = NodeEditor(self)
         self.layoutNode.addWidget(self._nodeEditor)
@@ -518,7 +519,7 @@ class AcquisitionSettingsEditor(acquisitionSettingsBase, acquisitionSettingsForm
 
 
 
-        self._dataMapper = QtGui.QDataWidgetMapper()
+        self._dataMapper = QtGui.QDataWidgetMapper(self)
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
@@ -600,45 +601,23 @@ class VoltageSettingsEditor(voltage_settings_base, voltage_settings_form ):
     def __init__(self, parent= None):
         super(voltage_settings_base, self).__init__(parent)
         self.setupUi(self)
-
-
- #def setSelection(self, current, old):
-
- #       current = self._proxyModel.mapToSource(current)
-
- #       node = current.internalPointer()
+        self._dataMapper = QtGui.QDataWidgetMapper(self)
         
- #       if node is not None:
- #           typeInfo = node.typeInfo()
-        
- #       self._setAllControlsVisibility(False)
- #       if typeInfo is not "NODE":
- #           self._setControlVisibility(typeInfo, True)
- #           self._setSelectionForType(typeInfo, current)
 
- #       self._nodeEditor.setSelection(current)
-        
-           
- #       #else:
- #       #    self._labelEditor.setVisible(False)
- #       #    self._comboEditor.setVisible(False)
- #       #    self._checkEditor.setVisible(False)
- #       #    self._numericEditor.setVisible(False)
- #       #    self._inChannelEditor.setVisible(False)
- #       #    self._acquisitionEditor.setVisible(False)
- #       #    self._outChannelEditot.setVisible(False)
+    def setModel(self, proxyModel):
+        self._proxyModel = proxyModel
+        self._dataMapper.setModel(proxyModel.sourceModel())
+        self._dataMapper.addMapping(self.ui_drain_source_start,2)
+        self._dataMapper.addMapping(self.ui_drain_source_stop,3)
+        self._dataMapper.addMapping(self.ui_drain_source_step,4)
+        self._dataMapper.addMapping(self.ui_gate_start,5)
+        self._dataMapper.addMapping(self.ui_gate_stop,6)
+        self._dataMapper.addMapping(self.ui_gate_step,7)
 
-            
-        
-    
- #   def setModel(self, proxyModel):
-        
- #       self._proxyModel = proxyModel
-        
- #       self._nodeEditor.setModel(proxyModel)
-
- #       self._setModelForControls(proxyModel)
-
+    def setSelection(self, current):
+        parent = current.parent()
+        self._dataMapper.setRootIndex(parent)
+        self._dataMapper.setCurrentModelIndex(current)
 
 
 if __name__ == '__main__':
@@ -646,14 +625,16 @@ if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     app.setStyle("cleanlooks")
     
-    #wnd = WndTutorial()
-    #wnd.show()
+    wnd = WndTutorial()
+    wnd.show()
 
     #t = Node
-    cfg = Configuration()
-    node = cfg.get_node_from_path("input_settings")
-    wnd = ChannelSettingsEditor(node)
-    wnd.show()
+    
+    
+    #cfg = Configuration()
+    #node = cfg.get_node_from_path("input_settings")
+    #wnd = ChannelSettingsEditor(node)
+    #wnd.show()
     
     #node = cfg.get_node_from_path("out_settings")
     #wnd = ChannelSettingsEditor(node)

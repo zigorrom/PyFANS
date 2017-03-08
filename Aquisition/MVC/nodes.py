@@ -493,5 +493,85 @@ class OutChannelNode(Node):
         return "OUT_CHANNEL"
 
 
+class VoltageSettingsNode(Node):
+    def __init__(self,name,parent=None):
+        super(VoltageSettingsNode,self).__init__(name,parent)
+        self._drain_source_voltage_start = 0
+        self._drain_source_voltage_stop = 0
+        self._drain_source_voltage_step = 0
+
+        self._gate_voltage_start = 0
+        self._gate_voltage_stop = 0
+        self._gate_voltage_step = 0
+
+    def typeInfo(self):
+        return "VOLTAGE_SETTINGS"
+
+    @classmethod
+    def typeInfo(cls):
+        return "VOLTAGE_SETTINGS"
+
+    def data(self, column):
+        r = super(VoltageSettingsNode,self).data(column)
+        #print("getting value: {0}".format(column))
+        if column is 2:     r = self.drain_source_voltage_start
+        elif column is 3:   r = self.drain_source_voltage_stop
+        elif column is 4:   r = self.drain_source_voltage_step
+        elif column is 5:   r = self.gate_voltage_start
+        elif column is 6:   r = self.gate_voltage_stop
+        elif column is 7:   r = self.gate_voltage_step
+        return r
+
+    def setData(self, column, value):
+        super(VoltageSettingsNode,self).setData(column,value)
+        print("setting value: {0} val:{1}".format(column,value))
+        if column is 2:     self.drain_source_voltage_start = value
+        elif column is 3:   self.drain_source_voltage_stop = value
+        elif column is 4:   self.drain_source_voltage_step = value
+        elif column is 5:   self.gate_voltage_start = value
+        elif column is 6:   self.gate_voltage_stop = value
+        elif column is 7:   self.gate_voltage_step = value
+
+    # DRAIN VOLTAGE START
+    def drain_source_voltage_start():
+        def fget(self):return self._drain_source_voltage_start
+        def fset(self,value): self._drain_source_voltage_start = float(value)
+        return locals()
+    drain_source_voltage_start = notifiable_property("drain_source_voltage_start",**drain_source_voltage_start())
+
+    # DRAIN VOLTAGE STOP
+    def drain_source_voltage_stop():
+        def fget(self):return self._drain_source_voltage_stop
+        def fset(self,value): self._drain_source_voltage_stop = float(value)
+        return locals()
+    drain_source_voltage_stop = notifiable_property("drain_source_voltage_stop",**drain_source_voltage_stop())
+    # DRAIN VOLTAGE STEP
+    def drain_source_voltage_step():
+        def fget(self):return self._drain_source_voltage_step
+        def fset(self,value): self._drain_source_voltage_step = float(value)
+        return locals()
+    drain_source_voltage_step = notifiable_property("drain_source_voltage_step",**drain_source_voltage_step())
+
+    # GATE VOLTAGE START
+    def gate_voltage_start():
+        def fget(self):return self._gate_voltage_start
+        def fset(self,value): self._gate_voltage_start = float(value)
+        return locals()
+    gate_voltage_start = notifiable_property("gate_voltage_start",**gate_voltage_start())
+
+    # GATE VOLTAGE STOP
+    def gate_voltage_stop():
+        def fget(self):return self._gate_voltage_stop
+        def fset(self,value): self._gate_voltage_stop = float(value)
+        return locals()
+    gate_voltage_stop = notifiable_property("gate_voltage_stop",**gate_voltage_stop())
+    # GATE VOLTAGE STEP
+    def gate_voltage_step():
+        def fget(self):return self._gate_voltage_step
+        def fset(self,value): self._gate_voltage_step = float(value)
+        return locals()
+    gate_voltage_step = notifiable_property("gate_voltage_step",**gate_voltage_step())
+
+    # 
 
 

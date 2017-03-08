@@ -28,8 +28,10 @@ class XmlNodeSerializer():
         cls, attrs = self.typeDic[key]
         for k, v in attrs.items():
             val = v.fget(node)
+            if type(val) is float:
+                val = "f{0}".format(val)
 ##            res = val
-            if type(val) is list:
+            elif type(val) is list:
                 val = "list[{0}]".format(",".join(val))
             xmlNode.setAttribute(k, val)
         return xmlNode
@@ -53,7 +55,10 @@ class XmlNodeSerializer():
             if domElement.hasAttribute(k):
                 if v.fset is not None:
                     val = domElement.attribute(k)
-                    if val.startswith("list[") and val.endswith("]"):
+                    if val.startswith("f"):
+                        val = float(val[1:])
+
+                    elif val.startswith("list[") and val.endswith("]"):
                         val = val[5:-1]
                         val = val.split(",")
                     v.fset(node,val)

@@ -27,6 +27,8 @@ class Observable(object):
                 o(*arg, **kw)
 
 
+
+
 def notifiable_property(name = None ,fget = None, fset = None,fdel = None, doc = None):
     def _mfset(self, value):
         _name = name

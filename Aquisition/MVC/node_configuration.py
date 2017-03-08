@@ -126,6 +126,8 @@ class Configuration(object):
         out_settings = Node("out_settings", parent = rootNode)
         och1 = OutChannelNode(AO_CHANNELS.names[AO_CHANNELS.AO_201],out_settings)
         och2 = OutChannelNode(AO_CHANNELS.names[AO_CHANNELS.AO_202],out_settings)
+
+        voltage_settings = VoltageSettingsNode("voltage_settings",parent = rootNode)
         
 
         return rootNode
