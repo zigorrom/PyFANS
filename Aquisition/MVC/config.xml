@@ -1,14 +1,14 @@
 <NODE name="Settings">
-    <ACQUISITION_SETTINGS name="acquisition_settings" homemade_amplifier="1" sample_rate="500000" filter_gain="1" filter_cutoff="1" pga_amplifier="1" amplifier="1"/>
+    <ACQUISITION_SETTINGS filter_gain="1" homemade_amplifier="1" pga_amplifier="1" filter_cutoff="1" sample_rate="500000" amplifier="1" name="acquisition_settings"/>
     <NODE name="input_settings">
-        <IN_CHANNEL name="AI_101" filter_gain="0" selected_range="1" selected_function="0" enabled="1" mode="0" filter_cutoff="15" pga_gain="0" selected_polarity="1"/>
-        <IN_CHANNEL name="AI_102" filter_gain="0" selected_range="0" selected_function="0" enabled="1" mode="0" filter_cutoff="15" pga_gain="0" selected_polarity="0"/>
-        <IN_CHANNEL name="AI_103" filter_gain="0" selected_range="0" selected_function="0" enabled="1" mode="0" filter_cutoff="15" pga_gain="0" selected_polarity="0"/>
-        <IN_CHANNEL name="AI_104" filter_gain="0" selected_range="0" selected_function="0" enabled="1" mode="0" filter_cutoff="15" pga_gain="0" selected_polarity="0"/>
+        <IN_CHANNEL mode="0" filter_gain="0" pga_gain="0" enabled="0" filter_cutoff="15" selected_function="0" selected_polarity="1" name="AI_101" selected_range="1"/>
+        <IN_CHANNEL mode="0" filter_gain="0" pga_gain="0" enabled="0" filter_cutoff="15" selected_function="0" selected_polarity="0" name="AI_102" selected_range="0"/>
+        <IN_CHANNEL mode="0" filter_gain="0" pga_gain="0" enabled="0" filter_cutoff="15" selected_function="0" selected_polarity="0" name="AI_103" selected_range="0"/>
+        <IN_CHANNEL mode="0" filter_gain="14" pga_gain="2" enabled="1" filter_cutoff="15" selected_function="0" selected_polarity="0" name="AI_104" selected_range="0"/>
     </NODE>
     <NODE name="out_settings">
-        <OUT_CHANNEL name="AO_201" selected_range="0" selected_function="0" enabled="1" selected_output="0" selected_polarity="0"/>
-        <OUT_CHANNEL name="AO_202" selected_range="0" selected_function="0" enabled="1" selected_output="0" selected_polarity="0"/>
+        <OUT_CHANNEL enabled="1" selected_output="0" selected_function="0" selected_polarity="0" name="AO_201" selected_range="0"/>
+        <OUT_CHANNEL enabled="1" selected_output="0" selected_function="0" selected_polarity="0" name="AO_202" selected_range="0"/>
     </NODE>
-    <VOLTAGE_SETTINGS name="voltage_settings" gate_voltage_stop="f0.0" gate_voltage_step="f0.0" drain_source_voltage_step="f-0.04" drain_source_voltage_start="f0.08" gate_voltage_start="f0.0" drain_source_voltage_stop="f-0.08"/>
+    <VOLTAGE_SETTINGS gate_voltage_start="f0.0" gate_voltage_step="f0.0" gate_voltage_stop="f0.0" drain_source_voltage_stop="f-0.08" drain_source_voltage_step="f-0.04" name="voltage_settings" drain_source_voltage_start="f0.08"/>
 </NODE>

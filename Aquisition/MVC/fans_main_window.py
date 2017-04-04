@@ -2,7 +2,7 @@ from PyQt4 import QtCore, QtGui, uic
 import sys
 
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
-from settings import WndTutorial, ChannelSettingsEditor
+from settings import WndTutorial, ChannelSettingsEditor, VoltageSettingsEditor
 from node_configuration import Configuration
 from fans_controller import FANS_CONTROLLER,FANS_AQUISITION_CONTROLLER
 from data import DataHandler
@@ -104,7 +104,9 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
         print("acquisition settings")
 
     @QtCore.pyqtSlot()  
-    def on_actionPowerSupplySettings_triggered(self):
+    def on_actionVoltageSettings_triggered(self):
+        dialog = VoltageSettingsEditor(self._configuration)
+        dialog.exec_()
         #dialog = PowerSupplySettings(self)
         #if dialog.exec_():
         print("acquisition settings")

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>822</width>
-    <height>687</height>
+    <width>914</width>
+    <height>734</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,7 +53,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>822</width>
+     <width>914</width>
      <height>26</height>
     </rect>
    </property>
@@ -84,7 +84,7 @@
     <addaction name="actionInputSettings"/>
     <addaction name="actionOutputSettings"/>
     <addaction name="actionAcquisitionSettings"/>
-    <addaction name="actionPowerSupplySettings"/>
+    <addaction name="actionVoltageSettings"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSettings"/>
@@ -203,253 +203,6 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="voltagesWidget">
-   <property name="maximumSize">
-    <size>
-     <width>200</width>
-     <height>400</height>
-    </size>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
-   </property>
-   <property name="windowTitle">
-    <string>Voltages</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_3">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <widget class="QGroupBox" name="groupBox">
-       <property name="title">
-        <string>Drain-Source Voltage</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Start</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QComboBox" name="SampleStartVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="SampleStartVoltage"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="SampleStepVoltage"/>
-        </item>
-        <item row="2" column="2">
-         <widget class="QComboBox" name="SampleStepVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Step</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QComboBox" name="SampleStopVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Stop</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="SampleStopVoltage"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="groupBox_2">
-       <property name="title">
-        <string>Gate Voltage</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="2" column="2">
-         <widget class="QComboBox" name="GateStopVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>Stop</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QComboBox" name="GateStepVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>Step</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="GateStepVoltage"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="GateStopVoltage"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>Start</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="GateStartVoltage"/>
-        </item>
-        <item row="1" column="2">
-         <widget class="QComboBox" name="GateStartVoltageUnits">
-          <item>
-           <property name="text">
-            <string>V</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>mV</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="groupBox_3">
-       <property name="title">
-        <string>Current Values</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_5">
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>Sample Current</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Gate Voltage</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="GateVoltage">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="SampleCurrent">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="SampleVoltage">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_9">
-          <property name="text">
-           <string>Sample Voltage</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="windowTitle">
     <string>Levels</string>
@@ -564,9 +317,9 @@
     <string>Acquisition settings</string>
    </property>
   </action>
-  <action name="actionPowerSupplySettings">
+  <action name="actionVoltageSettings">
    <property name="text">
-    <string>Power Supply Settings</string>
+    <string>Voltage settings</string>
    </property>
   </action>
  </widget>

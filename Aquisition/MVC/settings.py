@@ -265,14 +265,14 @@ class PropertiesEditor(propBase, propForm):
         self._controls = dict()
 
         #self.__addControl("NODE", NodeEditor(self))
-        self.__addControl("LABEL", LabelEditor(self))
-        self.__addControl("COMBO", ComboEditor(self))
-        self.__addControl("CHECK", CheckEditor(self))
-        self.__addControl("NUMERIC", NumericEditor(self))
-        self.__addControl("IN_CHANNEL", InChannelEditor(self))
-        self.__addControl("OUT_CHANNEL", OutChannelEditor(self))
-        self.__addControl("ACQUISITION_SETTINGS", AcquisitionSettingsEditor(self))
-        self.__addControl("VOLTAGE_SETTINGS",VoltageSettingsEditor(self))
+        self.__addControl("LABEL", LabelEditor(parent=self))
+        self.__addControl("COMBO", ComboEditor(parent=self))
+        self.__addControl("CHECK", CheckEditor(parent=self))
+        self.__addControl("NUMERIC", NumericEditor(parent=self))
+        self.__addControl("IN_CHANNEL", InChannelEditor(parent=self))
+        self.__addControl("OUT_CHANNEL", OutChannelEditor(parent=self))
+        self.__addControl("ACQUISITION_SETTINGS", AcquisitionSettingsEditor(parent=self))
+        self.__addControl("VOLTAGE_SETTINGS",VoltageSettingsEditor(parent=self))
         
         self._nodeEditor = NodeEditor(self)
         self.layoutNode.addWidget(self._nodeEditor)
@@ -598,11 +598,25 @@ class ChannelSettingsEditor(channel_settings_base,channel_settings_form):
 
 voltage_settings_base, voltage_settings_form = uic.loadUiType("Views/VoltageSettings.ui")
 class VoltageSettingsEditor(voltage_settings_base, voltage_settings_form ):
-    def __init__(self, parent= None):
+    def __init__(self, configuration = None,parent= None):
         super(voltage_settings_base, self).__init__(parent)
         self.setupUi(self)
         self._dataMapper = QtGui.QDataWidgetMapper(self)
+        if configuration:
+            node = configuration.get_node_from_path("voltage_settings")
+            self._proxyModel = QtGui.QSortFilterProxyModel(self)
+            self._model = SettingsModel(node, self)
+
+            self._proxyModel.setSourceModel(self._model)
+            self._proxyModel.setDynamicSortFilter(True)
+            self._proxyModel.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
         
+            self._proxyModel.setSortRole(SettingsModel.sortRole)
+            self._proxyModel.setFilterRole(SettingsModel.filterRole)
+            self._proxyModel.setFilterKeyColumn(0)
+        
+            self.setModel(self._proxyModel)
+
 
     def setModel(self, proxyModel):
         self._proxyModel = proxyModel
