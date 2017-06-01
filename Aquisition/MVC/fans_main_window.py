@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui, uic
+﻿from PyQt4 import QtCore, QtGui, uic
 import sys
 
 from fans_plot import SpectrumPlotWidget, WaterfallPlotWidget, TimetracePlotWidget
@@ -16,7 +16,8 @@ class FANS_MAIN_WINDOW(fans_main_view_base,fans_main_view_form):
         self.setup_fans_ui()
         self._configuration = Configuration()
         ### make to import visa resource from configuration
-        self._fans_controller = FANS_CONTROLLER("USB0::0x0957::0x1718::TW52524501::INSTR")
+        #self._fans_controller = FANS_CONTROLLER("USB0::0x0957::0x1718::TW52524501::INSTR")
+        self._fans_controller = FANS_CONTROLLER("ADC")
         self._fans_controller.set_configuration(self._configuration)
         self._data_handler = DataHandler(max_history_size = 50)
         self._data_handler.data_updated.connect(self.spectrumPlotWidget.update_plot)
