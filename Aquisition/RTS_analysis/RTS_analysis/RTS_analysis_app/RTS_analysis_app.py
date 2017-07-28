@@ -110,6 +110,8 @@ class RTSmainView(mainViewBase,mainViewForm):
         
         folder_name = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select Folder"))#, directory = self._settings.working_directory))
         
+
+
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
         msg.setText("This is a message box")
