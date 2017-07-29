@@ -105,7 +105,7 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.general_curve.setVisible(True)
         self.analysis_curve = self.plot1.plot(pen = pg.mkColor("y"))
         self.analysis_curve.setVisible(True)
-        self.histogram_curve = self.histogram_plot.plot(pen = pg.mkColor("b"))
+        self.histogram_curve = self.histogram_plot.plot(pen = pg.mkColor("b"), fillLevel=0, fillBrush=(255,255,255,30))
         self.histogram_curve.setVisible(True)
 
         print("init")
@@ -125,15 +125,10 @@ class RTSmainView(mainViewBase,mainViewForm):
         region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
 
         data = region_data.data
-        #print(data)
-        #print(data)
-        hist, bin_edges = np.histogram(data, bins = 'fd')
+        hist, bin_edges = np.histogram(data, bins = 'sqrt')
         bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])  #0.5*(x[1:] + x[:-1])
         self.histogram_curve.setData(bin_centers, hist)
 
-        #print(hist)
-        #print(bin_edges)
-        #print(self.region.boundingRect())
 
     @QtCore.pyqtSlot()
     def on_actionOpen_triggered(self):
