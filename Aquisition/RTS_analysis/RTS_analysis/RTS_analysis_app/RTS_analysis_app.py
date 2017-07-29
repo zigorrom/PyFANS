@@ -1,8 +1,10 @@
 import os
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore, uic
 from pyqtgraph.Point import Point
+
 
 
 ##generate layout
@@ -77,12 +79,18 @@ class RTSmainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
         super().__init__()
         self.setupUi()
-        
+        self.loaded_data = None
+        #self.timetrace_filename = ""
+        settings = QtCore.QSettings("foo","foo")
+        self.timetrace_filename = settings.value('filename', type=str)#.toString()
+        if self.timetrace_filename:
+            self.load_data(self.timetrace_filename)
 
     def setupUi(self):
         super().setupUi(self)
         self.plot1 = self.ui_plot_area.addPlot(row=1, col=0)
-        self.plot2 = self.ui_plot_area.addPlot(row=2, col=0)
+        self.plot2 = self.ui_plot_area.addPlot(row=2, col=0, colspan =2)
+        self.histogram_plot = self.ui_plot_area.addPlot(row = 1, col = 1)
         self.label = pg.LabelItem(justify='right')
 
         self.region = pg.LinearRegionItem()
@@ -97,36 +105,63 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.general_curve.setVisible(True)
         self.analysis_curve = self.plot1.plot(pen = pg.mkColor("y"))
         self.analysis_curve.setVisible(True)
+        self.histogram_curve = self.histogram_plot.plot(pen = pg.mkColor("b"))
+        self.histogram_curve.setVisible(True)
+
         print("init")
+
+    def closeEvent(self,event):
+        print("closing")
+        settings = QtCore.QSettings("foo","foo")
+        if self.timetrace_filename:
+            settings.setValue("filename", self.timetrace_filename)
+
 
     def update(self):
         minX, maxX = self.region.getRegion()
-        self.plot1.setXRange(minX, maxX, padding=0)  
+        
+        self.plot1.setXRange(minX, maxX, padding=0)
+        
+        region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
+
+        data = region_data.data
+        #print(data)
+        #print(data)
+        hist, bin_edges = np.histogram(data, bins = 'fd')
+        bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])  #0.5*(x[1:] + x[:-1])
+        self.histogram_curve.setData(bin_centers, hist)
+
+        #print(hist)
+        #print(bin_edges)
+        #print(self.region.boundingRect())
 
     @QtCore.pyqtSlot()
     def on_actionOpen_triggered(self):
         print("opening")
         print("Select folder")
         
-        folder_name = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select Folder"))#, directory = self._settings.working_directory))
+        self.timetrace_filename = os.path.abspath(QtGui.QFileDialog.getOpenFileName(self,caption="Select File"))#, directory = self._settings.working_directory))
         
-
-
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
         msg.setText("This is a message box")
         msg.setInformativeText("This is additional information")
         msg.setWindowTitle("MessageBox demo")
-        msg.setDetailedText(folder_name)
+        msg.setDetailedText(timetrace_filename)
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
-        if retval and self._settings:
-           pass
+        if retval:
+           self.load_data(timetrace_filename)
 
-    def load_data(self):
-        pass
-
-
+    def load_data(self, filename):
+        print("loading file: {0}".format(filename))
+        self.loaded_data = pd.read_csv(filename, delimiter = "\t", names=["time", "data"])
+        time = self.loaded_data.time #["time"]
+        data = self.loaded_data.data #["data"]
+        #time,data = np.loadtxt(filename).T
+        self.general_curve.setData(time,data)
+        self.analysis_curve.setData(time,data)
+        self.update()
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
