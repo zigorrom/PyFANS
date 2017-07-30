@@ -116,6 +116,11 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.histogram_curve = self.histogram_plot.plot(pen = pg.mkColor("b"), fillLevel=0, fillBrush=(255,255,255,30))
         self.histogram_curve.setVisible(True)
 
+        self.rts_curve = self.plot1.plot(pen = pg.mkColor("r"))
+        self.rts_curve.setVisible(True)
+        self.rts_curve.setZValue(100)
+        
+
         print("init")
 
     def closeEvent(self,event):
@@ -132,11 +137,26 @@ class RTSmainView(mainViewBase,mainViewForm):
         
         region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
 
+        time = region_data.time
         data = region_data.data
-        hist, bin_edges = np.histogram(data, bins = 'sqrt')
+        hist, bin_edges = np.histogram(data, bins = 'auto')
         bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])  #0.5*(x[1:] + x[:-1])
         self.histogram_curve.setData(bin_centers, hist)
 
+        #rts_values = self.calc_levels(data)
+        #self.rts_curve.setData(time, rts_values)
+        
+    @QtCore.pyqtSlot()
+    def on_actionFit_RTS_triggered(self):
+        minX, maxX = self.region.getRegion()
+        region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
+
+        time = region_data.time.values
+        data = region_data.data.values
+        
+        rts_values = self.calc_levels(data)
+        
+        self.rts_curve.setData(time,rts_values)
 
     @QtCore.pyqtSlot()
     def on_actionOpen_triggered(self):
@@ -161,8 +181,9 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.loaded_data = pd.read_csv(filename, delimiter = "\t", names=["time", "data"])
         time = self.loaded_data.time #["time"]
 
-        rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 5e-06)
-        self.loaded_data.data = self.loaded_data.data + rts
+        rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 20e-06)
+        rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
+        self.loaded_data.data = self.loaded_data.data + rts + rts2
         
         data = self.loaded_data.data #["data"]
         #time,data = np.loadtxt(filename).T
@@ -184,7 +205,6 @@ class RTSmainView(mainViewBase,mainViewForm):
         ones = ones * s
 
         arr =np.vstack((ones, tr)).T
-        print(arr)
 
         #np.apply_along_axis(generate_arr, 1, arr)
         result = np.zeros(nelem)
@@ -197,13 +217,40 @@ class RTSmainView(mainViewBase,mainViewForm):
             current_idx = next_idx
 
         return result
-        ## create trace:
-        #l = len(arr)
-        #for i,val in enumerate(arr):
-        #    print("{0}\{1}".format(i,l))
-        #    x = np.append(x, generate_arr(val))
-        #return x
+        
+    def calc_levels(self,current_arr):
+        L = len(current_arr)
+        result = np.zeros(L)
+        r_weights = [1,1,0.9]#,0.8,0.7]
+        l_weights = r_weights.reverse()
+        N_half_wnd = len(r_weights)
+        sigma = 10e-6
+        left_avg = np.average(current_arr[0:N_half_wnd])
+        right_arv = 0
+        prev_val = 0
+        
+        result[:N_half_wnd] = left_avg
+    ##    prev_time = 0
+    ##    time_counter = 0
+        for i in range(N_half_wnd,L-N_half_wnd):
+            left_avg = np.average(current_arr[i-N_half_wnd:i],weights=l_weights)
+            right_avg= np.average(current_arr[i:i+N_half_wnd],weights=r_weights)
+            diff = right_avg - left_avg
+            abs_diff = abs(diff)
+            if abs_diff > sigma or abs(right_avg - prev_val) > sigma:
+    ##            if time_counter >1:
+    ##                amplitude_time_list.append([prev_val,prev_time])
+                prev_val = right_avg
+    ##            prev_time =0
+    ##            time_counter =0 
 
+            result[i] = prev_val
+    ##        prev_time += dt
+    ##        time_counter += 1
+    ##        print(i)
+        result[-N_half_wnd:] = prev_val
+
+        return result
     
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
