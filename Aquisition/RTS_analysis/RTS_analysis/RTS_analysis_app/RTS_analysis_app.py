@@ -4,7 +4,8 @@ import pandas as pd
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore, uic
 from pyqtgraph.Point import Point
-
+import pyqtgraph.parametertree.parameterTypes as pTypes
+from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 
 
 ##generate layout
@@ -74,6 +75,20 @@ from pyqtgraph.Point import Point
 #proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 ##p1.scene().sigMouseMoved.connect(mouseMoved)
 
+class WeightParamGroup(pTypes.GroupParameter):
+    def __init__(self, **opts):
+        opts['type'] = 'group'
+        opts['addText'] = "Add"
+        opts['addList'] = ['float']
+        pTypes.GroupParameter.__init__(self, **opts)
+    
+    def addNew(self, typ):
+        val = {
+            'float': 0.0,
+        }[typ]
+        self.addChild(dict(name="w%d" % (len(self.childs)+1), type=typ, value=val, removable=True, renamable=True))
+
+
 def generate_arr(array):
     sign, nelem = array
     a = np.empty(nelem)
@@ -86,8 +101,10 @@ mainViewBase, mainViewForm = uic.loadUiType("RTS_main_view.ui")
 class RTSmainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
         super().__init__()
-        self.setupUi()
         self.loaded_data = None
+        self.parameters = None
+        self.setupUi()
+        self.setupParameterTree()
         #self.timetrace_filename = ""
         settings = QtCore.QSettings("foo","foo")
         self.timetrace_filename = settings.value('filename', type=str)#.toString()
@@ -116,18 +133,55 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.histogram_curve = self.histogram_plot.plot(pen = pg.mkColor("b"), fillLevel=0, fillBrush=(255,255,255,30))
         self.histogram_curve.setVisible(True)
 
-        self.rts_curve = self.plot1.plot(pen = pg.mkColor("r"))
+        self.rts_curve = self.plot1.plot(pen = pg.mkPen("r", width = 3)) #pg.mkColor("r"),width = 3)
         self.rts_curve.setVisible(True)
         self.rts_curve.setZValue(100)
-        
+
+        #roi = pg.MultiRectROI(, width=5, pen=(2,9))
+        #self.plot1.addItem(roi)
 
         print("init")
+
+    def getDefaultParams(self):
+        return [ {'name': 'Automated RTS recognition', 'type': 'group', 'children': [
+                        {'name': 'Error', 'type': 'float', 'value': 1e-06},
+                        WeightParamGroup(name="Semi-window weights", children=[
+                                                       
+                        ])
+                    ]},
+            {'name': 'Filtering', 'type': 'group', 'children':[]}         
+                 ]
+
+    def setupParameterTree(self):
+        t = ParameterTree()
+        t.setWindowTitle('pyqtgraph example: Parameter Tree')
+        self.parameterTreeLayout.addWidget(t)
+        
+        settings = QtCore.QSettings("foo","foo")
+        self.parameters = settings.value('params')
+        if not self.parameters:
+            self.parameters = self.getDefaultParams()
+
+        
+
+        p = Parameter.create(name='params', type='group', children=self.parameters)
+        
+
+        t.setParameters(p, showTop=False)
+        
+
+        
 
     def closeEvent(self,event):
         print("closing")
         settings = QtCore.QSettings("foo","foo")
         if self.timetrace_filename:
             settings.setValue("filename", self.timetrace_filename)
+
+        if self.parameters:
+            settings.setValue("params", self.parameters)
+
+
 
 
     def update(self):
@@ -139,15 +193,16 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         time = region_data.time
         data = region_data.data
-        hist, bin_edges = np.histogram(data, bins = 'auto')
+        hist, bin_edges = np.histogram(data, bins = 'rice') #bins = 'auto')
         bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])  #0.5*(x[1:] + x[:-1])
         self.histogram_curve.setData(bin_centers, hist)
+
 
         #rts_values = self.calc_levels(data)
         #self.rts_curve.setData(time, rts_values)
         
     @QtCore.pyqtSlot()
-    def on_actionFit_RTS_triggered(self):
+    def on_actionSelectedArea_triggered(self):
         minX, maxX = self.region.getRegion()
         region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
 
@@ -155,8 +210,15 @@ class RTSmainView(mainViewBase,mainViewForm):
         data = region_data.data.values
         
         rts_values = self.calc_levels(data)
-        
         self.rts_curve.setData(time,rts_values)
+
+    @QtCore.pyqtSlot()
+    def on_actionFull_Set_triggered(self):
+        time = self.loaded_data.time.values
+        data = self.loaded_data.data.values
+        rts_values = self.calc_levels(data)
+        self.rts_curve.setData(time,rts_values)
+
 
     @QtCore.pyqtSlot()
     def on_actionOpen_triggered(self):
@@ -221,7 +283,7 @@ class RTSmainView(mainViewBase,mainViewForm):
     def calc_levels(self,current_arr):
         L = len(current_arr)
         result = np.zeros(L)
-        r_weights = [1,1,0.9]#,0.8,0.7]
+        r_weights = [1,0.7,0.4]#,0.8,0.7]
         l_weights = r_weights.reverse()
         N_half_wnd = len(r_weights)
         sigma = 10e-6

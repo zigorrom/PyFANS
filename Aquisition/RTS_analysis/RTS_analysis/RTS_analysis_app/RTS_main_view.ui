@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>1185</width>
     <height>600</height>
    </rect>
   </property>
@@ -16,7 +16,15 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="GraphicsLayoutWidget" name="ui_plot_area"/>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="GraphicsLayoutWidget" name="ui_plot_area"/>
+      <widget class="QWidget" name="verticalLayoutWidget">
+       <layout class="QVBoxLayout" name="parameterTreeLayout"/>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,7 +33,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1185</width>
      <height>26</height>
     </rect>
    </property>
@@ -39,7 +47,14 @@
     <property name="title">
      <string>Fit</string>
     </property>
-    <addaction name="actionFit_RTS"/>
+    <widget class="QMenu" name="menuFit_RTS">
+     <property name="title">
+      <string>Fit RTS</string>
+     </property>
+     <addaction name="actionSelectedArea"/>
+     <addaction name="actionFull_Set"/>
+    </widget>
+    <addaction name="menuFit_RTS"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuFit"/>
@@ -50,9 +65,14 @@
     <string>Open</string>
    </property>
   </action>
-  <action name="actionFit_RTS">
+  <action name="actionSelectedArea">
    <property name="text">
-    <string>Fit RTS</string>
+    <string>SelectedArea</string>
+   </property>
+  </action>
+  <action name="actionFull_Set">
+   <property name="text">
+    <string>Full Set</string>
    </property>
   </action>
  </widget>
