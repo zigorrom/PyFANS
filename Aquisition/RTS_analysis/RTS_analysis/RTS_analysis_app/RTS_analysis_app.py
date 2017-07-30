@@ -74,6 +74,14 @@ from pyqtgraph.Point import Point
 #proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 ##p1.scene().sigMouseMoved.connect(mouseMoved)
 
+def generate_arr(array):
+    sign, nelem = array
+    a = np.empty(nelem)
+    a.fill(sign)
+    return a
+
+
+
 mainViewBase, mainViewForm = uic.loadUiType("RTS_main_view.ui")
 class RTSmainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
@@ -152,11 +160,51 @@ class RTSmainView(mainViewBase,mainViewForm):
         print("loading file: {0}".format(filename))
         self.loaded_data = pd.read_csv(filename, delimiter = "\t", names=["time", "data"])
         time = self.loaded_data.time #["time"]
+
+        rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 5e-06)
+        self.loaded_data.data = self.loaded_data.data + rts
+        
         data = self.loaded_data.data #["data"]
         #time,data = np.loadtxt(filename).T
         self.general_curve.setData(time,data)
         self.analysis_curve.setData(time,data)
+        
         self.update()
+
+    def generate_rts(self, nelem, k,dt, amplitude = 1):
+        k = float(k)
+        ra = np.random.rand(nelem)
+        # exponentially distributed jumps:
+        t = np.log(1./ra)/k
+        tr = np.floor(t/dt)
+        x = []
+        s = amplitude
+        ones = np.ones(len(tr))
+        ones[::2] = -1
+        ones = ones * s
+
+        arr =np.vstack((ones, tr)).T
+        print(arr)
+
+        #np.apply_along_axis(generate_arr, 1, arr)
+        result = np.zeros(nelem)
+
+        current_idx = 0
+
+        for val, n in arr:
+            next_idx = current_idx+int(n)
+            result[current_idx: next_idx] = val
+            current_idx = next_idx
+
+        return result
+        ## create trace:
+        #l = len(arr)
+        #for i,val in enumerate(arr):
+        #    print("{0}\{1}".format(i,l))
+        #    x = np.append(x, generate_arr(val))
+        #return x
+
+    
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
