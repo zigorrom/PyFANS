@@ -6,59 +6,9 @@ from pyqtgraph.Qt import QtGui, QtCore, uic
 from pyqtgraph.Point import Point
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
+import pickle
 
 
-##generate layout
-#app = QtGui.QApplication([])
-#win = pg.GraphicsWindow()
-#win.setWindowTitle('pyqtgraph example: crosshair')
-#label = pg.LabelItem(justify='right')
-#win.addItem(label)
-#p1 = win.addPlot(row=1, col=0)
-#p2 = win.addPlot(row=2, col=0)
-
-#region = pg.LinearRegionItem()
-#region.setZValue(10)
-## Add the LinearRegionItem to the ViewBox, but tell the ViewBox to exclude this 
-## item when doing auto-range calculations.
-#p2.addItem(region, ignoreBounds=True)
-
-##pg.dbg()
-#p1.setAutoVisible(y=True)
-
-
-##create numpy arrays
-##make the numbers large to show that the xrange shows data from 10000 to all the way 0
-#data1 = 10000 + 15000 * pg.gaussianFilter(np.random.random(size=10000), 10) + 3000 * np.random.random(size=10000)
-#data2 = 15000 + 15000 * pg.gaussianFilter(np.random.random(size=10000), 10) + 3000 * np.random.random(size=10000)
-
-#p1.plot(data1, pen="r")
-#p1.plot(data2, pen="g")
-
-#p2.plot(data1, pen="w")
-
-#def update():
-#    region.setZValue(10)
-#    minX, maxX = region.getRegion()
-#    p1.setXRange(minX, maxX, padding=0)    
-
-#region.sigRegionChanged.connect(update)
-
-#def updateRegion(window, viewRange):
-#    rgn = viewRange[0]
-#    region.setRegion(rgn)
-
-#p1.sigRangeChanged.connect(updateRegion)
-
-#region.setRegion([1000, 2000])
-
-##cross hair
-#vLine = pg.InfiniteLine(angle=90, movable=False)
-#hLine = pg.InfiniteLine(angle=0, movable=False)
-#p1.addItem(vLine, ignoreBounds=True)
-#p1.addItem(hLine, ignoreBounds=True)
-
-#vb = p1.vb
 
 #def mouseMoved(evt):
 #    pos = evt[0]  ## using signal proxy turns original arguments into a tuple
@@ -75,9 +25,10 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 #proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 ##p1.scene().sigMouseMoved.connect(mouseMoved)
 
+
 class WeightParamGroup(pTypes.GroupParameter):
     def __init__(self, **opts):
-        opts['type'] = 'group'
+        opts['type'] = 'weight_group'
         opts['addText'] = "Add"
         opts['addList'] = ['float']
         pTypes.GroupParameter.__init__(self, **opts)
@@ -87,6 +38,9 @@ class WeightParamGroup(pTypes.GroupParameter):
             'float': 0.0,
         }[typ]
         self.addChild(dict(name="w%d" % (len(self.childs)+1), type=typ, value=val, removable=True, renamable=True))
+
+
+registerParameterType('weight_group', WeightParamGroup, override = True)
 
 
 def generate_arr(array):
@@ -101,6 +55,7 @@ mainViewBase, mainViewForm = uic.loadUiType("RTS_main_view.ui")
 class RTSmainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
         super().__init__()
+        self.params_filename = "params.dat"
         self.loaded_data = None
         self.parameters = None
         self.setupUi()
@@ -137,6 +92,8 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.rts_curve.setVisible(True)
         self.rts_curve.setZValue(100)
 
+        #self.plot1.addItem(pg.MultiRectROI([[0, 0], [20,0 ], [40, 0]], width = 1e-06))
+
         #roi = pg.MultiRectROI(, width=5, pen=(2,9))
         #self.plot1.addItem(roi)
 
@@ -145,31 +102,50 @@ class RTSmainView(mainViewBase,mainViewForm):
     def getDefaultParams(self):
         return [ {'name': 'Automated RTS recognition', 'type': 'group', 'children': [
                         {'name': 'Error', 'type': 'float', 'value': 1e-06},
-                        WeightParamGroup(name="Semi-window weights", children=[
+                        {'name': 'Weights', 'type': 'str', 'value': '2'}
+                        #WeightParamGroup(name="Weights", children=[
                                                        
-                        ])
+                        #])
                     ]},
-            {'name': 'Filtering', 'type': 'group', 'children':[]}         
+                    {'name': 'Filtering', 'type': 'group', 'children':[
+                        {'name': 'Butter', 'type':'group','children':[
+                        
+                            ]}
+                        ]}         
                  ]
 
+    def save_state(self, filename,state):
+        """Save a tree as a pickle file
+        """
+        with open(filename, 'wb') as fid:
+            pickle.dump(state,fid)
+
+    def load_state(self, filename):
+        """Load a tree state to a pickle file
+        """
+        try:
+            with open(filename, 'rb') as fid:
+               data = pickle.load(fid)
+               return data
+        except FileNotFoundError as e:
+            print("File Not Found")
+            return None
+        
     def setupParameterTree(self):
-        t = ParameterTree()
-        t.setWindowTitle('pyqtgraph example: Parameter Tree')
-        self.parameterTreeLayout.addWidget(t)
+        self.param_tree = ParameterTree()
+        self.param_tree.setWindowTitle('pyqtgraph example: Parameter Tree')
+        self.parameterTreeLayout.addWidget(self.param_tree)
         
-        settings = QtCore.QSettings("foo","foo")
-        self.parameters = settings.value('params')
-        if not self.parameters:
-            self.parameters = self.getDefaultParams()
-
+        self.parameters = Parameter.create(name='params', type='group')
         
+        state = self.load_state(self.params_filename)
+        if state:
+            self.parameters.restoreState(state)
+        else: 
+            params = self.getDefaultParams()
+            self.parameters.addChildren(params)
 
-        p = Parameter.create(name='params', type='group', children=self.parameters)
-        
-
-        t.setParameters(p, showTop=False)
-        
-
+        self.param_tree.setParameters(self.parameters, showTop=False)
         
 
     def closeEvent(self,event):
@@ -179,8 +155,8 @@ class RTSmainView(mainViewBase,mainViewForm):
             settings.setValue("filename", self.timetrace_filename)
 
         if self.parameters:
-            settings.setValue("params", self.parameters)
-
+            self.save_state(self.params_filename, self.parameters.saveState())
+        
 
 
 
@@ -209,7 +185,12 @@ class RTSmainView(mainViewBase,mainViewForm):
         time = region_data.time.values
         data = region_data.data.values
         
-        rts_values = self.calc_levels(data)
+        #weights = self.parameters.va
+        weights = list(map(float, self.parameters["Automated RTS recognition","Weights"].split(';')))#.items()
+        error = self.parameters["Automated RTS recognition","Error"]
+
+
+        rts_values = self.calc_levels(data, weights, error)
         self.rts_curve.setData(time,rts_values)
 
     @QtCore.pyqtSlot()
@@ -280,13 +261,13 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         return result
         
-    def calc_levels(self,current_arr):
+    def calc_levels(self,current_arr, weights= [1,0.7,0.4], error = 1e-06):
         L = len(current_arr)
         result = np.zeros(L)
-        r_weights = [1,0.7,0.4]#,0.8,0.7]
+        r_weights = weights #[1,0.7,0.4]#,0.8,0.7]
         l_weights = r_weights.reverse()
         N_half_wnd = len(r_weights)
-        sigma = 10e-6
+        sigma = error
         left_avg = np.average(current_arr[0:N_half_wnd])
         right_arv = 0
         prev_val = 0
@@ -328,3 +309,4 @@ if __name__ == '__main__':
     wnd.show()
 
     sys.exit(app.exec_())
+ 
