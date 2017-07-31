@@ -108,9 +108,18 @@ class RTSmainView(mainViewBase,mainViewForm):
                         #])
                     ]},
                     {'name': 'Filtering', 'type': 'group', 'children':[
-                        {'name': 'Butter', 'type':'group','children':[
+                        {'name':'Filter design', 'type':'list', 'values': {"Butterworth":0,
+                                                                           "Chebyshev I":1,
+                                                                           "Chebyshev II":2,
+                                                                           "Elliptic":3,
+                                                                           "Bessel":4
+                                                                           }},    
+                        {'name':'Order', 'type': 'int', 'value': 1},
+                        {'name':'Type', 'type':'list', 'values': {"lowpass":0,
+                                                                 "highpass":1 }},
+                        {'name':'Frequency','type': 'float', 'value':100.0},
+                        {'name':'Apply', 'type':'action'}
                         
-                            ]}
                         ]}         
                  ]
 
@@ -137,16 +146,26 @@ class RTSmainView(mainViewBase,mainViewForm):
         self.parameterTreeLayout.addWidget(self.param_tree)
         
         self.parameters = Parameter.create(name='params', type='group')
-        
+        params = self.getDefaultParams()
+        self.parameters.addChildren(params)
+
         state = self.load_state(self.params_filename)
         if state:
             self.parameters.restoreState(state)
-        else: 
-            params = self.getDefaultParams()
-            self.parameters.addChildren(params)
+        #else: 
+            #params = self.getDefaultParams()
+            #self.parameters.addChildren(params)
+
+        self.parameters.sigTreeStateChanged.connect(self.action_signaled)
 
         self.param_tree.setParameters(self.parameters, showTop=False)
         
+
+    def action_signaled(self, *args, **kwargs):
+        print(args)
+        print(kwargs)
+
+
 
     def closeEvent(self,event):
         print("closing")
@@ -213,27 +232,33 @@ class RTSmainView(mainViewBase,mainViewForm):
         msg.setText("This is a message box")
         msg.setInformativeText("This is additional information")
         msg.setWindowTitle("MessageBox demo")
-        msg.setDetailedText(timetrace_filename)
+        msg.setDetailedText(self.timetrace_filename)
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
         if retval:
-           self.load_data(timetrace_filename)
+           self.load_data(self.timetrace_filename)
 
     def load_data(self, filename):
         print("loading file: {0}".format(filename))
-        self.loaded_data = pd.read_csv(filename, delimiter = "\t", names=["time", "data"])
-        time = self.loaded_data.time #["time"]
+        try:
+            self.loaded_data = pd.read_csv(filename, delimiter = "\t", names=["time", "data"])
+        
+            time = self.loaded_data.time #["time"]
 
-        rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 20e-06)
-        rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
-        self.loaded_data.data = self.loaded_data.data + rts + rts2
+            rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 20e-06)
+            rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
+            #self.loaded_data.data = self.loaded_data.data + rts + rts2
         
-        data = self.loaded_data.data #["data"]
-        #time,data = np.loadtxt(filename).T
-        self.general_curve.setData(time,data)
-        self.analysis_curve.setData(time,data)
+            data = self.loaded_data.data #["data"]
+            #time,data = np.loadtxt(filename).T
+            self.general_curve.setData(time,data)
+            self.analysis_curve.setData(time,data)
         
-        self.update()
+            self.update()
+
+        except Exception as e:
+            print("failed to load data")
+            
 
     def generate_rts(self, nelem, k,dt, amplitude = 1):
         k = float(k)
