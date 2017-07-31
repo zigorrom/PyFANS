@@ -22,7 +22,11 @@
       </property>
       <widget class="GraphicsLayoutWidget" name="ui_plot_area"/>
       <widget class="QWidget" name="verticalLayoutWidget">
-       <layout class="QVBoxLayout" name="parameterTreeLayout"/>
+       <layout class="QVBoxLayout" name="parameterTreeLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -34,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>1185</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -56,8 +60,15 @@
     </widget>
     <addaction name="menuFit_RTS"/>
    </widget>
+   <widget class="QMenu" name="menuConvolve">
+    <property name="title">
+     <string>Convolution</string>
+    </property>
+    <addaction name="actionConvolve"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuFit"/>
+   <addaction name="menuConvolve"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
@@ -73,6 +84,11 @@
   <action name="actionFull_Set">
    <property name="text">
     <string>Full Set</string>
+   </property>
+  </action>
+  <action name="actionConvolve">
+   <property name="text">
+    <string>Convolve</string>
    </property>
   </action>
  </widget>

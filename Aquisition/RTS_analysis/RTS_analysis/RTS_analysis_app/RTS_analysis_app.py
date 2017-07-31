@@ -7,6 +7,7 @@ from pyqtgraph.Point import Point
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 import pickle
+from scipy import signal
 
 
 
@@ -107,6 +108,7 @@ class RTSmainView(mainViewBase,mainViewForm):
                                                        
                         #])
                     ]},
+                    {'name':'Window', 'type': 'int', 'value':10},
                     {'name': 'Filtering', 'type': 'group', 'children':[
                         {'name':'Filter design', 'type':'list', 'values': {"Butterworth":0,
                                                                            "Chebyshev I":1,
@@ -193,7 +195,36 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         #rts_values = self.calc_levels(data)
         #self.rts_curve.setData(time, rts_values)
+    @QtCore.pyqtSlot()
+    def on_actionConvolve_triggered(self):
+        print("convolution")
+        minX, maxX = self.region.getRegion()
+        region_data = self.loaded_data.loc[lambda df: (df.time > minX) & (df.time < maxX),:]
+          
+        time = region_data.time.values
+        data = region_data.data.values
+
+        win_size = self.parameters['Window']
         
+        win = signal.hann(win_size)
+
+        mean_value = np.mean(data)
+        std = np.std(data)
+        
+        signal_to_noise = mean_value/ std
+        print("MEAN = {0}".format(mean_value))
+        print("STD = {0}".format(std))
+        print("SNR = {0}".format(signal_to_noise))
+
+        filtered = signal.convolve(data,win, mode='same')/sum(win)
+        
+        #filtered = data - filtered
+
+        
+
+        self.rts_curve.setData(time,filtered)
+
+
     @QtCore.pyqtSlot()
     def on_actionSelectedArea_triggered(self):
         minX, maxX = self.region.getRegion()
