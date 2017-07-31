@@ -177,8 +177,6 @@ class RTSmainView(mainViewBase,mainViewForm):
             self.save_state(self.params_filename, self.parameters.saveState())
         
 
-
-
     def update(self):
         minX, maxX = self.region.getRegion()
         
