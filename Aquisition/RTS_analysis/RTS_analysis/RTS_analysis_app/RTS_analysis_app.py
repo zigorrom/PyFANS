@@ -218,12 +218,34 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         filtered = signal.convolve(data,win, mode='same')/sum(win)
         
-        #filtered = data - filtered
 
-        
+        #optimal_wnd_size, std = self.fit_data_with_pulses(data, [5,10,15,20,25,30,50,100,200])
+        #print("STD = {0}".format(std))
+        #print("wnd_size = {0}".format(optimal_wnd_size))
+        #win = signal.hann(optimal_wnd_size)
+        #filtered = signal.convolve(data,win, mode='same')/sum(win)
+
+        #filtered = data - filtered
 
         self.rts_curve.setData(time,filtered)
 
+    def fit_data_with_pulses(self, data, wnd_length_arr:list):
+        current_std = 0
+        current_wnd_len = None
+
+        for i, wnd_size in enumerate(wnd_length_arr):
+            wnd = signal.hann(wnd_size)
+            filtered = data - signal.convolve(data,wnd, mode='same')/sum(wnd)
+            std = np.std(filtered)
+            if i == 0:
+                current_std = std
+                current_wnd_len = wnd_size
+
+            elif std < current_std:
+                current_std = std
+                current_wnd_len = wnd_size
+
+        return (current_wnd_len, current_std)
 
     @QtCore.pyqtSlot()
     def on_actionSelectedArea_triggered(self):
@@ -274,9 +296,9 @@ class RTSmainView(mainViewBase,mainViewForm):
         
             time = self.loaded_data.time #["time"]
 
-            rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 20e-06)
+            rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 3e-06)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
-            #self.loaded_data.data = self.loaded_data.data + rts + rts2
+            self.loaded_data.data = self.loaded_data.data + rts# + rts2
         
             data = self.loaded_data.data #["data"]
             #time,data = np.loadtxt(filename).T
