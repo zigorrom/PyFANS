@@ -8,6 +8,7 @@ import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 import pickle
 from scipy import signal
+from scipy import stats
 
 
 
@@ -145,7 +146,11 @@ class RTSmainView(mainViewBase,mainViewForm):
     def setupParameterTree(self):
         self.param_tree = ParameterTree()
         self.param_tree.setWindowTitle('pyqtgraph example: Parameter Tree')
+        #self.param_tree.setFixedWidth(300)
         self.parameterTreeLayout.addWidget(self.param_tree)
+        self.parameterTreeLayout.setSizes([500,150])
+
+        #self.parameterTreeLayour.
         
         self.parameters = Parameter.create(name='params', type='group')
         params = self.getDefaultParams()
@@ -192,6 +197,7 @@ class RTSmainView(mainViewBase,mainViewForm):
         bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])  #0.5*(x[1:] + x[:-1])
         self.histogram_curve.setData(bin_centers, hist)
 
+        print("data points selected: {0}".format(len(time)))
 
         #rts_values = self.calc_levels(data)
         #self.rts_curve.setData(time, rts_values)
@@ -206,20 +212,29 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         win_size = self.parameters['Window']
         
-        win = signal.hann(win_size)
+        win = self.generate_window(win_size) #signal.hann(win_size)
+        pg.plot(win, title = "Window size: {0}".format(win_size))
 
-        mean_value = np.mean(data)
-        std = np.std(data)
+        filtered = self.fit_using_pearson(data,win)
+        #fit_using_pearson
+
+        #mean_value = np.mean(data)
+        #std = np.std(data)
         
-        signal_to_noise = mean_value/ std
-        print("MEAN = {0}".format(mean_value))
-        print("STD = {0}".format(std))
-        print("SNR = {0}".format(signal_to_noise))
-
-        filtered = signal.convolve(data,win, mode='same')/sum(win)
+        #signal_to_noise = mean_value/ std
+        #print("MEAN = {0}".format(mean_value))
+        #print("STD = {0}".format(std))
+        #print("SNR = {0}".format(signal_to_noise))
         
+        #filtered = signal.convolve(data,win, mode='same')/sum(win)
+        
+        #pearsonr, p_val = stats.pearsonr(data, filtered)
+        #print("PearsonR = {0}".format(pearsonr))
 
-        #optimal_wnd_size, std = self.fit_data_with_pulses(data, [5,10,15,20,25,30,50,100,200])
+
+
+
+        #optimal_wnd_size, pearsonr = self.fit_data_with_pulses(data, [3,5,10,15,20,25,30,50,100,200])
         #print("STD = {0}".format(std))
         #print("wnd_size = {0}".format(optimal_wnd_size))
         #win = signal.hann(optimal_wnd_size)
@@ -229,23 +244,53 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         self.rts_curve.setData(time,filtered)
 
+    def generate_window(self, wnd_size, front_size = 3):
+        
+        
+        wnd = signal.hann(2*front_size)
+        wnd = np.insert(wnd,front_size,signal.boxcar(wnd_size))
+        wnd = np.insert(np.zeros(2*front_size),front_size, wnd)
+        return wnd
+
+
+    def fit_using_pearson(self, data, wnd):
+        wnd_size = len(wnd)
+        half_wnd_size = wnd_size/2
+        data_size = len(data)
+        result_size = data_size - wnd_size
+        result = np.zeros(data_size, dtype = np.float)
+        for i in range(result_size):
+            pearsonr,p_val =stats.pearsonr(data[i:i+wnd_size], wnd)
+            result[i+half_wnd_size] = pearsonr * 1e-04
+        return result
+
+
     def fit_data_with_pulses(self, data, wnd_length_arr:list):
-        current_std = 0
+        #current_std = 0
+        current_pearsonr_to_one_dist = 1
         current_wnd_len = None
 
         for i, wnd_size in enumerate(wnd_length_arr):
-            wnd = signal.hann(wnd_size)
-            filtered = data - signal.convolve(data,wnd, mode='same')/sum(wnd)
-            std = np.std(filtered)
+            wnd = self.generate_window(wnd_size)  #signal.hann(wnd_size)
+            print(wnd)
+            #filtered = data - signal.convolve(data,wnd, mode='same')/sum(wnd)
+            #std = np.std(filtered)
+            pg.plot(wnd, title = "Window size: {0}".format(wnd_size))
+            filtered = signal.convolve(data,wnd, mode='same')/sum(wnd)
+            pearsonr, p_val = stats.pearsonr(data, filtered)
+            dist = 1 - pearsonr
+            print("PearsonR = {0}".format(pearsonr))
+            print("wnd_size = {0}".format(wnd_size))
             if i == 0:
-                current_std = std
+                #current_std = std
+                current_pearsonr_to_one_dist = dist
                 current_wnd_len = wnd_size
 
-            elif std < current_std:
-                current_std = std
+            elif dist < current_pearsonr_to_one_dist:
+                current_pearsonr_to_one_dist = dist
                 current_wnd_len = wnd_size
 
-        return (current_wnd_len, current_std)
+        return (current_wnd_len, current_pearsonr_to_one_dist)
 
     @QtCore.pyqtSlot()
     def on_actionSelectedArea_triggered(self):
@@ -296,7 +341,7 @@ class RTSmainView(mainViewBase,mainViewForm):
         
             time = self.loaded_data.time #["time"]
 
-            rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 3e-06)
+            rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 5e-05)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
             self.loaded_data.data = self.loaded_data.data + rts# + rts2
         
