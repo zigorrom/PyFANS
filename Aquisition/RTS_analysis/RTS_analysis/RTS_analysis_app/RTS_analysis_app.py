@@ -9,8 +9,12 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 import pickle
 from scipy import signal
 from scipy import stats
+from scipy.fftpack import fft, ifft, fftfreq
+import math
+import cmath
 
-
+npphase = np.vectorize(cmath.polar)
+nprect = np.vectorize(cmath.rect) 
 
 #def mouseMoved(evt):
 #    pos = evt[0]  ## using signal proxy turns original arguments into a tuple
@@ -26,6 +30,79 @@ from scipy import stats
 
 #proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 ##p1.scene().sigMouseMoved.connect(mouseMoved)
+def lorenz_func(freq, freq0):
+    return 1/(1+np.square(freq/freq0))
+
+def P2R(radii, angles):
+    return radii * np.exp(1j*angles)
+
+def R2P(x):
+    return np.abs(x), np.angle(x)
+
+def fourier_filter(data,timestep):
+    n = data.size
+    freq = fftfreq(n,d = timestep)
+    ind = np.arange(n)
+    times=  ind*timestep
+    ft = fft(data)
+    phase = np.angle(ft, deg = False)
+    psd = np.abs(ft)**2
+
+    res = np.real(ifft(ft))
+    psd_freq = np.abs(psd*freq)
+
+    reconstruct = np.zeros_like(phase)
+
+    reconstruct = ft*signal.hann(n)
+    #for i in range(len(phase)):
+    #    reconstruct[i] = P2R(np.sqrt(psd[i]),phase[i])
+
+    reconstructed_res = np.real(ifft(reconstruct))
+    
+    #lorenz = lorenz_func(freq, 1000)
+
+    #result_conv = np.zeros_like(freq)
+
+
+    #for idx,f in enumerate(freq):
+    #    lorenz_wnd = None
+    #    wnd_sum = 1
+    #    if f == 0:
+    #        lorenz_wnd = np.zeros_like(freq)
+    #    else:
+    #        lorenz_wnd = lorenz_func(freq, f)*freq
+    #        wnd_sum = np.sum(lorenz_wnd)
+
+    #    conv = np.sum(np.multiply(lorenz_wnd,psd_freq))/wnd_sum #/np.sum(lorenz_wnd)
+    #    #conv = np.sum(np.multiply(lorenz_wnd,psd))/np.sum(lorenz_wnd)
+    #    #result_conv = signal.convolve(psd,wnd,mode = "same")/sum(wnd)
+    #    result_conv[idx] = conv
+        
+
+    #pg.plot(res, title = "After Fourier")
+    pg.plot(times,data, title = "Before Fourier")
+    #pg.plot(freq,psd, title = "PSD")
+    #pg.plot(freq,psd_freq, title = "PSD*f")
+    #pg.plot(freq,phase, title = "phase")
+    pg.plot(times,reconstructed_res,title = "Reconstructed")
+
+    #win = pg.GraphicsWindow(title="Basic plotting examples")
+    #win.resize(1000,600)
+    #win.setWindowTitle('pyqtgraph example: Plotting')
+
+    ## Enable antialiasing for prettier plots
+    ##pg.setConfigOptions(antialias=True)
+
+    #p2 = win.addPlot(title="Initial and reconstructed")
+    #p2.plot(data, pen=(255,0,0), name="Red curve")
+    #p2.plot(reconstructed_res, pen=(0,255,0), name="Blue curve")
+    
+    
+    
+
+    #pg.plot(freq,lorenz)
+    #pg.plot(freq,result_conv,title = "convolution")
+
 
 
 class WeightParamGroup(pTypes.GroupParameter):
@@ -215,19 +292,20 @@ class RTSmainView(mainViewBase,mainViewForm):
         win = self.generate_window(win_size) #signal.hann(win_size)
         pg.plot(win, title = "Window size: {0}".format(win_size))
 
-        filtered = self.fit_using_pearson(data,win)
+        #filtered = self.fit_using_pearson(data,win)
         #fit_using_pearson
 
-        #mean_value = np.mean(data)
-        #std = np.std(data)
+        mean_value = np.mean(data)
+        std = np.std(data)
         
-        #signal_to_noise = mean_value/ std
-        #print("MEAN = {0}".format(mean_value))
-        #print("STD = {0}".format(std))
-        #print("SNR = {0}".format(signal_to_noise))
+        signal_to_noise = mean_value / std
+        print("MEAN = {0}".format(mean_value))
+        print("STD = {0}".format(std))
+        print("SNR = {0}".format(signal_to_noise))
         
-        #filtered = signal.convolve(data,win, mode='same')/sum(win)
+        filtered = signal.convolve(data,win, mode='same')/sum(win)
         
+        fourier_filter(data, time[1]-time[0])
         #pearsonr, p_val = stats.pearsonr(data, filtered)
         #print("PearsonR = {0}".format(pearsonr))
 
@@ -244,8 +322,10 @@ class RTSmainView(mainViewBase,mainViewForm):
 
         self.rts_curve.setData(time,filtered)
 
+    
+
     def generate_window(self, wnd_size, front_size = 3):
-        
+        #wnd = np.hstack((np.zeros(wnd_size),np.ones(wnd_size)))
         
         wnd = signal.hann(2*front_size)
         wnd = np.insert(wnd,front_size,signal.boxcar(wnd_size))
@@ -341,7 +421,7 @@ class RTSmainView(mainViewBase,mainViewForm):
         
             time = self.loaded_data.time #["time"]
 
-            rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 5e-05)
+            rts = self.generate_rts(len(self.loaded_data.index), 10, time[1], 10e-05)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
             self.loaded_data.data = self.loaded_data.data + rts# + rts2
         
