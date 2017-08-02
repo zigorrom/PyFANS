@@ -52,11 +52,21 @@ def fourier_filter(data,timestep):
     res = np.real(ifft(ft))
     psd_freq = np.abs(psd*freq)
 
-    reconstruct = np.zeros_like(phase)
+    #reconstruct = np.zeros_like(phase)
+    window = None
+    half_window = signal.hann(n/2)
+    if n % 2==0:
+        window = np.repeat(half_window,2)
+    else:
+        window = np.hstack((half_window,0,half_window))
+       
 
-    reconstruct = ft*signal.hann(n)
+    #window = signa
+    reconstruct = ft*np.abs(freq)* window #*signal.hann(n)
     #for i in range(len(phase)):
     #    reconstruct[i] = P2R(np.sqrt(psd[i]),phase[i])
+
+    psd_windowed = np.abs(reconstruct)**2
 
     reconstructed_res = np.real(ifft(reconstruct))
     
@@ -83,6 +93,8 @@ def fourier_filter(data,timestep):
     #pg.plot(res, title = "After Fourier")
     pg.plot(times,data, title = "Before Fourier")
     pg.plot(freq,psd, title = "PSD")
+    pg.plot(freq,psd_windowed, title = "PSD_windowed")
+    
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
@@ -422,9 +434,9 @@ class RTSmainView(mainViewBase,mainViewForm):
         
             time = self.loaded_data.time #["time"]
 
-            rts = self.generate_rts(len(self.loaded_data.index), 10, time[1], 10e-05)
+            rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 5e-06)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
-            self.loaded_data.data = self.loaded_data.data# + rts# + rts2
+            self.loaded_data.data = self.loaded_data.data + rts# + rts2
         
             data = self.loaded_data.data #["data"]
             #time,data = np.loadtxt(filename).T
