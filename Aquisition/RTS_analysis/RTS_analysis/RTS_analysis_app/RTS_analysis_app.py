@@ -42,6 +42,7 @@ def R2P(x):
 def fourier_filter(data,timestep):
     n = data.size
     freq = fftfreq(n,d = timestep)
+    print(freq)
     ind = np.arange(n)
     times=  ind*timestep
     ft = fft(data)
@@ -81,11 +82,11 @@ def fourier_filter(data,timestep):
 
     #pg.plot(res, title = "After Fourier")
     pg.plot(times,data, title = "Before Fourier")
-    #pg.plot(freq,psd, title = "PSD")
+    pg.plot(freq,psd, title = "PSD")
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
-
+    
     #win = pg.GraphicsWindow(title="Basic plotting examples")
     #win.resize(1000,600)
     #win.setWindowTitle('pyqtgraph example: Plotting')
@@ -423,7 +424,7 @@ class RTSmainView(mainViewBase,mainViewForm):
 
             rts = self.generate_rts(len(self.loaded_data.index), 10, time[1], 10e-05)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
-            self.loaded_data.data = self.loaded_data.data + rts# + rts2
+            self.loaded_data.data = self.loaded_data.data# + rts# + rts2
         
             data = self.loaded_data.data #["data"]
             #time,data = np.loadtxt(filename).T
