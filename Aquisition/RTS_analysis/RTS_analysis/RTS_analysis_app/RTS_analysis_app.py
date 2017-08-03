@@ -10,6 +10,7 @@ import pickle
 from scipy import signal
 from scipy import stats
 from scipy.fftpack import fft, ifft, fftfreq
+#from scipy.signal import savgol_filter
 import math
 import cmath
 
@@ -30,6 +31,10 @@ nprect = np.vectorize(cmath.rect)
 
 #proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 ##p1.scene().sigMouseMoved.connect(mouseMoved)
+
+
+
+
 def lorenz_func(freq, freq0):
     return 1/(1+np.square(freq/freq0))
 
@@ -52,24 +57,34 @@ def fourier_filter(data,timestep):
     res = np.real(ifft(ft))
     psd_freq = np.abs(psd*freq)
 
+
+
     #reconstruct = np.zeros_like(phase)
-    window = None
-    half_window = signal.hann(n/2)
-    if n % 2==0:
-        window = np.repeat(half_window,2)
-    else:
-        window = np.hstack((half_window,0,half_window))
+    #window = None
+    #half_window = signal.hann(n/2)
+    #if n % 2==0:
+    #    window = np.repeat(half_window,2)
+    #else:
+    #    window = np.hstack((half_window,0,half_window))
        
 
     #window = signa
-    reconstruct = ft*np.abs(freq)* window #*signal.hann(n)
-    #for i in range(len(phase)):
-    #    reconstruct[i] = P2R(np.sqrt(psd[i]),phase[i])
-
+    reconstruct = ft*signal.hann(n) #ft*np.abs(freq)* window #*signal.hann(n)
     psd_windowed = np.abs(reconstruct)**2
-
     reconstructed_res = np.real(ifft(reconstruct))
     
+
+    half_n = int(n/2)
+
+    half_reconstruct = ft[:half_n]
+    half_freq = freq[:half_n]
+
+    f_half_reconstr = half_freq*half_reconstruct
+    f_half_reconstr_psd =  np.abs(f_half_reconstr)**2
+
+    wnd = signal.hann(50)
+    result_conv = signal.convolve(f_half_reconstr_psd,wnd,mode = "same")/sum(wnd)
+    smoothed_conv = signal.savgol_filter(result_conv, 201, 2)
     #lorenz = lorenz_func(freq, 1000)
 
     #result_conv = np.zeros_like(freq)
@@ -94,7 +109,9 @@ def fourier_filter(data,timestep):
     pg.plot(times,data, title = "Before Fourier")
     pg.plot(freq,psd, title = "PSD")
     pg.plot(freq,psd_windowed, title = "PSD_windowed")
-    
+    pg.plot(half_freq,f_half_reconstr_psd, title = "half freq*PSD")
+    pg.plot(half_freq,result_conv, title = "PSD convolution")
+    pg.plot(half_freq,smoothed_conv, title = "smoothed PSD convolution")
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
@@ -434,7 +451,7 @@ class RTSmainView(mainViewBase,mainViewForm):
         
             time = self.loaded_data.time #["time"]
 
-            rts = self.generate_rts(len(self.loaded_data.index), 1000, time[1], 5e-06)
+            rts = self.generate_rts(len(self.loaded_data.index), 100, time[1], 5e-05)
             rts2 = self.generate_rts(len(self.loaded_data.index), 10, time[1], 5e-06)
             self.loaded_data.data = self.loaded_data.data + rts# + rts2
         
