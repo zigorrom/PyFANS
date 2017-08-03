@@ -85,10 +85,12 @@ def fourier_filter(data,timestep):
     wnd = signal.hann(50)
     result_conv = signal.convolve(f_half_reconstr_psd,wnd,mode = "same")/sum(wnd)
     smoothed_conv = signal.savgol_filter(result_conv, 201, 2)
+    peakind = signal.find_peaks_cwt(result_conv, np.arange(500,10000,500))
     #lorenz = lorenz_func(freq, 1000)
-
+    peak_freq = half_freq[peakind]
+    peak_vals = result_conv[peakind]
     #result_conv = np.zeros_like(freq)
-
+    print(np.vstack((peak_freq,peak_vals)).T)
 
     #for idx,f in enumerate(freq):
     #    lorenz_wnd = None
@@ -112,6 +114,7 @@ def fourier_filter(data,timestep):
     pg.plot(half_freq,f_half_reconstr_psd, title = "half freq*PSD")
     pg.plot(half_freq,result_conv, title = "PSD convolution")
     pg.plot(half_freq,smoothed_conv, title = "smoothed PSD convolution")
+    pg.plot(peak_freq,peak_vals, title = "found peaks")
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
