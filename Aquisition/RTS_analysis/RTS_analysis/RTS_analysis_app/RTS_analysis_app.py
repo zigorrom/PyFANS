@@ -10,6 +10,7 @@ import pickle
 from scipy import signal
 from scipy import stats
 from scipy.fftpack import fft, ifft, fftfreq
+from scipy import interpolate
 #from scipy.signal import savgol_filter
 import math
 import cmath
@@ -44,8 +45,45 @@ def P2R(radii, angles):
 def R2P(x):
     return np.abs(x), np.angle(x)
 
+
+def removePickups(freq, data, quantityOfPoints = 100, nFreeFromEnd = 5):
+    count = len(data) - nFreeFromEnd
+    if quantityOfPoints < 1: 
+        quantityOfPoints = 1
+    
+    precision = 1/math.sqrt(quantityOfPoints)
+    low =  0
+    high = 0
+    lastNormalPoint = nFreeFromEnd -1
+    j = 0
+    k = 0
+
+    for i in range(nFreeFromEnd, count):
+        high = data[lastNormalPoint] + precision*data[lastNormalPoint]
+        low = math.exp(math.log(data[lastNormalPoint]) - 2*math.log(freq[i]/freq[lastNormalPoint])) - precision*data[lastNormalPoint]
+        if data[i]>high or data[i]<low:
+            data[i] = -500
+        else:
+            lastNormalPoint = i
+
+    for i in range(nFreeFromEnd,count):
+        if data[i] == -500:
+            j = i
+            while data[j] == -500:
+                j += 1
+
+            for k in range(i,j):
+                data[k] = math.exp(math.log(freq[k]/freq[i-1])/math.log(freq[j]/freq[i-1])*math.log(data[j]/data[i-1]) + math.log(data[i-1]))
+
+    return data
+
+
 def fourier_filter(data,timestep):
     n = data.size
+
+    #wnd = signal.hann(n) 
+    #data = wnd * data / sum(wnd)
+
     freq = fftfreq(n,d = timestep)
     print(freq)
     ind = np.arange(n)
@@ -85,12 +123,17 @@ def fourier_filter(data,timestep):
     wnd = signal.hann(50)
     result_conv = signal.convolve(f_half_reconstr_psd,wnd,mode = "same")/sum(wnd)
     smoothed_conv = signal.savgol_filter(result_conv, 201, 2)
-    peakind = signal.find_peaks_cwt(result_conv, np.arange(500,10000,500))
+
+    removed_peakups = removePickups(half_freq, f_half_reconstr_psd, 1 ,5)
+    spline_interpolation = interpolate.UnivariateSpline(half_freq, f_half_reconstr_psd,s = 1)
+    spline_smoothed = spline_interpolation(half_freq)
+
+    #peakind = signal.find_peaks_cwt(result_conv, np.arange(500,10000,500))
     #lorenz = lorenz_func(freq, 1000)
-    peak_freq = half_freq[peakind]
-    peak_vals = result_conv[peakind]
+    #peak_freq = half_freq[peakind]
+    #peak_vals = result_conv[peakind]
     #result_conv = np.zeros_like(freq)
-    print(np.vstack((peak_freq,peak_vals)).T)
+    #print(np.vstack((peak_freq,peak_vals)).T)
 
     #for idx,f in enumerate(freq):
     #    lorenz_wnd = None
@@ -114,7 +157,9 @@ def fourier_filter(data,timestep):
     pg.plot(half_freq,f_half_reconstr_psd, title = "half freq*PSD")
     pg.plot(half_freq,result_conv, title = "PSD convolution")
     pg.plot(half_freq,smoothed_conv, title = "smoothed PSD convolution")
-    pg.plot(peak_freq,peak_vals, title = "found peaks")
+    pg.plot(half_freq,removed_peakups, title = "removed pickups PSD convolution")
+    pg.plot(half_freq,spline_smoothed, title = "spline smoothed PSD convolution")
+    #pg.plot(peak_freq,peak_vals, title = "found peaks")
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
