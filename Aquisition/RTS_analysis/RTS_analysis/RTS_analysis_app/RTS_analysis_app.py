@@ -111,6 +111,8 @@ def fourier_filter(data,timestep):
     psd_windowed = np.abs(reconstruct)**2
     reconstructed_res = np.real(ifft(reconstruct))
     
+    reconstructed_res_cumsum = np.cumsum(reconstructed_res)
+
 
     half_n = int(n/2)
 
@@ -163,7 +165,7 @@ def fourier_filter(data,timestep):
     #pg.plot(freq,psd_freq, title = "PSD*f")
     #pg.plot(freq,phase, title = "phase")
     pg.plot(times,reconstructed_res,title = "Reconstructed")
-    
+    pg.plot(times,reconstructed_res_cumsum,title = "Reconstructed cumsum")
     #win = pg.GraphicsWindow(title="Basic plotting examples")
     #win.resize(1000,600)
     #win.setWindowTitle('pyqtgraph example: Plotting')
