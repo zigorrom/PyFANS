@@ -541,6 +541,7 @@ class RTSmainView(mainViewBase,mainViewForm):
             current_idx = next_idx
 
         return result
+    
         
     def calc_levels(self,current_arr, weights= [1,0.7,0.4], error = 1e-06):
         L = len(current_arr)
