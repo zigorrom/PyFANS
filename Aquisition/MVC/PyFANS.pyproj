@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{88615012-01f1-43ad-ae1d-4377348eb129}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>fans_main_window.py</StartupFile>
+    <StartupFile>agilent_u2542a.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>

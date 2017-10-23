@@ -457,7 +457,7 @@ def main():
 
 
     args= parser.parse_args()    
-##    args = parser.parse_args("D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K\\t16-100x100nm_noise_18.dat @nlevels 7".split(" "))#@means -1.87e-4 1.9e-5 1.38e-4".split(" "))
+    args = parser.parse_args("C:\\Users\\i.zadorozhnyi\\Desktop\\test\\soi#7r_chip51_t16_lg_15.dat @nlevels 2".split(" "))#@means -1.87e-4 1.9e-5 1.38e-4".split(" "))
 ##    args = parser.parse_args("F:\\Noise\\T=300K\\t16-100x100nm_noise_8.dat -wnd 0.7 0.8 0.9 1 1 1 1 0.9 0.8 0.7".split(" "))
 ##    print(args)
     perform_analysis(**vars(args))
