@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>LegacyNoiseMeasurementSetup.py</StartupFile>
+    <StartupFile>process_communication_protocol.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -30,6 +30,9 @@
     <Compile Include="calibration.py" />
     <Compile Include="communication_layer.py" />
     <Compile Include="configuration.py" />
+    <Compile Include="experiment.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="experiment_handler.py" />
     <Compile Include="experiment_writer.py" />
     <Compile Include="LegacyNoiseMeasurementSetup.py" />
