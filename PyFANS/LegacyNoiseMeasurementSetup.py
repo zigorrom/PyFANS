@@ -13,6 +13,7 @@ from communication_layer import get_available_gpib_resources, get_available_com_
 from plot import SpectrumPlotWidget
 from experiment_handler import ProcessingThread, ExperimentController   #, ExperimentProcess
 from measurement_data_structures import MeasurementInfo
+import modern_fans_experiment as mfe
 
 class StatusObject(QtCore.QObject):
     message_arrived = QtCore.pyqtSignal(str)
@@ -68,7 +69,7 @@ class MainView(mainViewBase,mainViewForm):
        #self._status_object.measurement_info_changed.connect(self._on_measurement_info_changed)
        self._status_object.multiple_param_changed.connect(self._on_multiple_param_changed)
 
-       self._experiment_controller = ExperimentController(self._spectrumPlotWidget, status_object = self._status_object)
+       self._experiment_controller = mfe.FANSExperimentController(self._spectrumPlotWidget, status_object = self._status_object)
        
 
     def setupFolderBrowseButton(self):

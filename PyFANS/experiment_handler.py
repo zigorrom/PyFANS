@@ -16,7 +16,7 @@ from multiprocessing import Event
 import plot as plt 
 import process_communication_protocol as pcp
 from nodes import ExperimentSettings, ValueRange, HardwareSettings
-import configuration as cfg
+import configuration as config
 
 from measurement_data_structures import MeasurementInfo
 from experiment_writer import ExperimentWriter
@@ -284,11 +284,11 @@ class ExperimentHandler(Process):
 
     def run(self):
         #if self._input_data_queue:
-        sys.stdout = LoggingQueuedStream(self._input_data_queue) #open("log.txt", "w")
+        #sys.stdout = LoggingQueuedStream(self._input_data_queue) #open("log.txt", "w")
         #else:
         #    sys.stdout = open("log.txt", "w")
 
-        cfg = cfg.Configuration()
+        cfg = config.Configuration()
         exp_settings = cfg.get_node_from_path("Settings.ExperimentSettings")
         assert isinstance(exp_settings, ExperimentSettings)
         simulate = exp_settings.simulate_experiment
@@ -298,7 +298,8 @@ class ExperimentHandler(Process):
         else:
             #self._experiment = PerformExperiment(self._input_data_queue, self._exit)
             experiment = self.get_experiment()
-            assert isinstance(exp.Experiment), "Experiment has wrong type"
+            #assert isinstance(exp.Experiment), "Experiment has wrong type"
+            assert isinstance(experiment, exp.Experiment), "Experiment is not inherited from Experiment type"
             self._experiment = experiment #mfe.FANSExperiment(self._input_data_queue, self._exit)
         
         self._experiment.initialize_settings(cfg)

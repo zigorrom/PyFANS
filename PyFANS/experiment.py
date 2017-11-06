@@ -1,6 +1,7 @@
+﻿import os
 import time
 import math
-
+import numpy as np
 
 import process_communication_protocol as pcp
 import nodes as ns
@@ -94,11 +95,11 @@ class Experiment:
         pass
     
     def initialize_calibration(self):
-        dir = os.path.dirname(__file__)
+        #dir = os.path.dirname(__file__)
         #self._calibration = calib.Calibration(os.path.join(dir,"calibration_data"))
-        self._calibration = calib.CalibrationSimple(os.path.join(dir,"calibration_data"))
-        self._calibration.init_values()
-   
+        #self._calibration = calib.CalibrationSimple(os.path.join(dir,"calibration_data"))
+        #self._calibration.init_values()
+        pass
 
     def get_meas_ranges(self):
         fg_range = self.__config.get_node_from_path("front_gate_range")
