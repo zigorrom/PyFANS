@@ -1,9 +1,15 @@
 import math
-from n_enum import enum
+from enum import IntEnum, unique
+#from n_enum import enum
 
 #RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
 #NORMAL_RANGE_HANDLER, BACK_FORTH_RANGE_HANDLER, ZERO_START_RANGE_HANDLER, ZERO_START_BACK_FORTH = RANGE_HANDLERS
-RANGE_HANDLERS = enum("NORMAL_RANGE_HANDLER", "BACK_FORTH_RANGE_HANDLER", "ZERO_START_RANGE_HANDLER", "ZERO_START_BACK_FORTH")
+@unique
+class RANGE_HANDLERS(IntEnum):
+   NORMAL_RANGE_HANDLER = 0
+   BACK_FORTH_RANGE_HANDLER = 1
+   ZERO_START_RANGE_HANDLER = 2
+   ZERO_START_BACK_FORTH = 3
 
 
 class float_range:

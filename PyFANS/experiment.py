@@ -1,3 +1,13 @@
+import time
+import math
+
+
+import process_communication_protocol as pcp
+import nodes as ns
+import configuration as cfg
+import experiment_writer as ew
+import calibration as calib
+import measurement_data_structures as mds
 
 class Experiment:
     def __init__(self, simulate = False, input_data_queue = None, stop_event = None):
@@ -71,11 +81,11 @@ class Experiment:
 
     def initialize_settings(self, configuration):
         self.__config = configuration
-        assert isinstance(configuration, Configuration)
+        assert isinstance(configuration, cfg.Configuration)
         self.__exp_settings = configuration.get_node_from_path("Settings.ExperimentSettings")
-        assert isinstance(self.__exp_settings, ExperimentSettings)
+        assert isinstance(self.__exp_settings, ns.ExperimentSettings)
         self.__hardware_settings = configuration.get_node_from_path("Settings.HardwareSettings")
-        assert isinstance(self.__hardware_settings, HardwareSettings)
+        assert isinstance(self.__hardware_settings, ns.HardwareSettings)
         self._working_directory = self.__exp_settings.working_directory
         
         #self._data_handler = DataHandler(self._working_directory,input_data_queue = self._input_data_queue)
@@ -85,18 +95,18 @@ class Experiment:
     
     def initialize_calibration(self):
         dir = os.path.dirname(__file__)
-        #self._calibration = Calibration(os.path.join(dir,"calibration_data"))
-        self._calibration = CalibrationSimple(os.path.join(dir,"calibration_data"))
+        #self._calibration = calib.Calibration(os.path.join(dir,"calibration_data"))
+        self._calibration = calib.CalibrationSimple(os.path.join(dir,"calibration_data"))
         self._calibration.init_values()
    
 
     def get_meas_ranges(self):
         fg_range = self.__config.get_node_from_path("front_gate_range")
         if self.__exp_settings.use_set_vfg_range:
-            assert isinstance(fg_range, ValueRange)
+            assert isinstance(fg_range, ns.ValueRange)
         ds_range = self.__config.get_node_from_path("drain_source_range")
         if self.__exp_settings.use_set_vds_range:
-            assert isinstance(fg_range, ValueRange)
+            assert isinstance(fg_range, ns.ValueRange)
         return ds_range, fg_range
 
     def output_curve_measurement_function(self):
@@ -304,7 +314,7 @@ class Experiment:
         experiment_name = self.__exp_settings.experiment_name
         self._send_command_with_params(pcp.ExperimentCommands.EXPERIMENT_STARTED, experiment_name = experiment_name)
         self._measurement_counter = self.__exp_settings.measurement_count
-        self._experiment_writer = ExperimentWriter(self._working_directory)
+        self._experiment_writer = ew.ExperimentWriter(self._working_directory)
         self._experiment_writer.open_experiment(experiment_name)
 
     def close_experiment(self):
@@ -315,8 +325,8 @@ class Experiment:
         #print("simulate open measurement")
         measurement_name = self.__exp_settings.measurement_name
         measurement_counter = self._measurement_counter
-        assert isinstance(self.__exp_settings, ExperimentSettings)
-        self._measurement_info = MeasurementInfo(measurement_name, measurement_counter, load_resistance = self.__exp_settings.load_resistance, second_amplifier_gain = self.__exp_settings.second_amp_coeff)
+        assert isinstance(self.__exp_settings, ns.ExperimentSettings)
+        self._measurement_info = mds.MeasurementInfo(measurement_name, measurement_counter, load_resistance = self.__exp_settings.load_resistance, second_amplifier_gain = self.__exp_settings.second_amp_coeff)
         #self._measurement_info.second_amplifier_gain = self.__exp_settings.second_amp_coeff
         self._send_command_with_params(pcp.ExperimentCommands.MEASUREMENT_STARTED, measurement_name = measurement_name, measurement_count = measurement_counter) 
 
@@ -432,3 +442,64 @@ class Experiment:
         self.open_experiment()
         self._execution_function()
         self.close_experiment()
+
+
+
+
+class SimulateExperiment(Experiment):
+    def __init__(self, input_data_queue = None, stop_event = None):
+        Experiment.__init__(self,True, input_data_queue, stop_event)
+
+    def initialize_hardware(self):
+        print("simulating hardware init")
+
+    def switch_transistor(self, transistor):
+        print("simulating switch transistor")
+
+    def set_front_gate_voltage(self, voltage):
+        print("simulate setting fg voltage: {0}".format(voltage))
+    
+    def set_drain_source_voltage(self, voltage):
+        print("simulate setting ds voltage: {0}".format(voltage))
+
+    def single_value_measurement(self, drain_source_voltage, gate_voltage):
+        self.open_measurement()
+        print("simulating single measurement vds:{0} vg:{1}".format(drain_source_voltage, gate_voltage))
+        #self.send_measurement_info()
+        self._measurement_info.start_sample_voltage = np.random.random_sample()
+        self._measurement_info.start_main_voltage = np.random.random_sample()
+        
+        self.send_start_measurement_info()
+
+        counter = 0
+        max_counter = 100
+        
+        while counter < max_counter: #(not need_exit()) and counter < max_counter:
+            data = 10**-3 * np.random.random(1600)
+            self.update_spectrum(data,0)
+            self.update_spectrum(data,1)
+            counter+=1
+            time.sleep(0.02)
+        
+        #frequency, spectrum = self.update_resulting_spectrum()
+        data = self.update_resulting_spectrum()
+        #data = np.vstack(self.update_resulting_spectrum()).transpose()
+        #freq,spectrum = np.vstack(self.update_resulting_spectrum()).transpose()
+        
+
+        data = data.transpose()
+        self._experiment_writer.write_measurement(data)   ##.write_measurement()
+        self._experiment_writer.write_measurement_info(self._measurement_info)
+        #self.get_resulting_spectrum()
+        #self.send_measurement_info()
+        self._measurement_info.end_sample_voltage = np.random.random_sample()
+        self._measurement_info.end_main_voltage = np.random.random_sample()
+        
+        self.send_end_measurement_info()
+        
+        self.close_measurement()
+
+    def non_gated_single_value_measurement(self, drain_source_voltage):
+        self.open_measurement()
+        print("simulating non gated single measurement vds:{0}".format(drain_source_voltage))
+        self.close_measurement()

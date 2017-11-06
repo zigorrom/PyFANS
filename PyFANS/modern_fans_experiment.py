@@ -1,17 +1,20 @@
 ﻿import time
+import math
+
 import numpy as np
+import experiment as exp
 import experiment_handler as eh
 import modern_fans_controller as mfans
 import modern_agilent_u2542a as mdaq
 import modern_fans_smu as msmu
 import temperature_controller as tc
-import math
+
 from configuration import Configuration
 from multiprocessing import Process, Event
 from scipy.signal import periodogram
 from scipy.signal import decimate
 from nodes import ExperimentSettings, ValueRange, HardwareSettings
-from process_communication_protocol import *
+
 
 def get_fans_ai_channels_from_number(number):
     assert isinstance(number, int), "Number should be integer"
@@ -23,47 +26,29 @@ def get_fans_ao_channels_from_number(number):
     assert (number>0 and number<17),"Wrong channel number!"
     return mfans.FANS_AO_CHANNELS(number)
 
-class FANSExperimentHandler(Process):
+class FANSExperimentController(eh.ExperimentController):
+    def __init__(self, spectrum_plot = None, timetrace_plot = None, status_object = None, measurement_ranges = {...}, parent = None):
+        return super().__init__(spectrum_plot, timetrace_plot, status_object, measurement_ranges, parent)
+
+    def get_experiment_handler(self):
+        return FANSExperimentHandler(self._input_data_queue)
+
+class FANSExperimentHandler(eh.ExperimentHandler):
     def __init__(self, input_data_queue = None):
-        super().__init__()
-        self._exit = Event()
-        self._experiment  = None
-        self._input_data_queue = input_data_queue
-
-    def stop(self):
-        self._exit.set()
-
-    def run(self):
-        #if self._input_data_queue:
-        #sys.stdout = eh.LoggingQueuedStream(self._input_data_queue) #open("log.txt", "w")
-        #else:
-        #    sys.stdout = open("log.txt", "w")
-
-        cfg = Configuration()
-        exp_settings = cfg.get_node_from_path("Settings.ExperimentSettings")
-        assert isinstance(exp_settings, ExperimentSettings)
-        simulate = exp_settings.simulate_experiment
-
-        if simulate:
-            self._experiment = eh.SimulateExperiment(self._input_data_queue, self._exit)
-        else:
-            self._experiment = FANSExperiment(self._input_data_queue, self._exit)
+        super().__init__(input_data_queue)
         
-        self._experiment.initialize_settings(cfg)
-        self._experiment.initialize_hardware()
-        self._experiment.initialize_calibration()
-        self._experiment.perform_experiment()
+    def get_experiment(self):
+        return FANSExperiment(self._input_data_queue, self._exit)
 
 
-class FANSExperiment(eh.Experiment):
+class FANSExperiment(exp.Experiment):
     def __init__(self, input_data_queue = None, stop_event = None):
         super().__init__(False, input_data_queue, stop_event)
         self._spectrum_ranges = {0: (0,5000,1),1:(0,250000,10)}
         self._spectrum_linking_frequencies = {0:(1,3000),1:(3000,250000)}
         self._frequencies = self._get_frequencies(self._spectrum_ranges)
         self._frequency_indexes = self._get_frequency_linking_indexes(self._spectrum_ranges, self._spectrum_linking_frequencies)
-        pass
-        #eh.Experiment.__init__(False, input_data_queue, stop_event)
+        
          
     def initialize_hardware(self):
         resource = self.hardware_settings.fans_controller_resource
@@ -73,11 +58,6 @@ class FANSExperiment(eh.Experiment):
         gate_motor_pin = get_fans_ao_channels_from_number(self.hardware_settings.gate_motor_channel)
         sample_relay = get_fans_ao_channels_from_number(self.hardware_settings.sample_relay_channel)
         gate_relay = get_fans_ao_channels_from_number(self.hardware_settings.gate_relay_channel)
-
-        #sample_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_6
-        #gate_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_7
-        #main_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_8
-        #self.acquistion_channel = mfans.FANS_AI_CHANNELS.AI_CH_1 ### here should be 1
 
         sample_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_6
         gate_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_8
@@ -90,15 +70,11 @@ class FANSExperiment(eh.Experiment):
         self.sample_rate = 500000
         self.points_per_shot = 50000
 
-        #self.fans_smu = msmu.FANS_SMU(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin)
         self.fans_smu = msmu.FANS_SMU_Specialized(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
         self.fans_smu.set_smu_parameters(100, self.load_resistance)
 
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)
         #self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
-       
-    
-              
          
     def prepare_to_set_voltages(self):
         self.fans_smu.init_smu_mode()
@@ -111,7 +87,6 @@ class FANSExperiment(eh.Experiment):
 
     def prepare_to_measure_spectrum(self):
         self.fans_acquisition.initialize_acquisition(self.acquistion_channel, mfans.FILTER_CUTOFF_FREQUENCIES.F150, mfans.FILTER_GAINS.G1, mfans.PGA_GAINS.PGA_1)
-        #self.fans_acquisition.initialize_acquisition(self.acquistion_channel, mfans.FILTER_CUTOFF_FREQUENCIES.F150, mfans.FILTER_GAINS.G1, mfans.PGA_GAINS.PGA_1)
         self.fans_acquisition.initialize_acquisition_params(self.sample_rate, self.points_per_shot, mfans.ACQUISITION_TYPE.CONT) 
         #switch off all output to the control circuit in order to reduce noiseness of the system
         self.fans_controller.switch_all_fans_output_state(mfans.SWITCH_STATES.OFF)
@@ -139,7 +114,7 @@ class FANSExperiment(eh.Experiment):
 
     def perform_single_value_measurement(self):
         assert isinstance(self.experiment_settings, ExperimentSettings)
-        #counter = 0
+        
         screen_update = self.experiment_settings.display_refresh  #10;
         total_averaging = self.experiment_settings.averages;
         adc = self.fans_acquisition
@@ -148,7 +123,6 @@ class FANSExperiment(eh.Experiment):
         npoints = self.points_per_shot
 
         counter = 0
-
         read_data = adc.read_acquisition_data_when_ready
 
         f1_max = 3000
@@ -202,10 +176,7 @@ class FANSExperiment(eh.Experiment):
         self._experiment_writer.write_measurement(data)
         adc.clear_buffer()
 
-
-
-
-
+    
     def perform_non_gated_single_value_measurement(self):
         return super().perform_non_gated_single_value_measurement()
 

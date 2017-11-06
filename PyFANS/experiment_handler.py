@@ -13,25 +13,22 @@ from multiprocessing import JoinableQueue
 from multiprocessing import Process
 from multiprocessing import Event
 
-from plot import SpectrumPlotWidget
+import plot as plt 
 import process_communication_protocol as pcp
 from nodes import ExperimentSettings, ValueRange, HardwareSettings
-from configuration import Configuration
-from temperature_controller import LakeShore211TemperatureSensor
+import configuration as cfg
 
 from measurement_data_structures import MeasurementInfo
 from experiment_writer import ExperimentWriter
 from calibration import Calibration, CalibrationSimple
-
-#from process_communication_protocol import *
-
+import experiment as exp
 
 
 class ExperimentController(QtCore.QObject):
     def __init__(self, spectrum_plot=None, timetrace_plot=None, status_object = None, measurement_ranges = {0: (0,1600,1),1:(0,102400,64)},  parent = None):
         super().__init__(parent)
         if spectrum_plot:
-            assert isinstance(spectrum_plot, SpectrumPlotWidget)
+            assert isinstance(spectrum_plot, plt.SpectrumPlotWidget)
         self._spectrum_plot = spectrum_plot
         self._running = False
 
@@ -68,7 +65,12 @@ class ExperimentController(QtCore.QObject):
 
     def __init_experiment_thread(self):
         #self._experiment_thread = ExperimentHandler(self._input_data_queue) #ExperimentProcess(self._input_data_queue,True)
-        self._experiment_thread = ExperimentHandler(self._input_data_queue) #ExperimentProcess(self._input_data_queue,True)
+        experiment_thread = self.get_experiment_handler()
+        assert isinstance(experiment_thread, ExperimentHandler)
+        self._experiment_thread = experiment_thread  #ExperimentHandler(self._input_data_queue) #ExperimentProcess(self._input_data_queue,True)
+
+    def get_experiment_handler(self):
+        raise NotImplementedError()
 
     def _command_received(self,cmd):
         self._status_object.send_message("Command received: {0}".format(pcp.ExperimentCommands[cmd]))
@@ -286,87 +288,33 @@ class ExperimentHandler(Process):
         #else:
         #    sys.stdout = open("log.txt", "w")
 
-        cfg = Configuration()
+        cfg = cfg.Configuration()
         exp_settings = cfg.get_node_from_path("Settings.ExperimentSettings")
         assert isinstance(exp_settings, ExperimentSettings)
         simulate = exp_settings.simulate_experiment
 
         if simulate:
-            self._experiment = SimulateExperiment(self._input_data_queue, self._exit)
+            self._experiment = exp.SimulateExperiment(self._input_data_queue, self._exit)
         else:
             #self._experiment = PerformExperiment(self._input_data_queue, self._exit)
-            self._experiment = mfe.FANSExperiment(self._input_data_queue, self._exit)
+            experiment = self.get_experiment()
+            assert isinstance(exp.Experiment), "Experiment has wrong type"
+            self._experiment = experiment #mfe.FANSExperiment(self._input_data_queue, self._exit)
         
         self._experiment.initialize_settings(cfg)
         self._experiment.initialize_hardware()
         self._experiment.initialize_calibration()
         self._experiment.perform_experiment()
 
-
+    def get_experiment(self):
+        raise NotImplementedError()
 
 
 
 ####
 ####this import should be after experiment class since it is required in modern_fans_experiment for import 
-import modern_fans_experiment as mfe
+#import modern_fans_experiment as mfe
 
-class SimulateExperiment(Experiment):
-    def __init__(self, input_data_queue = None, stop_event = None):
-        Experiment.__init__(self,True, input_data_queue, stop_event)
-
-    def initialize_hardware(self):
-        print("simulating hardware init")
-
-    def switch_transistor(self, transistor):
-        print("simulating switch transistor")
-
-    def set_front_gate_voltage(self, voltage):
-        print("simulate setting fg voltage: {0}".format(voltage))
-    
-    def set_drain_source_voltage(self, voltage):
-        print("simulate setting ds voltage: {0}".format(voltage))
-
-    def single_value_measurement(self, drain_source_voltage, gate_voltage):
-        self.open_measurement()
-        print("simulating single measurement vds:{0} vg:{1}".format(drain_source_voltage, gate_voltage))
-        #self.send_measurement_info()
-        self._measurement_info.start_sample_voltage = np.random.random_sample()
-        self._measurement_info.start_main_voltage = np.random.random_sample()
-        
-        self.send_start_measurement_info()
-
-        counter = 0
-        max_counter = 100
-        
-        while counter < max_counter: #(not need_exit()) and counter < max_counter:
-            data = 10**-3 * np.random.random(1600)
-            self.update_spectrum(data,0)
-            self.update_spectrum(data,1)
-            counter+=1
-            time.sleep(0.02)
-        
-        #frequency, spectrum = self.update_resulting_spectrum()
-        data = self.update_resulting_spectrum()
-        #data = np.vstack(self.update_resulting_spectrum()).transpose()
-        #freq,spectrum = np.vstack(self.update_resulting_spectrum()).transpose()
-        
-
-        data = data.transpose()
-        self._experiment_writer.write_measurement(data)   ##.write_measurement()
-        self._experiment_writer.write_measurement_info(self._measurement_info)
-        #self.get_resulting_spectrum()
-        #self.send_measurement_info()
-        self._measurement_info.end_sample_voltage = np.random.random_sample()
-        self._measurement_info.end_main_voltage = np.random.random_sample()
-        
-        self.send_end_measurement_info()
-        
-        self.close_measurement()
-
-    def non_gated_single_value_measurement(self, drain_source_voltage):
-        self.open_measurement()
-        print("simulating non gated single measurement vds:{0}".format(drain_source_voltage))
-        self.close_measurement()
 
 
 
@@ -383,7 +331,7 @@ class SimulateExperiment(Experiment):
 
 if __name__ == "__main__":
     
-    cfg = Configuration()
+    #cfg = Configuration()
     #exp = SimulateExperiment(None,None)
 
     eh = ExperimentHandler(None)
