@@ -124,14 +124,14 @@ class FANSExperimentWriter():
         if self._measurement_file:
             np.savetxt(self._measurement_file,data,delimiter='\t')
 
+    def write_noise_spectrum(self, data):
+        if self._measurement_file:
+            np.savetxt(self._measurement_file,data,delimiter='\t')
+
     
 
 
 
-class TestClass(dict):
-    def __init__(self):
-        super().__init__()
-    
     
     
 
