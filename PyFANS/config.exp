@@ -1,0 +1,7 @@
+<NODE name="Settings">
+    <ExperimentSettings meas_gated_structure="bool:True" use_automated_voltage_control="bool:False" homemade_amp_coeff="i:178" meas_characteristic_type="i:0" measurement_name="" front_gate_voltage="i:0" calibrate_before_measurement="bool:False" use_transistor_selector="bool:False" measurement_count="i:0" use_set_vds_range="bool:False" working_directory="" display_refresh="i:10" use_second_amplifier="bool:True" name="ExperimentSettings" use_homemade_amplifier="bool:True" use_set_vfg_range="bool:False" drain_source_voltage="i:0" transistor_list="" second_amp_coeff="i:100" need_measure_temperature="bool:False" load_resistance="i:5000" simulate_experiment="bool:False" overload_rejecion="bool:False" experiment_name="" averages="i:100">
+        <ValueRange points="i:10" name="drain_source_range" start_units="i:0" end_value="i:1" range_mode="i:0" start_value="i:0" end_units="i:0"/>
+        <ValueRange points="i:10" name="front_gate_range" start_units="i:0" end_value="i:1" range_mode="i:0" start_value="i:0" end_units="i:0"/>
+    </ExperimentSettings>
+    <HardwareSettings dsa_resource="" name="HardwareSettings" fans_controller_resource="" main_sample_multimeter_resource="" sample_motor_channel="i:0" sample_relay_channel="i:0" gate_multimeter_resource="" gate_motor_channel="i:0" gate_relay_channel="i:0"/>
+</NODE>
