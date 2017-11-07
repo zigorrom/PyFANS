@@ -98,7 +98,7 @@ class Experiment:
         raise NotImplementedError()
 
     def initialize_calibration(self):
-        self._calibration = create_calibration()
+        self._calibration = self.create_calibration()
         #dir = os.path.dirname(__file__)
         #self._calibration = self.create_calibration(dir)
         #self._calibration = calib.Calibration(os.path.join(dir,"calibration_data"))

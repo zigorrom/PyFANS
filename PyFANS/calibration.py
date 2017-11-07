@@ -14,6 +14,12 @@ class FANSCalibration:
         self._second_ampl_gain = 100
         self._frequency_responce_filename = "amplifier_frequency_responce.dat"
         self._amplifier_noise_filename = "amp_noise.dat"
+        self.assert_calibration_directory(calibration_data_directory)
+
+    def assert_calibration_directory(self, directory):
+        assert os.path.isdir(directory), "Specified directory does not exist"
+        assert os.path.isfile(os.path.join(directory, self._frequency_responce_filename)), "frequency responce file does not exist here"
+        assert os.path.isfile(os.path.join(directory, self._amplifier_noise_filename)), "amplifier noise file does not exist here"
 
     @property
     def calibration_data_directory(self):
@@ -21,9 +27,7 @@ class FANSCalibration:
 
     @calibration_data_directory.setter
     def calibration_data_directory(self, value):
-        assert os.path.isdir(value), "Specified directory does not exist"
-        assert os.path.isfile(os.path.join(value, self._frequency_responce_filename)), "frequency responce file does not exist here"
-        assert os.path.isfile(os.path.join(value, self._amplifier_noise_filename)), "amplifier noise file does not exist here"
+        self.assert_calibration_directory(value)
         self._calibration_data_directory = value
 
     @property
