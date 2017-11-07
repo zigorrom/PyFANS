@@ -409,18 +409,15 @@ class Experiment:
             list_of_frequency_slices.append(freq)
         result_freq = np.hstack(list_of_frequency_slices)
         result_data = np.hstack(list_of_spectrum_slices)
+        #data = np.vstack((result_freq,result_data))
+        
+        if self.calibration:
+            result_data = self.calibration.apply_calibration(result_freq)
+
         data = np.vstack((result_freq,result_data))
-        #if self.calibration:
-        #    self.calibration.set_amplifier_gain("second_amp",self._measurement_info.second_amplifier_gain)
-        #    data = self.calibration.apply_calibration(data) 
-
-        #self._calibration.apply_calibration(data, 178, self._measurement_info.second_amplifier_gain)
-
-        #if self._calibration:
-        #    data = self._calibration.apply_calibration(data)
-
-        return data #(result_freq,result_data)
-        #frequencies = np.vstack(
+        
+        return data 
+        
 
     def generate_experiment_function(self):
         func = None
