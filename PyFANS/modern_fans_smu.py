@@ -200,7 +200,8 @@ class FANS_SMU:
             ai_feedback.ai_polling_range = mdaq.AUTO_RANGE
             ai_feedback.apply_fans_ai_channel_params()
 
-
+        #set averaging and load resistance
+        self.set_smu_parameters(self.smu_averaging_number, self.smu_load_resistance)
        ## TODO: set also parameters for output channels
 
 
@@ -536,6 +537,8 @@ class FANS_SMU_Specialized(FANS_SMU):
     def read_all_test(self):
         drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
         drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+        print ("stabilizing voltages after drain switch on. waiting...")
+        time.sleep(5)
         result = super().read_all_test() 
         drain_source_switch_channel.analog_write(0)
         return result
@@ -543,6 +546,8 @@ class FANS_SMU_Specialized(FANS_SMU):
     def read_feedback_voltages(self):
         drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
         drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+        print ("stabilizing voltages after drain switch on. waiting...")
+        time.sleep(5)
         result = super().read_feedback_voltages()
         drain_source_switch_channel.analog_write(0)
         return result
@@ -550,6 +555,8 @@ class FANS_SMU_Specialized(FANS_SMU):
     def read_all_parameters(self):
         drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
         drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+        print ("stabilizing voltages after drain switch on. waiting...")
+        time.sleep(5)
         result = super().read_all_parameters()
         drain_source_switch_channel.analog_write(0)
         return result
