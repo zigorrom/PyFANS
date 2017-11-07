@@ -17,7 +17,7 @@ class FANSExperimentWriter(expw.ExperimentWriter):
 
         self._timetrace_measurement_file = None
 
-        self._timetrace_header = "Fs={0}".format(sample_rate)
+        self._timetrace_header = "Fs={0}\n".format(sample_rate)
         
     
     def open_measurement(self, measurement_name, measurement_counter):
