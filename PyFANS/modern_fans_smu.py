@@ -104,12 +104,15 @@ class FANS_SMU:
 
         self._load_resistance = 5000
         self._averageing_number = 100
+        self._smu_sample_rate = 1000
+
         self.set_smu_parameters(self.smu_averaging_number, self.smu_load_resistance)
 
 
     def set_smu_parameters(self, averaging, load_resistance):
         self.smu_load_resistance = load_resistance
         self.smu_averaging_number = averaging
+        self._fans_controller.set_sampling_rate(self._smu_sample_rate)
         
     
 
