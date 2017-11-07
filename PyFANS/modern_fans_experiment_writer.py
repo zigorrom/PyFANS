@@ -23,7 +23,7 @@ class FANSExperimentWriter(expw.ExperimentWriter):
     def open_measurement(self, measurement_name, measurement_counter):
         super().open_measurement(measurement_name, measurement_counter)
         filepath = join(self.working_directory, generate_timetrace_measurement_filename(measurement_name,measurement_counter, self.__timetrace_measurement_file_extension))
-        self._timetrace_measurement_file = open(filepath, "wb")
+        self._timetrace_measurement_file = open(filepath, "wb", buffering = self.__sample_rate)
         self._timetrace_measurement_file.write(self._timetrace_header.encode())
 
     def close_measurement(self):
