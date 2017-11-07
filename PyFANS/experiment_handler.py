@@ -74,7 +74,7 @@ class ExperimentController(QtCore.QObject):
 
     def _command_received(self,cmd):
         assert isinstance(cmd, pcp.ExperimentCommands), "Command not found"
-        self._status_object.send_message("Command received: {0}".format(cmd.name) #pcp.ExperimentCommands[cmd]))
+        self._status_object.send_message("Command received: {0}".format(cmd.name)) #pcp.ExperimentCommands[cmd]))
 
     def _on_log_message_received(self, message):
         if message:
@@ -173,7 +173,7 @@ class ProcessingThread(QtCore.QThread):
     
     threadStarted = QtCore.pyqtSignal()
     threadStopped = QtCore.pyqtSignal()
-    commandReceived = QtCore.pyqtSignal(int)
+    commandReceived = QtCore.pyqtSignal(pcp.ExperimentCommands) #int)
     experimentStarted = QtCore.pyqtSignal(dict)
     experimentFinished = QtCore.pyqtSignal()
     measurementStarted = QtCore.pyqtSignal(dict)

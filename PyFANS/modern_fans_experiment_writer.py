@@ -1,4 +1,4 @@
-from os.path import join, isfile
+﻿from os.path import join, isfile
 import numpy as np
 from measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
 import experiment_writer as expw
@@ -29,6 +29,7 @@ class FANSExperimentWriter(expw.ExperimentWriter):
     def close_measurement(self):
         super().close_measurement()
         if self._timetrace_measurement_file and not self._timetrace_measurement_file.closed:
+            self._timetrace_measurement_file.flush()
             self._timetrace_measurement_file.close()
 
     def write_noise_spectrum(self, data):
