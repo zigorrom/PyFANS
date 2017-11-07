@@ -92,14 +92,19 @@ class Experiment:
         #self._data_handler = DataHandler(self._working_directory,input_data_queue = self._input_data_queue)
 
     def initialize_hardware(self):
-        pass
-    
+        raise NotImplementedError()
+
+    def create_calibration(self):
+        raise NotImplementedError()
+
     def initialize_calibration(self):
+        self._calibration = create_calibration()
         #dir = os.path.dirname(__file__)
+        #self._calibration = self.create_calibration(dir)
         #self._calibration = calib.Calibration(os.path.join(dir,"calibration_data"))
         #self._calibration = calib.CalibrationSimple(os.path.join(dir,"calibration_data"))
         #self._calibration.init_values()
-        pass
+        #pass
 
     def get_meas_ranges(self):
         fg_range = self.__config.get_node_from_path("front_gate_range")

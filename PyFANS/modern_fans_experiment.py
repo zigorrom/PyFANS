@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import experiment as exp
+import calibration as calib
 import experiment_handler as eh
 import modern_fans_controller as mfans
 import modern_agilent_u2542a as mdaq
@@ -80,7 +81,12 @@ class FANSExperiment(exp.Experiment):
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)
         #self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
      
-        
+    def create_calibration(self):
+        dir = os.path.join(os.path.dirname(__file__), "calibration_data")
+        calibration = calib.FANSCalibration(dir)
+        calibration.second_amplifier_gain = self.experiment_settings.second_amp_coeff
+        calibration.initialize_calibration()
+
     def create_experiment_writer(self):
         return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
             
