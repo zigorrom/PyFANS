@@ -87,6 +87,7 @@ class FANSExperiment(exp.Experiment):
         calibration = calib.FANSCalibration(dir)
         calibration.second_amplifier_gain = self.experiment_settings.second_amp_coeff
         calibration.initialize_calibration()
+        return calibration
 
     def create_experiment_writer(self):
         return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)

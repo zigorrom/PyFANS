@@ -17,8 +17,8 @@ class ExperimentWriter():
         self._measurement_file = None
        
         
-        self._experiment_header = "\t".join(list(map(str,MeasurementInfo.header_options())))
-        self._measurement_header = "Frequency, f(Hz)\tSv (V2/Hz)"
+        self._experiment_header = "\t".join(list(map(str,MeasurementInfo.header_options()))) + "\n"
+        self._measurement_header = "Frequency, f(Hz)\tSv (V2/Hz)\n"
 
     @property
     def working_directory(self):
