@@ -73,7 +73,8 @@ class ExperimentController(QtCore.QObject):
         raise NotImplementedError()
 
     def _command_received(self,cmd):
-        self._status_object.send_message("Command received: {0}".format(pcp.ExperimentCommands[cmd]))
+        assert isinstance(cmd, pcp.ExperimentCommands), "Command not found"
+        self._status_object.send_message("Command received: {0}".format(cmd.name) #pcp.ExperimentCommands[cmd]))
 
     def _on_log_message_received(self, message):
         if message:

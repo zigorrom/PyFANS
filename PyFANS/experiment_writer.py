@@ -78,7 +78,7 @@ class ExperimentWriter():
 
         if isinstance(info, MeasurementInfo):
             data_dict = info.to_dict()
-            datalist = (data_dict[opt] for opt in MeasurementInfo.header_options())
+            data_list = [data_dict[opt] for opt in MeasurementInfo.header_options()]
             representation = "\t".join(map(str,data_list)) + '\n'
             self._experiment_file.write(representation.encode())
             self._experiment_file.flush()
