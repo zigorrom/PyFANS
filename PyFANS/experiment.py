@@ -311,11 +311,16 @@ class Experiment:
         if q:
             q.put_nowait(params)   
 
+    def create_experiment_writer(self):
+        return ew.ExperimentWriter(self._working_directory)
+
     def open_experiment(self):
         experiment_name = self.__exp_settings.experiment_name
         self._send_command_with_params(pcp.ExperimentCommands.EXPERIMENT_STARTED, experiment_name = experiment_name)
         self._measurement_counter = self.__exp_settings.measurement_count
-        self._experiment_writer = ew.ExperimentWriter(self._working_directory)
+        exp_writer = self.create_experiment_writer()
+        assert isinstance(exp_writer, ew.ExperimentWriter), "Experiment writer is not inherited from ExperimentWriterType"
+        self._experiment_writer = exp_writer #ew.ExperimentWriter(self._working_directory)
         self._experiment_writer.open_experiment(experiment_name)
 
     def close_experiment(self):

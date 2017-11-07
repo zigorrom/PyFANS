@@ -3,16 +3,6 @@
 import numpy as np
 from measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
 
-#class MeasurementProperty:
-#    def __init__(self):
-#        pass
-
-    
-
-
-#class MeasurementInfo():
-
-
 
 class ExperimentWriter():
     def __init__(self, working_directory, experiment_name = None, measurement_name = None, measurement_counter = 0):
@@ -22,31 +12,13 @@ class ExperimentWriter():
         self._measurement_counter = measurement_counter
         self.__experiment_file_extension = "dat"
         self.__measurement_file_extension = "dat"
+
         self._experiment_file = None
         self._measurement_file = None
-        self._experiment_info_data = np.asarray([
-            ["U\_sample","V"],
-            ["Current", "A"],
-            ["R\_equivalent", "Ohm"],
-            ["Filename","str"],
-            ["R\_load","Ohm"],
-            ["U\_whole","V"],
-            ["U\_0sample", "V"],
-            ["U\_0whole","V"],
-            ["R\-(0sample)","Ohm"],
-            ["R\-(Esample)","Ohm"],
-            ["Temperature\-(0)","K"],
-            ["Temperature\-(E)","K"],
-            ["k\-(ampl)","int"],
-            ["N\-(aver)","int"],
-            ["V\-(0Gate)","V"],
-            ["V\-(EGate)","V"],
-            ["Current\_0", "A"],
-            ]).transpose()
-        self._measurement_info_data = np.asarray([["Frequency","Hz"],["Sv","V2/Hz"]]).transpose()
-        #    ]
-#       U\-(sample)	Current	R\-(Eq)	Filename	R\-(load)	U\-(Whole)	U\-(0sample)	U\-(0Whole)	R\-(0sample)	R\-(Esample)	Temperature\-(0)	Temperature\-(E)	k\-(ampl)	N\-(aver)	V\-(Gate)
-#       V	A	\g(W)		\g(W)	V	V	V	\g(W)	\g(W)	K	K			V
+       
+        
+        self._experiment_header = "\t".join(list(map(str,MeasurementInfo.header_options())))
+        self._measurement_header = "Frequency, f(Hz)\tSv (V2/Hz)"
 
     @property
     def working_directory(self):
@@ -55,8 +27,6 @@ class ExperimentWriter():
     @working_directory.setter
     def working_directory(self,value):
         self._working_directory = value
-
-
 
     def open_experiment(self, experiment_name):
         if self._experiment_file: 
@@ -87,63 +57,29 @@ class ExperimentWriter():
         filepath = join(self._working_directory, generate_measurement_info_filename(self._measurement_name,self._measurement_counter, self.__measurement_file_extension))
         self._measurement_file = open(filepath,"wb")
         self._write_measurement_header()
+        
 
     def _write_experiment_header(self):
-        np.savetxt(self._experiment_file,self._experiment_info_data,'%s','\t')
+        self._experiment_file.write(self._experiment_header.encode())
+        #np.savetxt(self._experiment_file,self._experiment_header,'%s','\t')
 
     def _write_measurement_header(self):
-        np.savetxt(self._measurement_file,self._measurement_info_data,'%s','\t')
+        self._measurement_file.write(self._measurement_header.encode())
+        #np.savetxt(self._measurement_file,self._measurement_header,'%s','\t')
         
 
     def close_measurement(self):
         if self._measurement_file and not self._measurement_file.closed:
             self._measurement_file.close()
 
-            # ["U\_sample","V"],
-            #["Current", "A"],
-            #["R\_equivalent", "Ohm"],
-            #["Filename","str"],
-            #["R\_load","Ohm"],
-            #["U\_whole","V"],
-            #["U\_0sample", "V"],
-            #["U\_0whole","V"],
-            #["R\-(0sample)","Ohm"],
-            #["R\-(Esample)","Ohm"],
-            #["Temperature\-(0)","K"],
-            #["Temperature\-(E)","K"],
-            #["k\-(ampl)","int"],
-            #["N\-(aver)","int"],
-            #["V\-(0Gate)","V"],
-            #["V\-(EGate)","V"],
-            #["Current\_0", "A"],
-
-
     def write_measurement_info(self,info):
         if not self._experiment_file:
             return 
 
         if isinstance(info, MeasurementInfo):
-            data_list = [info.end_sample_voltage,
-                         info.sample_current_end, 
-                         info.equivalent_resistance_end, 
-                         generate_measurement_info_filename(info.measurement_filename, info.measurement_count,info._measurement_file_extension),
-                         info._load_resistance,
-                         info.end_main_voltage,
-                         info.start_sample_voltage,
-                         info.start_main_voltage,
-                         info.sample_resistance_start,
-                         info.sample_resistance_end,
-                         info.start_temperature,
-                         info.end_temperature,
-                         info.second_amplifier_gain,
-                         None,
-                         info.start_gate_voltage,
-                         info.end_gate_voltage,
-                         info.sample_current_start
-                         ]
+            data_dict = info.to_dict()
+            datalist = (data_dict[opt] for opt in MeasurementInfo.header_list)
             representation = "\t".join(map(str,data_list)) + '\n'
-            
-
             self._experiment_file.write(representation.encode())
             self._experiment_file.flush()
 

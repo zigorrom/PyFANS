@@ -14,6 +14,8 @@ from multiprocessing import Process, Event
 from scipy.signal import periodogram
 from scipy.signal import decimate
 from nodes import ExperimentSettings, ValueRange, HardwareSettings
+import modern_fans_experiment_writer as mfew
+
 
 
 def get_fans_ai_channels_from_number(number):
@@ -48,7 +50,9 @@ class FANSExperiment(exp.Experiment):
         self._spectrum_linking_frequencies = {0:(1,3000),1:(3000,250000)}
         self._frequencies = self._get_frequencies(self._spectrum_ranges)
         self._frequency_indexes = self._get_frequency_linking_indexes(self._spectrum_ranges, self._spectrum_linking_frequencies)
-        
+        self._max_timetrace_length = -1 # -1 - means all data, 0 - means no data, number means number seconds
+
+
          
     def initialize_hardware(self):
         resource = self.hardware_settings.fans_controller_resource
@@ -75,7 +79,11 @@ class FANSExperiment(exp.Experiment):
 
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)
         #self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
-         
+     
+        
+    def create_experiment_writer(self):
+        return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
+            
     def prepare_to_set_voltages(self):
         self.fans_smu.init_smu_mode()
 
@@ -118,9 +126,21 @@ class FANSExperiment(exp.Experiment):
         screen_update = self.experiment_settings.display_refresh  #10;
         total_averaging = self.experiment_settings.averages;
         adc = self.fans_acquisition
-
+        
         fs = self.sample_rate
         npoints = self.points_per_shot
+
+        seconds_counter = 0.0
+        max_seconds_to_write = self._max_timetrace_length
+        time_step_sec = npoints * 1.0 / fs
+
+        write_timetrace_confition = False
+        if max_seconds_to_write < 0:
+            write_timetrace_confition = True
+        elif max_seconds_to_write == 0:
+            write_timetrace_confition = False
+        else: 
+            write_timetrace_confition = lambda: seconds_counter < max_seconds_to_write
 
         counter = 0
         read_data = adc.read_acquisition_data_when_ready
@@ -160,6 +180,10 @@ class FANSExperiment(exp.Experiment):
                 f, psd = periodogram(data, fs)
                 self.update_spectrum(psd,1,1)
 
+                if write_timetrace_confition :
+                    self._experiment_writer.write_timetrace_data(data)
+                    seconds_counter += time_step_sec
+
                 if new_fill_value % fs == 0:
                     decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
                     f, psd = periodogram(decimated, new_fs)
@@ -174,6 +198,7 @@ class FANSExperiment(exp.Experiment):
         data = self.update_resulting_spectrum()
         data = data.transpose()
         self._experiment_writer.write_measurement(data)
+
         adc.clear_buffer()
 
     

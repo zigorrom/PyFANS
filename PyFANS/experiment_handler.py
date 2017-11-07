@@ -272,6 +272,7 @@ class LoggingQueuedStream:
         pass
 
 
+
 class ExperimentHandler(Process):
     def __init__(self, input_data_queue = None):
         super().__init__()
@@ -315,20 +316,6 @@ class ExperimentHandler(Process):
 ####
 ####this import should be after experiment class since it is required in modern_fans_experiment for import 
 #import modern_fans_experiment as mfe
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     

@@ -52,7 +52,25 @@ class MeasurementInfo:
     AVERAGES_OPTION = "Naver"#    averages                None,
     GATE_VOLTAGE_END_OPTION = "Vgate (end)" #            self.end_gate_voltage
     GATE_VOLTAGE_START_OPTION = "Vgate (start)"
-                
+       
+    HEADER_LIST_OPTIONS = [
+            SAMPLE_VOLTAGE_END_OPTION,
+            SAMPLE_CURRENT_END_OPTION,
+            EQUIVALENT_RESISTANCE_END_OPTION,
+            FILENAME_OPTION,
+            LOAD_RESISTANCE_OPTION,
+            MAIN_VOLTAGE_END_OPTION,
+            SAMPLE_VOLTAGE_START_OPTION,
+            MAIN_VOLTAGE_START_OPTION,
+            SAMPLE_RESISTANCE_START_OPTION,
+            SAMPLE_RESISTANCE_END_OPTION,
+            TEMPERATURE_START_OPTION,
+            TEMPERATURE_END_OPTION,
+            AMPLIFICATION_OPTION,
+            AVERAGES_OPTION,
+            GATE_VOLTAGE_END_OPTION,
+            GATE_VOLTAGE_START_OPTION
+            ]         
 
 
 
@@ -274,6 +292,10 @@ class MeasurementInfo:
         #    ["k\-(ampl)","int"],
         #    ["N\-(aver)","int"],
         #    ["V\-(Gate)","V"]
+    @classmethod
+    def header_options(cls):
+        return cls.HEADER_LIST_OPTIONS
+        
     @property
     def header_list(self):
         return [
