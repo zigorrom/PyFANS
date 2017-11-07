@@ -495,8 +495,10 @@ class AgilentU2542A_DSP(VisaInstrument):
 
     def empty_continuous_acquisition_buffer(self):
         # TODO send command to clear buffer
-        while not check_continuous_acquisition_buffer_is_empty(self.continuous_acquisition_state()):
-            rest_data = self.acquisition_read_raw_data()
+        self.clear_status()
+
+        #while not check_continuous_acquisition_buffer_is_empty(self.continuous_acquisition_state()):
+        #    rest_data = self.acquisition_read_raw_data()
 
 
 
