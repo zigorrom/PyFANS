@@ -62,8 +62,9 @@ class FANSCalibration:
 
             total_amplification = hma_gain * hma_gain * sec_ampl_gain * sec_ampl_gain
             total_amplification_with_freq_resp = total_amplification * self._frequency_responce
-            scaled_spectrum = np.divide(spectrum_data, total_amplification_with_freq_resp)
-            resulting_spectrum = np.subtract(scaled_spectrum, self._amp_noise)
+            resulting_spectrum = np.subtract(spectrum_data, self._amp_noise)
+            resulting_spectrum = np.divide(resulting_spectrum, total_amplification_with_freq_resp)
+            
             return resulting_spectrum
         except Exception as e:
             print(str(e))
