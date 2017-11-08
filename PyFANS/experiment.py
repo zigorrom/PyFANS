@@ -10,6 +10,10 @@ import experiment_writer as ew
 import calibration as calib
 import measurement_data_structures as mds
 
+class StopExperiment(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
 class Experiment:
     def __init__(self, simulate = False, input_data_queue = None, stop_event = None):
         self.__config = None
@@ -30,6 +34,7 @@ class Experiment:
         self._measurement_counter = 0
         self._experiment_writer = None    
         self._calibration = None
+        
                                                                                                                                              
     
     @property
@@ -105,6 +110,10 @@ class Experiment:
         #self._calibration = calib.CalibrationSimple(os.path.join(dir,"calibration_data"))
         #self._calibration.init_values()
         #pass
+    
+    def assert_need_exit(self):
+        if self.need_exit:
+            raise StopExperiment("Experiment stop was raised")
 
     def get_meas_ranges(self):
         fg_range = self.__config.get_node_from_path("front_gate_range")
@@ -290,7 +299,8 @@ class Experiment:
         self.prepare_to_measure_voltages()
         self.perform_start_param_measurement()
         self.prepare_to_measure_spectrum()
-        self.perform_non_gated_single_value_measurement()
+        self.perform_single_value_measurement()
+        #self.perform_non_gated_single_value_measurement()
         self.perform_end_param_measurement()
         self.save_measurement_info()
         self.close_measurement()
