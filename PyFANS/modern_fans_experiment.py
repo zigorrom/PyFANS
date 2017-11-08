@@ -142,11 +142,11 @@ class FANSExperiment(exp.Experiment):
         max_seconds_to_write = self._max_timetrace_length
         time_step_sec = npoints * 1.0 / fs
 
-        write_timetrace_confition = False
+        write_timetrace_confition = lambda: False
         if max_seconds_to_write < 0:
-            write_timetrace_confition = True
+            write_timetrace_confition = lambda: True
         elif max_seconds_to_write == 0:
-            write_timetrace_confition = False
+            write_timetrace_confition = lambda: False
         else: 
             write_timetrace_confition = lambda: seconds_counter < max_seconds_to_write
 
@@ -188,7 +188,7 @@ class FANSExperiment(exp.Experiment):
                 f, psd = periodogram(data, fs)
                 self.update_spectrum(psd,1,1)
 
-                if write_timetrace_confition :
+                if write_timetrace_confition() :
                     self._experiment_writer.write_timetrace_data(data)
                     seconds_counter += time_step_sec
 

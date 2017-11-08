@@ -173,6 +173,9 @@ class ExperimentController(QtCore.QObject):
         self._processing_thread.stop()
         self._running = False
 
+    def wait_all_threads(self):
+        pass
+
 class ProcessingThread(QtCore.QThread):
     
     threadStarted = QtCore.pyqtSignal()
