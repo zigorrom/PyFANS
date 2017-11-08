@@ -263,8 +263,11 @@ class MainView(mainViewBase,mainViewForm):
         fans_controller = mfans.FANS_CONTROLLER(resource)
         fans_smu = msmu.FANS_SMU_Specialized(fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
 
-        voltage_control_view = savc.VoltageControlView(parent_fans_smu = fans_smu)
-        voltage_control_view.show()
+        
+        
+        self.voltage_control_view = savc.VoltageControlView(parent_fans_smu = fans_smu)
+
+        self.voltage_control_view.show()
 
 
 

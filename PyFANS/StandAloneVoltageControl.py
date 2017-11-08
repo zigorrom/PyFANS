@@ -27,7 +27,7 @@ class VoltageControlView(mainViewBase,mainViewForm):
         self._initialized = False
         self._repetitive_timer = QtCore.QTimer(self)
         self._repetitive_timer.setInterval(100)
-        self._refresh_timer.timeout.connect(self.read_values)
+        self._repetitive_timer.timeout.connect(self.read_values)
 
         if isinstance(parent_fans_smu, mfs.FANS_SMU):
             self._fans_smu = parent_fans_smu

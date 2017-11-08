@@ -240,10 +240,11 @@ class FANS_SMU:
         self.__set_voltage_polarity(FANS_NEGATIVE_POLARITY, self._gate_motor, self._gate_relay)
 
     def move_motor(self, voltage_set_channel, direction, speed, timeout = 0.1):
+        assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS),"Incorrect channel"
         output_channel = self._fans_controller.get_fans_output_channel(voltage_set_channel)
-        output_channel.ao_voltage = direction*speed
+        output_channel.analog_write(direction*speed)
         time.sleep(timeout)
-        output_channel.ao_voltage = 0
+        output_channel.analog_write(0)
 
     def move_ds_motor_left(self):
         self.move_motor(self._drain_source_motor, -1, LOW_SPEED, SHORT_TIME)
