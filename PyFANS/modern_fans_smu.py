@@ -7,6 +7,11 @@ import numpy as np
 
 DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
 
+##### TODO:
+#Create a moving average array of length(trusted length) and fill with 0 
+#Create index to calculate how many values is already in the list and use it for averaging 
+#if value does not change the average of moving average list would be in some error range
+#if value is not changing raise error
 
 MIN_MOVING_VOLTAGE = 0.3
 MAX_MOVING_VOLTAGE = 6
