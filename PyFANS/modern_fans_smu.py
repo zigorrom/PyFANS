@@ -74,6 +74,13 @@ SHORT_TIME,LONG_TIME = (0.3,2)
 
 
 class FANS_SMU:
+    #{"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
+    DRAIN_SOURCE_VOLTAGE_VAR = "Vds"
+    GATE_SOURVCE_VOLTAGE_VAR = "Vgs"
+    MAIN_VOLTAGE_VAR = "Vmain"
+    DRAIN_CURRENT_VAR = "Ids"
+    SAMPLE_RESISTANCE_VAR = "Rs"
+
     def __init__(self,fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback,  gate_motor, gate_relay, gate_feedback, main_feedback):
         assert isinstance(fans_controller, mfc.FANS_CONTROLLER), "Wrong controller type"
         assert isinstance(drain_source_motor, mfc.FANS_AO_CHANNELS)
@@ -401,8 +408,13 @@ class FANS_SMU:
         except ZeroDivisionError:
             current = 0
             resistance = 0
-        
-        return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
+
+        return {self.DRAIN_SOURCE_VOLTAGE_VAR:ds_voltage,
+                self.GATE_SOURVCE_VOLTAGE_VAR:gate_voltage,
+                self.MAIN_VOLTAGE_VAR:main_voltage, 
+                self.DRAIN_CURRENT_VAR:current,
+                self.SAMPLE_RESISTANCE_VAR:resistance}
+        #return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
 
 
 

@@ -13,7 +13,10 @@ from communication_layer import get_available_gpib_resources, get_available_com_
 from plot import SpectrumPlotWidget
 from experiment_handler import ProcessingThread, ExperimentController   #, ExperimentProcess
 from measurement_data_structures import MeasurementInfo
+import modern_fans_controller as mfans
+import modern_fans_smu as msmu
 import modern_fans_experiment as mfe
+import StandAloneVoltageControl as savc
 
 class StatusObject(QtCore.QObject):
     message_arrived = QtCore.pyqtSignal(str)
@@ -238,6 +241,31 @@ class MainView(mainViewBase,mainViewForm):
         self._on_message_arrived("saving config file")
         self._config.save_config()
         self._on_message_arrived("config saved!")
+
+    @QtCore.pyqtSlot()
+    def on_ui_voltage_control_clicked(self):
+
+        hardware_settings = self._config.get_node_from_path("HardwareSettings")
+        assert isinstance(hardware_settings,HardwareSettings), "Cannot find hardware settings"
+
+        sample_motor_pin = mfe.get_fans_ao_channels_from_number(hardware_settings.sample_motor_channel)
+        gate_motor_pin = mfe.get_fans_ao_channels_from_number(hardware_settings.gate_motor_channel)
+        sample_relay = mfe.get_fans_ao_channels_from_number(hardware_settings.sample_relay_channel)
+        gate_relay = mfe.get_fans_ao_channels_from_number(hardware_settings.gate_relay_channel)
+        
+        sample_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_6
+        gate_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_8
+        main_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_7
+        
+        drain_source_voltage_switch_channel = mfans.FANS_AO_CHANNELS.AO_CH_10
+        resource = hardware_settings.fans_controller_resource
+
+        fans_controller = mfans.FANS_CONTROLLER(resource)
+        fans_smu = msmu.FANS_SMU_Specialized(fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
+
+        voltage_control_view = savc.VoltageControlView(parent_fans_smu = fans_smu)
+        voltage_control_view.show()
+
 
 
     @QtCore.pyqtSlot()

@@ -339,13 +339,6 @@
          </property>
         </widget>
        </item>
-       <item row="16" column="1" colspan="5">
-        <widget class="QCheckBox" name="ui_use_automated_voltage_control">
-         <property name="text">
-          <string>Automated Voltage Control</string>
-         </property>
-        </widget>
-       </item>
        <item row="24" column="1" colspan="5">
         <widget class="QGroupBox" name="groupBox">
          <property name="sizePolicy">
@@ -613,6 +606,20 @@
         <widget class="QCheckBox" name="ui_simulate">
          <property name="text">
           <string>Simulate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="1" colspan="3">
+        <widget class="QCheckBox" name="ui_use_automated_voltage_control">
+         <property name="text">
+          <string>Automated Voltage Control</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="4" colspan="2">
+        <widget class="QPushButton" name="ui_voltage_control">
+         <property name="text">
+          <string>Voltage control</string>
          </property>
         </widget>
        </item>

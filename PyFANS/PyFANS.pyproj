@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>modern_fans_experiment.py</StartupFile>
+    <StartupFile>StandAloneVoltageControl.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -46,6 +46,7 @@
     <Compile Include="plot.py" />
     <Compile Include="process_communication_protocol.py" />
     <Compile Include="range_handlers.py" />
+    <Compile Include="StandAloneVoltageControl.py" />
     <Compile Include="temperature_controller.py" />
     <Compile Include="xml_serializer.py" />
     <Compile Include="__init__.py" />
