@@ -411,8 +411,8 @@ class Experiment:
         result_data = np.hstack(list_of_spectrum_slices)
         #data = np.vstack((result_freq,result_data))
         
-        #if self.calibration:
-        #    result_data = self.calibration.apply_calibration(result_data)
+        if self.calibration:
+            result_data = self.calibration.apply_calibration(result_data)
 
         data = np.vstack((result_freq,result_data))
         
