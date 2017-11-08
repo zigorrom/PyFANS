@@ -113,6 +113,10 @@ class ExperimentController(QtCore.QObject):
         print("end measurement_info_arrived")
         self._status_object.send_refresh_measurement_end_data(measurement_info)
 
+    def _on_progress_changed_received(self, progress_value):
+        print("progress changed received")
+        self._status_object.send_progress_changed(progress_value)
+
     #def _on_measurement_info_arrived(self,measurement_info):
     #    print("measurement_info_arrived")
     #    self._status_object.send_measurement_info_changed(measurement_info)
@@ -183,6 +187,7 @@ class ProcessingThread(QtCore.QThread):
     endMeasurementDataArrived = QtCore.pyqtSignal(MeasurementInfo)
     resulting_spectrum_update = QtCore.pyqtSignal(dict)
     log_message_received = QtCore.pyqtSignal(str)
+    progressChanged = QtCore.pyqtSignal(int)
 
     def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
         super().__init__(parent)
@@ -215,9 +220,9 @@ class ProcessingThread(QtCore.QThread):
                     self.experimentStarted.emit(param)
                     continue
 
-                elif cmd is pcp.ExperimentCommands.EXPERIMENT_STOPPED:
+                elif cmd is pcp.ExperimentCommands.EXPERIMENT_FINISHED:
                     self.alive = False
-                    self.commandReceived.emit(pcp.ExperimentCommands.EXPERIMENT_STOPPED)
+                    self.commandReceived.emit(pcp.ExperimentCommands.EXPERIMENT_FINISHED)
                     self.experimentFinished.emit()
                     break
 
@@ -249,7 +254,8 @@ class ProcessingThread(QtCore.QThread):
                 elif cmd is pcp.ExperimentCommands.LOG_MESSAGE:
                     self.log_message_received.emit(param)
 
-
+                elif cmd is pcp.ExperimentCommands.PROGRESS_CHANGED:
+                    self.progressChanged.emit(param)
 
             except EOFError as e:
                 print(str(e))

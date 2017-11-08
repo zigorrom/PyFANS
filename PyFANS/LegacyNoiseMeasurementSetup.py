@@ -25,6 +25,7 @@ class StatusObject(QtCore.QObject):
     #measurement_info_changed = QtCore.pyqtSignal(MeasurementInfo)
     refresh_measurement_start_data = QtCore.pyqtSignal(MeasurementInfo)
     refresh_measurement_end_data = QtCore.pyqtSignal(MeasurementInfo)
+    progress_changed = QtCore.pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -47,6 +48,9 @@ class StatusObject(QtCore.QObject):
 
     def send_multiple_param_changed(self, params):
         self.multiple_param_changed.emit(params)
+
+    def send_progress_changed(self, progress_value):
+        self.progress_changed.emit(progress_value)
 
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v2.ui")
@@ -71,6 +75,7 @@ class MainView(mainViewBase,mainViewForm):
 
        #self._status_object.measurement_info_changed.connect(self._on_measurement_info_changed)
        self._status_object.multiple_param_changed.connect(self._on_multiple_param_changed)
+       self._status_object.progress_changed.connect(self._on_progress_changed)
 
        self._experiment_controller = mfe.FANSExperimentController(self._spectrumPlotWidget, status_object = self._status_object)
        
@@ -155,6 +160,9 @@ class MainView(mainViewBase,mainViewForm):
     #    if isinstance(measurement_info, MeasurementInfo):
     #        print("measurement_info :{0}".format(measurement_info))
     #        self.__ui_set_measurement_info(measurement_info)
+
+    def _on_progress_changed(self, progress_value):
+        print("progress changed received: {0}".format(progress_value))
 
     def _on_multiple_param_changed(self, params):
         if isinstance(params,dict):

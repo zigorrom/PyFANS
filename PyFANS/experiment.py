@@ -295,7 +295,9 @@ class Experiment:
         self.save_measurement_info()
         self.close_measurement()
 
-
+    def send_progress_changed(self, progress_value):
+        print("Progress changed: {0}".format(progress_value))
+        self._send_command_with_param(pcp.ExperimentCommands.PROGRESS_CHANGED, progress_value)
 
     def _send_command(self,command):
         q = self._input_data_queue
@@ -329,7 +331,7 @@ class Experiment:
         self._experiment_writer.open_experiment(experiment_name)
 
     def close_experiment(self):
-        self._send_command(pcp.ExperimentCommands.EXPERIMENT_STOPPED)
+        self._send_command(pcp.ExperimentCommands.EXPERIMENT_FINISHED)
         self._experiment_writer.close_experiment()
 
     def open_measurement(self):
