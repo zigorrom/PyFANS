@@ -92,7 +92,7 @@ class ExperimentController(QtCore.QObject):
 
     def _on_experiment_finished(self):
         print("Experiment finished")
-        self.stop()
+        #self.stop()
 
     def _on_measurement_started(self,  params):
         measurement_name = params.get("measurement_name")

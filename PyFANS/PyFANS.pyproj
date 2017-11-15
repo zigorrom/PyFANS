@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>LegacyNoiseMeasurementSetup.py</StartupFile>
+    <StartupFile>pyfans.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -35,7 +35,7 @@
     </Compile>
     <Compile Include="experiment_handler.py" />
     <Compile Include="experiment_writer.py" />
-    <Compile Include="LegacyNoiseMeasurementSetup.py" />
+    <Compile Include="pyfans.py" />
     <Compile Include="measurement_data_structures.py" />
     <Compile Include="modern_agilent_u2542a.py" />
     <Compile Include="modern_fans_controller.py" />
