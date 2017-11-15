@@ -498,8 +498,9 @@ def update():
 
 if __name__== "__main__":
     app = QtGui.QApplication(sys.argv)
-    app.setApplicationName("LegacyNoiseMeasurementSetup")
-    #app.setStyle("cleanlooks")
+    app.setApplicationName("PyFANS")
+    app.setStyle("cleanlooks")
+    app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
 
     #css = "QLineEdit#sample_voltage_start {background-color: yellow}"
     #app.setStyleSheet(css)
