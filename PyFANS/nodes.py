@@ -711,7 +711,7 @@ class ExperimentSettings(Node):
         self.__averages = 100
 
         self.__use_homemade_amplifier = True
-        self.__homemade_amp_coeff = 178
+        self.__homemade_amp_coeff = 172
         self.__use_second_amplifier = True
         self.__second_amp_coeff = 100
 

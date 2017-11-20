@@ -66,7 +66,7 @@ class SpectrumPlotWidget:
         self.plot.setLogMode(x=True, y=True)
         self.plot.setLabel("left", "Power", units="V^2Hz-1")
         self.plot.setLabel("bottom", "Frequency", units="Hz")
-        self.plot.setLimits(xMin=0.1,xMax = 7, yMin = -18, yMax = 2)
+        self.plot.setLimits(xMin=0.1,xMax = 7, yMin = -30, yMax = 2)
         self.plot.setXRange(0.1,5)
         self.plot.setYRange(-20,-1)
 

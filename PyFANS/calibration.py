@@ -10,7 +10,7 @@ class FANSCalibration:
         self._calibration_data_directory = calibration_data_directory 
         self._frequency_responce = None
         self._amp_noise = None
-        self._homemade_ampl_gain = 178
+        self._homemade_ampl_gain = 172 #178
         self._second_ampl_gain = 100
         self._frequency_responce_filename = "amplifier_frequency_responce.dat"
         self._amplifier_noise_filename = "amp_noise.dat"
