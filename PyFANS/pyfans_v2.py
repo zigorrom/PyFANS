@@ -48,46 +48,131 @@ def get_value_of_module_type(value, module_type):
     return cls(value)
 
 
+def bind(objectName, propertyName, value_type):#, set_value_type):
+    def getter(self):
+        return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
 
-mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v2.ui")
+    def setter(self,value):
+        #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
+        self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)
+
+    return property(getter, setter)
+
+
+mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None, controller = None):
        super(mainViewBase,self).__init__(parent)
-       self.setupUi(self)
+       self.setupUi()
        self.init_values()
-       self.connect_slots()
+       
        assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
        self._controller = controller
        self.calibrate_before_measurement = True
-       
-    def init_values(self):
-        self._calibrate_before_measurement = False
-
-    def connect_slots(self):
-       self.ui_calibrate.stateChanged.connect(self._on_calibrate_before_measurement_value_changed)
-
+    
+    def setupUi(self):
+        print("setting the ui up")
+        super().setupUi(self)
+        self.ui_current_temp.setValidator(QtGui.QDoubleValidator())
+        self.ui_load_resistance.setValidator(QtGui.QIntValidator())
+        self.ui_drain_source_voltage.setValidator(QtGui.QDoubleValidator())
+        self.ui_front_gate_voltage.setValidator(QtGui.QDoubleValidator())
 
 
     @property
     def controller(self):
         return self._controller
+          
+    def init_values(self):
+        self._calibrate_before_measurement = False
 
-    def _on_calibrate_before_measurement_value_changed(self, value):
-        if value == QtCore.Qt.Checked:
-            self._calibrate_before_measurement = True
+    calibrate_before_measurement = bind("ui_calibrate", "checked", bool)
+    overload_reject = bind("ui_overload_reject", "checked", bool)
+    display_refresh = bind("ui_display_refresh", "value", int)
+    number_of_averages = bind("ui_averages", "value", int)
+    use_homemade_amplifier = bind("ui_use_homemade_amplifier", "checked", bool)
+    second_amplifier_gain = bind("ui_second_amp_coeff", "currentText", int)
+
+
+    @QtCore.pyqtSlot()
+    def on_ui_open_hardware_settings_clicked(self):
+        val = self.calibrate_before_measurement
+        self.calibrate_before_measurement = not val
+        if val is True:
+            self.second_amplifier_gain = 20
         else:
-            self._calibrate_before_measurement = False
+            self.second_amplifier_gain = 100
 
-    @property
-    def calibrate_before_measurement(self):
-        return self._calibrate_before_measurement
+        self.use_homemade_amplifier = not self.use_homemade_amplifier
 
-    @calibrate_before_measurement.setter
-    @assert_boolean_argument
-    def calibrate_before_measurement(self, value):
-        if self.calibrate_before_measurement != value:
-            self._calibrate_before_measurement = value
-            self.ui_calibrate.setChecked(value)
+    @QtCore.pyqtSlot(int)
+    def on_ui_calibrate_stateChanged(self, value):
+        print(self.calibrate_before_measurement)
+        print(type(self.calibrate_before_measurement))        
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_overload_reject_stateChanged(self, value):
+        print("overload rejection")
+
+    def _print_test(self):
+        print("test")
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_simulate_stateChanged(self,value):
+        self._print_test()
+       
+    @QtCore.pyqtSlot(int)
+    def on_ui_averages_valueChanged(self,value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_use_homemade_amplifier_stateChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_second_amp_coeff_currentIndexChanged(self,value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_need_meas_temp_stateChanged(self, value):
+        self._print_test()
+    
+    @QtCore.pyqtSlot(str)
+    def on_ui_current_temp_textChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(str)
+    def on_ui_load_resistance_textChanged(self, value):
+        self._print_test()
+    
+    @QtCore.pyqtSlot(int)
+    def on_ui_meas_gated_structure_stateChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_use_dut_selector_stateChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot()
+    def on_ui_transistorSelector_clicked(self):
+        self._print_test()
+
+    @QtCore.pyqtSlot()
+    def on_ui_use_automated_voltage_control_stateChanged(self):
+        self._print_test()
+    
+    @QtCore.pyqtSlot()
+    def on_ui_voltage_control_clicked(self):
+        self._print_test()
+    
+    @QtCore.pyqtSlot(int)
+    def on_ui_meas_characteristic_type_currentIndexChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(str)
+    def on_ui_drain_source_voltage_textChanged(self, value):
+        self._print_test()
+
 
 
 
@@ -470,8 +555,8 @@ def test_cmd():
 
 
 if __name__== "__main__":
-    #sys.exit(test_ui())
-    sys.exit(test_cmd())
+    sys.exit(test_ui())
+    #sys.exit(test_cmd())
 
 
    
