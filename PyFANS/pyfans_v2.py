@@ -36,6 +36,17 @@ def assert_list_or_tuple_argument(function):
 def has_same_value(a, b):
     return a == b
 
+def get_module_name_and_type(t):
+    module = t.__module__
+    cls_name = type(t).__name__
+    return "{0}.{1}".format(module,cls_name)
+
+def get_value_of_module_type(value, module_type):
+    module, t = module_type.split(".")
+    mod = sys.modules[module]
+    cls = getattr(mod, t)
+    return cls(value)
+
 
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v2.ui")
@@ -450,14 +461,17 @@ def test_ui():
 def test_cmd():
     s = ExperimentSettings()
     s.averages = 10
-
+    t =get_module_name_and_type(mfc.FANS_AI_CHANNELS.AI_CH_1)
+    print(t)
+    v = get_value_of_module_type(8, t)
+    print(v)
     return 0
 
 
 
 if __name__== "__main__":
-    sys.exit(test_ui())
-    #sys.exit(test_cmd())
+    #sys.exit(test_ui())
+    sys.exit(test_cmd())
 
 
    
