@@ -1,6 +1,7 @@
 import sys
 from PyQt4 import uic, QtGui, QtCore
-
+import pint
+from pint import UnitRegistry
 import modern_fans_controller as mfc
 
 def __assert_isinstance_wrapper(function, t):
@@ -59,13 +60,42 @@ def bind(objectName, propertyName, value_type):#, set_value_type):
     return property(getter, setter)
 
 
+class QVoltageValidatorRegEx(QtGui.QRegExpValidator):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        regex = QtCore.QRegExp("(\d+).?(\d*)\s*(m|cm|km)")
+        self.setRegExp(regex)
+
+class QVoltageValidator(QtGui.QDoubleValidator):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ureg = UnitRegistry()
+        #(\d+).?(\d*)\s*(m|cm|km)
+
+    def validate(self, string, position):
+        try:
+            value = self.ureg(string)#.ito(ureg.volt)
+            if isinstance(value, (int,float)):
+                print("{0} volt".format(value))
+            elif isinstance(value, pint.quantity._Quantity):
+                print("{0} {1}".format(value.magnitude, value.units))
+                
+        except:
+            res = super().validate(string, position)
+            return res
+        else:
+            return (QtGui.QValidator.Acceptable, string, position)
+        
+
+
+
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None, controller = None):
        super(mainViewBase,self).__init__(parent)
        self.setupUi()
        self.init_values()
-       
+         
        assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
        self._controller = controller
        self.calibrate_before_measurement = True
@@ -73,10 +103,10 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def setupUi(self):
         print("setting the ui up")
         super().setupUi(self)
-        self.ui_current_temp.setValidator(QtGui.QDoubleValidator())
+        self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
         self.ui_load_resistance.setValidator(QtGui.QIntValidator())
-        self.ui_drain_source_voltage.setValidator(QtGui.QDoubleValidator())
-        self.ui_front_gate_voltage.setValidator(QtGui.QDoubleValidator())
+        self.ui_drain_source_voltage.setValidator(QVoltageValidatorRegEx())#notation = QtGui.QDoubleValidator.StandardNotation))
+        self.ui_front_gate_voltage.setValidator(QVoltageValidator(notation = QtGui.QDoubleValidator.StandardNotation))
 
 
     @property
@@ -104,6 +134,15 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
             self.second_amplifier_gain = 100
 
         self.use_homemade_amplifier = not self.use_homemade_amplifier
+        
+        ureg = UnitRegistry()
+        string = "1e01"
+        value = ureg(string)#.to(ureg.volt)
+        #print(type(ureg(string))
+        print(value.magnitude)
+        print(value.units)
+        
+
 
     @QtCore.pyqtSlot(int)
     def on_ui_calibrate_stateChanged(self, value):
