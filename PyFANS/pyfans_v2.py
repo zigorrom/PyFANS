@@ -461,9 +461,9 @@ def test_ui():
 def test_cmd():
     s = ExperimentSettings()
     s.averages = 10
-    t =get_module_name_and_type(mfc.FANS_AI_CHANNELS.AI_CH_1)
+    t =get_module_name_and_type(1)
     print(t)
-    v = get_value_of_module_type(8, t)
+    v = get_value_of_module_type(6, t)
     print(v)
     return 0
 
