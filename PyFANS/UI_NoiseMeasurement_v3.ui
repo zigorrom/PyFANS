@@ -154,7 +154,7 @@
        <item row="11" column="5" colspan="2">
         <widget class="QLabel" name="label_4">
          <property name="text">
-          <string>Load resistance</string>
+          <string>Load resistance (Ω)</string>
          </property>
         </widget>
        </item>
@@ -171,7 +171,7 @@
        <item row="9" column="1" colspan="3">
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>Current Temp</string>
+          <string>Current Temp (K)</string>
          </property>
         </widget>
        </item>
@@ -235,6 +235,9 @@
        </item>
        <item row="0" column="1" colspan="3">
         <widget class="QCheckBox" name="ui_calibrate">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Calibrate before measurement</string>
          </property>
@@ -304,6 +307,9 @@
        </item>
        <item row="1" column="1" colspan="3">
         <widget class="QCheckBox" name="ui_overload_reject">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Overload rejection</string>
          </property>
@@ -376,7 +382,7 @@
          </property>
          <layout class="QGridLayout" name="gridLayout">
           <item row="2" column="1">
-           <widget class="QLineEdit" name="front_gate_voltage_start">
+           <widget class="QLineEdit" name="ui_front_gate_voltage_start">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -409,7 +415,7 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLineEdit" name="sample_current_start">
+           <widget class="QLineEdit" name="ui_sample_current_start">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -452,7 +458,7 @@
            </widget>
           </item>
           <item row="2" column="2">
-           <widget class="QLineEdit" name="front_gate_voltage_end">
+           <widget class="QLineEdit" name="ui_front_gate_voltage_end">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -465,7 +471,7 @@
            </widget>
           </item>
           <item row="1" column="2">
-           <widget class="QLineEdit" name="sample_voltage_end">
+           <widget class="QLineEdit" name="ui_sample_voltage_end">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -475,7 +481,7 @@
            </widget>
           </item>
           <item row="3" column="2">
-           <widget class="QLineEdit" name="sample_current_end">
+           <widget class="QLineEdit" name="ui_sample_current_end">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -488,7 +494,7 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="sample_voltage_start">
+           <widget class="QLineEdit" name="ui_sample_voltage_start">
             <property name="text">
              <string/>
             </property>
@@ -508,7 +514,7 @@
            </widget>
           </item>
           <item row="4" column="2">
-           <widget class="QLineEdit" name="sample_resistance_end">
+           <widget class="QLineEdit" name="ui_sample_resistance_end">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -521,7 +527,7 @@
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLineEdit" name="sample_resistance_start">
+           <widget class="QLineEdit" name="ui_sample_resistance_start">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -630,7 +636,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

@@ -63,32 +63,65 @@ def bind(objectName, propertyName, value_type):#, set_value_type):
 class QVoltageValidator(QtGui.QRegExpValidator):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[vV]")   #"(\d+).?(\d*)\s*(m|cm|km)")
+        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")
         self.setRegExp(regex)
 
 
-        
 
+def convert_value_to_volts(ureg, value):
+    assert isinstance(ureg, UnitRegistry)
+    try:
+          v = ureg(value)
+          if not isinstance(v,pint.quantity._Quantity):
+              v = v * ureg.volt
+          print("{0} {1}".format(v.magnitude, v.units))
+          v.ito(ureg.volt)
+          return v.magnitude
+    except:
+          print("error while handling value")
+          return None
 
+def string_to_volt_converter(ureg):
+    def wrapper(value):
+       return convert_value_to_volts(ureg, value)
+    return wrapper
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
-
+    ureg = UnitRegistry()
     calibrate_before_measurement = bind("ui_calibrate", "checked", bool)
     overload_reject = bind("ui_overload_reject", "checked", bool)
     display_refresh = bind("ui_display_refresh", "value", int)
+    simulate_measurement = bind("ui_simulate", "checked", bool)
     number_of_averages = bind("ui_averages", "value", int)
     use_homemade_amplifier = bind("ui_use_homemade_amplifier", "checked", bool)
     second_amplifier_gain = bind("ui_second_amp_coeff", "currentText", int)
+    perform_temperature_measurement = bind("ui_need_meas_temp","checked", bool)
+    current_temperature = bind("ui_current_temp", "text", float)
+    load_resistance = bind("ui_load_resistance", "text", float)
+    perform_measurement_of_gated_structure = bind("ui_meas_gated_structure", "checked", bool)
+    use_dut_selector = bind("ui_use_dut_selector", "checked", bool)
+    use_automated_voltage_control = bind("ui_use_automated_voltage_control", "checked", bool)
+    measurement_characteristic_type = bind("ui_meas_characteristic_type", "currentIndex", int)
+    drain_source_voltage = bind("ui_drain_source_voltage", "text",string_to_volt_converter(ureg))
+    front_gate_voltage = bind("ui_front_gate_voltage", "text", string_to_volt_converter(ureg))
+    sample_voltage_start = bind("ui_sample_voltage_start", "text", float)
+    sample_voltage_end = bind("ui_sample_voltage_end", "text", float)
+    front_gate_voltage_start = bind("ui_front_gate_voltage_start", "text", float)
+    front_gate_voltage_end = bind("ui_front_gate_voltage_end", "text", float)
+    sample_current_start = bind("ui_sample_current_start", "text", float)
+    sample_current_end = bind("ui_sample_current_end", "text", float)
+    sample_resistance_start = bind("ui_sample_resistance_start", "text", float)
+    sample_resistance_end = bind("ui_sample_resistance_end", "text", float)
+    experimentName = bind("ui_experimentName", "text", str)
+    measurementName = bind("ui_measurementName", "text", str)
+    measurementCount = bind("ui_measurementCount", "value", int)
 
     def __init__(self, parent = None, controller = None):
        super(mainViewBase,self).__init__(parent)
        self.setupUi()
-       self.ureg = UnitRegistry()
-
+       #self.ureg = UnitRegistry()
        self.init_values()
-        
-
        assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
        self._controller = controller
        self.calibrate_before_measurement = True
@@ -107,9 +140,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         return self._controller
           
     def init_values(self):
-        self._calibrate_before_measurement = False
-
-    
+        pass#self._calibrate_before_measurement = False
 
 
     @QtCore.pyqtSlot()
@@ -123,15 +154,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
         self.use_homemade_amplifier = not self.use_homemade_amplifier
         
-        ureg = UnitRegistry()
-        string = "1e01"
-        value = ureg(string)#.to(ureg.volt)
-        #print(type(ureg(string))
-        print(value.magnitude)
-        print(value.units)
         
-
-
     @QtCore.pyqtSlot(int)
     def on_ui_calibrate_stateChanged(self, value):
         print(self.calibrate_before_measurement)
@@ -167,6 +190,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot(str)
     def on_ui_current_temp_textChanged(self, value):
         self._print_test()
+        print(self.current_temperature)
 
     @QtCore.pyqtSlot(str)
     def on_ui_load_resistance_textChanged(self, value):
@@ -198,12 +222,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(str)
     def on_ui_drain_source_voltage_textChanged(self, value):
-        v = self.ureg(value)
-        if isinstance(v,pint.quantity._Quantity):
-            print("{0} {1}".format(v.magnitude, v.units))
-        else:
-            print(v)
-    
+        self.ui_drain_source_voltage.setToolTip(str(self.drain_source_voltage))
+        print(self.drain_source_voltage)
+        #val = convert_value_to_volts(self.ureg, value)
+        #print(val)
+     
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vds_range_stateChanged(self, value):
         self._print_test()
@@ -214,11 +237,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(str)
     def on_ui_front_gate_voltage_textChanged(self, value):
-        v = self.ureg(value)
-        if isinstance(v,pint.quantity._Quantity):
-            print("{0} {1}".format(v.magnitude, v.units))
-        else:
-            print(v)
+        self.ui_front_gate_voltage.setToolTip(str(self.front_gate_voltage))
+        print(self.front_gate_voltage)
     
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vfg_range_stateChanged(self, value):
@@ -227,10 +247,26 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_VfgRange_clicked(self):
         self._print_test()
+    
+    @QtCore.pyqtSlot()
+    def on_folderBrowseButton_clicked(self):
+        self._print_test()
 
+    @QtCore.pyqtSlot(str)
+    def on_ui_experimentName_textChanged(self, value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(str)
+    def on_ui_measurementName_textChanged(self,value):
+        self._print_test()
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_measurementCount_valueChanged(self, value):
+        self._print_test()
+    
 
 class FANS_UI_Controller():
-    def __init__(self):
+    def __init__(self, ):
         pass
 
 
@@ -523,7 +559,7 @@ class ExperimentSettings():
 
 
 
-class HardwareSettingsModel():
+class HardwareSettings():
     def __init__(self):
         self._fans_controller_resource = None
         self._sample_motor_channel = None
@@ -575,9 +611,6 @@ class HardwareSettingsModel():
     def gate_relay_channel(self, value):
         assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
         self._gate_relay_channel = value
-
-
-
 
 
 
