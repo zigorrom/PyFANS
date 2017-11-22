@@ -593,34 +593,6 @@
          </layout>
         </widget>
        </item>
-       <item row="17" column="3">
-        <widget class="QComboBox" name="ui_drain_source_units">
-         <item>
-          <property name="text">
-           <string>V</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>mV</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="22" column="3">
-        <widget class="QComboBox" name="ui_front_gate_units">
-         <item>
-          <property name="text">
-           <string>V</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>mV</string>
-          </property>
-         </item>
-        </widget>
-       </item>
        <item row="17" column="2">
         <widget class="QLineEdit" name="ui_drain_source_voltage">
          <property name="sizePolicy">
@@ -658,7 +630,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
