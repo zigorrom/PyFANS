@@ -117,13 +117,16 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     measurementName = bind("ui_measurementName", "text", str)
     measurementCount = bind("ui_measurementCount", "value", int)
 
-    def __init__(self, parent = None, controller = None):
+    valueChanged = QtCore.pyqtSignal(str, object) #str - name of the object, object - new value
+
+    def __init__(self, parent = None):
        super(mainViewBase,self).__init__(parent)
        self.setupUi()
        #self.ureg = UnitRegistry()
        self.init_values()
-       assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
-       self._controller = controller
+       self._controller = None
+       #assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
+       #self._controller = controller
        self.calibrate_before_measurement = True
     
     def setupUi(self):
@@ -134,11 +137,18 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.ui_drain_source_voltage.setValidator(QVoltageValidator())
         self.ui_front_gate_voltage.setValidator(QVoltageValidator())
 
-
     @property
     def controller(self):
         return self._controller
+    
+    @controller.setter
+    def controller(self,value):
+        assert isinstance(value, FANS_UI_Controller)
+        self._controller = value
           
+    def set_controller(self, controller):
+        self.controller = controller
+
     def init_values(self):
         pass#self._calibrate_before_measurement = False
 
@@ -262,12 +272,18 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(int)
     def on_ui_measurementCount_valueChanged(self, value):
-        self._print_test()
-    
+        self._print_test() 
 
 class FANS_UI_Controller():
-    def __init__(self, ):
-        pass
+    def __init__(self, view):
+        assert isinstance(view, FANS_UI_MainView)
+        self.main_view = view
+        self.main_view.set_controller(self)
+
+
+    def show_main_view(self):
+        assert isinstance(self.main_view, FANS_UI_MainView)
+        self.main_view.show()
 
 
 class ExperimentSettings():
@@ -557,8 +573,6 @@ class ExperimentSettings():
     def use_set_vfg_range(self,value):
         self.__use_set_vfg_range= value
 
-
-
 class HardwareSettings():
     def __init__(self):
         self._fans_controller_resource = None
@@ -612,20 +626,21 @@ class HardwareSettings():
         assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
         self._gate_relay_channel = value
 
-
+class AppSettings():
+    def __init__(self, **kwargs):
+        return super().__init__(**kwargs)
 
 def test_ui():
+    
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
     app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
 
-    #css = "QLineEdit#sample_voltage_start {background-color: yellow}"
-    #app.setStyleSheet(css)
-    #sample_voltage_start
-    controller = FANS_UI_Controller()
-    wnd = FANS_UI_MainView(controller = controller)
-    wnd.show()
+    
+    wnd = FANS_UI_MainView()
+    controller = FANS_UI_Controller(wnd)
+    controller.show_main_view()
 
     return app.exec_()
     
