@@ -103,8 +103,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     use_dut_selector = bind("ui_use_dut_selector", "checked", bool)
     use_automated_voltage_control = bind("ui_use_automated_voltage_control", "checked", bool)
     measurement_characteristic_type = bind("ui_meas_characteristic_type", "currentIndex", int)
-    drain_source_voltage = bind("ui_drain_source_voltage", "text",string_to_volt_converter(ureg))
-    front_gate_voltage = bind("ui_front_gate_voltage", "text", string_to_volt_converter(ureg))
+    drain_source_voltage = bind("ui_drain_source_voltage", "text", ureg) #string_to_volt_converter(ureg))
+    front_gate_voltage = bind("ui_front_gate_voltage", "text", ureg) #string_to_volt_converter(ureg))
     sample_voltage_start = bind("ui_sample_voltage_start", "text", float)
     sample_voltage_end = bind("ui_sample_voltage_end", "text", float)
     front_gate_voltage_start = bind("ui_front_gate_voltage_start", "text", float)
@@ -147,7 +147,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.controller = controller
 
     def init_values(self):
-        pass#self._calibrate_before_measurement = False
+        print("initializing values")
+        self._calibrate_before_measurement = False
+        self.front_gate_voltage = "123 mV"
 
 
     #**************
@@ -163,7 +165,6 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
             self.second_amplifier_gain = 100
 
         self.use_homemade_amplifier = not self.use_homemade_amplifier
-        
         
     @QtCore.pyqtSlot(int)
     def on_ui_calibrate_stateChanged(self, value):
