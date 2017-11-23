@@ -112,3 +112,4 @@ class XmlNodeSerializer():
                 self.build_tree(xmlElement,parentNode = node,tabLevel=tabLevel)
             xmlChildNode = xmlChildNode.nextSibling()
         tabLevel -=1 
+

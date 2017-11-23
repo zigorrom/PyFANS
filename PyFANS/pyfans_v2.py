@@ -1,9 +1,14 @@
-import sys
 import os
-from PyQt4 import uic, QtGui, QtCore
+import sys
 import pint
+import pickle
+
 from pint import UnitRegistry
+from PyQt4 import uic, QtGui, QtCore
+
+import plot as plt
 import modern_fans_controller as mfc
+from communication_layer import get_available_gpib_resources, get_available_com_resources
 
 def __assert_isinstance_wrapper(function, t):
     def wrapper(self,value):
@@ -132,6 +137,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.ui_drain_source_voltage.setValidator(QVoltageValidator())
         self.ui_front_gate_voltage.setValidator(QVoltageValidator())
         self.__setup_folder_browse_button()
+        self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
 
     @property
     def controller(self):
@@ -171,9 +177,26 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     def on_open_folder_in_explorer(self):
         print("opening folder")
-        request = 'explorer "{0}"'.format("")#self._settings.working_directory)
+        request = 'explorer "{0}"'.format(self.experiment_settings.working_directory)#self._settings.working_directory)
         print(request)
         os.system(request)
+
+    @QtCore.pyqtSlot()
+    def on_folderBrowseButton_clicked(self):
+        print("Select folder")
+        folder_name = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select Folder", directory = self.experiment_settings.working_directory))
+        
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Information)
+        msg.setText("This is a message box")
+        msg.setInformativeText("This is additional information")
+        msg.setWindowTitle("MessageBox demo")
+        msg.setDetailedText(folder_name)
+        msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        retval = msg.exec_()
+        if retval and self.experiment_settings:
+            self.experiment_settings.working_directory = folder_name
+            self.set_selected_folder_context_menu_item_text(folder_name)
 
     #
     # END BROWSER BUTTON
@@ -202,7 +225,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.use_homemade_amplifier = settings.use_homemade_amplifier
         self.second_amplifier_gain = settings.second_amp_coeff
         self.perform_temperature_measurement = settings.need_measure_temperature
-        self.current_temperature = float("NaN") #  "Not initialized" #settings.curre
+        self.current_temperature = settings.current_temperature  #  "Not initialized" #settings.curre
         self.perform_measurement_of_gated_structure = settings.meas_gated_structure
         self.use_dut_selector = False #
         self.use_automated_voltage_control = settings.use_automated_voltage_control
@@ -223,25 +246,14 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
         print("open hardware settings")
-        #val = self.calibrate_before_measurement
-        #self.calibrate_before_measurement = not val
-        #if val is True:
-        #    self.second_amplifier_gain = 20
-        #else:
-        #    self.second_amplifier_gain = 100
-
-        #self.use_homemade_amplifier = not self.use_homemade_amplifier
-        
+        self.controller.show_hardware_settings_view()
+                
     @QtCore.pyqtSlot(int)
     def on_ui_calibrate_stateChanged(self, value):
-        #print(self.calibrate_before_measurement)
-        #print(type(self.calibrate_before_measurement))        
         self.experiment_settings.calibrate_before_measurement = self.calibrate_before_measurement
-
-
+        
     @QtCore.pyqtSlot(int)
     def on_ui_overload_reject_stateChanged(self, value):
-        #print("overload rejection")
         self.experiment_settings.overload_rejecion = self.overload_reject
 
     def _print_test(self):
@@ -249,60 +261,48 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(int)
     def on_ui_simulate_stateChanged(self,value):
-        self._print_test()
         self.experiment_settings.simulate_experiment = self.simulate_measurement
        
     @QtCore.pyqtSlot(int)
     def on_ui_averages_valueChanged(self,value):
-        self._print_test()
-        self.number_of_averages = self.number_of_averages
+        self.experiment_settings.averages = self.number_of_averages
 
     @QtCore.pyqtSlot(int)
     def on_ui_use_homemade_amplifier_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.use_homemade_amplifier = self.use_homemade_amplifier
 
     @QtCore.pyqtSlot(int)
     def on_ui_second_amp_coeff_currentIndexChanged(self,value):
-        self._print_test()
         self.experiment_settings.second_amp_coeff = self.second_amplifier_gain
         #idx = self.experiment_settings.second_amp_coeff 
         #raise NotImplementedError()
 
     @QtCore.pyqtSlot(int)
     def on_ui_need_meas_temp_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.need_measure_temperature = self.perform_temperature_measurement
     
     @QtCore.pyqtSlot(str)
     def on_ui_current_temp_textChanged(self, value):
-        self._print_test()
-        print(self.current_temperature)
-        #self.experiment_settings
+        self.experiment_settings.current_temperature = self.current_temperature
 
     @QtCore.pyqtSlot(str)
     def on_ui_load_resistance_textChanged(self, value):
-        self._print_test()
         self.experiment_settings.load_resistance = self.load_resistance
     
     @QtCore.pyqtSlot(int)
     def on_ui_meas_gated_structure_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.meas_gated_structure = self.perform_measurement_of_gated_structure
 
     @QtCore.pyqtSlot(int)
     def on_ui_use_dut_selector_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.use_transistor_selector = self.use_dut_selector
 
     @QtCore.pyqtSlot()
     def on_ui_transistorSelector_clicked(self):
         self._print_test()
 
-
     @QtCore.pyqtSlot(int)
     def on_ui_use_automated_voltage_control_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.use_automated_voltage_control = self.use_automated_voltage_control
     
     @QtCore.pyqtSlot()
@@ -311,56 +311,46 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     
     @QtCore.pyqtSlot(int)
     def on_ui_meas_characteristic_type_currentIndexChanged(self, value):
-        self._print_test()
         self.experiment_settings.meas_characteristic_type = self.measurement_characteristic_type
 
     @QtCore.pyqtSlot(str)
     def on_ui_drain_source_voltage_textChanged(self, value):
         self.ui_drain_source_voltage.setToolTip("Vds = {0} V".format(self.drain_source_voltage))
-        print(self.drain_source_voltage)
         self.experiment_settings.drain_source_voltage = self.drain_source_voltage
         
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vds_range_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.use_set_vds_range = self.use_drain_source_range
 
     @QtCore.pyqtSlot()
     def on_VdsRange_clicked(self):
         self._print_test()
 
+
+
     @QtCore.pyqtSlot(str)
     def on_ui_front_gate_voltage_textChanged(self, value):
         self.ui_front_gate_voltage.setToolTip("Vgs = {0} V".format(self.front_gate_voltage))
-        print(self.front_gate_voltage)
         self.experiment_settings.front_gate_voltage = self.front_gate_voltage
     
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vfg_range_stateChanged(self, value):
-        self._print_test()
         self.experiment_settings.use_set_vfg_range = self.use_gate_source_range
 
     @QtCore.pyqtSlot()
     def on_VfgRange_clicked(self):
         self._print_test()
     
-    @QtCore.pyqtSlot()
-    def on_folderBrowseButton_clicked(self):
-        self._print_test()
-
     @QtCore.pyqtSlot(str)
     def on_ui_experimentName_textChanged(self, value):
-        self._print_test()
         self.experiment_settings.experiment_name = self.experimentName
 
     @QtCore.pyqtSlot(str)
     def on_ui_measurementName_textChanged(self,value):
-        self._print_test()
         self.experiment_settings.measurement_name = self.measurementName
 
     @QtCore.pyqtSlot(int)
     def on_ui_measurementCount_valueChanged(self, value):
-        self._print_test() 
         self.experiment_settings.measurement_count = self.measurementCount
 
     @QtCore.pyqtSlot()
@@ -370,6 +360,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_ui_stopButton_clicked(self):
         self.controller.stop_experiment()
+
+    def closeEvent(self, event):
+        self.controller.on_main_view_closing()
 
     #**************
     #end event handlers
@@ -397,165 +390,69 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         pass
 
 
+HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
+class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
 
+
+    def __init__(self,parent = None):
+        super(HardwareSettingsBase,self).__init__(parent)
+        self.setupUi(self)
+        gpib_resources = get_available_gpib_resources()
+        #com_resources = get_available_com_resources()
+        self.ui_fans_controller.addItems(gpib_resources)
+        
+    def set_hardware_settings(self, hardware_settings):
+        pass
+    
 
 class FANS_UI_Controller():
+    settings_file = "state.cfg"
+
     def __init__(self, view):
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
         self.main_view.set_controller(self)
         self.experiment_settings = None
+        self.hardware_settings = None
         self.load_settings()
 
     def load_settings(self):
-        exp = ExperimentSettings()
-        exp.averages = 150
-        exp.use_set_vds_range = True
-        exp.use_set_vfg_range = True
+        self.load_settings_from_file()
+        self.main_view.experiment_settings = self.experiment_settings
         
-        exp.experiment_name = "test_exp"
-        exp.measurement_name = "test_meas_name"
-        exp.measurement_count = 123
-        self.experiment_settings = exp
-        self.main_view.experiment_settings = exp
-        #self.experiment_settings 
-
     def start_experiment(self):
         print("start experiment")
-        self.load_settings()
+        #self.load_settings()
 
-    def stop_experiment(selt):
+    def stop_experiment(self):
         print("stop experiment")
+        #self.save_settings_to_file()
 
     def show_main_view(self):
         assert isinstance(self.main_view, FANS_UI_MainView)
         self.main_view.show()
 
-    def save_to_xml(self):
-        pass
+    def on_main_view_closing(self):
+        print("closing main view")
+        self.save_settings_to_file()
 
-class XmlNodeSerializer():
-    def __init__(self):
-        #t = Node
-        #self.typeDic = dict((cls.typeInfo(),(cls, self.requiredNodeAttributes(cls))) for cls in t.__subclasses__())
-        #self.typeDic[t.typeInfo()] = (t, self.requiredNodeAttributes(t))
-        pass
+    def show_hardware_settings_view(self):
+        dialog = HardwareSettingsView()
+        result = dialog.exec_()
+        print(result)
 
-    def serialize(self,rootNode):
-        doc = QtXml.QDomDocument()
-        xmlNode = self.xmlFromNode(doc,rootNode)
-        #doc.appendChild(xmlNode)
-        for child in rootNode._children:
-            self._recurseXml(doc, xmlNode,child)
-        return doc.toString(indent = 4)
-
-#    def _recurseXml(self, doc, parentXmlNode,node):
-#        xmlNode = self.xmlFromNode(doc,node)
-#        parentXmlNode.appendChild(xmlNode)
-#        for child in node._children:
-#            self._recurseXml(doc,xmlNode,child)
-
-    def xmlFromNode(self,doc, node):
-        class_name = node 
-
-        key = node.typeInfo()
-        xmlNode = doc.createElement(class_name)
-        for cls in nodeType.__mro__:
-            for k,v in cls.__dict__.items():
-                if isinstance(v,property):
-                    print(v)
-
-
-
-#        cls, attrs = self.typeDic[key]
-#        for k, v in attrs.items():
-#            val = v.fget(node)
-#            if type(val) is bool:
-#                val = "bool:{0}".format("True" if val else "False")
-
-#            elif type(val) is int:
-#                val = "i:{0}".format(val)
-
-#            elif type(val) is float:
-#                val = "f:{0}".format(val)
-###            res = val
-#            elif type(val) is list:
-#                val = "list:[{0}]".format(",".join(val))
-#            xmlNode.setAttribute(k, val)
-        return xmlNode
-        
-
-
-#    def requiredNodeAttributes(self, nodeType):
-#        requiredAttributes = {}
-#        for cls in nodeType.__mro__:
-#            for k,v in cls.__dict__.items():
-#                if isinstance(v,property):
-#                    requiredAttributes[k] = v
-#        return requiredAttributes
-    
-#    def nodeFromXml(self,domElement):
-#        key = domElement.tagName()
-#        cls, attrs = self.typeDic[key]
-#        node = cls("unknown")
-#        counter = 0
-#        for k,v in attrs.items():
-#            if domElement.hasAttribute(k):
-#                if v.fset is not None:
-#                    val = domElement.attribute(k)
-#                    print("name: {0}, val: {1}, type: {2}".format(k,val,type(val)))
-                    
-#                    if val.startswith("bool:"):
-#                        val = val[5:] #bool(val[6:])
-#                        print(val)
-#                        print(len(val))
-#                        print(val == "True")
-#                        val = (True if val == "True" else False)
-
-#                    elif val.startswith("i:"):
-#                        val = int(val[2:])
-
-#                    elif val.startswith("f:"):
-#                        val = float(val[2:])
-
-#                    elif val.startswith("list:[") and val.endswith("]"):
-#                        val = val[6:-1]
-#                        val = val.split(",")
-#                    print("converted value: {0}, type:{1}\n".format(val, type(val)))
-#                    v.fset(node,val)
-#            counter+=1
-#        return node
-
-        
-#    def deserialize(self, xmlString):
-#        xml = QtXml.QDomDocument()
-#        if not xml.setContent(xmlString):
-#            print("failed")
-#            raise ValueError()
-        
-#        xmlRootNode = xml.documentElement()
-#        rootNode = self.nodeFromXml(xmlRootNode)
-#        self.build_tree(xmlRootNode,rootNode)
-#        return rootNode
-    
-#    def build_tree(self, parentXmlNode, parentNode=None, tabLevel=-1):
-#        key = parentXmlNode.tagName()
-#        tabLevel += 1
-###        print("{0}|------ {1}\n".format("\t"*tabLevel,key))
-###        print(parentNode)
-#        xmlChildNode = parentXmlNode.firstChild()        
-#        while not xmlChildNode.isNull():
-#            xmlElement = xmlChildNode.toElement()
-#            if not xmlElement.isNull():
-#                node = self.nodeFromXml(xmlElement)
-#                if parentNode is not None:
-#                    parentNode.addChild(node)
-                
-#                self.build_tree(xmlElement,parentNode = node,tabLevel=tabLevel)
-#            xmlChildNode = xmlChildNode.nextSibling()
-#        tabLevel -=1 
-
-
+    def save_settings_to_file(self):
+        with open(self.settings_file,"wb") as f:
+            pickle.dump(self.experiment_settings, f)
+       
+    def load_settings_from_file(self):
+        if not os.path.isfile(self.settings_file):
+            print("creating new settings")
+            self.experiment_settings = ExperimentSettings()
+        else:
+            print("loading settings from file")
+            with open(self.settings_file,"rb") as f:
+                self.experiment_settings = pickle.load(f)
 
 class ExperimentSettings():
     def __init__(self):
@@ -575,6 +472,7 @@ class ExperimentSettings():
         self.__second_amp_coeff = None
         self.__load_resistance = None
         self.__need_measure_temperature = None
+        self.__current_temperature = None
         self.__meas_gated_structure = None
         self.__meas_characteristic_type = None
         self.__use_automated_voltage_control = None
@@ -602,6 +500,14 @@ class ExperimentSettings():
     #@vfg_range.setter
     #def vfg_range(self,value):
     #    self.__vfg_range = value
+
+    @property
+    def current_temperature(self):
+        return self.__current_temperature
+
+    @current_temperature.setter
+    def current_temperature(self, value):
+        self.__current_temperature = value
 
     @property
     def simulate_experiment(self):
@@ -877,8 +783,6 @@ class HardwareSettings():
 
 
 
-
-
 def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
@@ -902,6 +806,7 @@ def test_cmd():
 if __name__== "__main__":
     sys.exit(test_ui())
     #sys.exit(test_cmd())
+    sys.exit(test_xml_serializer())
 
 
  
