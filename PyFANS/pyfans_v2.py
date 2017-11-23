@@ -232,11 +232,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(str)
     def on_ui_drain_source_voltage_textChanged(self, value):
-        self.ui_drain_source_voltage.setToolTip(str(self.drain_source_voltage))
+        self.ui_drain_source_voltage.setToolTip("Vds = {0} V".format(self.drain_source_voltage))
         print(self.drain_source_voltage)
-        #val = convert_value_to_volts(self.ureg, value)
-        #print(val)
-     
+        
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vds_range_stateChanged(self, value):
         self._print_test()
@@ -247,7 +245,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot(str)
     def on_ui_front_gate_voltage_textChanged(self, value):
-        self.ui_front_gate_voltage.setToolTip(str(self.front_gate_voltage))
+        self.ui_front_gate_voltage.setToolTip("Vgs = {0} V".format(self.front_gate_voltage))
         print(self.front_gate_voltage)
     
     @QtCore.pyqtSlot(int)
@@ -274,11 +272,25 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def on_ui_measurementCount_valueChanged(self, value):
         self._print_test() 
 
+    @QtCore.pyqtSlot()
+    def on_ui_startButton_clicked(self):
+        self._print_test()
+
+    @QtCore.pyqtSlot()
+    def on_ui_stopButton_clicked(self):
+        self._print_test()
+
+
 class FANS_UI_Controller():
     def __init__(self, view):
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
         self.main_view.set_controller(self)
+        self.settings = None
+
+    def load_settings(self):
+        self.settings = AppSettings()
+
 
 
     def show_main_view(self):
