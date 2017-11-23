@@ -122,11 +122,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
        super(mainViewBase,self).__init__(parent)
        self.setupUi()
-       #self.ureg = UnitRegistry()
        self.init_values()
        self._controller = None
-       #assert isinstance(controller, FANS_UI_Controller), "unsuitable controller class"
-       #self._controller = controller
        self.calibrate_before_measurement = True
     
     def setupUi(self):
@@ -153,6 +150,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         pass#self._calibrate_before_measurement = False
 
 
+    #**************
+    #event handlers
+    #**************
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
         val = self.calibrate_before_measurement
@@ -280,6 +280,27 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def on_ui_stopButton_clicked(self):
         self.controller.stop_experiment()
 
+    #**************
+    #end event handlers
+    #**************
+
+    def ui_set_experiment_started(self):
+        pass
+
+    def ui_set_experiment_idle(self):
+        pass
+
+    def ui_set_experiment_stopped(self):
+        pass
+
+    def ui_show_message_in_status_bar(self, timeout):
+        pass
+
+    def ui_show_message_in_popup_window(self):
+        pass
+
+
+
 
 class FANS_UI_Controller():
     def __init__(self, view):
@@ -301,6 +322,7 @@ class FANS_UI_Controller():
         assert isinstance(self.main_view, FANS_UI_MainView)
         self.main_view.show()
 
+    
 
 class ExperimentSettings():
     def __init__(self):
