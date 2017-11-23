@@ -274,11 +274,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot()
     def on_ui_startButton_clicked(self):
-        self._print_test()
+        self.controller.start_experiment()
 
     @QtCore.pyqtSlot()
     def on_ui_stopButton_clicked(self):
-        self._print_test()
+        self.controller.stop_experiment()
 
 
 class FANS_UI_Controller():
@@ -291,7 +291,11 @@ class FANS_UI_Controller():
     def load_settings(self):
         self.settings = AppSettings()
 
+    def start_experiment(self):
+        print("start experiment")
 
+    def stop_experiment(selt):
+        print("stop experiment")
 
     def show_main_view(self):
         assert isinstance(self.main_view, FANS_UI_MainView)
