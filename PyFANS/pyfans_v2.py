@@ -155,6 +155,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     #**************
     #event handlers
     #**************
+
+
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
         val = self.calibrate_before_measurement
@@ -281,9 +283,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def on_ui_stopButton_clicked(self):
         self.controller.stop_experiment()
 
+
     #**************
     #end event handlers
     #**************
+
 
     def ui_set_experiment_started(self):
         pass
