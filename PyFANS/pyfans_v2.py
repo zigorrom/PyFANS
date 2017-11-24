@@ -8,6 +8,7 @@ from PyQt4 import uic, QtGui, QtCore
 
 import plot as plt
 import modern_fans_controller as mfc
+import modern_fans_experiment as mfexp
 from communication_layer import get_available_gpib_resources, get_available_com_resources
 
 def __assert_isinstance_wrapper(function, t):
@@ -392,7 +393,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
 HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
-
+    fans_controller_resource = bind("ui_fans_controller", "currentText", str)
+    fans_sample_motor_channel = bind("ui_sample_channel", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
+    fans_sample_relay_channel = bind("ui_sample_relay", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
+    fans_gate_motor_channel = bind("ui_gate_channel", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
+    fans_gate_relay_channel = bind("ui_gate_relay", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
 
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -400,10 +405,40 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
         gpib_resources = get_available_gpib_resources()
         #com_resources = get_available_com_resources()
         self.ui_fans_controller.addItems(gpib_resources)
-        
-    def set_hardware_settings(self, hardware_settings):
-        pass
+        self.hardware_settings = None
     
+    
+    @QtCore.pyqtSlot(int)
+    def on_ui_fans_controller_currentIndexChanged(self,value):
+        if self.hardware_settings:
+            self.hardware_settings.fans_controller_resource = self.fans_controller_resource
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_sample_channel_currentIndexChanged(self,value):
+        if self.hardware_settings:
+            self.hardware_settings.sample_motor_channel = self.fans_sample_motor_channel
+    
+    @QtCore.pyqtSlot(int)
+    def on_ui_sample_relay_currentIndexChanged(self,value):
+        if self.hardware_settings:
+            self.hardware_settings.sample_relay_channel = self.fans_sample_relay_channel
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_gate_channel_currentIndexChanged(self,value):
+        if self.hardware_settings:
+            self.hardware_settings.gate_motor_channel = self.fans_gate_motor_channel
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_gate_relay_currentIndexChanged(self,value):
+        if self.hardware_settings:    
+            self.hardware_settings.gate_relay_channel = self.fans_gate_relay_channel
+    
+    def set_hardware_settings(self, hardware_settings):
+        assert isinstance(hardware_settings, HardwareSettings)
+        self.hardware_settings = hardware_settings
+    
+
+
 
 class FANS_UI_Controller():
     settings_file = "state.cfg"
@@ -437,7 +472,9 @@ class FANS_UI_Controller():
         self.save_settings_to_file()
 
     def show_hardware_settings_view(self):
+        self.hardware_settings = HardwareSettings()
         dialog = HardwareSettingsView()
+        dialog.set_hardware_settings(self.hardware_settings)
         result = dialog.exec_()
         print(result)
 

@@ -16,6 +16,12 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="5" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -26,6 +32,12 @@
    </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_8">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Gate Relay</string>
      </property>
@@ -33,6 +45,12 @@
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="label_5">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Sample Channel</string>
      </property>
@@ -40,6 +58,12 @@
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="label_7">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Sample Relay</string>
      </property>
@@ -47,6 +71,12 @@
    </item>
    <item row="3" column="1">
     <widget class="QComboBox" name="ui_gate_channel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <item>
       <property name="text">
        <string>1</string>
@@ -111,6 +141,12 @@
    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="label_6">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Gate Channel</string>
      </property>
@@ -118,6 +154,12 @@
    </item>
    <item row="4" column="1">
     <widget class="QComboBox" name="ui_gate_relay">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <item>
       <property name="text">
        <string>1</string>
@@ -182,6 +224,12 @@
    </item>
    <item row="2" column="1">
     <widget class="QComboBox" name="ui_sample_relay">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <item>
       <property name="text">
        <string>1</string>
@@ -246,6 +294,12 @@
    </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label_4">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>FANS Controller</string>
      </property>
@@ -253,6 +307,12 @@
    </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="ui_sample_channel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <item>
       <property name="text">
        <string>1</string>
@@ -316,7 +376,14 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QComboBox" name="ui_fans_controller"/>
+    <widget class="QComboBox" name="ui_fans_controller">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
