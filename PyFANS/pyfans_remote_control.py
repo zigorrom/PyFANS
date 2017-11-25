@@ -16,10 +16,7 @@ qr.add_data('https://www.google.com/')
 qr.make(fit=True)
 
 img = qr.make_image()
-#print(img)
 #img.show()
-#data = img.getdata()
-#print(data)
 
 def PILimageToQImage(pilimage):
     """converts a PIL image to QImage"""

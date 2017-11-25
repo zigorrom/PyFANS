@@ -63,6 +63,14 @@ def string_index_to_ao_channel_converter(index):
     int_index = int(index)
     return mfexp.get_fans_ao_channels_from_number(int_index)
 
+def fans_channel_to_string(channel):
+    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
+    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
+        val = str(channel.value)
+        return val
+    else:
+        return ""
+
 def bind(objectName, propertyName, value_type):#, set_value_type):
     def getter(self):
         return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
@@ -450,10 +458,10 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     def refresh_view(self):
         if self.hardware_settings:
             self.fans_controller_resource = self.hardware_settings.fans_controller_resource
-            self.fans_sample_motor_channel = self.hardware_settings.sample_motor_channel#.value
-            self.fans_sample_relay_channel = self.hardware_settings.sample_relay_channel#.value
-            self.fans_gate_motor_channel = self.hardware_settings.gate_motor_channel#.value
-            self.fans_gate_relay_channel = self.hardware_settings.gate_relay_channel#.value
+            self.fans_sample_motor_channel = fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
+            self.fans_sample_relay_channel = fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
+            self.fans_gate_motor_channel = fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
+            self.fans_gate_relay_channel = fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
 
 
 
