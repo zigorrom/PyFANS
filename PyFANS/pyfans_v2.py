@@ -243,6 +243,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.second_amplifier_gain = settings.second_amp_coeff
         self.perform_temperature_measurement = settings.need_measure_temperature
         self.current_temperature = settings.current_temperature  #  "Not initialized" #settings.curre
+        self.load_resistance = settings.load_resistance
         self.perform_measurement_of_gated_structure = settings.meas_gated_structure
         self.use_dut_selector = False #
         self.use_automated_voltage_control = settings.use_automated_voltage_control
@@ -420,6 +421,10 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     fans_sample_relay_channel = bind("ui_sample_relay", "currentText", string_index_to_ao_channel_converter)
     fans_gate_motor_channel = bind("ui_gate_channel", "currentText", string_index_to_ao_channel_converter)
     fans_gate_relay_channel = bind("ui_gate_relay", "currentText", string_index_to_ao_channel_converter)
+    fans_acquisition_channel = bind("ui_acquisition_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_sample_feedback_channel = bind("ui_sample_feedback_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_gate_feedback_channel = bind("ui_gate_feedback_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_main_feedback_channel = bind("ui_main_feedback_channel", "currentText", string_index_to_ai_channel_converter)
 
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -455,6 +460,30 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
         if self.hardware_settings:    
             self.hardware_settings.gate_relay_channel = self.fans_gate_relay_channel
     
+    @QtCore.pyqtSlot(int)
+    def on_ui_acquisition_channel_currentIndexChanged(self, value):
+        if self.hardware_settings:    
+            self.hardware_settings.acquisition_channel = self.fans_acquisition_channel
+
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_sample_feedback_channel_currentIndexChanged(self, value):
+        if self.hardware_settings:
+            self.hardware_settings.sample_feedback_channel = self.fans_sample_feedback_channel
+        
+    @QtCore.pyqtSlot(int)
+    def on_ui_gate_feedback_channel_currentIndexChanged(self, value):
+        if self.hardware_settings:
+            self.hardware_settings.gate_feedback_channel = self.fans_gate_feedback_channel
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_main_feedback_channel_currentIndexChanged(self, value):
+        if self.hardware_settings:
+            self.hardware_settings.main_feedback_channel = self.fans_main_feedback_channel
+
+    
+
+
     def set_hardware_settings(self, hardware_settings):
         assert isinstance(hardware_settings, HardwareSettings)
         self.hardware_settings = hardware_settings
@@ -467,12 +496,16 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
             self.fans_sample_relay_channel = fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
             self.fans_gate_motor_channel = fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
             self.fans_gate_relay_channel = fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
-
+            self.fans_acquisition_channel = fans_channel_to_string(self.hardware_settings.acquisition_channel)
+            self.fans_sample_feedback_channel = fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
+            self.fans_gate_feedback_channel = fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
+            self.fans_main_feedback_channel = fans_channel_to_string(self.hardware_settings.main_feedback_channel)
 
 
 class FANS_UI_Controller():
     settings_file = "state.cfg"
     hardware_file = "hardware.cfg"
+    settings_filename = "settings.cfg"
     def __init__(self, view):
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
@@ -507,31 +540,26 @@ class FANS_UI_Controller():
         dialog.set_hardware_settings(self.hardware_settings)
         result = dialog.exec_()
         print(result)
+    
+
 
     def save_settings_to_file(self):
-        with open(self.settings_file,"wb") as f:
-            pickle.dump(self.experiment_settings, f)
-
-        with open(self.hardware_file,"wb") as f:
-            pickle.dump(self.hardware_settings, f)
+        with open(self.settings_filename,"wb") as f:
+            save_object = (self.experiment_settings, self.hardware_settings) 
+            pickle.dump(save_object, f)
        
     def load_settings_from_file(self):
-        if not os.path.isfile(self.settings_file):
+        if not os.path.isfile(self.settings_filename):
             print("creating new settings")
             self.experiment_settings = ExperimentSettings()
-        else:
-            print("loading settings from file")
-            with open(self.settings_file,"rb") as f:
-                self.experiment_settings = pickle.load(f)
-
-
-        if not os.path.isfile(self.hardware_file):
-            print("creating new hardware settings")
             self.hardware_settings = HardwareSettings()
         else:
-            print("loading hardware settings file")
-            with open(self.hardware_file, "rb") as f:
-                self.hardware_settings = pickle.load(f)
+            print("loading settings from file")
+            with open(self.settings_filename,"rb") as f:
+                exp_settings, hardware_settings = pickle.load(f)
+                self.experiment_settings = exp_settings
+                self.hardware_settings = hardware_settings
+
 
 class ExperimentSettings():
     def __init__(self):
@@ -814,6 +842,10 @@ class HardwareSettings():
         self._sample_relay_channel = None
         self._gate_motor_channel = None
         self._gate_relay_channel = None
+        self._acquisition_channel = None
+        self._sample_feedback = None
+        self._gate_feedback = None
+        self._main_feedback = None
 
     @property
     def fans_controller_resource(self):
@@ -860,13 +892,58 @@ class HardwareSettings():
         assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
         self._gate_relay_channel = value
 
+    @property
+    def acquisition_channel(self):
+        return self._acquisition_channel
+
+    @acquisition_channel.setter
+    def acquisition_channel(self,value):
+        assert isinstance(value, mfc.FANS_AI_CHANNELS)
+        self._acquisition_channel = value
+
+    @property
+    def sample_feedback_channel(self):
+        return self._sample_feedback
+
+    @sample_feedback_channel.setter
+    def sample_feedback_channel(self,value):
+        assert isinstance(value, mfc.FANS_AI_CHANNELS)
+        self._sample_feedback = value
+
+    @property
+    def gate_feedback_channel(self):
+        return self._gate_feedback
+
+    @gate_feedback_channel.setter
+    def gate_feedback_channel(self,value):
+        assert isinstance(value, mfc.FANS_AI_CHANNELS)
+        self._gate_feedback = value
+       
+    @property
+    def main_feedback_channel(self):
+        return self._main_feedback
+
+    @main_feedback_channel.setter
+    def main_feedback_channel(self,value):
+        assert isinstance(value, mfc.FANS_AI_CHANNELS)
+        self._main_feedback = value
 
 
 def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
-    app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
+    #icon_file = "pyfans.ico"
+    icon_file = "pyfans.png"
+    app_icon = QtGui.QIcon()
+    app_icon.addFile(icon_file, QtCore.QSize(16,16))
+    app_icon.addFile(icon_file, QtCore.QSize(24,24))
+    app_icon.addFile(icon_file, QtCore.QSize(32,32))
+    app_icon.addFile(icon_file, QtCore.QSize(48,48))
+    app_icon.addFile(icon_file, QtCore.QSize(256,256))
+    app.setWindowIcon(app_icon)
+    #app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
+
     wnd = FANS_UI_MainView()
     controller = FANS_UI_Controller(wnd)
     controller.show_main_view()
