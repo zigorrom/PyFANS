@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>pyfans_v2.py</StartupFile>
+    <StartupFile>pyfans_remote_control.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -45,6 +45,9 @@
     <Compile Include="nodes.py" />
     <Compile Include="plot.py" />
     <Compile Include="process_communication_protocol.py" />
+    <Compile Include="pyfans_remote_control.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="pyfans_v2.py">
       <SubType>Code</SubType>
     </Compile>

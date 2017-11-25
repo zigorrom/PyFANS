@@ -448,11 +448,12 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
         self.refresh_view()
     
     def refresh_view(self):
-        self.fans_controller_resource = self.hardware_settings.fans_controller_resource
-        self.fans_sample_motor_channel = self.hardware_settings.sample_motor_channel.value
-        self.fans_sample_relay_channel = self.hardware_settings.sample_relay_channel.value
-        self.fans_gate_motor_channel = self.hardware_settings.gate_motor_channel.value
-        self.fans_gate_relay_channel = self.hardware_settings.gate_relay_channel.value
+        if self.hardware_settings:
+            self.fans_controller_resource = self.hardware_settings.fans_controller_resource
+            self.fans_sample_motor_channel = self.hardware_settings.sample_motor_channel#.value
+            self.fans_sample_relay_channel = self.hardware_settings.sample_relay_channel#.value
+            self.fans_gate_motor_channel = self.hardware_settings.gate_motor_channel#.value
+            self.fans_gate_relay_channel = self.hardware_settings.gate_relay_channel#.value
 
 
 
