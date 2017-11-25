@@ -406,6 +406,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_set_measurement_info_end(self, measurement_info):
         pass
 
+    def ui_set_measurement_count(self, measurement_count):
+        self.measurementCount = measurement_count
+
+    def ui_increment_measurement_count(self):
+        self.measurementCount += 1
 
 HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
@@ -483,6 +488,7 @@ class FANS_UI_Controller():
     def start_experiment(self):
         print("start experiment")
         #self.load_settings()
+        self.main_view.ui_increment_measurement_count()
 
     def stop_experiment(self):
         print("stop experiment")
