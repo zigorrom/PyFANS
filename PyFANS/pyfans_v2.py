@@ -55,6 +55,14 @@ def get_value_of_module_type(value, module_type):
     cls = getattr(mod, t)
     return cls(value)
 
+def string_index_to_ai_channel_converter(index):
+    int_index = int(index)
+    return mfexp.get_fans_ai_channels_from_number(int_index)
+
+def string_index_to_ao_channel_converter(index):
+    int_index = int(index)
+    return mfexp.get_fans_ao_channels_from_number(int_index)
+
 def bind(objectName, propertyName, value_type):#, set_value_type):
     def getter(self):
         return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
@@ -393,11 +401,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
 HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
+    
     fans_controller_resource = bind("ui_fans_controller", "currentText", str)
-    fans_sample_motor_channel = bind("ui_sample_channel", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
-    fans_sample_relay_channel = bind("ui_sample_relay", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
-    fans_gate_motor_channel = bind("ui_gate_channel", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
-    fans_gate_relay_channel = bind("ui_gate_relay", "currentText", lambda x: mfexp.get_fans_ao_channels_from_number(int(x)))
+    fans_sample_motor_channel = bind("ui_sample_channel", "currentText",  string_index_to_ao_channel_converter)
+    fans_sample_relay_channel = bind("ui_sample_relay", "currentText", string_index_to_ao_channel_converter)
+    fans_gate_motor_channel = bind("ui_gate_channel", "currentText", string_index_to_ao_channel_converter)
+    fans_gate_relay_channel = bind("ui_gate_relay", "currentText", string_index_to_ao_channel_converter)
 
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -436,13 +445,20 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     def set_hardware_settings(self, hardware_settings):
         assert isinstance(hardware_settings, HardwareSettings)
         self.hardware_settings = hardware_settings
+        self.refresh_view()
     
+    def refresh_view(self):
+        self.fans_controller_resource = self.hardware_settings.fans_controller_resource
+        self.fans_sample_motor_channel = self.hardware_settings.sample_motor_channel.value
+        self.fans_sample_relay_channel = self.hardware_settings.sample_relay_channel.value
+        self.fans_gate_motor_channel = self.hardware_settings.gate_motor_channel.value
+        self.fans_gate_relay_channel = self.hardware_settings.gate_relay_channel.value
 
 
 
 class FANS_UI_Controller():
     settings_file = "state.cfg"
-
+    hardware_file = "hardware.cfg"
     def __init__(self, view):
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
@@ -472,7 +488,6 @@ class FANS_UI_Controller():
         self.save_settings_to_file()
 
     def show_hardware_settings_view(self):
-        self.hardware_settings = HardwareSettings()
         dialog = HardwareSettingsView()
         dialog.set_hardware_settings(self.hardware_settings)
         result = dialog.exec_()
@@ -481,6 +496,9 @@ class FANS_UI_Controller():
     def save_settings_to_file(self):
         with open(self.settings_file,"wb") as f:
             pickle.dump(self.experiment_settings, f)
+
+        with open(self.hardware_file,"wb") as f:
+            pickle.dump(self.hardware_settings, f)
        
     def load_settings_from_file(self):
         if not os.path.isfile(self.settings_file):
@@ -490,6 +508,15 @@ class FANS_UI_Controller():
             print("loading settings from file")
             with open(self.settings_file,"rb") as f:
                 self.experiment_settings = pickle.load(f)
+
+
+        if not os.path.isfile(self.hardware_file):
+            print("creating new hardware settings")
+            self.hardware_settings = HardwareSettings()
+        else:
+            print("loading hardware settings file")
+            with open(self.hardware_file, "rb") as f:
+                self.hardware_settings = pickle.load(f)
 
 class ExperimentSettings():
     def __init__(self):
@@ -802,7 +829,7 @@ class HardwareSettings():
 
     @property
     def gate_motor_channel(self):
-        return self.gate_motor_channel
+        return self._gate_motor_channel
     
     @gate_motor_channel.setter
     def gate_motor_channel(self, value):
