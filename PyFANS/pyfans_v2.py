@@ -358,7 +358,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_increment_measurement_count(self):
         self.measurementCount += 1
 
-    def ui_update_spectrum_data(self, data):
+    def ui_update_spectrum_data(self, rang, data):
         pass
 
     def ui_update_resulting_spectrum_data(self, data):
