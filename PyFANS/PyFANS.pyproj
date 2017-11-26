@@ -51,9 +51,15 @@
     <Compile Include="pyfans_v2.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="range_editor.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="range_handlers.py" />
     <Compile Include="StandAloneVoltageControl.py" />
     <Compile Include="temperature_controller.py" />
+    <Compile Include="ui_helper.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="xml_serializer.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>

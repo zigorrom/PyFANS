@@ -8,135 +8,136 @@ from PyQt4 import uic, QtGui, QtCore
 
 import plot as plt
 import modern_fans_controller as mfc
-import modern_fans_experiment as mfexp
 from communication_layer import get_available_gpib_resources, get_available_com_resources
+import ui_helper as uih
+import range_handlers as rh
+import range_editor as redit
 
-def __assert_isinstance_wrapper(function, t):
-    def wrapper(self,value):
-        assert isinstance(value, t), "expected {0} - received {1}".format(t,type(value))
-        return function(self, value)
-    return wrapper
+#def __assert_isinstance_wrapper(function, t):
+#    def wrapper(self,value):
+#        assert isinstance(value, t), "expected {0} - received {1}".format(t,type(value))
+#        return function(self, value)
+#    return wrapper
 
-def assert_boolean_argument(function):
-    return __assert_isinstance_wrapper(function, bool)
+#def uih.assert_boolean_argument(function):
+#    return __assert_isinstance_wrapper(function, bool)
 
-def assert_int_or_float_argument(function):
-    return __assert_isinstance_wrapper(function,(int,float))
+#def uih.assert_int_or_float_argument(function):
+#    return __assert_isinstance_wrapper(function,(int,float))
 
-def assert_float_argument(function):
-    return __assert_isinstance_wrapper(function, float)
+#def uih.assert_float_argument(function):
+#    return __assert_isinstance_wrapper(function, float)
 
-def assert_string_argument(function):
-    return __assert_isinstance_wrapper(function, str)
+#def uih.assert_string_argument(function):
+#    return __assert_isinstance_wrapper(function, str)
 
-def assert_integer_argument(function):
-    return __assert_isinstance_wrapper(function, int)
+#def uih.assert_integer_argument(function):
+#    return __assert_isinstance_wrapper(function, int)
 
-def assert_list_argument(function):
-    return __assert_isinstance_wrapper(function, list)
+#def uih.assert_list_argument(function):
+#    return __assert_isinstance_wrapper(function, list)
 
-def assert_tuple_argument(function):
-    return __assert_isinstance_wrapper(function, tuple)
+#def uih.assert_tuple_argument(function):
+#    return __assert_isinstance_wrapper(function, tuple)
 
-def assert_list_or_tuple_argument(function):
-    return __assert_isinstance_wrapper(function, (list, tuple))
+#def uih.assert_list_or_tuple_argument(function):
+#    return __assert_isinstance_wrapper(function, (list, tuple))
 
-def has_same_value(a, b):
-    return a == b
 
-def get_module_name_and_type(t):
-    module = t.__module__
-    cls_name = type(t).__name__
-    return "{0}.{1}".format(module,cls_name)
 
-def get_value_of_module_type(value, module_type):
-    module, t = module_type.split(".")
-    mod = sys.modules[module]
-    cls = getattr(mod, t)
-    return cls(value)
+#def uih.get_module_name_and_type(t):
+#    module = t.__module__
+#    cls_name = type(t).__name__
+#    return "{0}.{1}".format(module,cls_name)
 
-def string_index_to_ai_channel_converter(index):
-    int_index = int(index)
-    return mfexp.get_fans_ai_channels_from_number(int_index)
+#def uih.get_value_of_module_type(value, module_type):
+#    module, t = module_type.split(".")
+#    mod = sys.modules[module]
+#    cls = getattr(mod, t)
+#    return cls(value)
 
-def string_index_to_ao_channel_converter(index):
-    int_index = int(index)
-    return mfexp.get_fans_ao_channels_from_number(int_index)
+#def uih.string_index_to_ai_channel_converter(index):
+#    int_index = int(index)
+#    return mfexp.get_fans_ai_channels_from_number(int_index)
 
-def fans_channel_to_string(channel):
-    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
-    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
-        val = str(channel.value)
-        return val
-    else:
-        return ""
+#def uih.string_index_to_ao_channel_converter(index):
+#    int_index = int(index)
+#    return mfexp.get_fans_ao_channels_from_number(int_index)
 
-def bind(objectName, propertyName, value_type):#, set_value_type):
-    def getter(self):
-        return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
+#def uih.fans_channel_to_string(channel):
+#    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
+#    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
+#        val = str(channel.value)
+#        return val
+#    else:
+#        return ""
 
-    def setter(self,value):
-        #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
-        self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)
+#def uih.bind(objectName, propertyName, value_type):#, set_value_type):
+#    def getter(self):
+#        return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
 
-    return property(getter, setter)
+#    def setter(self,value):
+#        #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
+#        self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)
 
-class QVoltageValidator(QtGui.QRegExpValidator):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")
-        self.setRegExp(regex)
+#    return property(getter, setter)
 
-def convert_value_to_volts(ureg, value):
-    assert isinstance(ureg, UnitRegistry)
-    try:
-          v = ureg(value)
-          if not isinstance(v,pint.quantity._Quantity):
-              v = v * ureg.volt
-          print("{0} {1}".format(v.magnitude, v.units))
-          v.ito(ureg.volt)
-          return v.magnitude
-    except:
-          print("error while handling value")
-          return None
+#class uih.QVoltageValidator(QtGui.QRegExpValidator):
+#    def __init__(self, **kwargs):
+#        super().__init__(**kwargs)
+#        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")
+#        self.setRegExp(regex)
 
-def string_to_volt_converter(ureg):
-    def wrapper(value):
-       return convert_value_to_volts(ureg, value)
-    return wrapper
+#def uih.convert_value_to_volts(ureg, value):
+#    assert isinstance(ureg, UnitRegistry)
+#    try:
+#          v = ureg(value)
+#          if not isinstance(v,pint.quantity._Quantity):
+#              v = v * ureg.volt
+#          print("{0} {1}".format(v.magnitude, v.units))
+#          v.ito(ureg.volt)
+#          return v.magnitude
+#    except:
+#          print("error while handling value")
+#          return None
+
+#def uih.string_to_volt_converter(ureg):
+#    def wrapper(value):
+#       return uih.convert_value_to_volts(ureg, value)
+#    return wrapper
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     ureg = UnitRegistry()
-    calibrate_before_measurement = bind("ui_calibrate", "checked", bool)
-    overload_reject = bind("ui_overload_reject", "checked", bool)
-    display_refresh = bind("ui_display_refresh", "value", int)
-    simulate_measurement = bind("ui_simulate", "checked", bool)
-    number_of_averages = bind("ui_averages", "value", int)
-    use_homemade_amplifier = bind("ui_use_homemade_amplifier", "checked", bool)
-    second_amplifier_gain = bind("ui_second_amp_coeff", "currentText", int)
-    perform_temperature_measurement = bind("ui_need_meas_temp","checked", bool)
-    current_temperature = bind("ui_current_temp", "text", float)
-    load_resistance = bind("ui_load_resistance", "text", float)
-    perform_measurement_of_gated_structure = bind("ui_meas_gated_structure", "checked", bool)
-    use_dut_selector = bind("ui_use_dut_selector", "checked", bool)
-    use_automated_voltage_control = bind("ui_use_automated_voltage_control", "checked", bool)
-    measurement_characteristic_type = bind("ui_meas_characteristic_type", "currentIndex", int)
-    drain_source_voltage = bind("ui_drain_source_voltage", "text", string_to_volt_converter(ureg)) # ureg) #
-    front_gate_voltage = bind("ui_front_gate_voltage", "text", string_to_volt_converter(ureg)) # ureg) #
-    use_drain_source_range = bind("ui_use_set_vds_range","checked", bool)
-    use_gate_source_range = bind("ui_use_set_vfg_range","checked", bool)
-    sample_voltage_start = bind("ui_sample_voltage_start", "text", float)
-    sample_voltage_end = bind("ui_sample_voltage_end", "text", float)
-    front_gate_voltage_start = bind("ui_front_gate_voltage_start", "text", float)
-    front_gate_voltage_end = bind("ui_front_gate_voltage_end", "text", float)
-    sample_current_start = bind("ui_sample_current_start", "text", float)
-    sample_current_end = bind("ui_sample_current_end", "text", float)
-    sample_resistance_start = bind("ui_sample_resistance_start", "text", float)
-    sample_resistance_end = bind("ui_sample_resistance_end", "text", float)
-    experimentName = bind("ui_experimentName", "text", str)
-    measurementName = bind("ui_measurementName", "text", str)
-    measurementCount = bind("ui_measurementCount", "value", int)
+    calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
+    overload_reject = uih.bind("ui_overload_reject", "checked", bool)
+    display_refresh = uih.bind("ui_display_refresh", "value", int)
+    simulate_measurement = uih.bind("ui_simulate", "checked", bool)
+    number_of_averages = uih.bind("ui_averages", "value", int)
+    use_homemade_amplifier = uih.bind("ui_use_homemade_amplifier", "checked", bool)
+    second_amplifier_gain = uih.bind("ui_second_amp_coeff", "currentText", int)
+    perform_temperature_measurement = uih.bind("ui_need_meas_temp","checked", bool)
+    current_temperature = uih.bind("ui_current_temp", "text", float)
+    load_resistance = uih.bind("ui_load_resistance", "text", float)
+    perform_measurement_of_gated_structure = uih.bind("ui_meas_gated_structure", "checked", bool)
+    use_dut_selector = uih.bind("ui_use_dut_selector", "checked", bool)
+    use_automated_voltage_control = uih.bind("ui_use_automated_voltage_control", "checked", bool)
+    measurement_characteristic_type = uih.bind("ui_meas_characteristic_type", "currentIndex", int)
+    drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg)) # ureg) #
+    front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg)) # ureg) #
+    use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
+    use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
+    sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float)
+    sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float)
+    front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float)
+    front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float)
+    sample_current_start = uih.bind("ui_sample_current_start", "text", float)
+    sample_current_end = uih.bind("ui_sample_current_end", "text", float)
+    sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float)
+    sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float)
+    experimentName = uih.bind("ui_experimentName", "text", str)
+    measurementName = uih.bind("ui_measurementName", "text", str)
+    measurementCount = uih.bind("ui_measurementCount", "value", int)
     valueChanged = QtCore.pyqtSignal(str, object) #str - name of the object, object - new value
 
     def __init__(self, parent = None):
@@ -151,8 +152,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         super().setupUi(self)
         self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
         self.ui_load_resistance.setValidator(QtGui.QIntValidator())
-        self.ui_drain_source_voltage.setValidator(QVoltageValidator())
-        self.ui_front_gate_voltage.setValidator(QVoltageValidator())
+        self.ui_drain_source_voltage.setValidator(uih.QVoltageValidator())
+        self.ui_front_gate_voltage.setValidator(uih.QVoltageValidator())
         self.__setup_folder_browse_button()
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
 
@@ -235,6 +236,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def refresh_view(self):
         assert isinstance(self._experiment_settings, ExperimentSettings), "Not initialized experiment settings"
         settings = self.experiment_settings
+        uih.setAllChildObjectSignaling(self,True)
         self.calibrate_before_measurement = settings.calibrate_before_measurement
         self.overload_reject = settings.overload_rejecion
         self.simulate_measurement = settings.simulate_experiment
@@ -245,7 +247,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.current_temperature = settings.current_temperature  #  "Not initialized" #settings.curre
         self.load_resistance = settings.load_resistance
         self.perform_measurement_of_gated_structure = settings.meas_gated_structure
-        self.use_dut_selector = False #
+        self.use_dut_selector = settings.use_transistor_selector #
         self.use_automated_voltage_control = settings.use_automated_voltage_control
         self.measurement_characteristic_type = settings.meas_characteristic_type
         self.drain_source_voltage = settings.drain_source_voltage
@@ -256,7 +258,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.experimentName = settings.experiment_name
         self.measurementName = settings.measurement_name
         self.measurementCount = settings.measurement_count
-
+        uih.setAllChildObjectSignaling(self,False)
     #**************
     #event handlers
     #**************
@@ -334,7 +336,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot(str)
     def on_ui_drain_source_voltage_textChanged(self, value):
         self.ui_drain_source_voltage.setToolTip("Vds = {0} V".format(self.drain_source_voltage))
-        self.experiment_settings.drain_source_voltage = self.drain_source_voltage
+        val = self.drain_source_voltage
+        self.experiment_settings.drain_source_voltage = val
+        self.drain_source_voltage = val
         
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vds_range_stateChanged(self, value):
@@ -342,14 +346,26 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot()
     def on_VdsRange_clicked(self):
-        self._print_test()
+        print("settings vds range")
+        rng = self.experiment_settings.vds_range
+        if rng:
+            rng = rng.copy_range() #
+        else:
+            rng = rh.float_range(0,1,1)
 
+        dialog = redit.RangeSelectorView()
+        dialog.set_range(rng)
+        res = dialog.exec_()
+        if res:
+            self.experiment_settings.vds_range = dialog.get_range()
 
 
     @QtCore.pyqtSlot(str)
     def on_ui_front_gate_voltage_textChanged(self, value):
         self.ui_front_gate_voltage.setToolTip("Vgs = {0} V".format(self.front_gate_voltage))
-        self.experiment_settings.front_gate_voltage = self.front_gate_voltage
+        val = self.front_gate_voltage
+        self.experiment_settings.front_gate_voltage = val
+        self.front_gate_voltage = val
     
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vfg_range_stateChanged(self, value):
@@ -357,7 +373,19 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot()
     def on_VfgRange_clicked(self):
-        self._print_test()
+        print("settings vfg range")
+        rng = self.experiment_settings.vfg_range
+        if rng:
+            rng = rng.copy_range() #
+        else:
+            rng = rh.float_range(0,1,1)
+
+        dialog = redit.RangeSelectorView()
+        dialog.set_range(rng)
+        res = dialog.exec_()
+        if res:
+            self.experiment_settings.vfg_range = dialog.get_range()
+
     
     @QtCore.pyqtSlot(str)
     def on_ui_experimentName_textChanged(self, value):
@@ -416,15 +444,15 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     
-    fans_controller_resource = bind("ui_fans_controller", "currentText", str)
-    fans_sample_motor_channel = bind("ui_sample_channel", "currentText",  string_index_to_ao_channel_converter)
-    fans_sample_relay_channel = bind("ui_sample_relay", "currentText", string_index_to_ao_channel_converter)
-    fans_gate_motor_channel = bind("ui_gate_channel", "currentText", string_index_to_ao_channel_converter)
-    fans_gate_relay_channel = bind("ui_gate_relay", "currentText", string_index_to_ao_channel_converter)
-    fans_acquisition_channel = bind("ui_acquisition_channel", "currentText", string_index_to_ai_channel_converter)
-    fans_sample_feedback_channel = bind("ui_sample_feedback_channel", "currentText", string_index_to_ai_channel_converter)
-    fans_gate_feedback_channel = bind("ui_gate_feedback_channel", "currentText", string_index_to_ai_channel_converter)
-    fans_main_feedback_channel = bind("ui_main_feedback_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_controller_resource = uih.bind("ui_fans_controller", "currentText", str)
+    fans_sample_motor_channel = uih.bind("ui_sample_channel", "currentText",  uih.string_index_to_ao_channel_converter)
+    fans_sample_relay_channel = uih.bind("ui_sample_relay", "currentText", uih.string_index_to_ao_channel_converter)
+    fans_gate_motor_channel = uih.bind("ui_gate_channel", "currentText", uih.string_index_to_ao_channel_converter)
+    fans_gate_relay_channel = uih.bind("ui_gate_relay", "currentText", uih.string_index_to_ao_channel_converter)
+    fans_acquisition_channel = uih.bind("ui_acquisition_channel", "currentText", uih.string_index_to_ai_channel_converter)
+    fans_sample_feedback_channel = uih.bind("ui_sample_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
+    fans_gate_feedback_channel = uih.bind("ui_gate_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
+    fans_main_feedback_channel = uih.bind("ui_main_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
 
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -492,14 +520,14 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     def refresh_view(self):
         if self.hardware_settings:
             self.fans_controller_resource = self.hardware_settings.fans_controller_resource
-            self.fans_sample_motor_channel = fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
-            self.fans_sample_relay_channel = fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
-            self.fans_gate_motor_channel = fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
-            self.fans_gate_relay_channel = fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
-            self.fans_acquisition_channel = fans_channel_to_string(self.hardware_settings.acquisition_channel)
-            self.fans_sample_feedback_channel = fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
-            self.fans_gate_feedback_channel = fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
-            self.fans_main_feedback_channel = fans_channel_to_string(self.hardware_settings.main_feedback_channel)
+            self.fans_sample_motor_channel = uih.fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
+            self.fans_sample_relay_channel = uih.fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
+            self.fans_gate_motor_channel = uih.fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
+            self.fans_gate_relay_channel = uih.fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
+            self.fans_acquisition_channel = uih.fans_channel_to_string(self.hardware_settings.acquisition_channel)
+            self.fans_sample_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
+            self.fans_gate_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
+            self.fans_main_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.main_feedback_channel)
 
 
 class FANS_UI_Controller():
@@ -578,6 +606,7 @@ class ExperimentSettings():
         self.__use_second_amplifier = None
         self.__second_amp_coeff = None
         self.__load_resistance = None
+        #self.__use_dut_selector = None
         self.__need_measure_temperature = None
         self.__current_temperature = None
         self.__meas_gated_structure = None
@@ -586,33 +615,45 @@ class ExperimentSettings():
         self.__use_transistor_selector = None
         self.__transistor_list = None
         self.__use_set_vds_range = None
-        #self.__vds_range = None
+        self.__vds_range = None
         self.__use_set_vfg_range = None
-        #self.__vfg_range = None
+        self.__vfg_range = None
         self.__front_gate_voltage = None
         self.__drain_source_voltage = None
 
+    @property
+    def vds_range(self):
+        return self.__vds_range
+
+    @vds_range.setter
+    def vds_range(self,value):
+        assert isinstance(value, rh.float_range)
+        self.__vds_range = value
+
+    @property
+    def vfg_range(self):
+        return self.__vfg_range
+
+    @vfg_range.setter
+    def vfg_range(self,value):
+        assert isinstance(value, rh.float_range)
+        self.__vfg_range = value
+    
     #@property
-    #def vds_range(self):
-    #    return self.__vds_range
+    #def use_dut_selector(self):
+    #    return self.__use_dut_selector
 
-    #@vds_range.setter
-    #def vds_range(self,value):
-    #    self.__vds_range = value
-
-    #@property
-    #def vfg_range(self):
-    #    return self.__vfg_range
-
-    #@vfg_range.setter
-    #def vfg_range(self,value):
-    #    self.__vfg_range = value
+    #@use_dut_selector.setter
+    #@uih.assert_boolean_argument
+    #def use_dut_selector(self,value):
+    #    self.__use_dut_selector = value
 
     @property
     def current_temperature(self):
         return self.__current_temperature
 
     @current_temperature.setter
+    @uih.assert_int_or_float_argument
     def current_temperature(self, value):
         self.__current_temperature = value
 
@@ -621,7 +662,7 @@ class ExperimentSettings():
         return self.__simulate_experiment
 
     @simulate_experiment.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def simulate_experiment(self,value):
         self.__simulate_experiment = value
 
@@ -630,7 +671,7 @@ class ExperimentSettings():
         return self.__use_automated_voltage_control
 
     @use_automated_voltage_control.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_automated_voltage_control(self, value):
         self.__use_automated_voltage_control = value
 
@@ -639,7 +680,7 @@ class ExperimentSettings():
         return self.__front_gate_voltage
 
     @front_gate_voltage.setter
-    @assert_float_argument
+    @uih.assert_float_argument
     def front_gate_voltage(self,value):
         self.__front_gate_voltage = value
 
@@ -648,7 +689,7 @@ class ExperimentSettings():
         return self.__drain_source_voltage
 
     @drain_source_voltage.setter
-    @assert_float_argument
+    @uih.assert_float_argument
     def drain_source_voltage(self,value):
         self.__drain_source_voltage = value
 
@@ -657,7 +698,7 @@ class ExperimentSettings():
         return self.__working_directory
 
     @working_directory.setter
-    @assert_string_argument
+    @uih.assert_string_argument
     def working_directory(self,value):
         self.__working_directory = value
 
@@ -667,7 +708,7 @@ class ExperimentSettings():
         return self.__experiment_name
 
     @experiment_name.setter
-    @assert_string_argument
+    @uih.assert_string_argument
     def experiment_name(self,value):
         self.__experiment_name = value
 
@@ -677,7 +718,7 @@ class ExperimentSettings():
         return self.__measurement_name
 
     @measurement_name.setter
-    @assert_string_argument
+    @uih.assert_string_argument
     def measurement_name(self,value):
         self.__measurement_name = value
 
@@ -687,7 +728,7 @@ class ExperimentSettings():
         return self.__measurement_count
 
     @measurement_count.setter
-    @assert_integer_argument
+    @uih.assert_integer_argument
     def measurement_count(self,value):
         self.__measurement_count = value    
 
@@ -696,7 +737,7 @@ class ExperimentSettings():
         return self.__calibrate_before_measurement
 
     @calibrate_before_measurement.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def calibrate_before_measurement(self,value):
         self.__calibrate_before_measurement= value    
 
@@ -705,7 +746,7 @@ class ExperimentSettings():
         return self.__overload_rejecion
 
     @overload_rejecion.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def overload_rejecion(self,value):
         self.__overload_rejecion= value    
 
@@ -714,7 +755,7 @@ class ExperimentSettings():
         return self.__display_refresh
 
     @display_refresh.setter
-    @assert_integer_argument
+    @uih.assert_integer_argument
     def display_refresh(self,value):
         self.__display_refresh= value    
 
@@ -723,7 +764,7 @@ class ExperimentSettings():
         return self.__averages
 
     @averages.setter
-    @assert_integer_argument
+    @uih.assert_integer_argument
     def averages(self,value):
         self.__averages= value  
 
@@ -732,7 +773,7 @@ class ExperimentSettings():
         return self.__use_homemade_amplifier
 
     @use_homemade_amplifier.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_homemade_amplifier(self,value):
         self.__use_homemade_amplifier= value  
 
@@ -741,7 +782,7 @@ class ExperimentSettings():
         return self.__homemade_amp_coeff
 
     @homemade_amp_coeff.setter
-    @assert_int_or_float_argument
+    @uih.assert_int_or_float_argument
     def homemade_amp_coeff(self,value):
         self.__homemade_amp_coeff= value  
 
@@ -750,7 +791,7 @@ class ExperimentSettings():
         return self.__use_second_amplifier
 
     @use_second_amplifier.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_second_amplifier(self,value):
         self.__use_second_amplifier= value 
 
@@ -759,7 +800,7 @@ class ExperimentSettings():
         return self.__second_amp_coeff
 
     @second_amp_coeff.setter
-    @assert_int_or_float_argument
+    @uih.assert_int_or_float_argument
     def second_amp_coeff(self,value):
         self.__second_amp_coeff= value 
 
@@ -768,7 +809,7 @@ class ExperimentSettings():
         return self.__load_resistance
 
     @load_resistance.setter
-    @assert_int_or_float_argument
+    @uih.assert_int_or_float_argument
     def load_resistance(self,value):
         self.__load_resistance= value 
 
@@ -777,7 +818,7 @@ class ExperimentSettings():
         return self.__need_measure_temperature
 
     @need_measure_temperature.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def need_measure_temperature(self,value):
         self.__need_measure_temperature= value 
 
@@ -786,7 +827,7 @@ class ExperimentSettings():
         return self.__meas_gated_structure
 
     @meas_gated_structure.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def meas_gated_structure(self,value):
         self.__meas_gated_structure= value 
   
@@ -795,7 +836,7 @@ class ExperimentSettings():
         return self.__meas_characteristic_type
 
     @meas_characteristic_type.setter
-    @assert_integer_argument
+    @uih.assert_integer_argument
     def meas_characteristic_type(self,value):
         self.__meas_characteristic_type= value
 
@@ -804,7 +845,7 @@ class ExperimentSettings():
         return self.__use_transistor_selector
 
     @use_transistor_selector.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_transistor_selector(self,value):
         self.__use_transistor_selector= value
 
@@ -813,7 +854,7 @@ class ExperimentSettings():
         return self.__transistor_list
 
     @transistor_list.setter
-    @assert_list_argument
+    @uih.assert_list_argument
     def transistor_list(self,value):
         self.__transistor_list= value
 
@@ -822,7 +863,7 @@ class ExperimentSettings():
         return self.__use_set_vds_range
 
     @use_set_vds_range.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_set_vds_range(self,value):
         self.__use_set_vds_range= value
  
@@ -831,7 +872,7 @@ class ExperimentSettings():
         return self.__use_set_vfg_range
 
     @use_set_vfg_range.setter
-    @assert_boolean_argument
+    @uih.assert_boolean_argument
     def use_set_vfg_range(self,value):
         self.__use_set_vfg_range= value
 
@@ -952,9 +993,9 @@ def test_ui():
 def test_cmd():
     s = ExperimentSettings()
     s.averages = 10
-    t =get_module_name_and_type(1)
+    t =uih.get_module_name_and_type(1)
     print(t)
-    v = get_value_of_module_type(6, t)
+    v = uih.get_value_of_module_type(6, t)
     print(v)
     return 0
 

@@ -12,28 +12,50 @@ class RANGE_HANDLERS(IntEnum):
    ZERO_START_BACK_FORTH = 3
 
 
+
 class float_range:
-    def __init__(self, start, stop, step = 1, len = -1):
+    def __init__(self, start, stop, step = 1, length = -1):
         self.__start = start
         self.__stop = stop
+        self.__step = step
+        self.__length = length
+        self.__calculate_length_step()
+      
+    def __calculate_length_step(self):
         value_difference = math.fabs(self.__stop - self.__start)
-
-        if len > 0:
-            self.__length = len
+        if self.__length > 1:
+            #self.__length = len
             self.__step = value_difference / (self.__length - 1)
-        elif step > 0:
-            self.__length = math.floor(value_difference / step)
-            self.__step = value_difference / (self.__length - 1)
+        elif self.__length == 1:
+            self.__step = 0
+        elif self.__step > 0:
+            self.__length = math.floor(value_difference / self.__step)
+            if self.__length>1:
+                self.__step = value_difference / (self.__length - 1)
+            else: 
+                self.__step = 0
         else:
             raise AttributeError("length or step is not set correctly")
-        
+          
     @property
     def start(self):
         return self.__start
 
+    @start.setter
+    def start(self, value):
+        assert isinstance(value, (int, float))
+        self.__start = value
+        self.__calculate_length_step()
+
     @property       
     def stop(self):
         return self.__stop
+
+    @stop.setter
+    def stop(self, value):
+        assert isinstance(value, (int, float))
+        self.__stop = value
+        self.__calculate_length_step()
 
     @property
     def step(self):
@@ -42,6 +64,20 @@ class float_range:
     @property
     def length(self):
         return self.__length
+
+    @length.setter
+    def length(self,value):
+        assert isinstance(value,int)
+        self.__length = value
+        self.__calculate_length_step()
+
+    def copy_range(self):
+        rng = float_range(0,0)
+        rng.__start = self.start
+        rng.__stop = self.stop
+        rng.__length = self.length
+        rng.__step = self.step
+        return rng
 
 POSITIVE_DIRECTION, NEGATIVE_DIRECTION = (1,-1)       
 class range_handler():
