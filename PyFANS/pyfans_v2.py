@@ -10,6 +10,7 @@ import plot as plt
 
 from collections import deque
 from multiprocessing import JoinableQueue
+from multiprocessing import Event
 
 from communication_layer import get_available_gpib_resources, get_available_com_resources
 import ui_helper as uih
@@ -20,6 +21,7 @@ from fans_experiment_settings import ExperimentSettings
 from fans_hardware_settings import HardwareSettingsView, HardwareSettings
 import modern_fans_experiment as mfexp
 import experiment_handler as eh
+
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -379,10 +381,15 @@ class FANS_UI_Controller():
         self.hardware_settings = None
         self.load_settings()
 
+        self.experiment_stop_event = Event()
         self.visualization_deque = deque(maxlen = 100)
         self.input_data_queue = JoinableQueue() 
         self.processing_thread = None
         self.experiment_thread = None
+        self.ui_refresh_timer = QtCore.QTimer(self)
+        self.ui_refresh_timer.setInterval(50)
+        self.ui_refresh_timer.timeout.connect(self.update_ui)
+
         self.initialize_experiment()
 
     def load_settings(self):
@@ -391,11 +398,22 @@ class FANS_UI_Controller():
         
     def start_experiment(self):
         print("start experiment")
+        self.ui_refresh_timer.start()
+        self.experiment_thread.start()
+        self.processing_thread.start()
+        #self.input_data_queue.join()
         #self.load_settings()
-        self.main_view.ui_increment_measurement_count()
+        #self.main_view.ui_increment_measurement_count()
+
 
     def stop_experiment(self):
         print("stop experiment")
+        self.experiment_stop_event.set()
+        self.experiment_thread.stop()
+        self.processing_thread.stop()
+        self.ui_refresh_timer.stop()
+        self.experiment_thread.join()
+        
         #self.save_settings_to_file()
 
     def show_main_view(self):
@@ -430,8 +448,58 @@ class FANS_UI_Controller():
                 self.hardware_settings = hardware_settings
    
     def initialize_experiment(self):
+        self.processing_thread = eh.ProcessingThread(self.input_data_queue, self.visualization_deque)
+        self.processing_thread.experimentStarted.connect(self.on_experiment_started)
+        self.processing_thread.experimentFinished.connect(self.on_experiment_finished)
+        self.processing_thread.measurementStarted.connect(self.on_measurement_started)
+        self.processing_thread.measurementFinished.connect(self.on_measurement_finished)
+        self.processing_thread.startMeasurementDataArrived.connect(self.on_start_measurement_info_received)
+        self.processing_thread.endMeasurementDataArrived.connect(self.on_end_measurement_info_received)
+        self.processing_thread.resulting_spectrum_update.connect(self.on_resulting_spectrum_received)
+        self.processing_thread.log_message_received.connect(self.on_log_message_received)
+        self.processing_thread.commandReceived.connect(self.on_command_received)
+        self.processing_thread.progressChanged.connect(self.on_progress_changed)
+
+        self.experiment_thread = mfexp.FANSExperiment(self.input_data_queue, self.experiment_stop_event)
+
+
+
+    def on_experiment_started(self, params):
+        experiment_name = params.get("experiment name")
+        msg = "Experiment \"{0}\" started".format(experiment_name)
+        self.main_view.ui_show_message_in_status_bar(msg, 1000)
+
+    def on_experiment_finished(self):
+        msg = "Experiment finished"
+        self.main_view.ui_show_message_in_status_bar(msg, 1000)
+        self.stop_experiment()
+
+    def on_measurement_started(self):
         pass
 
+    def on_measurement_finished(self):
+        pass
+
+    def on_start_measurement_info_received(self):
+        pass
+
+    def on_end_measurement_info_received(self):
+        pass
+
+    def on_resulting_spectrum_received(self,data):
+        pass
+
+    def on_progress_changed(self, progress):
+        pass
+
+    def on_log_message_received(self):
+        pass
+
+    def on_command_received(self):
+        pass
+
+    def update_ui(self):
+        pass
 
 
 def test_ui():
