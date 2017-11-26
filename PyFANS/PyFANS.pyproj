@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>pyfans_remote_control.py</StartupFile>
+    <StartupFile>pyfans_v2.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -35,6 +35,12 @@
     </Compile>
     <Compile Include="experiment_handler.py" />
     <Compile Include="experiment_writer.py" />
+    <Compile Include="fans_experiment_settings.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="fans_hardware_settings.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="pyfans.py" />
     <Compile Include="measurement_data_structures.py" />
     <Compile Include="modern_agilent_u2542a.py" />

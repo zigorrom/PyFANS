@@ -7,104 +7,19 @@ from pint import UnitRegistry
 from PyQt4 import uic, QtGui, QtCore
 
 import plot as plt
-import modern_fans_controller as mfc
+
+from collections import deque
+from multiprocessing import JoinableQueue
+
 from communication_layer import get_available_gpib_resources, get_available_com_resources
 import ui_helper as uih
 import range_handlers as rh
 import range_editor as redit
 
-#def __assert_isinstance_wrapper(function, t):
-#    def wrapper(self,value):
-#        assert isinstance(value, t), "expected {0} - received {1}".format(t,type(value))
-#        return function(self, value)
-#    return wrapper
-
-#def uih.assert_boolean_argument(function):
-#    return __assert_isinstance_wrapper(function, bool)
-
-#def uih.assert_int_or_float_argument(function):
-#    return __assert_isinstance_wrapper(function,(int,float))
-
-#def uih.assert_float_argument(function):
-#    return __assert_isinstance_wrapper(function, float)
-
-#def uih.assert_string_argument(function):
-#    return __assert_isinstance_wrapper(function, str)
-
-#def uih.assert_integer_argument(function):
-#    return __assert_isinstance_wrapper(function, int)
-
-#def uih.assert_list_argument(function):
-#    return __assert_isinstance_wrapper(function, list)
-
-#def uih.assert_tuple_argument(function):
-#    return __assert_isinstance_wrapper(function, tuple)
-
-#def uih.assert_list_or_tuple_argument(function):
-#    return __assert_isinstance_wrapper(function, (list, tuple))
-
-
-
-#def uih.get_module_name_and_type(t):
-#    module = t.__module__
-#    cls_name = type(t).__name__
-#    return "{0}.{1}".format(module,cls_name)
-
-#def uih.get_value_of_module_type(value, module_type):
-#    module, t = module_type.split(".")
-#    mod = sys.modules[module]
-#    cls = getattr(mod, t)
-#    return cls(value)
-
-#def uih.string_index_to_ai_channel_converter(index):
-#    int_index = int(index)
-#    return mfexp.get_fans_ai_channels_from_number(int_index)
-
-#def uih.string_index_to_ao_channel_converter(index):
-#    int_index = int(index)
-#    return mfexp.get_fans_ao_channels_from_number(int_index)
-
-#def uih.fans_channel_to_string(channel):
-#    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
-#    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
-#        val = str(channel.value)
-#        return val
-#    else:
-#        return ""
-
-#def uih.bind(objectName, propertyName, value_type):#, set_value_type):
-#    def getter(self):
-#        return value_type(self.findChild(QtCore.QObject, objectName).property(propertyName))
-
-#    def setter(self,value):
-#        #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
-#        self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)
-
-#    return property(getter, setter)
-
-#class uih.QVoltageValidator(QtGui.QRegExpValidator):
-#    def __init__(self, **kwargs):
-#        super().__init__(**kwargs)
-#        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")
-#        self.setRegExp(regex)
-
-#def uih.convert_value_to_volts(ureg, value):
-#    assert isinstance(ureg, UnitRegistry)
-#    try:
-#          v = ureg(value)
-#          if not isinstance(v,pint.quantity._Quantity):
-#              v = v * ureg.volt
-#          print("{0} {1}".format(v.magnitude, v.units))
-#          v.ito(ureg.volt)
-#          return v.magnitude
-#    except:
-#          print("error while handling value")
-#          return None
-
-#def uih.string_to_volt_converter(ureg):
-#    def wrapper(value):
-#       return uih.convert_value_to_volts(ureg, value)
-#    return wrapper
+from fans_experiment_settings import ExperimentSettings
+from fans_hardware_settings import HardwareSettingsView, HardwareSettings
+import modern_fans_experiment as mfexp
+import experiment_handler as eh
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -441,98 +356,20 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_increment_measurement_count(self):
         self.measurementCount += 1
 
-HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
-class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
-    
-    fans_controller_resource = uih.bind("ui_fans_controller", "currentText", str)
-    fans_sample_motor_channel = uih.bind("ui_sample_channel", "currentText",  uih.string_index_to_ao_channel_converter)
-    fans_sample_relay_channel = uih.bind("ui_sample_relay", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_gate_motor_channel = uih.bind("ui_gate_channel", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_gate_relay_channel = uih.bind("ui_gate_relay", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_acquisition_channel = uih.bind("ui_acquisition_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_sample_feedback_channel = uih.bind("ui_sample_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_gate_feedback_channel = uih.bind("ui_gate_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_main_feedback_channel = uih.bind("ui_main_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
+    def ui_update_spectrum_data(self, data):
+        pass
 
-    def __init__(self,parent = None):
-        super(HardwareSettingsBase,self).__init__(parent)
-        self.setupUi(self)
-        gpib_resources = get_available_gpib_resources()
-        #com_resources = get_available_com_resources()
-        self.ui_fans_controller.addItems(gpib_resources)
-        self.hardware_settings = None
-    
-    
-    @QtCore.pyqtSlot(int)
-    def on_ui_fans_controller_currentIndexChanged(self,value):
-        if self.hardware_settings:
-            self.hardware_settings.fans_controller_resource = self.fans_controller_resource
+    def ui_update_resulting_spectrum_data(self, data):
+        pass
 
-    @QtCore.pyqtSlot(int)
-    def on_ui_sample_channel_currentIndexChanged(self,value):
-        if self.hardware_settings:
-            self.hardware_settings.sample_motor_channel = self.fans_sample_motor_channel
-    
-    @QtCore.pyqtSlot(int)
-    def on_ui_sample_relay_currentIndexChanged(self,value):
-        if self.hardware_settings:
-            self.hardware_settings.sample_relay_channel = self.fans_sample_relay_channel
+    def ui_update_calculated_thermal_noise(self, data):
+        pass
 
-    @QtCore.pyqtSlot(int)
-    def on_ui_gate_channel_currentIndexChanged(self,value):
-        if self.hardware_settings:
-            self.hardware_settings.gate_motor_channel = self.fans_gate_motor_channel
-
-    @QtCore.pyqtSlot(int)
-    def on_ui_gate_relay_currentIndexChanged(self,value):
-        if self.hardware_settings:    
-            self.hardware_settings.gate_relay_channel = self.fans_gate_relay_channel
-    
-    @QtCore.pyqtSlot(int)
-    def on_ui_acquisition_channel_currentIndexChanged(self, value):
-        if self.hardware_settings:    
-            self.hardware_settings.acquisition_channel = self.fans_acquisition_channel
-
-
-    @QtCore.pyqtSlot(int)
-    def on_ui_sample_feedback_channel_currentIndexChanged(self, value):
-        if self.hardware_settings:
-            self.hardware_settings.sample_feedback_channel = self.fans_sample_feedback_channel
-        
-    @QtCore.pyqtSlot(int)
-    def on_ui_gate_feedback_channel_currentIndexChanged(self, value):
-        if self.hardware_settings:
-            self.hardware_settings.gate_feedback_channel = self.fans_gate_feedback_channel
-
-    @QtCore.pyqtSlot(int)
-    def on_ui_main_feedback_channel_currentIndexChanged(self, value):
-        if self.hardware_settings:
-            self.hardware_settings.main_feedback_channel = self.fans_main_feedback_channel
-
-    
-
-
-    def set_hardware_settings(self, hardware_settings):
-        assert isinstance(hardware_settings, HardwareSettings)
-        self.hardware_settings = hardware_settings
-        self.refresh_view()
-    
-    def refresh_view(self):
-        if self.hardware_settings:
-            self.fans_controller_resource = self.hardware_settings.fans_controller_resource
-            self.fans_sample_motor_channel = uih.fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
-            self.fans_sample_relay_channel = uih.fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
-            self.fans_gate_motor_channel = uih.fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
-            self.fans_gate_relay_channel = uih.fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
-            self.fans_acquisition_channel = uih.fans_channel_to_string(self.hardware_settings.acquisition_channel)
-            self.fans_sample_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
-            self.fans_gate_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
-            self.fans_main_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.main_feedback_channel)
+    def ui_update_timetrace(self, data):
+        pass
 
 
 class FANS_UI_Controller():
-    settings_file = "state.cfg"
-    hardware_file = "hardware.cfg"
     settings_filename = "settings.cfg"
     def __init__(self, view):
         assert isinstance(view, FANS_UI_MainView)
@@ -541,6 +378,12 @@ class FANS_UI_Controller():
         self.experiment_settings = None
         self.hardware_settings = None
         self.load_settings()
+
+        self.visualization_deque = deque(maxlen = 100)
+        self.input_data_queue = JoinableQueue() 
+        self.processing_thread = None
+        self.experiment_thread = None
+        self.initialize_experiment()
 
     def load_settings(self):
         self.load_settings_from_file()
@@ -569,8 +412,6 @@ class FANS_UI_Controller():
         result = dialog.exec_()
         print(result)
     
-
-
     def save_settings_to_file(self):
         with open(self.settings_filename,"wb") as f:
             save_object = (self.experiment_settings, self.hardware_settings) 
@@ -587,387 +428,10 @@ class FANS_UI_Controller():
                 exp_settings, hardware_settings = pickle.load(f)
                 self.experiment_settings = exp_settings
                 self.hardware_settings = hardware_settings
+   
+    def initialize_experiment(self):
+        pass
 
-
-class ExperimentSettings():
-    def __init__(self):
-        #this settings - separate class. shoy\uld be saved to file
-        self.__simulate_experiment = None
-        self.__working_directory = None
-        self.__experiment_name = None
-        self.__measurement_name = None
-        self.__measurement_count  = None
-        self.__calibrate_before_measurement = None
-        self.__overload_rejecion = None
-        self.__display_refresh = None
-        self.__averages = None
-        self.__use_homemade_amplifier = None
-        self.__homemade_amp_coeff = None
-        self.__use_second_amplifier = None
-        self.__second_amp_coeff = None
-        self.__load_resistance = None
-        #self.__use_dut_selector = None
-        self.__need_measure_temperature = None
-        self.__current_temperature = None
-        self.__meas_gated_structure = None
-        self.__meas_characteristic_type = None
-        self.__use_automated_voltage_control = None
-        self.__use_transistor_selector = None
-        self.__transistor_list = None
-        self.__use_set_vds_range = None
-        self.__vds_range = None
-        self.__use_set_vfg_range = None
-        self.__vfg_range = None
-        self.__front_gate_voltage = None
-        self.__drain_source_voltage = None
-
-    @property
-    def vds_range(self):
-        return self.__vds_range
-
-    @vds_range.setter
-    def vds_range(self,value):
-        assert isinstance(value, rh.float_range)
-        self.__vds_range = value
-
-    @property
-    def vfg_range(self):
-        return self.__vfg_range
-
-    @vfg_range.setter
-    def vfg_range(self,value):
-        assert isinstance(value, rh.float_range)
-        self.__vfg_range = value
-    
-    #@property
-    #def use_dut_selector(self):
-    #    return self.__use_dut_selector
-
-    #@use_dut_selector.setter
-    #@uih.assert_boolean_argument
-    #def use_dut_selector(self,value):
-    #    self.__use_dut_selector = value
-
-    @property
-    def current_temperature(self):
-        return self.__current_temperature
-
-    @current_temperature.setter
-    @uih.assert_int_or_float_argument
-    def current_temperature(self, value):
-        self.__current_temperature = value
-
-    @property
-    def simulate_experiment(self):
-        return self.__simulate_experiment
-
-    @simulate_experiment.setter
-    @uih.assert_boolean_argument
-    def simulate_experiment(self,value):
-        self.__simulate_experiment = value
-
-    @property 
-    def use_automated_voltage_control(self):
-        return self.__use_automated_voltage_control
-
-    @use_automated_voltage_control.setter
-    @uih.assert_boolean_argument
-    def use_automated_voltage_control(self, value):
-        self.__use_automated_voltage_control = value
-
-    @property
-    def front_gate_voltage(self):
-        return self.__front_gate_voltage
-
-    @front_gate_voltage.setter
-    @uih.assert_float_argument
-    def front_gate_voltage(self,value):
-        self.__front_gate_voltage = value
-
-    @property
-    def drain_source_voltage(self):
-        return self.__drain_source_voltage
-
-    @drain_source_voltage.setter
-    @uih.assert_float_argument
-    def drain_source_voltage(self,value):
-        self.__drain_source_voltage = value
-
-    @property
-    def working_directory(self):
-        return self.__working_directory
-
-    @working_directory.setter
-    @uih.assert_string_argument
-    def working_directory(self,value):
-        self.__working_directory = value
-
-    #self.__expeiment_name = None
-    @property
-    def experiment_name(self):
-        return self.__experiment_name
-
-    @experiment_name.setter
-    @uih.assert_string_argument
-    def experiment_name(self,value):
-        self.__experiment_name = value
-
-    #self.__measurement_name = None
-    @property
-    def measurement_name(self):
-        return self.__measurement_name
-
-    @measurement_name.setter
-    @uih.assert_string_argument
-    def measurement_name(self,value):
-        self.__measurement_name = value
-
-    #self.__measurement_count  = 0
-    @property
-    def measurement_count(self):
-        return self.__measurement_count
-
-    @measurement_count.setter
-    @uih.assert_integer_argument
-    def measurement_count(self,value):
-        self.__measurement_count = value    
-
-    @property
-    def calibrate_before_measurement(self):
-        return self.__calibrate_before_measurement
-
-    @calibrate_before_measurement.setter
-    @uih.assert_boolean_argument
-    def calibrate_before_measurement(self,value):
-        self.__calibrate_before_measurement= value    
-
-    @property
-    def overload_rejecion(self):
-        return self.__overload_rejecion
-
-    @overload_rejecion.setter
-    @uih.assert_boolean_argument
-    def overload_rejecion(self,value):
-        self.__overload_rejecion= value    
-
-    @property
-    def display_refresh(self):
-        return self.__display_refresh
-
-    @display_refresh.setter
-    @uih.assert_integer_argument
-    def display_refresh(self,value):
-        self.__display_refresh= value    
-
-    @property
-    def averages(self):
-        return self.__averages
-
-    @averages.setter
-    @uih.assert_integer_argument
-    def averages(self,value):
-        self.__averages= value  
-
-    @property
-    def use_homemade_amplifier(self):
-        return self.__use_homemade_amplifier
-
-    @use_homemade_amplifier.setter
-    @uih.assert_boolean_argument
-    def use_homemade_amplifier(self,value):
-        self.__use_homemade_amplifier= value  
-
-    @property
-    def homemade_amp_coeff(self):
-        return self.__homemade_amp_coeff
-
-    @homemade_amp_coeff.setter
-    @uih.assert_int_or_float_argument
-    def homemade_amp_coeff(self,value):
-        self.__homemade_amp_coeff= value  
-
-    @property
-    def use_second_amplifier(self):
-        return self.__use_second_amplifier
-
-    @use_second_amplifier.setter
-    @uih.assert_boolean_argument
-    def use_second_amplifier(self,value):
-        self.__use_second_amplifier= value 
-
-    @property
-    def second_amp_coeff(self):
-        return self.__second_amp_coeff
-
-    @second_amp_coeff.setter
-    @uih.assert_int_or_float_argument
-    def second_amp_coeff(self,value):
-        self.__second_amp_coeff= value 
-
-    @property
-    def load_resistance(self):
-        return self.__load_resistance
-
-    @load_resistance.setter
-    @uih.assert_int_or_float_argument
-    def load_resistance(self,value):
-        self.__load_resistance= value 
-
-    @property
-    def need_measure_temperature(self):
-        return self.__need_measure_temperature
-
-    @need_measure_temperature.setter
-    @uih.assert_boolean_argument
-    def need_measure_temperature(self,value):
-        self.__need_measure_temperature= value 
-
-    @property
-    def meas_gated_structure(self):
-        return self.__meas_gated_structure
-
-    @meas_gated_structure.setter
-    @uih.assert_boolean_argument
-    def meas_gated_structure(self,value):
-        self.__meas_gated_structure= value 
-  
-    @property
-    def meas_characteristic_type(self):
-        return self.__meas_characteristic_type
-
-    @meas_characteristic_type.setter
-    @uih.assert_integer_argument
-    def meas_characteristic_type(self,value):
-        self.__meas_characteristic_type= value
-
-    @property
-    def use_transistor_selector(self):
-        return self.__use_transistor_selector
-
-    @use_transistor_selector.setter
-    @uih.assert_boolean_argument
-    def use_transistor_selector(self,value):
-        self.__use_transistor_selector= value
-
-    @property
-    def transistor_list(self):
-        return self.__transistor_list
-
-    @transistor_list.setter
-    @uih.assert_list_argument
-    def transistor_list(self,value):
-        self.__transistor_list= value
-
-    @property
-    def use_set_vds_range(self):
-        return self.__use_set_vds_range
-
-    @use_set_vds_range.setter
-    @uih.assert_boolean_argument
-    def use_set_vds_range(self,value):
-        self.__use_set_vds_range= value
- 
-    @property
-    def use_set_vfg_range(self):
-        return self.__use_set_vfg_range
-
-    @use_set_vfg_range.setter
-    @uih.assert_boolean_argument
-    def use_set_vfg_range(self,value):
-        self.__use_set_vfg_range= value
-
-class HardwareSettings():
-    def __init__(self):
-        self._fans_controller_resource = None
-        self._sample_motor_channel = None
-        self._sample_relay_channel = None
-        self._gate_motor_channel = None
-        self._gate_relay_channel = None
-        self._acquisition_channel = None
-        self._sample_feedback = None
-        self._gate_feedback = None
-        self._main_feedback = None
-
-    @property
-    def fans_controller_resource(self):
-        return self._fans_controller_resource
-
-    @fans_controller_resource.setter
-    def fans_controller_resource(self, value):
-        assert isinstance(value, str), "unexpected data type"
-        self._fans_controller_resource = value
-
-    @property
-    def sample_motor_channel(self):
-        return self._sample_motor_channel
-    
-    @sample_motor_channel.setter
-    def sample_motor_channel(self, value):
-        assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
-        self._sample_motor_channel = value
-
-    @property
-    def sample_relay_channel(self):
-        return self._sample_relay_channel
-
-    @sample_relay_channel.setter
-    def sample_relay_channel(self,value):
-        assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
-        self._sample_relay_channel = value
-
-    @property
-    def gate_motor_channel(self):
-        return self._gate_motor_channel
-    
-    @gate_motor_channel.setter
-    def gate_motor_channel(self, value):
-        assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
-        self._gate_motor_channel = value
-
-    @property
-    def gate_relay_channel(self):
-        return self._gate_relay_channel
-
-    @gate_relay_channel.setter
-    def gate_relay_channel(self, value):
-        assert isinstance(value, mfc.FANS_AO_CHANNELS), "unexpected data type"
-        self._gate_relay_channel = value
-
-    @property
-    def acquisition_channel(self):
-        return self._acquisition_channel
-
-    @acquisition_channel.setter
-    def acquisition_channel(self,value):
-        assert isinstance(value, mfc.FANS_AI_CHANNELS)
-        self._acquisition_channel = value
-
-    @property
-    def sample_feedback_channel(self):
-        return self._sample_feedback
-
-    @sample_feedback_channel.setter
-    def sample_feedback_channel(self,value):
-        assert isinstance(value, mfc.FANS_AI_CHANNELS)
-        self._sample_feedback = value
-
-    @property
-    def gate_feedback_channel(self):
-        return self._gate_feedback
-
-    @gate_feedback_channel.setter
-    def gate_feedback_channel(self,value):
-        assert isinstance(value, mfc.FANS_AI_CHANNELS)
-        self._gate_feedback = value
-       
-    @property
-    def main_feedback_channel(self):
-        return self._main_feedback
-
-    @main_feedback_channel.setter
-    def main_feedback_channel(self,value):
-        assert isinstance(value, mfc.FANS_AI_CHANNELS)
-        self._main_feedback = value
 
 
 def test_ui():

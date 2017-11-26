@@ -67,8 +67,9 @@ def setAllChildObjectSignaling(parentObj, Signaling):
     assert isinstance(parentObj, QtCore.QObject)
     assert isinstance(Signaling, bool)
     for child in parentObj.children():
-        print(child.objectName())
-        print(child.blockSignals(Signaling))
+        #print(child.objectName())
+        res = child.blockSignals(Signaling)
+        #print(res)
 
 def bind(objectName, propertyName, value_type):#, set_value_type):
     def getter(self):
