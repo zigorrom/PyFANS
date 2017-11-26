@@ -338,7 +338,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.ui_drain_source_voltage.setToolTip("Vds = {0} V".format(self.drain_source_voltage))
         val = self.drain_source_voltage
         self.experiment_settings.drain_source_voltage = val
-        self.drain_source_voltage = val
+        #self.drain_source_voltage = val
         
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vds_range_stateChanged(self, value):
@@ -365,7 +365,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.ui_front_gate_voltage.setToolTip("Vgs = {0} V".format(self.front_gate_voltage))
         val = self.front_gate_voltage
         self.experiment_settings.front_gate_voltage = val
-        self.front_gate_voltage = val
+        #self.front_gate_voltage = val
     
     @QtCore.pyqtSlot(int)
     def on_ui_use_set_vfg_range_stateChanged(self, value):

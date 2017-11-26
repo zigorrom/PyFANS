@@ -40,26 +40,35 @@ class RangeSelectorView(rangeSelectorBase,rangeSelectorForm):
             self.counts = self._value_range.length
             uih.setAllChildObjectSignaling(self, False)
 
+    def refresh_step_count(self):
+        if self._value_range:
+            uih.setAllChildObjectSignaling(self, True)
+            self.voltage_step = self._value_range.step
+            self.counts = self._value_range.length
+            uih.setAllChildObjectSignaling(self, False)
 
     @QtCore.pyqtSlot(str)
     def on_ui_start_val_textChanged(self, value):
         if self._value_range:
             val = self.voltage_start
             self._value_range.start = val 
-            self.refresh_view()
+            #self.refresh_view()
+            self.refresh_step_count()
 
     @QtCore.pyqtSlot(str)
     def on_ui_stop_val_textChanged(self, value):
         if self._value_range:
             self._value_range.stop = self.voltage_stop
-            self.refresh_view()
+            #self.refresh_view()
+            self.refresh_step_count()
 
     @QtCore.pyqtSlot(str)
     def on_ui_count_valueChanged(self, value):
         if self._value_range:
             self._value_range.length = self.counts
             self.voltage_step = self._value_range.step
-            self.refresh_view()
+            #self.refresh_view()
+            self.refresh_step_count()
 
 if __name__ == "__main__":
     app = QtGui.QApplication([])
