@@ -19,6 +19,7 @@ import range_editor as redit
 
 from fans_experiment_settings import ExperimentSettings
 from fans_hardware_settings import HardwareSettingsView, HardwareSettings
+
 import modern_fans_experiment as mfexp
 import process_communication_protocol as pcp
 from measurement_data_structures import MeasurementInfo
@@ -73,6 +74,10 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.ui_front_gate_voltage.setValidator(uih.QVoltageValidator())
         self.__setup_folder_browse_button()
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
+        self.progressBar = QtGui.QProgressBar(self)
+        self.progressBar.setVisible(True)
+        self.statusbar.addPermanentWidget(self.progressBar)
+
 
     @property
     def controller(self):
@@ -266,9 +271,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         print("settings vds range")
         rng = self.experiment_settings.vds_range
         if rng:
-            rng = rng.copy_range() #
+            rng = rng.copy_object() #
         else:
-            rng = rh.float_range(0,1,1)
+            rng =  rh.RangeObject.empty_object()
 
         dialog = redit.RangeSelectorView()
         dialog.set_range(rng)
@@ -293,9 +298,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         print("settings vfg range")
         rng = self.experiment_settings.vfg_range
         if rng:
-            rng = rng.copy_range() #
+            rng = rng.copy_object() #
         else:
-            rng = rh.float_range(0,1,1)
+            rng = rh.RangeObject.empty_object()
 
         dialog = redit.RangeSelectorView()
         dialog.set_range(rng)
@@ -340,17 +345,33 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_set_experiment_stopped(self):
         pass
 
-    def ui_show_message_in_status_bar(self, message,  timeout=-1):
-        pass
+    def ui_show_message_in_status_bar(self, message = "",  timeout=0):
+        self.statusbar.showMessage(message, timeout)
 
     def ui_show_message_in_popup_window(self, message):
-        pass
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Information)
+        msg.setText(message)
+        #msg.setInformativeText("This is additional information")
+        msg.setWindowTitle("MessageBox demo")
+        msg.setDetailedText(message)
+        msg.setStandardButtons(QtGui.QMessageBox.Ok)
+        retval = msg.exec_()
+
 
     def ui_set_measurement_info_start(self, measurement_info):
-        pass
-
+        if isinstance(measurement_info, MeasurementInfo):
+            self.front_gate_voltage_start = measurement_info.start_gate_voltage
+            self.sample_voltage_start = measurement_info.start_sample_voltage
+            self.sample_current_start = measurement_info.sample_current_start
+            self.sample_resistance_start = measurement_info.sample_resistance_start
+            
     def ui_set_measurement_info_end(self, measurement_info):
-        pass
+        if isinstance(measurement_info, MeasurementInfo):
+            self.front_gate_voltage_end= measurement_info.end_gate_voltage
+            self.sample_voltage_end = measurement_info.end_sample_voltage
+            self.sample_current_end = measurement_info.sample_current_end
+            self.sample_resistance_end = measurement_info.sample_resistance_end
 
     def ui_set_measurement_count(self, measurement_count):
         self.measurementCount = measurement_count
@@ -487,7 +508,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer.setInterval(50)
         self.ui_refresh_timer.timeout.connect(self.update_ui)
 
-        self.initialize_experiment()
+        #self.initialize_experiment()
 
     def load_settings(self):
         self.load_settings_from_file()
@@ -495,6 +516,8 @@ class FANS_UI_Controller(QtCore.QObject):
         
     def start_experiment(self):
         print("start experiment")
+        self.copy_main_view_settings_to_settings_object()
+        self.initialize_experiment()
         self.ui_refresh_timer.start()
         self.experiment_thread.start()
         self.processing_thread.start()
@@ -513,18 +536,47 @@ class FANS_UI_Controller(QtCore.QObject):
         
         #self.save_settings_to_file()
 
+    def copy_main_view_settings_to_settings_object(self):
+        assert isinstance(self.main_view, FANS_UI_MainView)
+        mv = self.main_view
+        self.experiment_settings.calibrate_before_measurement = mv.calibrate_before_measurement
+        self.experiment_settings.overload_rejecion = mv.overload_reject
+        self.experiment_settings.simulate_experiment = mv.simulate_measurement
+        self.experiment_settings.averages = mv.number_of_averages
+        self.experiment_settings.use_homemade_amplifier = mv.use_homemade_amplifier
+        self.experiment_settings.second_amp_coeff = mv.second_amplifier_gain
+        self.experiment_settings.need_measure_temperature = mv.perform_temperature_measurement
+        self.experiment_settings.current_temperature = mv.current_temperature
+        self.experiment_settings.load_resistance = mv.load_resistance
+        self.experiment_settings.meas_gated_structure = mv.perform_measurement_of_gated_structure
+        self.experiment_settings.use_transistor_selector = mv.use_dut_selector
+        self.experiment_settings.use_automated_voltage_control = mv.use_automated_voltage_control
+        self.experiment_settings.meas_characteristic_type = mv.measurement_characteristic_type
+        self.experiment_settings.drain_source_voltage = mv.drain_source_voltage
+        self.experiment_settings.front_gate_voltage = mv.front_gate_voltage
+        self.experiment_settings.use_set_vds_range = mv.use_drain_source_range
+        self.experiment_settings.use_set_vfg_range = mv.use_gate_source_range
+        self.experiment_settings.experiment_name = mv.experimentName
+        self.experiment_settings.measurement_name = mv.measurementName
+        self.experiment_settings.measurement_count = mv.measurementCount
+        
+    
+
     def show_main_view(self):
         assert isinstance(self.main_view, FANS_UI_MainView)
         self.main_view.show()
 
     def on_main_view_closing(self):
         print("closing main view")
+        self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
 
     def show_hardware_settings_view(self):
         dialog = HardwareSettingsView()
         dialog.set_hardware_settings(self.hardware_settings)
         result = dialog.exec_()
+        if result:
+            dialog.copy_settings_to_object()
         print(result)
     
     def save_settings_to_file(self):
@@ -557,7 +609,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.commandReceived.connect(self.on_command_received)
         self.processing_thread.progressChanged.connect(self.on_progress_changed)
 
-        self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
+        self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
 
 

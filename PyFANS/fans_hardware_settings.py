@@ -80,6 +80,21 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
         self.hardware_settings = hardware_settings
         self.refresh_view()
     
+    def copy_settings_to_object(self):
+        assert isinstance(self.hardware_settings, HardwareSettings)
+        self.hardware_settings.fans_controller_resource = self.fans_controller_resource
+        self.hardware_settings.sample_motor_channel = self.fans_sample_motor_channel
+        self.hardware_settings.sample_relay_channel = self.fans_sample_relay_channel
+        self.hardware_settings.gate_motor_channel = self.fans_gate_motor_channel
+        self.hardware_settings.gate_relay_channel = self.fans_gate_relay_channel
+
+        self.hardware_settings.acquisition_channel = self.fans_acquisition_channel
+        self.hardware_settings.sample_feedback_channel = self.fans_sample_feedback_channel
+        self.hardware_settings.gate_feedback_channel = self.fans_gate_feedback_channel
+        self.hardware_settings.main_feedback_channel = self.fans_main_feedback_channel
+
+
+
     def refresh_view(self):
         if self.hardware_settings:
             uih.setAllChildObjectSignaling(self,True)
@@ -187,3 +202,6 @@ class HardwareSettings():
     def main_feedback_channel(self,value):
         assert isinstance(value, mfc.FANS_AI_CHANNELS)
         self._main_feedback = value
+
+if __name__ == "__main__":
+    print("test")

@@ -150,6 +150,16 @@ def get_pga_value(pga_gain, cs_hold):
     return (cs_hold.value << 2) | pga_gain.value
     
 
+def get_fans_ai_channels_from_number(number):
+    assert isinstance(number, int), "Number should be integer"
+    assert (number>0 and number<9),"Wrong channel number!"
+    return FANS_AI_CHANNELS(number)
+
+def get_fans_ao_channels_from_number(number):
+    assert isinstance(number, int), "Number should be integer"
+    assert (number>0 and number<17),"Wrong channel number!"
+    return FANS_AO_CHANNELS(number)
+
 
 class FANS_AI_CHANNEL:
     def __init__(self, daq_input, parent_device, **kwargs):

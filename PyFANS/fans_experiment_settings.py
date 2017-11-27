@@ -39,7 +39,8 @@ class ExperimentSettings():
 
     @vds_range.setter
     def vds_range(self,value):
-        assert isinstance(value, rh.float_range)
+        assert isinstance(value, rh.RangeObject)
+        #assert isinstance(value, rh.float_range)
         self.__vds_range = value
 
     @property
@@ -48,7 +49,8 @@ class ExperimentSettings():
 
     @vfg_range.setter
     def vfg_range(self,value):
-        assert isinstance(value, rh.float_range)
+        assert isinstance(value, rh.RangeObject)
+        #assert isinstance(value, rh.float_range)
         self.__vfg_range = value
     
     #@property
@@ -287,3 +289,6 @@ class ExperimentSettings():
     @uih.assert_boolean_argument
     def use_set_vfg_range(self,value):
         self.__use_set_vfg_range= value
+
+if __name__ == "__main__":
+    pass

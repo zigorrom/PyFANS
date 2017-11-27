@@ -2,7 +2,7 @@ import pint
 from pint import UnitRegistry
 from PyQt4 import QtGui, QtCore
 import modern_fans_controller as mfc
-import modern_fans_experiment as mfexp
+
 
 def __assert_isinstance_wrapper(function, t):
     def wrapper(self,value):
@@ -49,11 +49,11 @@ def get_value_of_module_type(value, module_type):
 
 def string_index_to_ai_channel_converter(index):
     int_index = int(index)
-    return mfexp.get_fans_ai_channels_from_number(int_index)
+    return mfc.get_fans_ai_channels_from_number(int_index)
 
 def string_index_to_ao_channel_converter(index):
     int_index = int(index)
-    return mfexp.get_fans_ao_channels_from_number(int_index)
+    return mfc.get_fans_ao_channels_from_number(int_index)
 
 def fans_channel_to_string(channel):
     #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
@@ -74,7 +74,12 @@ def setAllChildObjectSignaling(parentObj, Signaling):
 def bind(objectName, propertyName, value_type):#, set_value_type):
     def getter(self):
         prop_val = self.findChild(QtCore.QObject, objectName).property(propertyName)
-        value =value_type(prop_val) 
+        value = None
+        if prop_val:
+            value =value_type(prop_val) 
+        else:
+            value = value_type()
+
         return value
 
     def setter(self,value):
@@ -101,7 +106,7 @@ def convert_value_to_volts(ureg, value):
     except Exception as e:
           print("error while handling value")
           print(str(e))
-          return None
+          return 0.0
 
 def string_to_volt_converter(ureg):
     def wrapper(value):

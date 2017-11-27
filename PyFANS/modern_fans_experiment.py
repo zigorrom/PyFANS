@@ -5,11 +5,11 @@ import math
 import numpy as np
 import calibration as calib
 import modern_fans_controller as mfans
-import modern_agilent_u2542a as mdaq
+#import modern_agilent_u2542a as mdaq
 import modern_fans_smu as msmu
 import temperature_controller as tc
 
-from configuration import Configuration
+
 from multiprocessing import Process, Event
 from scipy.signal import periodogram
 from scipy.signal import decimate
@@ -17,26 +17,25 @@ from scipy.signal import decimate
 from fans_hardware_settings import HardwareSettings
 from fans_experiment_settings import ExperimentSettings
 
-#from nodes import ExperimentSettings, ValueRange, HardwareSettings
 import modern_fans_experiment_writer as mfew
+import pickle
+import process_communication_protocol as pcp
+import experiment_writer as ew
+#def get_fans_ai_channels_from_number(number):
+#    assert isinstance(number, int), "Number should be integer"
+#    assert (number>0 and number<9),"Wrong channel number!"
+#    return mfans.FANS_AI_CHANNELS(number)
 
-
-
-def get_fans_ai_channels_from_number(number):
-    assert isinstance(number, int), "Number should be integer"
-    assert (number>0 and number<9),"Wrong channel number!"
-    return mfans.FANS_AI_CHANNELS(number)
-
-def get_fans_ao_channels_from_number(number):
-    assert isinstance(number, int), "Number should be integer"
-    assert (number>0 and number<17),"Wrong channel number!"
-    return mfans.FANS_AO_CHANNELS(number)
+#def get_fans_ao_channels_from_number(number):
+#    assert isinstance(number, int), "Number should be integer"
+#    assert (number>0 and number<17),"Wrong channel number!"
+#    return mfans.FANS_AO_CHANNELS(number)
 
 
 
 class Experiment:
     def __init__(self, simulate = False, input_data_queue = None, stop_event = None):
-        self.__config = None
+        #self.__config = None
         self.__exp_settings = None
         self.__hardware_settings = None
         self._simulate = simulate
@@ -67,9 +66,9 @@ class Experiment:
     def calibration(self):
         return self._calibration
 
-    @property
-    def configuration(self):
-        return self.__config
+    #@property
+    #def configuration(self):
+    #    return self.__config
 
     @property
     def experiment_settings(self):
@@ -135,38 +134,40 @@ class Experiment:
             raise StopExperiment("Experiment stop was raised")
 
     def get_meas_ranges(self):
-        fg_range = self.__config.get_node_from_path("front_gate_range")
-        if self.__exp_settings.use_set_vfg_range:
-            assert isinstance(fg_range, ns.ValueRange)
-        ds_range = self.__config.get_node_from_path("drain_source_range")
-        if self.__exp_settings.use_set_vds_range:
-            assert isinstance(fg_range, ns.ValueRange)
-        return ds_range, fg_range
+        fg_range = self.experiment_settings.vfg_range
+        ds_range = self.experiment_settings.vds_range
+        #fg_range = self.__config.get_node_from_path("front_gate_range")
+        #if self.__exp_settings.use_set_vfg_range:
+        #    assert isinstance(fg_range, ns.ValueRange)
+        #ds_range = self.__config.get_node_from_path("drain_source_range")
+        #if self.__exp_settings.use_set_vds_range:
+        #    assert isinstance(fg_range, ns.ValueRange)
+        return (ds_range, fg_range)
 
     def output_curve_measurement_function(self):
         try:
             ds_range, fg_range = self.get_meas_ranges()
         
-            if (not self.__exp_settings.use_set_vfg_range) and (not self.__exp_settings.use_set_vds_range) and not self.need_exit:
+            if (not self.__exp_settings.use_set_vfg_range) and (not self.__exp_settings.use_set_vds_range) and (not self.need_exit):
                 self.single_value_measurement(self.__exp_settings.drain_source_voltage,self.__exp_settings.front_gate_voltage)
 
-            elif self.__exp_settings.use_set_vds_range and self.__exp_settings.use_set_vfg_range and not self.need_exit:
-                for vfg in fg_range.get_range_handler():
+            elif self.__exp_settings.use_set_vds_range and self.__exp_settings.use_set_vfg_range and (not self.need_exit):
+                for vfg in fg_range: #fg_range.get_range_handler():
                     if self.need_exit:
                         return
-                    for vds in ds_range.get_range_handler():
+                    for vds in ds_range:  #.get_range_handler():
                         if self.need_exit:
                             return
                         self.single_value_measurement(vds, vfg)
            
             elif not self.__exp_settings.use_set_vfg_range:
-                for vds in ds_range.get_range_handler():
+                for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(vds, self.__exp_settings.front_gate_voltage)
                     
             elif not self.__exp_settings.use_set_vds_range:
-                for vfg in fg_range.get_range_handler():
+                for vfg in fg_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
@@ -185,22 +186,22 @@ class Experiment:
                  self.single_value_measurement(self.__exp_settings.drain_source_voltage,self.__exp_settings.front_gate_voltage)
 
             elif self.__exp_settings.use_set_vds_range and self.__exp_settings.use_set_vfg_range:
-                for vds in ds_range.get_range_handler():
+                for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
-                    for vfg in fg_range.get_range_handler():
+                    for vfg in fg_range: #.get_range_handler():
                         if self.need_exit:
                             return
                         self.single_value_measurement(vds, vfg)
            
             elif not self.__exp_settings.use_set_vfg_range:
-                for vds in ds_range.get_range_handler():
+                for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(vds, self.__exp_settings.front_gate_voltage)
                     
             elif not self.__exp_settings.use_set_vds_range:
-                 for vfg in fg_range.get_range_handler():
+                 for vfg in fg_range: #.get_range_handler():
                      if self.need_exit:
                         return
                      self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
@@ -556,15 +557,15 @@ class FANSExperiment(Experiment):
         resource = self.hardware_settings.fans_controller_resource
         self.fans_controller = mfans.FANS_CONTROLLER(resource)
 
-        sample_motor_pin = get_fans_ao_channels_from_number(self.hardware_settings.sample_motor_channel)
-        gate_motor_pin = get_fans_ao_channels_from_number(self.hardware_settings.gate_motor_channel)
-        sample_relay = get_fans_ao_channels_from_number(self.hardware_settings.sample_relay_channel)
-        gate_relay = get_fans_ao_channels_from_number(self.hardware_settings.gate_relay_channel)
+        sample_motor_pin = self.hardware_settings.sample_motor_channel #get_fans_ao_channels_from_number(self.hardware_settings.sample_motor_channel)
+        gate_motor_pin = self.hardware_settings.gate_motor_channel #get_fans_ao_channels_from_number(self.hardware_settings.gate_motor_channel)
+        sample_relay = self.hardware_settings.sample_relay_channel #get_fans_ao_channels_from_number(self.hardware_settings.sample_relay_channel)
+        gate_relay = self.hardware_settings.gate_relay_channel #get_fans_ao_channels_from_number(self.hardware_settings.gate_relay_channel)
 
-        sample_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_6
-        gate_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_8
-        main_feedback_pin = mfans.FANS_AI_CHANNELS.AI_CH_7
-        self.acquistion_channel = mfans.FANS_AI_CHANNELS.AI_CH_1 ### here should be 1
+        sample_feedback_pin = self.hardware_settings.sample_feedback_channel  #mfans.FANS_AI_CHANNELS.AI_CH_6
+        gate_feedback_pin = self.hardware_settings.gate_feedback_channel #mfans.FANS_AI_CHANNELS.AI_CH_8
+        main_feedback_pin = self.hardware_settings.main_feedback_channel #mfans.FANS_AI_CHANNELS.AI_CH_7
+        self.acquistion_channel = self.hardware_settings.acquisition_channel #mfans.FANS_AI_CHANNELS.AI_CH_1 ### here should be 1
 
         drain_source_voltage_switch_channel = mfans.FANS_AO_CHANNELS.AO_CH_10
 
@@ -732,8 +733,6 @@ class LoggingQueuedStream:
     def flush(self):
         pass
 
-
-
 class ExperimentHandler(Process):
     def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None):
         super().__init__()
@@ -767,7 +766,7 @@ class ExperimentHandler(Process):
             assert isinstance(experiment, Experiment), "Experiment is not inherited from Experiment type"
             self._experiment = experiment #mfe.FANSExperiment(self._input_data_queue, self._exit)
         
-        self._experiment.initialize_settings(cfg)
+        self._experiment.initialize_settings(self._experiment_settings, self._hardware_settings)
         self._experiment.initialize_hardware()
         self._experiment.initialize_calibration()
         self._experiment.perform_experiment()
@@ -776,16 +775,28 @@ class ExperimentHandler(Process):
         raise NotImplementedError()
 
 class FANSExperimentHandler(ExperimentHandler):
-    def __init__(self, input_data_queue = None):
-        super().__init__(input_data_queue)
+    def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None ):
+        super().__init__(input_data_queue, experiment_settings, hardware_settings)
         
     def get_experiment(self):
         return FANSExperiment(self._input_data_queue, self._exit)
 
+__settings_filename__ = "settings.cfg"
+def load_settings_from_file():
+        if not os.path.isfile(__settings_filename__):
+            print("creating new settings")
+            experiment_settings = ExperimentSettings()
+            hardware_settings = HardwareSettings()
+            return (experiment_settings, hardware_settings)
+        else:
+            print("loading settings from file")
+            with open(__settings_filename__,"rb") as f:
+                settings = pickle.load(f)
+                return settings
 
 
 if __name__ == "__main__":
-
-    cfg = Configuration()
-    handl = FANSExperimentHandler(None)
+    settings = load_settings_from_file()
+    
+    handl = FANSExperimentHandler(None, settings[0], settings[1])
     handl.run()

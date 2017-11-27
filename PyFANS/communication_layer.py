@@ -98,3 +98,7 @@ class VisaInstrument:
 
     def read_raw(self):
         return self.__instrument.read_raw()
+
+
+if __name__ == "__main__":
+    pass

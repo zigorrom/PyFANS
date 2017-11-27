@@ -11,7 +11,73 @@ class RANGE_HANDLERS(IntEnum):
    ZERO_START_RANGE_HANDLER = 2
    ZERO_START_BACK_FORTH = 3
 
+def index_to_range_handler_converter(index):
+    return RANGE_HANDLERS(index)
 
+class RangeObject:
+    def __init__(self, rng = None):
+        self._float_range = None
+        self.floatRange = rng
+        self._range_handler = RANGE_HANDLERS.NORMAL_RANGE_HANDLER
+        self._repeats = 1
+
+    @property
+    def floatRange(self):
+        return self._float_range
+
+    @floatRange.setter
+    def floatRange(self,value):
+        assert isinstance(value, (float_range, type(None)))
+        self._float_range = value
+
+    @property
+    def rangeHandler(self):
+        return self._range_handler
+    
+    @rangeHandler.setter
+    def rangeHandler(self, value):
+        assert isinstance(value, RANGE_HANDLERS)
+        self._range_handler = value
+
+    @property
+    def rangeRepeats(self):
+        return self._repeats
+
+    @rangeRepeats.setter
+    def rangeRepeats(self,value):
+        assert isinstance(value, int)
+        assert value > 0
+        self._repeats = value
+
+    def copy_object(self):
+        rng = None
+        if self.floatRange:
+            rng = self.floatRange.copy_range()
+        ro = RangeObject(rng)
+        ro.rangeHandler = self.rangeHandler
+        ro.rangeRepeats = self.rangeRepeats
+        return ro
+
+    @staticmethod
+    def empty_object():
+        rng = float_range(0,1)
+        ro = RangeObject(rng)
+        return ro
+
+    def __iter__(self):
+        rng = self.floatRange
+        if not rng:
+            return None
+        if self.rangeHandler == RANGE_HANDLERS.NORMAL_RANGE_HANDLER:
+            return normal_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+        elif self.rangeHandler == RANGE_HANDLERS.BACK_FORTH_RANGE_HANDLER:
+            return back_forth_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+        elif self.rangeHandler == RANGE_HANDLERS.ZERO_START_RANGE_HANDLER:
+            return zero_start_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+        elif self.rangeHandler == RANGE_HANDLERS.ZERO_START_BACK_FORTH:
+            return zero_start_back_forth(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+    
+    
 
 class float_range:
     def __init__(self, start, stop, step = 1, length = -1):
@@ -220,8 +286,14 @@ class zero_start_back_forth(range_handler):
 
 
 if __name__ == "__main__":
-    nr = normal_range_handler(-2,2,step = 0.1)
-    for i in nr:
+    ro = RangeObject(None)
+    ro.floatRange = float_range(0,1,length = 11)
+    ro.rangeRepeats = 2
+    ro.rangeHandler = RANGE_HANDLERS.BACK_FORTH_RANGE_HANDLER
+    for i in ro:
         print(i)
+    #nr = normal_range_handler(-2,2,step = 0.1)
+    #for i in nr:
+    #    print(i)
 
-    pass
+    #pass
