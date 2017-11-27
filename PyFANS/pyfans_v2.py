@@ -20,8 +20,8 @@ import range_editor as redit
 from fans_experiment_settings import ExperimentSettings
 from fans_hardware_settings import HardwareSettingsView, HardwareSettings
 import modern_fans_experiment as mfexp
-import experiment_handler as eh
-
+import process_communication_protocol as pcp
+from measurement_data_structures import MeasurementInfo
 
 mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -340,7 +340,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_set_experiment_stopped(self):
         pass
 
-    def ui_show_message_in_status_bar(self, message,  timeout):
+    def ui_show_message_in_status_bar(self, message,  timeout=-1):
         pass
 
     def ui_show_message_in_popup_window(self, message):
@@ -359,10 +359,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.measurementCount += 1
 
     def ui_update_spectrum_data(self, rang, data):
-        pass
+        self._spectrumPlotWidget.update_spectrum(rang, data)
 
     def ui_update_resulting_spectrum_data(self, data):
-        pass
+        frequency = data[pcp.FREQUENCIES]
+        spectrum_data = data[pcp.DATA]
+        self._spectrumPlotWidget.updata_resulting_spectrum(frequency,spectrum_data)
 
     def ui_update_calculated_thermal_noise(self, data):
         pass
@@ -370,6 +372,100 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def ui_update_timetrace(self, data):
         pass
 
+    def ui_update_progress(self, progress):
+        pass
+
+class ProcessingThread(QtCore.QThread):
+    
+    threadStarted = QtCore.pyqtSignal()
+    threadStopped = QtCore.pyqtSignal()
+    commandReceived = QtCore.pyqtSignal(pcp.ExperimentCommands) #int)
+    experimentStarted = QtCore.pyqtSignal(dict)
+    experimentFinished = QtCore.pyqtSignal()
+    measurementStarted = QtCore.pyqtSignal(dict)
+    measurementFinished = QtCore.pyqtSignal()
+    measurementDataArrived = QtCore.pyqtSignal(MeasurementInfo)
+    startMeasurementDataArrived = QtCore.pyqtSignal(MeasurementInfo)
+    endMeasurementDataArrived = QtCore.pyqtSignal(MeasurementInfo)
+    resulting_spectrum_update = QtCore.pyqtSignal(dict)
+    log_message_received = QtCore.pyqtSignal(str)
+    progressChanged = QtCore.pyqtSignal(int)
+
+    def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
+        super().__init__(parent)
+        self.alive = False
+        assert isinstance(visualization_queue, deque)
+        self._visualization_queue = visualization_queue
+        #assert isinstance(input_data_queue, JoinableQueue)
+        self._input_data_queue = input_data_queue
+
+    def stop(self):
+        self.alive = False
+        self.wait()
+
+    def run(self):
+        self.alive = True
+        #while self.alive
+        while self.alive or (not self._input_data_queue.empty()):
+            try:
+                data = self._input_data_queue.get(timeout = 1)
+                self._input_data_queue.task_done()
+                cmd_format = "{0} command received"
+                cmd = data.get(pcp.COMMAND)
+                param = data.get(pcp.PARAMETER)
+                
+                #print(cmd_format.format(ExperimentCommands[cmd]))
+                if cmd is None:
+                    continue
+                elif cmd is pcp.ExperimentCommands.EXPERIMENT_STARTED:
+                    self.commandReceived.emit(pcp.ExperimentCommands.EXPERIMENT_STARTED)
+                    self.experimentStarted.emit(param)
+                    continue
+
+                elif cmd is pcp.ExperimentCommands.EXPERIMENT_FINISHED:
+                    self.alive = False
+                    self.commandReceived.emit(pcp.ExperimentCommands.EXPERIMENT_FINISHED)
+                    self.experimentFinished.emit()
+                    break
+
+                elif cmd is pcp.ExperimentCommands.MEASUREMENT_STARTED:
+                    self.commandReceived.emit(pcp.ExperimentCommands.MEASUREMENT_STARTED)
+                    self.measurementStarted.emit(param)
+                    continue
+
+                elif cmd is pcp.ExperimentCommands.MEASUREMENT_FINISHED:
+                    self.commandReceived.emit(pcp.ExperimentCommands.MEASUREMENT_FINISHED)
+                    self.measurementFinished.emit()
+                    continue
+
+                elif cmd is pcp.ExperimentCommands.MEASUREMENT_INFO:
+                    self.measurementDataArrived.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.MEASUREMENT_INFO_START:
+                    self.startMeasurementDataArrived.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.MEASUREMENT_INFO_END:
+                    self.endMeasurementDataArrived.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.DATA:
+                    self._visualization_queue.append(data)   
+                     
+                elif cmd is pcp.ExperimentCommands.SPECTRUM_DATA:
+                    self.resulting_spectrum_update.emit(data)
+                
+                elif cmd is pcp.ExperimentCommands.LOG_MESSAGE:
+                    self.log_message_received.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.PROGRESS_CHANGED:
+                    self.progressChanged.emit(param)
+
+            except EOFError as e:
+                print(str(e))
+                break
+            except:
+                pass
+
+        self.alive = False
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -410,7 +506,7 @@ class FANS_UI_Controller(QtCore.QObject):
     def stop_experiment(self):
         print("stop experiment")
         self.experiment_stop_event.set()
-        self.experiment_thread.stop()
+        #self.experiment_thread.stop()
         self.processing_thread.stop()
         self.ui_refresh_timer.stop()
         self.experiment_thread.join()
@@ -449,7 +545,7 @@ class FANS_UI_Controller(QtCore.QObject):
                 self.hardware_settings = hardware_settings
    
     def initialize_experiment(self):
-        self.processing_thread = eh.ProcessingThread(self.input_data_queue, self.visualization_deque)
+        self.processing_thread = ProcessingThread(self.input_data_queue, self.visualization_deque)
         self.processing_thread.experimentStarted.connect(self.on_experiment_started)
         self.processing_thread.experimentFinished.connect(self.on_experiment_finished)
         self.processing_thread.measurementStarted.connect(self.on_measurement_started)
@@ -475,32 +571,53 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         self.stop_experiment()
 
-    def on_measurement_started(self):
-        pass
+    def on_measurement_started(self, params):
+        measurement_name = params.get("measurement_name")
+        measurement_count = params.get("measurement_count")
+        msg = "Measurement \"{0}:{1}\" started".format(measurement_name, measurement_count)
+        print(msg)
+        self.main_view.ui_show_message_in_status_bar(msg, 1000)
+        #self.main_view.ui_set_measurement_count(measurement_count+1)
 
     def on_measurement_finished(self):
-        pass
+        self.main_view.ui_increment_measurement_count()
 
-    def on_start_measurement_info_received(self):
-        pass
+    def on_start_measurement_info_received(self, measurement_info):
+        self.main_view.ui_set_measurement_info_start(measurement_info)
 
-    def on_end_measurement_info_received(self):
-        pass
+    def on_end_measurement_info_received(self,measurement_info):
+        self.main_view.ui_set_measurement_info_end(measurement_info)
 
     def on_resulting_spectrum_received(self,data):
-        pass
+        self.main_view.ui_update_resulting_spectrum_data(data)
 
     def on_progress_changed(self, progress):
-        pass
+        self.main_view.ui_update_progress(progress)
 
-    def on_log_message_received(self):
-        pass
+    def on_log_message_received(self, message):
+        if message:
+            print("received log message")
+            print(message)
+            self.main_view.ui_show_message_in_status_bar(message, 100)#._status_object.send_message(message)
 
-    def on_command_received(self):
-        pass
+    def on_command_received(self, cmd):
+        if isinstance(cmd, pcp.ExperimentCommands):
+            self.main_view.ui_show_message_in_status_bar(cmd.name)
 
     def update_ui(self):
-        pass
+        try:
+            print("updating gui")
+            data = self.visualization_deque.popleft()
+            cmd_format = "{0} command received"
+            cmd = data.get(pcp.COMMAND)
+            
+            if cmd is pcp.ExperimentCommands.DATA:
+                index = data[pcp.INDEX]
+                rang = data[pcp.SPECTRUM_RANGE]
+                #print("visualized data index: {0}".format(index))
+                self.main_view.ui_update_spectrum_data(rang ,data)
+        except Exception as e:
+            pass
 
 
 def test_ui():

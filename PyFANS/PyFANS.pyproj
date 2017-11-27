@@ -30,10 +30,6 @@
     <Compile Include="calibration.py" />
     <Compile Include="communication_layer.py" />
     <Compile Include="configuration.py" />
-    <Compile Include="experiment.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="experiment_handler.py" />
     <Compile Include="experiment_writer.py" />
     <Compile Include="fans_experiment_settings.py">
       <SubType>Code</SubType>
