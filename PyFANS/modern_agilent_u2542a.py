@@ -401,6 +401,9 @@ class AgilentU2542A_DSP(VisaInstrument):
         value = self.query("MEAS? (@{0})".format(channel))
         return float(value)
 
+    #create here method that returns multichannel analog reader object
+    #which is not conducting all checkups on every call
+
     def analog_measure_channels(self, channels):
         assert all((check_analog_in_channel_exists(channel) for channel in channels)), "At least one of channels is not existing"
         str_result = self.query("MEAS? (@{0})".format(join_channels(channels)))
