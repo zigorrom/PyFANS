@@ -371,9 +371,10 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         pass
 
 
-class FANS_UI_Controller():
+class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
     def __init__(self, view):
+        super().__init__()
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
         self.main_view.set_controller(self)
