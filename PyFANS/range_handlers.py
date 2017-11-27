@@ -214,7 +214,7 @@ class range_handler():
         return self
 
 class normal_range_handler(range_handler):
-    def __init__(self,start,stop,step=1,len=-1,repeats = 1):
+    def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
         super().__init__(float_range(start,stop,step,len),repeats,6)
         self.__current_value = start
         self.__current_round = 0
@@ -233,7 +233,7 @@ class normal_range_handler(range_handler):
         return value
 
 class back_forth_range_handler(range_handler):
-    def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
+    def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
         super().__init__(float_range(start,stop,step,len), repeats, 6) 
         self.__current_value = start
         self.__current_round = 0
@@ -269,8 +269,9 @@ class back_forth_range_handler(range_handler):
         return value
 
 class zero_start_range_handler(range_handler):
-    def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
-        if start * stop >= 0:
+    def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
+        assert isinstance(rng, float_range)
+        if rng.start * rng.stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
         super().__init__(float_range(start,stop,step,len), repeats, 6)
 
@@ -279,8 +280,9 @@ class zero_start_range_handler(range_handler):
         pass
 
 class zero_start_back_forth(range_handler):
-    def __init__(self, start, stop, step= 1, len=-1, repeats = 1):
-        if start * stop >= 0:
+    def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
+        assert isinstance(rng, float_range)
+        if rng.start * rng.stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
         return super().__init__(float_range(start,stop,step,len), repeats, 6) 
 
