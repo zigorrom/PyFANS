@@ -506,7 +506,7 @@ class FANS_UI_Controller(QtCore.QObject):
     def stop_experiment(self):
         print("stop experiment")
         self.experiment_stop_event.set()
-        #self.experiment_thread.stop()
+        self.experiment_thread.stop()
         self.processing_thread.stop()
         self.ui_refresh_timer.stop()
         self.experiment_thread.join()
@@ -557,7 +557,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.commandReceived.connect(self.on_command_received)
         self.processing_thread.progressChanged.connect(self.on_progress_changed)
 
-        self.experiment_thread = mfexp.FANSExperiment(self.input_data_queue, self.experiment_stop_event)
+        self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
 
 
