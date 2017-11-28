@@ -587,15 +587,41 @@ class FANS_SMU_Specialized(FANS_SMU):
 ZERO_TRUST_INTERVAL = 0.02
 
 class FANS_SMU_PID(FANS_SMU_Specialized):
-    Kp = 0
-    Ki = 0
-    Kd = 0
+    #Kp = 1
+    #Ki = 0
+    #Kd = 0
     DESIRED_ERROR = 0.002
 
-    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 0, Ki = 0, Kd = 0):
+    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 1, Ki = 0, Kd = 0):
         super().__init__(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage)
+        self._Kp = Kp
+        self._Ki = Ki
+        self._Kd = Kd
 
-        self.pid_controller = mfpid.FANS_PID(self.Kp, self.Ki, self.Kd,self.DESIRED_ERROR)
+    @property
+    def Kp(self):
+        return self._Kp
+    
+    @Kp.setter
+    def Kp(self, value):
+        self._Kp = value
+
+    @property
+    def Ki(self):
+        return self._Ki
+    
+    @Ki.setter
+    def Ki(self, value):
+        self._Ki = value
+
+    @property
+    def Kd(self):
+        return self._Kd
+    
+    @Kd.setter
+    def Kd(self, value):
+        self._Kd = value
+
 
     def smu_set_drain_source_voltage(self, voltage):
         drain_motor = self.smu_ds_motor
@@ -607,7 +633,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         main_feedback = self.smu_main_feedback
         feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
 
-        pid = self.pid_controller
+        pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR) #self.pid_controller
         pid.clear()
         pid.desired_error = self.DESIRED_ERROR
         
@@ -627,6 +653,8 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         try:
             while(True):
                 # make small move to direction of increasing value to guess where we are in polarity terms
+                self.move_ds_motor_right_fast()
+                
                 res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
                 sample_voltage = res[drain_feedback]
                 main_voltage = res[main_feedback]
@@ -641,7 +669,21 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     else:
                         return result
 
-                value_to_set = pid.update(
+                value_to_set = pid.update(sample_voltage)
+                # correction for resistances
+                correction = main_voltage/sample_voltage
+                if correction <= 0:
+                    correction = 1
+
+                value_to_set = correction * value_to_set
+                abs_value_to_set = math.fabs(value_to_set)
+                abs_value_to_set += MIN_MOVING_VOLTAGE
+                if abs_value_to_set > MAX_MOVING_VOLTAGE:
+                    abs_value_to_set = MAX_MOVING_VOLTAGE
+
+                value_to_set = math.copysign(abs_value_to_set, value_to_set)
+                output_channel.analog_write(value_to_set)
+
 
         except mfpid.PID_ReachedDesiredErrorException:
             return True
