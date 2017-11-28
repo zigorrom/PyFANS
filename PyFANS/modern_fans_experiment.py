@@ -21,6 +21,7 @@ import modern_fans_experiment_writer as mfew
 import pickle
 import process_communication_protocol as pcp
 import experiment_writer as ew
+import measurement_data_structures as mds
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"
 #    assert (number>0 and number<9),"Wrong channel number!"
@@ -368,7 +369,7 @@ class Experiment:
         #print("simulate open measurement")
         measurement_name = self.__exp_settings.measurement_name
         measurement_counter = self._measurement_counter
-        assert isinstance(self.__exp_settings, ns.ExperimentSettings)
+        assert isinstance(self.__exp_settings, ExperimentSettings)
         self._measurement_info = mds.MeasurementInfo(measurement_name, measurement_counter, load_resistance = self.__exp_settings.load_resistance, second_amplifier_gain = self.__exp_settings.second_amp_coeff)
         #self._measurement_info.second_amplifier_gain = self.__exp_settings.second_amp_coeff
         self._send_command_with_params(pcp.ExperimentCommands.MEASUREMENT_STARTED, measurement_name = measurement_name, measurement_count = measurement_counter) 
@@ -603,6 +604,19 @@ class FANSExperiment(Experiment):
         self.fans_acquisition.initialize_acquisition_params(self.sample_rate, self.points_per_shot, mfans.ACQUISITION_TYPE.CONT) 
         #switch off all output to the control circuit in order to reduce noiseness of the system
         self.fans_controller.switch_all_fans_output_state(mfans.SWITCH_STATES.OFF)
+
+        #HARDCODE
+        ch = self.fans_controller.get_fans_output_channel(mfans.FANS_AO_CHANNELS.AO_CH_7)
+        ch.analog_write(8.4)
+        time.sleep(5)
+        ch.analog_write(0)
+
+        # drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+        #print ("stabilizing voltages after drain switch on. waiting...")
+        #time.sleep(5)
+        #result = super().read_all_test() 
+        #drain_source_switch_channel.analog_write(0)
+
         self.wait_for_stabilization_after_switch(30)
 
     def prepare_to_measure_timetrace(self):

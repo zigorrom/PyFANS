@@ -380,7 +380,7 @@ class FANS_SMU:
 
         #fans_channels = [self._fans_controller.get_fans_channel_by_name(ch) for ch in channels]
         #fans_multichannel = mfc.FANS_AI_MULTICHANNEL(*fans_channels)
-        fans_multichannel = mfc.FANS_AI_MULTICHANNEL(*channels)
+        fans_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, *channels)
         result = fans_multichannel.analog_read()
         #converted_dict = {ch: result[fans_ch.ai_daq_input] for ch, fans_ch in zip(channels,fans_channels) }
         return result ##converted_dict

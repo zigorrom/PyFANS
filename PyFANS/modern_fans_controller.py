@@ -942,11 +942,11 @@ def test_channel_conversion():
 
 def test_switch():
     c = FANS_CONTROLLER("ADC")
-    chan = c.get_fans_output_channel(FANS_AO_CHANNELS.AO_CH_5)
+    chan = c.get_fans_output_channel(FANS_AO_CHANNELS.AO_CH_7)
     assert isinstance(chan, FANS_AO_CHANNEL)
-    voltage = 8.4
+    voltage = 8.5
     chan.analog_write(voltage)
-    time.sleep(0.5)
+    time.sleep(2)
     chan.analog_write(0)
     #time.sleep(3)
     #chan.analog_write(-voltage)
@@ -983,8 +983,8 @@ if __name__ == "__main__":
     #test_acqusition()
     #test_cont_acquisition()
     #test_channel_conversion()
-    #test_switch()
-    test_ai_multichannel()
+    test_switch()
+    #test_ai_multichannel()
 #    switch_relay_on()
 #    switch_relay_off()
     

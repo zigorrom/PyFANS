@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import pint
 import pickle
@@ -658,7 +658,7 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def update_ui(self):
         try:
-            print("updating gui")
+            #print("updating gui")
             data = self.visualization_deque.popleft()
             cmd_format = "{0} command received"
             cmd = data.get(pcp.COMMAND)
