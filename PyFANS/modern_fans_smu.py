@@ -377,11 +377,12 @@ class FANS_SMU:
         ## to do 
         ## improve speed here 
 
-        fans_channels = [self._fans_controller.get_fans_channel_by_name(ch) for ch in channels]
-        fans_multichannel = mfc.FANS_AI_MULTICHANNEL(*fans_channels)
+        #fans_channels = [self._fans_controller.get_fans_channel_by_name(ch) for ch in channels]
+        #fans_multichannel = mfc.FANS_AI_MULTICHANNEL(*fans_channels)
+        fans_multichannel = mfc.FANS_AI_MULTICHANNEL(*channels)
         result = fans_multichannel.analog_read()
-        converted_dict = {ch: result[fans_ch.ai_daq_input] for ch, fans_ch in zip(channels,fans_channels) }
-        return converted_dict
+        #converted_dict = {ch: result[fans_ch.ai_daq_input] for ch, fans_ch in zip(channels,fans_channels) }
+        return result ##converted_dict
 
     def read_all_test(self):
         result = self.analog_read_channels([self.smu_drain_source_feedback,self.smu_gate_feedback,self.smu_main_feedback])

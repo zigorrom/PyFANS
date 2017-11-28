@@ -351,14 +351,23 @@ class FANS_AI_CHANNEL:
         return self._daq_device.analog_measure(self.ai_daq_input)
     
 class FANS_AI_MULTICHANNEL:
-    def __init__(self, *args):
+    def __init__(self, fans_controller, *args):
         assert len(args) > 0, "Too less channels to create multichannel"
-        assert all(isinstance(channel, FANS_AI_CHANNEL) for channel in args), "At least one channels has wrong type!"
-        fans_controller = args[0].fans_controller
-        assert all(fans_controller is channel.fans_controller for channel in args), "Not all channels reference same fans controller!"
+        assert all(isinstance(channel, FANS_AI_CHANNELS) for channel in args), "At least one channels has wrong type!"
+        #assert all(isinstance(channel, FANS_AI_CHANNEL) for channel in args), "At least one channels has wrong type!"
+        #fans_controller =  #args[0].fans_controller
+        #assert all(fans_controller is channel.fans_controller for channel in args), "Not all channels reference same fans controller!"
         self._fans_controller = fans_controller
-        self._fans_channels = sorted(list(args), key = lambda ch: ch.ai_daq_input) #list(args)
+        #self._fans_channels = sorted(list(args), key = lambda ch: ch.ai_daq_input) #list(args)
+        assert isinstance(fans_controller, FANS_CONTROLLER)
+        #self._fans_channels = [fans_controller.get_fans_channel_by_name(ch) for ch in list(args)]
+        self._fans_channel_converter = {fans_controller.get_fans_channel_by_name(ch).ai_daq_input : ch for ch in list(args)}
+        self._fans_channels = sorted([fans_controller.get_fans_channel_by_name(ch) for ch in list(args)] , key = lambda ch: ch.ai_daq_input)  #sorted(list(args), key = lambda ch: ch.ai_daq_input) #list(args)
+        #self._fans_channels = list(_fans_channel_converter.values())
+        #assert all(fans_controller is channel.fans_controller for channel in self._fans_channels), "Not all channels reference same fans controller!"
+
         #self._daq_device = parent_device.daq_parent_device
+        #values are alreadyu sorted
         self._daq_channels = [ch.ai_daq_input for ch in self._fans_channels] #sorted([channel.ai_daq_input for channel in self._fans_channels])
         self._enabled = None #daq.SWITCH_STATE_OFF
         self._range = None #daq.RANGE_10
@@ -366,6 +375,8 @@ class FANS_AI_MULTICHANNEL:
         self._polarity = None #daq.BIPOLAR
         self._polling_polarity = None #daq.BIPOLAR
         #self._initialize_daq_hardware()
+
+    
 
     def _initialize_daq_hardware(self):
         self.ai_enabled = self._enabled
@@ -444,9 +455,16 @@ class FANS_AI_MULTICHANNEL:
         self._polling_polarity = polarity
         self._daq_device.analog_set_polarity_for_channels(self.daq_channels, polarity)
     
-    def analog_read(self):
-        return self._daq_device.analog_measure_channels(self.daq_channels) 
+    #def analog_read(self):
+    #    return self._daq_device.analog_measure_channels_native(self.daq_channels) #self._daq_device.analog_measure_channels(self.daq_channels) 
 
+    def analog_read(self):
+        res = self._daq_device.analog_measure_channels_native(self.daq_channels)
+        return_dict = {self._fans_channel_converter[ch]: val for (ch, val) in zip(self.daq_channels,res)}
+        return return_dict
+    #    pass
+        #return {ch: val for (ch, val) in zip(self.}
+        #return self._daq_device.analog_measure_channels_native(self.daq_channels)
     
 
 
@@ -901,7 +919,7 @@ def test_cont_acquisition():
     #this should be called after initialize acquisition methodprint("")
     adc.initialize_acquisition_params(sample_rate, points, ACQUISITION_TYPE.CONT)
 
-    max_count = 5* 60 * n_aquis
+    max_count = 5 * 60 * n_aquis
     counter = 0
     adc.start()
 
@@ -950,12 +968,14 @@ def switch_relay_off():
 
 def test_ai_multichannel():
     c = FANS_CONTROLLER("ADC")
-    ch1 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_3)
-    ch2 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_2)
-    ch3 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_1)
-    mc = FANS_AI_MULTICHANNEL(ch1,ch2,ch3)
-    for i in range(100):
-        print(mc.analog_read())
+    #ch1 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_3)
+    #ch2 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_2)
+    #ch3 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_1)
+    mc1 = FANS_AI_MULTICHANNEL(c,FANS_AI_CHANNELS.AI_CH_3,FANS_AI_CHANNELS.AI_CH_1,FANS_AI_CHANNELS.AI_CH_2)
+    mc2 = FANS_AI_MULTICHANNEL(c,FANS_AI_CHANNELS.AI_CH_2,FANS_AI_CHANNELS.AI_CH_1,FANS_AI_CHANNELS.AI_CH_3)
+    for i in range(10):
+        print(mc1.analog_read())
+        print(mc2.analog_read())
     #chan = c.get_fans_output_channel(FANS_AO_CHANNELS.AO_CH_5)
 
 if __name__ == "__main__":

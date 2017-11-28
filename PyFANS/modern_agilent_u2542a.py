@@ -414,6 +414,7 @@ class AgilentU2542A_DSP(VisaInstrument):
     def analog_measure_channels_native(self, channels):
         str_result = self.query("MEAS? (@{0})".format(join_channels(channels)))
         spl = str_result.split(',')
+        assert len(spl) == len(channels), "Inconsistent result"
         return [float(val) for val in spl]
 
     def analog_set_source_polarity(self, channel, polarity):
