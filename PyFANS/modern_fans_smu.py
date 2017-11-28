@@ -40,7 +40,7 @@ X0_VOLTAGE_SET = 0.1
 POWER_VOLTAGE_SET = 5#3
 
 
-def voltage_setting_function(current_value, set_value, fine_tuning = False):
+def voltage_setting_function(current_value, set_value, fine_tuning = False, correction_coefficient = 1):
     # fermi-dirac-distribution
     sign = -1
     if current_value <0:
@@ -54,14 +54,23 @@ def voltage_setting_function(current_value, set_value, fine_tuning = False):
         else:
             sign = -1
     
+    result = 0
+    if correction_coefficient <= 0:
+        correction_coefficient = 1
+
     if fine_tuning:
         #return MIN_MOVING_VOLTAGE
-        return sign*MIN_MOVING_VOLTAGE
+        #return sign*MIN_MOVING_VOLTAGE
+        result = sign* correction_coefficient *MIN_MOVING_VOLTAGE
     else:
         diff = math.fabs(current_value-set_value)
-        return sign*(MAX_MOVING_VOLTAGE + (MIN_MOVING_VOLTAGE-MAX_MOVING_VOLTAGE)/(1+math.pow(diff/X0_VOLTAGE_SET,POWER_VOLTAGE_SET)))
-        
+        result = correction_coefficient * sign*(MAX_MOVING_VOLTAGE + (MIN_MOVING_VOLTAGE-MAX_MOVING_VOLTAGE)/(1+math.pow(diff/X0_VOLTAGE_SET,POWER_VOLTAGE_SET)))
+        if result < MIN_MOVING_VOLTAGE:
+            result = MIN_MOVING_VOLTAGE
+        elif result> MAX_MOVING_VOLTAGE:
+            result = MAX_MOVING_VOLTAGE
 
+    return result
         #try:
         #    exponent = math.exp(diff/FD_CONST)
         #except OverflowError:
@@ -252,29 +261,32 @@ class FANS_SMU:
         time.sleep(timeout)
         output_channel.analog_write(0)
 
+    LEFT_DIRECTION = 1
+    RIGHT_DIRECTION = -1
+
     def move_ds_motor_left(self):
-        self.move_motor(self._drain_source_motor, -1, LOW_SPEED, SHORT_TIME)
+        self.move_motor(self._drain_source_motor, self.LEFT_DIRECTION, LOW_SPEED, SHORT_TIME)
 
     def move_ds_motor_left_fast(self):
-        self.move_motor(self._drain_source_motor, -1, FAST_SPEED, LONG_TIME)
+        self.move_motor(self._drain_source_motor, self.LEFT_DIRECTION, FAST_SPEED, LONG_TIME)
 
     def move_ds_motor_right(self):
-        self.move_motor(self._drain_source_motor, 1, LOW_SPEED, SHORT_TIME)
+        self.move_motor(self._drain_source_motor, self.RIGHT_DIRECTION, LOW_SPEED, SHORT_TIME)
 
     def move_ds_motor_right_fast(self):
-        self.move_motor(self._drain_source_motor, 1, FAST_SPEED, LONG_TIME)
+        self.move_motor(self._drain_source_motor, self.RIGHT_DIRECTION, FAST_SPEED, LONG_TIME)
 
     def move_gate_motor_left(self):
-        self.move_motor(self._gate_motor, -1, LOW_SPEED,SHORT_TIME)
+        self.move_motor(self._gate_motor, self.LEFT_DIRECTION, LOW_SPEED,SHORT_TIME)
 
     def move_gate_motor_left_fast(self):
-        self.move_motor(self._gate_motor, -1, FAST_SPEED, LONG_TIME)
+        self.move_motor(self._gate_motor, self.LEFT_DIRECTION, FAST_SPEED, LONG_TIME)
 
     def move_gate_motor_right(self):
-        self.move_motor(self._gate_motor, 1, LOW_SPEED, SHORT_TIME)
+        self.move_motor(self._gate_motor, self.RIGHT_DIRECTION, LOW_SPEED, SHORT_TIME)
 
     def move_gate_motor_right_fast(self):
-        self.move_motor(self._gate_motor, 1, FAST_SPEED, LONG_TIME)
+        self.move_motor(self._gate_motor, self.RIGHT_DIRECTION, FAST_SPEED, LONG_TIME)
 
    
     def __set_voltage_for_function(self,voltage, voltage_set_channel, relay_channel, feedback_channel):
@@ -456,7 +468,7 @@ class FANS_SMU_Specialized(FANS_SMU):
             self._fans_controller.get_fans_output_channel(voltage_set_channel)
 
 
-    def __set_voltage_for_function(self,voltage, voltage_set_channel, relay_channel, feedback_channel, additional_channel = None, additional_control_voltage = 0.0):
+    def __set_drain_source_voltage(self,voltage, voltage_set_channel, relay_channel, feedback_channel, additional_channel = None, additional_control_voltage = 0.0):
         assert isinstance(voltage, float) or isinstance(voltage, int)
         assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS)
         assert isinstance(relay_channel, mfc.FANS_AO_CHANNELS)
@@ -491,14 +503,23 @@ class FANS_SMU_Specialized(FANS_SMU):
         VoltageSetError = FANS_VOLTAGE_SET_ERROR
         VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
 
+        # Adding here correction for ressitance relation
+        feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, self.smu_drain_source_feedback, self.smu_main_feedback)
+
+
         if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL :
             VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL
             VoltageTuningInterval =  VoltageTuningInterval+VoltageSetError     #5*VoltageSetError   
 
         while True: #continue_setting:    
-            current_value = self.analog_read(feedback_channel)
+            res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+            current_value  = res[self.smu_drain_source_feedback]
+            main_voltage = res[self.smu_main_feedback]
+
+            #current_value = self.analog_read(feedback_channel)
+
             if current_value*voltage<0 and not polarity_switched:
-                set_result = self.__set_voltage_for_function(0, voltage_set_channel, relay_channel, feedback_channel,additional_channel, additional_control_voltage )
+                set_result = self.__set_drain_source_voltage(0, voltage_set_channel, relay_channel, feedback_channel,additional_channel, additional_control_voltage )
         
                 if set_result:
                     polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
@@ -507,7 +528,7 @@ class FANS_SMU_Specialized(FANS_SMU):
                 else:
                     return set_result
 
-            value_to_set = voltage_setting_function(current_value,voltage)
+            value_to_set = voltage_setting_function(current_value,voltage, correction_coefficient = main_voltage/current_value)
             abs_distance = math.fabs(current_value - voltage)
 
             if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
@@ -553,8 +574,10 @@ class FANS_SMU_Specialized(FANS_SMU):
             #output_channel.ao_voltage = value_to_set 
 
     def smu_set_drain_source_voltage(self, voltage):
-        self.__set_voltage_for_function(voltage, self.smu_ds_motor, self.smu_ds_relay, self.smu_drain_source_feedback, self._drain_source_switch_channel, self._drain_source_switch_voltage)
+        self.__set_drain_source_voltage(voltage, self.smu_ds_motor, self.smu_ds_relay, self.smu_drain_source_feedback, self._drain_source_switch_channel, self._drain_source_switch_voltage)
 
+    #def smu_set_gate_voltage(self, voltage):
+    #    return super().__set
     
 
     def read_all_test(self):
@@ -592,7 +615,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
     #Kd = 0
     DESIRED_ERROR = 0.002
 
-    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 1, Ki = 0, Kd = 0):
+    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 1000, Ki = 10, Kd = 0):
         super().__init__(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage)
         self._Kp = Kp
         self._Ki = Ki
@@ -633,14 +656,14 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         main_feedback = self.smu_main_feedback
         feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
 
-        pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR) #self.pid_controller
+        pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR, points_to_check_error = 5000) #self.pid_controller
         pid.clear()
         pid.desired_error = self.DESIRED_ERROR
         
         output_channel = None
         additional_output_channel = None
 
-        if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
+        if isinstance(drain_switch_channel, mfc.FANS_AO_CHANNELS):
             output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
             assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
             assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
@@ -651,30 +674,31 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
 
         try:
+            # make small move to direction of increasing value to guess where we are in polarity terms
+            #self.move_ds_motor_right_fast()
+            #self.move_ds_motor_right()
+
             while(True):
-                # make small move to direction of increasing value to guess where we are in polarity terms
-                self.move_ds_motor_right_fast()
-                
                 res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
                 sample_voltage = res[drain_feedback]
                 main_voltage = res[main_feedback]
-                
+                print("{0}\t{1}\t{2}\t{3}".format(time.time(), voltage, sample_voltage, main_voltage))
                 current_polarity = FANS_NEGATIVE_POLARITY if sample_voltage < 0 else FANS_POSITIVE_POLARITY
 
-                if sample_voltage*voltage<0:
-                    #means we are in different polarity
-                    #go to zero
-                    result = self.smu_set_drain_source_voltage(0)
-                    if result:
-                         polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
-                         self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
-                         current_polarity = polarity
-                    else:
-                        return result
+                #if sample_voltage*voltage<0:
+                #    #means we are in different polarity
+                #    #go to zero
+                #    result = self.smu_set_drain_source_voltage(0)
+                #    if result:
+                #         polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
+                #         self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
+                #         current_polarity = polarity
+                #    else:
+                #        return result
 
                 value_to_set = pid.update(sample_voltage)
                 # correction for resistances
-                correction = main_voltage/sample_voltage
+                correction = math.fabs(main_voltage/sample_voltage)
                 if correction <= 0:
                     correction = 1
 
@@ -706,29 +730,40 @@ def test_pid_smu():
     
     smu = FANS_SMU_PID(f, mfc.FANS_AO_CHANNELS.AO_CH_1,
                    mfc.FANS_AO_CHANNELS.AO_CH_4, 
-                   mfc.FANS_AI_CHANNELS.AI_CH_2, #ds
+                   mfc.FANS_AI_CHANNELS.AI_CH_6, 
                    mfc.FANS_AO_CHANNELS.AO_CH_9,
                    mfc.FANS_AO_CHANNELS.AO_CH_12, 
-                   mfc.FANS_AI_CHANNELS.AI_CH_4, #gate
-                   mfc.FANS_AI_CHANNELS.AI_CH_3) #main
+                   mfc.FANS_AI_CHANNELS.AI_CH_8,
+                   mfc.FANS_AI_CHANNELS.AI_CH_7,
+                   mfc.FANS_AO_CHANNELS.AO_CH_10
+                   
 
-    smu.set_smu_parameters(100, 5000)
+                   ) #main
+    
+    smu.set_smu_parameters(100, 100000)
     smu.init_smu_mode()
+    try:
+        smu.smu_set_drain_source_voltage(0.1)
+        
+    except Exception as e:
+        raise
+        print(str(e))
+    finally:
+        f.switch_all_fans_output_state(mfc.SWITCH_STATES.OFF)
 
-
-
-if __name__ == "__main__":
-
-   
+def fans_test_2():
+    
     f = mfc.FANS_CONTROLLER("ADC");   #USB0::0x0957::0x1718::TW52524501::INSTR")
     
-    smu = FANS_SMU(f, mfc.FANS_AO_CHANNELS.AO_CH_1,
+    smu = FANS_SMU_Specialized(f, mfc.FANS_AO_CHANNELS.AO_CH_1,
                    mfc.FANS_AO_CHANNELS.AO_CH_4, 
-                   mfc.FANS_AI_CHANNELS.AI_CH_2, #ds
+                   mfc.FANS_AI_CHANNELS.AI_CH_6,
                    mfc.FANS_AO_CHANNELS.AO_CH_9,
                    mfc.FANS_AO_CHANNELS.AO_CH_12, 
-                   mfc.FANS_AI_CHANNELS.AI_CH_4, #gate
-                   mfc.FANS_AI_CHANNELS.AI_CH_3) #main
+                   mfc.FANS_AI_CHANNELS.AI_CH_7,
+                   mfc.FANS_AI_CHANNELS.AI_CH_8,
+                   mfc.FANS_AO_CHANNELS.AO_CH_10
+                   ) 
 
     smu.set_smu_parameters(100, 5000)
     smu.init_smu_mode()
@@ -765,3 +800,7 @@ if __name__ == "__main__":
     finally:
         f.switch_all_fans_output_state(mfc.SWITCH_STATES.OFF)
   
+
+if __name__ == "__main__":
+    #test_pid_smu()
+    fans_test_2()
