@@ -3,12 +3,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import spline
 
+class PID_ReachedDesiredErrorException(Exception):
+    pass
+
+class PID_ReachedMaximumAllowedUpdatesException(Exception):
+    pass
+
+class PID_ErrorNotChangingException(Exception):
+    pass
 
 class FANS_PID:
-    def __init__(self, P = 0.2, I = 0.0, D= 0.0):
+    def __init__(self, P = 0.2, I = 0.0, D= 0.0, desired_error = 0.001, points_to_check_error = 50 ,max_point_to_set_value = 10000000):
         self.Kp = P
         self.Ki = I
         self.Kd = D
+
+        self._points_to_check_error = points_to_check_error
+        self._max_point_to_set_value = max_point_to_set_value
+        self._desired_error = desired_error
 
         self._sampling_time = 0.0
         self.current_time = time.time()
@@ -20,6 +32,9 @@ class FANS_PID:
         self.d_term = 0.0
 
         self.last_error = 0.0
+        self.last_error_array = np.zeros(points_to_check_error)
+        self.error_change_array = np.zeros(points_to_check_error)
+        self.updates_counter = 0
 
         self.int_error = 0.0
         self.guard = 0.0
@@ -34,16 +49,35 @@ class FANS_PID:
         self.i_term = 0.0
         self.d_term = 0.0
         self.last_error = 0.0
+        self.last_error_array = np.zeros_like(self.last_error_array)
+        self.error_change_array = np.zeros_like(self.error_change_array)
+        self.updates_counter = 0
         self.int_error = 0.0
         self.guard = 0.0
         self.output = 0.0
 
     def update(self, current_value):
+        self.updates_counter+=1
         error = self.set_point - current_value
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
+        self.last_error_array = np.roll(self.last_error_array, 1)
+        self.error_change_array = np.roll(self.error_change_array, 1)
+        self.last_error_array[0] = error
+        self.error_change_array[0] = delta_error
         
+        if self.updates_counter >= self._points_to_check_error:
+            average_error = np.average(self.last_error_array)
+            average_delta_error = np.average(self.error_change_array)
+            if average_error<= self.desired_error:
+                raise PID_ReachedDesiredErrorException()
+            elif average_delta_error <= self.desired_error:
+                raise PID_ErrorNotChangingException()
+
+        if self.updates_counter >= self._max_point_to_set_value:
+            raise PID_ReachedMaximumAllowedUpdatesException()
+
         if (delta_time >= self._sampling_time):
             self.p_term = self.Kp * error
             self.i_term += error * delta_time
@@ -61,8 +95,34 @@ class FANS_PID:
             self.last_error = error
 
             self.output = self.p_term + (self.Ki * self.i_term) + (self.Kd * self.d_term)
-
+            
         return self.output
+
+    
+    @property
+    def desired_error(self):
+        return self._desired_error
+
+    @desired_error.setter
+    def desired_error(self, value):
+        self._desired_error = value
+
+    @property
+    def points_to_check_error(self):
+        return self._points_to_check_error
+
+    @points_to_check_error.setter
+    def points_to_check_error(self, value):
+        self._points_to_check_error = value
+
+    @property
+    def max_point_to_set_value(self):
+        return self._max_point_to_set_value
+
+    @max_point_to_set_value.setter
+    def max_point_to_set_value(self,value):
+        self._max_point_to_set_value = value
+
 
     @property
     def SetPoint(self):

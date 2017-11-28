@@ -3,6 +3,7 @@ import math
 
 import modern_fans_controller as mfc
 import modern_agilent_u2542a as mdaq
+import modern_fans_pid_controller as mfpid
 import numpy as np
 
 DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
@@ -582,6 +583,79 @@ class FANS_SMU_Specialized(FANS_SMU):
         result = super().read_all_parameters()
         drain_source_switch_channel.analog_write(0)
         return result
+
+ZERO_TRUST_INTERVAL = 0.02
+
+class FANS_SMU_PID(FANS_SMU_Specialized):
+    Kp = 0
+    Ki = 0
+    Kd = 0
+    DESIRED_ERROR = 0.002
+
+    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 0, Ki = 0, Kd = 0):
+        super().__init__(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage)
+
+        self.pid_controller = mfpid.FANS_PID(self.Kp, self.Ki, self.Kd,self.DESIRED_ERROR)
+
+    def smu_set_drain_source_voltage(self, voltage):
+        drain_motor = self.smu_ds_motor
+        drain_relay = self.smu_ds_relay
+        drain_feedback = self.smu_drain_source_feedback
+        drain_switch_channel = self._drain_source_switch_channel
+        drain_switch_voltage = self._drain_source_switch_voltage
+
+        main_feedback = self.smu_main_feedback
+        feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
+
+        pid = self.pid_controller
+        pid.clear()
+        pid.desired_error = self.DESIRED_ERROR
+        
+        output_channel = None
+        additional_output_channel = None
+
+        if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
+            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
+            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+            additional_output_channel.analog_write(drain_switch_voltage)
+        else:
+            output_channel = self._fans_controller.get_fans_output_channel(drain_motor)
+
+        assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+
+        try:
+            while(True):
+                # make small move to direction of increasing value to guess where we are in polarity terms
+                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+                sample_voltage = res[drain_feedback]
+                main_voltage = res[main_feedback]
+                
+                if sample_voltage*voltage<0:
+                    #means we are in different polarity
+                    #go to zero
+                    result = self.smu_set_drain_source_voltage(0)
+                    if result:
+                         polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
+                         self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
+                    else:
+                        return result
+
+                value_to_set = pid.update(
+
+        except mfpid.PID_ReachedDesiredErrorException:
+            return True
+        except mfpid.PID_ErrorNotChangingException:
+            return False
+        except mfpid.PID_ReachedMaximumAllowedUpdatesException:
+            return False
+        else:
+            return True
+
+
+
+
+
 
 
 if __name__ == "__main__":
