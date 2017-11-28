@@ -119,7 +119,7 @@ class FANS_PID:
         self._sampling_time = value
 
 
-def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100):
+def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100, name = ""):
     """Self-test PID class
     .. note::
         ...
@@ -162,19 +162,19 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100):
     time_smooth = np.linspace(time_sm.min(), time_sm.max(), 300)
     feedback_smooth = spline(time_list, feedback_list, time_smooth)
 
+    #plt.ion()
     plt.plot(time_smooth, feedback_smooth)
     plt.plot(time_list, setpoint_list)
     plt.xlim((0, L))
     plt.ylim((min(feedback_list)-0.5, max(feedback_list)+0.5))
     plt.xlabel('time (s)')
     plt.ylabel('PID (PV)')
-    plt.title('TEST PID')
-
+    plt.title('TEST PID {0}'.format(name))
     plt.ylim((1-0.5, 1+0.5))
-
     plt.grid(True)
     plt.show()
 
 if __name__ == "__main__":
-    test_pid(0.9, 2, 0.002, L=50)
+    for i in np.arange(0,0.001, 0.0001):
+        test_pid(0.6, 1.8, i, L=200, name = i)
 #    test_pid(0.8, L=50)

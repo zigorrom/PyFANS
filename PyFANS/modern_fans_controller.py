@@ -357,9 +357,9 @@ class FANS_AI_MULTICHANNEL:
         fans_controller = args[0].fans_controller
         assert all(fans_controller is channel.fans_controller for channel in args), "Not all channels reference same fans controller!"
         self._fans_controller = fans_controller
-        self._fans_channels = list(args)
+        self._fans_channels = sorted(list(args), key = lambda ch: ch.ai_daq_input) #list(args)
         #self._daq_device = parent_device.daq_parent_device
-
+        self._daq_channels = [ch.ai_daq_input for ch in self._fans_channels] #sorted([channel.ai_daq_input for channel in self._fans_channels])
         self._enabled = None #daq.SWITCH_STATE_OFF
         self._range = None #daq.RANGE_10
         self._polling_range = None # daq.AUTO_RANGE
@@ -388,8 +388,8 @@ class FANS_AI_MULTICHANNEL:
 
     @property
     def daq_channels(self):
-        daq_ch = sorted([channel.ai_daq_input for channel in self.fans_channels])
-        return daq_ch
+        #daq_ch = sorted([channel.ai_daq_input for channel in self.fans_channels])
+        return self._daq_channels #daq_ch
 
     #self._enabled = daq.SWITCH_STATE_OFF
     @property
@@ -443,9 +443,12 @@ class FANS_AI_MULTICHANNEL:
         assert polarity in daq.POLARITIES, "Wrong polarity"
         self._polling_polarity = polarity
         self._daq_device.analog_set_polarity_for_channels(self.daq_channels, polarity)
-
+    
     def analog_read(self):
         return self._daq_device.analog_measure_channels(self.daq_channels) 
+
+    
+
 
 class FANS_AO_CHANNEL:
     def __init__(self, daq_output, parent_device, selected_output = 0, **kwargs):
@@ -502,9 +505,10 @@ class FANS_AO_CHANNEL:
         self._polarity = polarity
         self._daq_device.analog_set_source_polarity(self.ao_daq_output, polarity)
 
-
     def analog_write(self, voltage):
         self._daq_device.analog_source_voltage(self.ao_daq_output, voltage)
+
+    
     
 class FANS_AO_MULTICHANNEL:
     def __init__(self, *args):
@@ -564,6 +568,7 @@ class FANS_AO_MULTICHANNEL:
     def analog_write(self, voltage):
         self._daq_device.analog_source_voltage_for_channels(self.daq_channels, voltage)
      
+
 class FANS_ACQUISITION:
     def __init__(self, fans_controller):
         assert isinstance(fans_controller, FANS_CONTROLLER), "Wrong fans controller type"
@@ -944,12 +949,23 @@ def switch_relay_off():
     chan.analog_write(0)
 
 
+def test_ai_multichannel():
+    c = FANS_CONTROLLER("ADC")
+    ch1 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_3)
+    ch2 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_2)
+    ch3 = c.get_fans_channel_by_name(FANS_AI_CHANNELS.AI_CH_1)
+    mc = FANS_AI_MULTICHANNEL(ch1,ch2,ch3)
+    for i in range(100):
+        print(mc.analog_read())
+    #chan = c.get_fans_output_channel(FANS_AO_CHANNELS.AO_CH_5)
+
 if __name__ == "__main__":
     #test_ao_channels()
     #test_acqusition()
     #test_cont_acquisition()
     #test_channel_conversion()
-    test_switch()
+    #test_switch()
+    test_ai_multichannel()
 #    switch_relay_on()
 #    switch_relay_off()
     
