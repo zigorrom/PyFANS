@@ -174,8 +174,9 @@ class Experiment:
                     self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
             else:
                 raise ValueError("range handlers are not properly defined")
-        except:
-            pass
+        except Exception as exc:
+            print(str(exc))
+            #pass
         finally:
             self.set_voltages_to_zero()
 
@@ -573,8 +574,8 @@ class FANSExperiment(Experiment):
         self.load_resistance = self.experiment_settings.load_resistance
         self.sample_rate = 500000
         self.points_per_shot = 50000
-        self.fans_smu = msmu.FANS_SMU_PID(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
-        #self.fans_smu = msmu.FANS_SMU_Specialized(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
+        #self.fans_smu = msmu.FANS_SMU_PID(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
+        self.fans_smu = msmu.FANS_SMU_Specialized(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
         self.fans_smu.set_smu_parameters(100, self.load_resistance)
 
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)

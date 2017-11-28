@@ -1,4 +1,4 @@
-import math
+﻿import math
 from enum import IntEnum, unique
 #from n_enum import enum
 
@@ -69,13 +69,13 @@ class RangeObject:
         if not rng:
             return None
         if self.rangeHandler == RANGE_HANDLERS.NORMAL_RANGE_HANDLER:
-            return normal_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+            return normal_range_handler(rng, self.rangeRepeats) #rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
         elif self.rangeHandler == RANGE_HANDLERS.BACK_FORTH_RANGE_HANDLER:
-            return back_forth_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+            return back_forth_range_handler(rng, self.rangeRepeats)#rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
         elif self.rangeHandler == RANGE_HANDLERS.ZERO_START_RANGE_HANDLER:
-            return zero_start_range_handler(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+            return zero_start_range_handler(rng, self.rangeRepeats) #rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
         elif self.rangeHandler == RANGE_HANDLERS.ZERO_START_BACK_FORTH:
-            return zero_start_back_forth(rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
+            return zero_start_back_forth(rng, self.rangeRepeats) #rng.start,rng.stop, rng.step, rng.length, self.rangeRepeats)
     
     
 
@@ -215,9 +215,9 @@ class range_handler():
 
 class normal_range_handler(range_handler):
     def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
-        super().__init__(float_range(start,stop,step,len),repeats,6)
-        self.__current_value = start
-        self.__current_round = 0
+        super().__init__(rng, repeats,6) #float_range(start,stop,step,len),repeats,6)
+        self.__current_value = self.woking_range.start
+        self.__current_round = 0 
 
     def __next__(self):
         if not self.comparison_function(self.__current_value, self.woking_range.stop):
@@ -234,7 +234,7 @@ class normal_range_handler(range_handler):
 
 class back_forth_range_handler(range_handler):
     def __init__(self, rng, repeats):# start,stop,step=1,len=-1,repeats = 1):
-        super().__init__(float_range(start,stop,step,len), repeats, 6) 
+        super().__init__(rng, repeats,6)#(float_range(start,stop,step,len), repeats, 6) 
         self.__current_value = start
         self.__current_round = 0
         self.__left_value = self.woking_range.start
@@ -273,7 +273,7 @@ class zero_start_range_handler(range_handler):
         assert isinstance(rng, float_range)
         if rng.start * rng.stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
-        super().__init__(float_range(start,stop,step,len), repeats, 6)
+        super().__init__(rng, repeats,6)#(float_range(start,stop,step,len), repeats, 6)
 
 
     def __next__(self):
@@ -284,7 +284,7 @@ class zero_start_back_forth(range_handler):
         assert isinstance(rng, float_range)
         if rng.start * rng.stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
-        return super().__init__(float_range(start,stop,step,len), repeats, 6) 
+        return super().__init__(rng, repeats,6)#(float_range(start,stop,step,len), repeats, 6) 
 
 
 if __name__ == "__main__":

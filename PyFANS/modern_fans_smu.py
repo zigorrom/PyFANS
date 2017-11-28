@@ -55,7 +55,8 @@ def voltage_setting_function(current_value, set_value, fine_tuning = False, corr
             sign = -1
     
     result = 0
-    if correction_coefficient <= 0:
+    #correction_coefficient = 1
+    if correction_coefficient <= 1:
         correction_coefficient = 1
 
     if fine_tuning:
@@ -64,12 +65,12 @@ def voltage_setting_function(current_value, set_value, fine_tuning = False, corr
         result = sign* correction_coefficient *MIN_MOVING_VOLTAGE
     else:
         diff = math.fabs(current_value-set_value)
-        result = correction_coefficient * sign*(MAX_MOVING_VOLTAGE + (MIN_MOVING_VOLTAGE-MAX_MOVING_VOLTAGE)/(1+math.pow(diff/X0_VOLTAGE_SET,POWER_VOLTAGE_SET)))
+        result = (MAX_MOVING_VOLTAGE + (MIN_MOVING_VOLTAGE-MAX_MOVING_VOLTAGE)/(1+math.pow(diff/X0_VOLTAGE_SET,POWER_VOLTAGE_SET)))
         if result < MIN_MOVING_VOLTAGE:
             result = MIN_MOVING_VOLTAGE
         elif result> MAX_MOVING_VOLTAGE:
             result = MAX_MOVING_VOLTAGE
-
+        result = correction_coefficient * sign*result
     return result
         #try:
         #    exponent = math.exp(diff/FD_CONST)
