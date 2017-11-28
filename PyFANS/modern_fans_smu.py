@@ -659,6 +659,8 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 sample_voltage = res[drain_feedback]
                 main_voltage = res[main_feedback]
                 
+                current_polarity = FANS_NEGATIVE_POLARITY if sample_voltage < 0 else FANS_POSITIVE_POLARITY
+
                 if sample_voltage*voltage<0:
                     #means we are in different polarity
                     #go to zero
@@ -666,6 +668,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     if result:
                          polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
                          self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
+                         current_polarity = polarity
                     else:
                         return result
 
@@ -675,6 +678,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 if correction <= 0:
                     correction = 1
 
+                value_to_set = math.copysign(value_to_set, current_polarity)
                 value_to_set = correction * value_to_set
                 abs_value_to_set = math.fabs(value_to_set)
                 abs_value_to_set += MIN_MOVING_VOLTAGE
@@ -697,6 +701,19 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
 
 
 
+def test_pid_smu():
+    f = mfc.FANS_CONTROLLER("ADC");   #USB0::0x0957::0x1718::TW52524501::INSTR")
+    
+    smu = FANS_SMU_PID(f, mfc.FANS_AO_CHANNELS.AO_CH_1,
+                   mfc.FANS_AO_CHANNELS.AO_CH_4, 
+                   mfc.FANS_AI_CHANNELS.AI_CH_2, #ds
+                   mfc.FANS_AO_CHANNELS.AO_CH_9,
+                   mfc.FANS_AO_CHANNELS.AO_CH_12, 
+                   mfc.FANS_AI_CHANNELS.AI_CH_4, #gate
+                   mfc.FANS_AI_CHANNELS.AI_CH_3) #main
+
+    smu.set_smu_parameters(100, 5000)
+    smu.init_smu_mode()
 
 
 
