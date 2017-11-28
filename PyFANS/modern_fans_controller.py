@@ -885,7 +885,6 @@ def test_acqusition():
     data = adc.read_single_shot_data_when_ready()
     adc.stop_single_shot()
     
-
     print(data)
     print("DATA LENGTH = {0}".format(data.shape))
 
