@@ -663,6 +663,18 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         pid.clear()
         pid.desired_error = self.DESIRED_ERROR
         
+        # check if value is in the range of ZERO_TRUST_ERROR
+        # if it is there -> move to the direction of value increasing.
+        # check polarity
+        # check if desired value is the same polarity as current value
+        # if so = move to value
+        # else 
+        # move to zero 
+        # then switch polarity 
+        # set desired voltage
+
+
+
         with open("pid_test.dat","w") as test_file:
 
             output_channel = None
