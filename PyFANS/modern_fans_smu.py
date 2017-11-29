@@ -704,7 +704,6 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     if correction <= 1:
                         correction = 1
     
-                    #value_to_set = math.copysign(value_to_set, current_polarity)
                     value_to_set = correction * value_to_set
                     abs_value_to_set = math.fabs(value_to_set)
                     abs_value_to_set += MIN_MOVING_VOLTAGE
@@ -738,19 +737,17 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         pid.SetPoint(voltage)
         try:
             while(True):
-                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+                res = feedback_multichannel.analog_read()
                 sample_voltage = res[drain_feedback]
                 main_voltage = res[main_feedback]
                 print("{0}\t{1}\t{2}\t{3}".format(time.time(), voltage, sample_voltage, main_voltage))
-                current_polarity = FANS_NEGATIVE_POLARITY if sample_voltage < 0 else FANS_POSITIVE_POLARITY
-
+                
                 value_to_set = pid.update(math.fabs(sample_voltage))
                 # correction for resistances
                 correction = math.fabs(main_voltage/sample_voltage)
                 if correction <= 0:
                     correction = 1
 
-                #value_to_set = math.copysign(value_to_set, current_polarity)
                 value_to_set = correction * value_to_set
                 abs_value_to_set = math.fabs(value_to_set)
                 abs_value_to_set += MIN_MOVING_VOLTAGE
@@ -759,7 +756,6 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
 
                 value_to_set = math.copysign(abs_value_to_set, value_to_set)
                 output_channel.analog_write(value_to_set)
-
 
         except mfpid.PID_ReachedDesiredErrorException:
             return True
