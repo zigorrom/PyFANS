@@ -57,26 +57,27 @@ class FANS_PID:
         self.output = 0.0
 
     def update(self, current_value):
-        self.updates_counter+=1
+        #self.updates_counter+=1
         error = self.set_point - current_value
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
-        self.last_error_array = np.roll(self.last_error_array, 1)
-        self.error_change_array = np.roll(self.error_change_array, 1)
-        self.last_error_array[0] = error
-        self.error_change_array[0] = delta_error
-        
-        if self.updates_counter >= self._points_to_check_error:
-            average_error = np.average(self.last_error_array)
-            average_delta_error = np.average(self.error_change_array)
-            if average_error<= self.desired_error:
-                raise PID_ReachedDesiredErrorException()
-            elif average_delta_error <= self.desired_error:
-                raise PID_ErrorNotChangingException()
+        #delta_error = error - self.last_error
+        #self.last_error_array = np.roll(self.last_error_array, 1)
+        #self.error_change_array = np.roll(self.error_change_array, 1)
+        #self.last_error_array[0] = error
+        #self.error_change_array[0] = delta_error
+        #print("last error {0}; delta_error {1}".format(error))
+        #if self.updates_counter >= self._points_to_check_error:
+        #    average_error = np.average(self.last_error_array)
+        #    average_delta_error = np.average(self.error_change_array)
+        #    if average_error<= self.desired_error:
+        #        raise PID_ReachedDesiredErrorException()
+        #    elif average_delta_error <= self.desired_error:
+        #        raise PID_ErrorNotChangingException()
 
-        if self.updates_counter >= self._max_point_to_set_value:
-            raise PID_ReachedMaximumAllowedUpdatesException()
+        #if self.updates_counter >= self._max_point_to_set_value:
+        #    raise PID_ReachedMaximumAllowedUpdatesException()
 
         if (delta_time >= self._sampling_time):
             self.p_term = self.Kp * error
@@ -94,6 +95,26 @@ class FANS_PID:
             self.last_time = self.current_time
             self.last_error = error
 
+            self.last_error_array = np.roll(self.last_error_array, 1)
+            self.error_change_array = np.roll(self.error_change_array, 1)
+            self.last_error_array[0] = error
+            self.error_change_array[0] = delta_error
+            print("last error {0}; delta_error {1}".format(error,delta_error))
+            if self.updates_counter >= self._points_to_check_error:
+                average_error = np.fabs(np.average(self.last_error_array))
+                average_delta_error = np.fabs(np.average(self.error_change_array))
+                print("last average error {0}; average delta_error {1}".format(average_error, average_delta_error))
+                if average_error<= self.desired_error:
+                    raise PID_ReachedDesiredErrorException()
+                elif average_delta_error <= self.desired_error:
+                    raise PID_ErrorNotChangingException()
+
+            if self.updates_counter >= self._max_point_to_set_value:
+                raise PID_ReachedMaximumAllowedUpdatesException()
+
+
+
+            self.updates_counter+=1
             self.output = self.p_term + (self.Ki * self.i_term) + (self.Kd * self.d_term)
             
         return self.output
@@ -179,7 +200,7 @@ class FANS_PID:
         self._sampling_time = value
 
 
-def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100, name = ""):
+def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
     """Self-test PID class
     .. note::
         ...
@@ -198,6 +219,7 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100, name = ""):
     pid.SetPoint = 0.0
     pid.sampling_time = 0.01
     pid.guard_value = 50.0
+    pid.points_to_check_error = 500
 
     END = L
     feedback = 0
@@ -205,18 +227,29 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100, name = ""):
     feedback_list = []
     time_list = []
     setpoint_list = []
+    try:
+        
+        
+        for i in range(1, END):
+            output = pid.update(feedback)
+            if pid.SetPoint > 0:
+                feedback += (output - (1/i))
+            if i>9:
+                pid.SetPoint = 1.0
+            time.sleep(0.02)
 
-    for i in range(1, END):
-        output = pid.update(feedback)
-        if pid.SetPoint > 0:
-            feedback += (output - (1/i))
-        if i>9:
-            pid.SetPoint = 1.0
-        time.sleep(0.02)
+            feedback_list.append(feedback)
+            setpoint_list.append(pid.SetPoint)
+            time_list.append(i)
+            print(i)
+    except PID_ErrorNotChangingException as e:
+        print("error not changing")
+    except PID_ReachedDesiredErrorException as e:
+        print("reached desired error")
+    except PID_ReachedMaximumAllowedUpdatesException as e:
+        print("max counts reached")
+        
 
-        feedback_list.append(feedback)
-        setpoint_list.append(pid.SetPoint)
-        time_list.append(i)
 
     time_sm = np.array(time_list)
     time_smooth = np.linspace(time_sm.min(), time_sm.max(), 300)
@@ -235,6 +268,6 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=100, name = ""):
     plt.show()
 
 if __name__ == "__main__":
-    for i in np.arange(0,0.001, 0.0001):
-        test_pid(0.6, 1.8, i, L=200, name = i)
+    #for i in np.arange(0,0.001, 0.0001):
+    test_pid(0.6, 0, 0, L=2000, name = 0)
 #    test_pid(0.8, L=50)
