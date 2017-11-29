@@ -1,4 +1,4 @@
-import time
+﻿import time
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import spline
@@ -33,11 +33,11 @@ class FANS_PID:
 
         self.last_error = 0.0
         self.last_error_array = np.zeros(points_to_check_error)
-        self.error_change_array = np.zeros(points_to_check_error)
+        self.error_change_array = np.zeros(10*points_to_check_error)
         self.updates_counter = 0
 
         self.int_error = 0.0
-        self.guard = 0.0
+        self.guard = 1000.0
 
         self.output = 0.0
 
@@ -53,7 +53,7 @@ class FANS_PID:
         self.error_change_array = np.zeros_like(self.error_change_array)
         self.updates_counter = 0
         self.int_error = 0.0
-        self.guard = 0.0
+        #self.guard = 0.0
         self.output = 0.0
 
     def update(self, current_value):
@@ -99,7 +99,7 @@ class FANS_PID:
             self.error_change_array = np.roll(self.error_change_array, 1)
             self.last_error_array[0] = error
             self.error_change_array[0] = delta_error
-            print("last error {0}; delta_error {1}".format(error,delta_error))
+            print("current value {2} last error {0}; delta_error {1}".format(error,delta_error, current_value))
             if self.updates_counter >= self._points_to_check_error:
                 average_error = np.fabs(np.average(self.last_error_array))
                 average_delta_error = np.fabs(np.average(self.error_change_array))
@@ -151,7 +151,7 @@ class FANS_PID:
 
     @SetPoint.setter
     def SetPoint(self,value):
-        assert isinstance(value, float)
+        assert isinstance(value, (float,int))
         self.set_point = value
 
     @property

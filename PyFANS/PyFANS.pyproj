@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>modern_fans_pid_controller.py</StartupFile>
+    <StartupFile>modern_fans_smu.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

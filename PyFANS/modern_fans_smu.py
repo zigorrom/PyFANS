@@ -617,7 +617,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
     #Kd = 0
     DESIRED_ERROR = 0.002
 
-    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 1000, Ki = 10, Kd = 0):
+    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE, Kp = 1, Ki = 0, Kd = 0):
         super().__init__(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage)
         self._Kp = Kp
         self._Ki = Ki
@@ -658,52 +658,110 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
         main_feedback = self.smu_main_feedback
         feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
 
-        pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR, points_to_check_error = 500) #self.pid_controller
+        pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR, points_to_check_error = 1000) #self.pid_controller
+        pid.sampling_time = 0.001
         pid.clear()
         pid.desired_error = self.DESIRED_ERROR
         
-        output_channel = None
-        additional_output_channel = None
-        # make small move to direction of increasing value to guess where we are in polarity terms
-        # important to do so before next block of code since it switches output channel off
-        self.move_ds_motor_right()
+        with open("pid_test.dat","w") as test_file:
 
-        if isinstance(drain_switch_channel, mfc.FANS_AO_CHANNELS):
-            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
-            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-            additional_output_channel.analog_write(drain_switch_voltage)
-        else:
-            output_channel = self._fans_controller.get_fans_output_channel(drain_motor)
+            output_channel = None
+            additional_output_channel = None
+            # make small move to direction of increasing value to guess where we are in polarity terms
+            # important to do so before next block of code since it switches output channel off
+            self.move_ds_motor_right()
 
-        assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+            if isinstance(drain_switch_channel, mfc.FANS_AO_CHANNELS):
+                output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
+                assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+                assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+                additional_output_channel.analog_write(drain_switch_voltage)
+            else:
+                output_channel = self._fans_controller.get_fans_output_channel(drain_motor)
 
-        #check the polarity
-        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-        sample_voltage = res[drain_feedback]
-        main_voltage = res[main_feedback]
-        current_polarity = FANS_NEGATIVE_POLARITY
-        #INCREASING_ABS_VALUE_DIRECTION = 
+            assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
 
-        if sample_voltage >= 0:
-            current_polarity = FANS_POSITIVE_POLARITY
+            #check the polarity
+            res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+            sample_voltage = res[drain_feedback]
+            main_voltage = res[main_feedback]
+            current_polarity = FANS_POSITIVE_POLARITY #FANS_NEGATIVE_POLARITY
+            #INCREASING_ABS_VALUE_DIRECTION = 
+            #for check reason commented
+            #if sample_voltage >= 0:
+            #    current_polarity = FANS_POSITIVE_POLARITY
+
+            VOLTAGE_SET_DIRECTION = -1 if current_polarity == FANS_POSITIVE_POLARITY else 1
+            #if voltage * sample_voltage < 0:
+            #    #set 0 volts
+            #    pid.SetPoint = 0
+            #    try:
+            #        while(True):
+            #            res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+            #            sample_voltage = res[drain_feedback]
+            #            main_voltage = res[main_feedback]
+            #            print("{0}\t{1}\t{2}\t{3}".format(time.time(), voltage, sample_voltage, main_voltage))
+                    
+            #            value_to_set = VOLTAGE_SET_DIRECTION * pid.update(sample_voltage)
+            #            #value_to_set = pid.update(math.fabs(sample_voltage))
+            #            # correction for resistances
+            #            correction = math.fabs(main_voltage/sample_voltage)
+            #            if correction <= 1:
+            #                correction = 1
+    
+            #            value_to_set = correction * value_to_set
+            #            abs_value_to_set = math.fabs(value_to_set)
+            #            abs_value_to_set += MIN_MOVING_VOLTAGE
+            #            if abs_value_to_set > MAX_MOVING_VOLTAGE:
+            #                abs_value_to_set = MAX_MOVING_VOLTAGE
+
+            #            value_to_set = math.copysign(abs_value_to_set, value_to_set)
+            #            #value_to_set = math.copysign(abs_value_to_set, VOLTAGE_SET_DIRECTION)
+            #            output_channel.analog_write(value_to_set)
+
+            #    except mfpid.PID_ReachedDesiredErrorException:
+            #        print("reached desired error")#return True
+            #    except mfpid.PID_ErrorNotChangingException:
+            #        print("error is not changing")
+            #        if math.fabs(sample_voltage) > ZERO_TRUST_INTERVAL:
+            #            return False
+            #    except mfpid.PID_ReachedMaximumAllowedUpdatesException:
+            #        print("max updates reached")
+            #        return False
+            #    else:
+            #        pass#return True
+
+            #    #switch polarity here 
+            #    if voltage >= 0:
+            #        current_polarity = FANS_POSITIVE_POLARITY
+            #    else :
+            #        current_polarity = FANS_NEGATIVE_POLARITY
+
+            #    self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
+
+                #set desired voltage
         
-        if voltage * sample_voltage < 0:
-            #set 0 volts
-            pid.SetPoint = 0
+            VOLTAGE_SET_DIRECTION = -1 if current_polarity == FANS_POSITIVE_POLARITY else 1
+            voltage  = math.fabs(voltage)
+            pid.SetPoint = voltage
+            ref_time = time.time()
             try:
                 while(True):
-                    res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+                    res = feedback_multichannel.analog_read()
                     sample_voltage = res[drain_feedback]
                     main_voltage = res[main_feedback]
-                    print("{0}\t{1}\t{2}\t{3}".format(time.time(), voltage, sample_voltage, main_voltage))
+                    current_time = time.time() - ref_time
+                    test_file.write("{0}\t{1}\n".format(current_time,sample_voltage))
+
+                    print("{0}\t{1}\t{2}\t{3}".format(current_time, voltage, sample_voltage, main_voltage))
                     
-                    value_to_set = pid.update(math.fabs(sample_voltage))
+                    value_to_set = VOLTAGE_SET_DIRECTION * pid.update(sample_voltage)
+                    #value_to_set = pid.update(math.fabs(sample_voltage))
                     # correction for resistances
                     correction = math.fabs(main_voltage/sample_voltage)
                     if correction <= 1:
                         correction = 1
-    
+
                     value_to_set = correction * value_to_set
                     abs_value_to_set = math.fabs(value_to_set)
                     abs_value_to_set += MIN_MOVING_VOLTAGE
@@ -711,60 +769,21 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                         abs_value_to_set = MAX_MOVING_VOLTAGE
 
                     value_to_set = math.copysign(abs_value_to_set, value_to_set)
+                    #value_to_set = math.copysign(abs_value_to_set, VOLTAGE_SET_DIRECTION)
+                    print("value to set {0}".format(value_to_set))
                     output_channel.analog_write(value_to_set)
 
             except mfpid.PID_ReachedDesiredErrorException:
-                pass#return True
+                print("reached desired error")
+                return True
             except mfpid.PID_ErrorNotChangingException:
-                if math.fabs(sample_voltage) > ZERO_TRUST_INTERVAL:
-                    return False
+                print("error is not changing")
+                return False
             except mfpid.PID_ReachedMaximumAllowedUpdatesException:
+                print("max updates reached")
                 return False
             else:
-                pass#return True
-
-            #switch polarity here 
-            if voltage >= 0:
-                current_polarity = FANS_POSITIVE_POLARITY
-            else :
-                current_polarity = FANS_NEGATIVE_POLARITY
-
-            self.__set_voltage_polarity(polarity, drain_motor,drain_relay, drain_switch_channel, drain_switch_voltage)
-
-            #set desired voltage
-
-        voltage  = math.fabs(voltage)
-        pid.SetPoint(voltage)
-        try:
-            while(True):
-                res = feedback_multichannel.analog_read()
-                sample_voltage = res[drain_feedback]
-                main_voltage = res[main_feedback]
-                print("{0}\t{1}\t{2}\t{3}".format(time.time(), voltage, sample_voltage, main_voltage))
-                
-                value_to_set = pid.update(math.fabs(sample_voltage))
-                # correction for resistances
-                correction = math.fabs(main_voltage/sample_voltage)
-                if correction <= 0:
-                    correction = 1
-
-                value_to_set = correction * value_to_set
-                abs_value_to_set = math.fabs(value_to_set)
-                abs_value_to_set += MIN_MOVING_VOLTAGE
-                if abs_value_to_set > MAX_MOVING_VOLTAGE:
-                    abs_value_to_set = MAX_MOVING_VOLTAGE
-
-                value_to_set = math.copysign(abs_value_to_set, value_to_set)
-                output_channel.analog_write(value_to_set)
-
-        except mfpid.PID_ReachedDesiredErrorException:
-            return True
-        except mfpid.PID_ErrorNotChangingException:
-            return False
-        except mfpid.PID_ReachedMaximumAllowedUpdatesException:
-            return False
-        else:
-            return True
+                return True
 
 
 
@@ -783,11 +802,13 @@ def test_pid_smu():
                    
 
                    ) #main
+    smu.Kp = 100
+    smu.Ki = 0.5#10000
     
     smu.set_smu_parameters(100, 100000)
     smu.init_smu_mode()
     try:
-        smu.smu_set_drain_source_voltage(0.1)
+        smu.smu_set_drain_source_voltage(2.5)
         
     except Exception as e:
         raise
@@ -846,5 +867,5 @@ def fans_test_2():
   
 
 if __name__ == "__main__":
-    #test_pid_smu()
-    fans_test_2()
+    test_pid_smu()
+    #fans_test_2()
