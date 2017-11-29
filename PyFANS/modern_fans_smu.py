@@ -750,6 +750,13 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     res = feedback_multichannel.analog_read()
                     sample_voltage = res[drain_feedback]
                     main_voltage = res[main_feedback]
+
+                    correction = math.fabs(main_voltage/sample_voltage)
+                    if correction <= 1:
+                        correction = 1
+
+                    sample_voltage = math.fabs(sample_voltage)
+
                     current_time = time.time() - ref_time
                     test_file.write("{0}\t{1}\n".format(current_time,sample_voltage))
 
@@ -758,10 +765,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     value_to_set = VOLTAGE_SET_DIRECTION * pid.update(sample_voltage)
                     #value_to_set = pid.update(math.fabs(sample_voltage))
                     # correction for resistances
-                    correction = math.fabs(main_voltage/sample_voltage)
-                    if correction <= 1:
-                        correction = 1
-
+                   
                     value_to_set = correction * value_to_set
                     abs_value_to_set = math.fabs(value_to_set)
                     abs_value_to_set += MIN_MOVING_VOLTAGE
@@ -786,6 +790,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 return True
 
 
+#def set_voltage_using_pid_controller(pid_controller, voltage_set_channel, 
 
 
 def test_pid_smu():
