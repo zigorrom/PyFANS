@@ -219,7 +219,7 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
     pid.SetPoint = 0.0
     pid.sampling_time = 0.01
     pid.guard_value = 50.0
-    pid.points_to_check_error = 500
+    pid.points_to_check_error = 50
 
     END = L
     feedback = 0
@@ -269,5 +269,5 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
 
 if __name__ == "__main__":
     #for i in np.arange(0,0.001, 0.0001):
-    test_pid(0.6, 0, 0, L=2000, name = 0)
+    test_pid(1.6, 0, 0, L=2000, name = 0)
 #    test_pid(0.8, L=50)
