@@ -235,7 +235,7 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
             if pid.SetPoint > 0:
                 feedback += (output - (1/i))
             if i>9:
-                pid.SetPoint = 1.0
+                pid.SetPoint = 2.5
             time.sleep(0.02)
 
             feedback_list.append(feedback)
@@ -258,16 +258,16 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
     #plt.ion()
     plt.plot(time_smooth, feedback_smooth)
     plt.plot(time_list, setpoint_list)
-    plt.xlim((0, L))
+    plt.xlim((0, time_list[-1]))
     plt.ylim((min(feedback_list)-0.5, max(feedback_list)+0.5))
     plt.xlabel('time (s)')
     plt.ylabel('PID (PV)')
     plt.title('TEST PID {0}'.format(name))
-    plt.ylim((1-0.5, 1+0.5))
+    #plt.ylim((1-0.5, 1+0.5))
     plt.grid(True)
     plt.show()
 
 if __name__ == "__main__":
     #for i in np.arange(0,0.001, 0.0001):
-    test_pid(1.6, 0, 0, L=2000, name = 0)
+    test_pid(0.5, 0.05, 0.001, L=2000, name = 0)
 #    test_pid(0.8, L=50)
