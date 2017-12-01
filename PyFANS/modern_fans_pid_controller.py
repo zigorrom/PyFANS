@@ -62,23 +62,7 @@ class FANS_PID:
         self.current_time = time.time()
         delta_time = self.current_time - self.last_time
         delta_error = error - self.last_error
-        #delta_error = error - self.last_error
-        #self.last_error_array = np.roll(self.last_error_array, 1)
-        #self.error_change_array = np.roll(self.error_change_array, 1)
-        #self.last_error_array[0] = error
-        #self.error_change_array[0] = delta_error
-        #print("last error {0}; delta_error {1}".format(error))
-        #if self.updates_counter >= self._points_to_check_error:
-        #    average_error = np.average(self.last_error_array)
-        #    average_delta_error = np.average(self.error_change_array)
-        #    if average_error<= self.desired_error:
-        #        raise PID_ReachedDesiredErrorException()
-        #    elif average_delta_error <= self.desired_error:
-        #        raise PID_ErrorNotChangingException()
-
-        #if self.updates_counter >= self._max_point_to_set_value:
-        #    raise PID_ReachedMaximumAllowedUpdatesException()
-
+       
         if (delta_time >= self._sampling_time):
             self.p_term = self.Kp * error
             self.i_term += error * delta_time
@@ -219,7 +203,7 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
     pid.SetPoint = 0.0
     pid.sampling_time = 0.01
     pid.guard_value = 50.0
-    pid.points_to_check_error = 50
+    pid.points_to_check_error = 10
 
     END = L
     feedback = 0
