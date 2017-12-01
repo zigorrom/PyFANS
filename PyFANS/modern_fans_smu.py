@@ -680,8 +680,6 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
             output_channel = None
             additional_output_channel = None
             
-            #self.move_ds_motor_right()
-
             #if isinstance(drain_switch_channel, mfc.FANS_AO_CHANNELS):
             output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
             assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
@@ -734,7 +732,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
             #else:
                 #set desired voltage
 
-            VOLTAGE_SET_DIRECTION = -1 if current_polarity == FANS_POSITIVE_POLARITY else 1
+            VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if current_polarity == FANS_POSITIVE_POLARITY else -ABS_VOLTAGE_INCREASE_DIRECTION
             voltage  = math.fabs(voltage)
             pid.SetPoint = voltage
             ref_time = time.time()
@@ -757,7 +755,6 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     
                     value_to_set = VOLTAGE_SET_DIRECTION * pid.update(sample_voltage)
                     # correction for resistances
-                   
                     value_to_set = correction * value_to_set
                     abs_value_to_set = math.fabs(value_to_set)
                     abs_value_to_set += MIN_MOVING_VOLTAGE
