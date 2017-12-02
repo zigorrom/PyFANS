@@ -283,6 +283,7 @@ class Experiment:
         if self.need_exit:
             return
         
+        # utilize here with statement to be sure all files are properly opened and closed
         self.open_measurement()
         
         #assert isinstance(self.experiment_settings, ExperimentSettings)
