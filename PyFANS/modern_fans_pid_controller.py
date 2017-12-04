@@ -33,7 +33,7 @@ class FANS_PID:
 
         self.last_error = 0.0
         self.last_error_array = np.zeros(points_to_check_error)
-        self.error_change_array = np.zeros(10*points_to_check_error)
+        self.error_change_array = np.zeros(10*points_to_check_error) # 10*points_to_check_error
         self.updates_counter = 0
 
         self.int_error = 0.0
@@ -85,7 +85,7 @@ class FANS_PID:
             self.error_change_array[0] = delta_error
             print("current value {2} last error {0}; delta_error {1}".format(error,delta_error, current_value))
             if self.updates_counter >= self._points_to_check_error:
-                average_error = np.std(self.last_error_array) #np.sqrt(np.mean(np.power(self.last_error_array,2))) #np.fabs(np.average(self.last_error_array))
+                average_error = np.sqrt(np.mean(np.power(self.last_error_array,2))) #np.std(self.last_error_array) #np.sqrt(np.mean(np.power(self.last_error_array,2))) #np.fabs(np.average(self.last_error_array))
                 average_delta_error = np.std(self.error_change_array) # np.fabs(np.average(self.error_change_array))
                 print("last average error {0}; average delta_error {1}".format(average_error, average_delta_error))
                 if average_error<= self.desired_error:
