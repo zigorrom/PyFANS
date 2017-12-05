@@ -680,7 +680,8 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
 
         pid = mfpid.FANS_PID(self._Kp, self._Ki, self._Kd,self.DESIRED_ERROR, points_to_check_error = 100) #self.pid_controller
         pid.sampling_time = 0.001
-        pid.clear()
+        #pid.clear()
+        pid.guard_value = MAX_MOVING_VOLTAGE
         pid.desired_error = self.DESIRED_ERROR
         current_polarity = None
         
@@ -757,7 +758,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
                 additional_output_channel.analog_write(drain_switch_voltage)
                 
-            VOLTAGE_SET_DIRECTION = 1 # ABS_VOLTAGE_INCREASE_DIRECTION if math.fabs(sample_voltage) < math.fabs(voltage) else -ABS_VOLTAGE_INCREASE_DIRECTION
+            VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if math.fabs(sample_voltage) < math.fabs(voltage) else -ABS_VOLTAGE_INCREASE_DIRECTION
 
             #voltage  = math.fabs(voltage)
             pid.SetPoint = voltage
@@ -822,15 +823,15 @@ def test_pid_smu():
                    
 
                    ) #main
-    smu.Kp = 3
-    smu.Ki = 0 #0.01 #0.5#10000
-    smu.Kd = 0 #0.5 #  0.05
-
+    smu.Kp = 4
+    smu.Ki = 0.025 # 0.01 #0.01 #0.5#10000
+    smu.Kd = 100 #10 #0.5 #  0.05
+    
     smu.set_smu_parameters(100, 100000)
     smu.init_smu_mode()
 
     try:
-        smu.smu_set_drain_source_voltage(-0.5)
+        smu.smu_set_drain_source_voltage(0.5)
         #smu.smu_set_drain_source_voltage(0)
 
     except Exception as e:

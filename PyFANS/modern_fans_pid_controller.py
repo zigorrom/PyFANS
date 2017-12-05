@@ -171,6 +171,8 @@ class FANS_PID:
     
     @guard_value.setter
     def guard_value(self, value):
+        if isinstance(value, int):
+            value = float(value)
         assert isinstance(value, float)
         self.guard = value
 
