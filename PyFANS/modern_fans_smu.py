@@ -372,7 +372,7 @@ class FANS_SMU:
             print("current: {0}; goal: {1};to set: {2};".format(current_value,voltage, value_to_set))    
             output_channel.analog_write(value_to_set)
             #output_channel.ao_voltage = value_to_set 
-
+        output_channel.analog_write(0)
 
    
 
@@ -564,6 +564,10 @@ class FANS_SMU_Specialized(FANS_SMU):
         ref_time = time.time()
         VoltageSetError = FANS_VOLTAGE_SET_ERROR
         VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+
+        MAX_ALLOWED_ITERATIONS = 1000
+        iteration_counter = 0
+
         while True:
             res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
             sample_voltage = res[drain_feedback]
@@ -586,8 +590,13 @@ class FANS_SMU_Specialized(FANS_SMU):
                     abs_distance = math.fabs(sample_voltage - voltage)
 
                     print("current distanse: {0}, trust_error: {1}, count: {2}, value: {3}".format(abs_distance, VoltageSetError, i, sample_voltage))
+                    iteration_counter += 1
+                    if iteration_counter > MAX_ALLOWED_ITERATIONS:
+                        break
+
                     if abs_distance > VoltageSetError:
                         condition_sattisfied = False
+                        iteration_counter = 0
                         break
 
                 if condition_sattisfied:
@@ -605,6 +614,10 @@ class FANS_SMU_Specialized(FANS_SMU):
             elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
                 fine_tuning = True
                 value_to_set = pid_voltage_settings_function(sample_voltage,voltage,True)
+                iteration_counter += 1
+                if iteration_counter > MAX_ALLOWED_ITERATIONS:
+                        break
+
                 
             value_to_set = VOLTAGE_SET_DIRECTION * value_to_set
             abs_value_to_set = math.fabs(value_to_set)
@@ -613,7 +626,7 @@ class FANS_SMU_Specialized(FANS_SMU):
 
             value_to_set = math.copysign(abs_value_to_set, value_to_set)
             output_channel.analog_write(value_to_set)
-
+        output_channel.analog_write(0)
     #def __set_drain_source_voltage(self,voltage, voltage_set_channel, relay_channel, feedback_channel, additional_channel = None, additional_control_voltage = 0.0):
     #    assert isinstance(voltage, float) or isinstance(voltage, int)
     #    assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS)
