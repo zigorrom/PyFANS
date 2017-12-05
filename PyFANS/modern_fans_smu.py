@@ -700,13 +700,10 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
             output_channel = None
             additional_output_channel = None
             
-            #if isinstance(drain_switch_channel, mfc.FANS_AO_CHANNELS):
             output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
             assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
             assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
             additional_output_channel.analog_write(drain_switch_voltage)
-            #else:
-            #    output_channel = self._fans_controller.get_fans_output_channel(drain_motor)
             assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
 
             res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
@@ -750,8 +747,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 #switch polarity
                 current_polarity = -current_polarity
         
-                rel_ch = self._fans_controller.get_fans_output_channel(drain_relay) #.fans_ao_switch.select_channel(relay_channel)
-                #assert isinstance(rel_ch, mfc.FANS_AO_CHANNEL)
+                rel_ch = self._fans_controller.get_fans_output_channel(drain_relay)
                 rel_ch.analog_write(current_polarity)
                 time.sleep(0.5)
                 rel_ch.analog_write(0)
@@ -761,16 +757,9 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                 assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
                 additional_output_channel.analog_write(drain_switch_voltage)
                 
+            VOLTAGE_SET_DIRECTION = 1 # ABS_VOLTAGE_INCREASE_DIRECTION if math.fabs(sample_voltage) < math.fabs(voltage) else -ABS_VOLTAGE_INCREASE_DIRECTION
 
-                #self.__set_voltage_polarity(current_polarity, drain_motor, drain_relay, drain_switch_channel, drain_switch_voltage)
-                
-            #else:
-                #set desired voltage
-
-            #VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if current_polarity == FANS_POSITIVE_POLARITY else -ABS_VOLTAGE_INCREASE_DIRECTION
-            VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if sample_voltage < voltage else -ABS_VOLTAGE_INCREASE_DIRECTION
-
-            voltage  = math.fabs(voltage)
+            #voltage  = math.fabs(voltage)
             pid.SetPoint = voltage
             ref_time = time.time()
             try:
@@ -783,7 +772,7 @@ class FANS_SMU_PID(FANS_SMU_Specialized):
                     if correction <= 1:
                         correction = 1
 
-                    sample_voltage = math.fabs(sample_voltage)
+                    #sample_voltage = math.fabs(sample_voltage)
 
                     current_time = time.time() - ref_time
                     test_file.write("{0}\t{1}\n".format(current_time,sample_voltage))
@@ -841,7 +830,7 @@ def test_pid_smu():
     smu.init_smu_mode()
 
     try:
-        smu.smu_set_drain_source_voltage(0.5)
+        smu.smu_set_drain_source_voltage(-0.5)
         #smu.smu_set_drain_source_voltage(0)
 
     except Exception as e:
@@ -894,25 +883,25 @@ def fans_test_2():
         #    time.sleep(0.5)
 
         smu.smu_set_drain_source_voltage(0.1)
-        for vg in np.arange(-2,2,0.5):
-          print("setting gate")
-          smu.smu_set_gate_voltage(vg)
-          print(smu.read_all_parameters())
+        #for vg in np.arange(-2,2,0.5):
+        #  print("setting gate")
+        #  smu.smu_set_gate_voltage(vg)
+        #  print(smu.read_all_parameters())
           
-          time.sleep(2)
+        #  time.sleep(2)
 
-        smu.smu_set_drain_source_voltage(1)
-        smu.smu_set_gate_voltage(1) 
-        smu.smu_set_drain_source_voltage(-1)
-        smu.smu_set_gate_voltage(-1)
+        #smu.smu_set_drain_source_voltage(1)
+        #smu.smu_set_gate_voltage(1) 
+        #smu.smu_set_drain_source_voltage(-1)
+        #smu.smu_set_gate_voltage(-1)
 
-        smu.smu_set_drain_source_voltage(0)
-        smu.smu_set_gate_voltage(0)
+        #smu.smu_set_drain_source_voltage(0)
+        #smu.smu_set_gate_voltage(0)
 
 
-        print("finish")
-        smu.smu_set_drain_source_voltage(-1)
-        print(smu.read_all_parameters())
+        #print("finish")
+        #smu.smu_set_drain_source_voltage(-1)
+        #print(smu.read_all_parameters())
     except Exception as e:
         raise
         print(str(e))
