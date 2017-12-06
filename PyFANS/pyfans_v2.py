@@ -488,6 +488,32 @@ class ProcessingThread(QtCore.QThread):
 
         self.alive = False
 
+#import pywhatsapp as wa
+
+#class WhatsAppSender:
+#    wa_config = "wa.cfg"
+
+#    def __init__(self):
+#        self.user = None
+#        self.pwd = None
+#        self.wa_client = None
+#        with open(self.wa_config) as cfg:
+#            self.user = cfg.readline()
+#            self.pwd = cfg.readline()
+
+#        if self.user and self.pwd:
+#            self.wa_client = wa.Client(login = self.user, password = self.pwd)
+
+
+#    def send_message(self, message):
+#        assert isinstance(message, str)
+#        if self.wa_client:
+#            self.wa_client.send_message(self.user, message)
+
+#    def send_hello(self):
+#        pass
+
+
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
     def __init__(self, view):
@@ -508,6 +534,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer.setInterval(50)
         self.ui_refresh_timer.timeout.connect(self.update_ui)
 
+        #self.wa = WhatsAppSender()
         #self.initialize_experiment()
 
     def load_settings(self):
@@ -617,11 +644,14 @@ class FANS_UI_Controller(QtCore.QObject):
         experiment_name = params.get("experiment name")
         msg = "Experiment \"{0}\" started".format(experiment_name)
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
+        #self.wa.send_message(msg)
 
     def on_experiment_finished(self):
         msg = "Experiment finished"
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
+        #self.wa.send_message(msg)
         self.stop_experiment()
+        
 
     def on_measurement_started(self, params):
         measurement_name = params.get("measurement_name")

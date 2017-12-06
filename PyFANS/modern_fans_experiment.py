@@ -233,6 +233,8 @@ class Experiment:
     def set_voltages_to_zero(self):
         self.set_drain_source_voltage(0)
         self.set_front_gate_voltage(0)
+        #self.
+
 
     def handle_measurement_abort(self):
         raise NotImplementedError()
