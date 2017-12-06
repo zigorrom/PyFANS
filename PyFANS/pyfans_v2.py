@@ -495,11 +495,10 @@ class ProcessingThread(QtCore.QThread):
 
 #    def __init__(self):
 #        self.user = None
-#        self.pwd = None
 #        self.wa_client = None
 #        with open(self.wa_config) as cfg:
 #            self.user = cfg.readline()
-#            self.pwd = cfg.readline()
+            
 
 #        if self.user and self.pwd:
 #            self.wa_client = wa.Client(login = self.user, password = self.pwd)
