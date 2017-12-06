@@ -512,6 +512,94 @@ class ProcessingThread(QtCore.QThread):
 #    def send_hello(self):
 #        pass
 
+emailAuthBase, emailAuthForm = uic.loadUiType("UI_email_auth.ui")
+class EmailAuthForm(emailAuthBase, emailAuthForm):
+    #email_cfg = "em.cfg"
+
+    username = uih.bind("ui_login", "text", str)
+    password = uih.bind("ui_password", "text", str)
+
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+
+import smtplib
+
+class EmailSender:
+    email_cfg = "em.cfg"
+    message_format = """
+    From: {f}
+    To: {t}
+    Subject: {s}
+    {msg}
+    """
+    def __init__(self):
+        self._server = ""
+        self._my_address = ""
+        self._login = ""
+        self._password = ""
+        self._login_successful = False
+        
+
+        with open("em.cfg") as cfg:
+            self._server = cfg.readline().rstrip()
+            self._my_address = cfg.readline().rstrip()
+
+    def initialize(self, login, password):
+        assert isinstance(login, str)
+        assert isinstance(password, str)
+        try:
+            server = smtplib.SMTP(self._server)
+            res_code, res_message = server.starttls()
+            assert res_code == 220, "SMTP is not ready"
+            res_code, res_message = server.login(login, password)
+            assert res_code == 235, "Authentication unseccessful"
+            res_code, res_message = server.quit()
+            assert res_code == 221, "Quit error"
+            self._login_successful = True
+            self._login = login
+            self._password = password
+            print("email login successful")
+
+        except Exception as e:
+            print(str(e))
+            self._login_successful = False
+            print("email login failed")
+        finally:
+            return self._login_successful 
+
+    def send_message(self, subject, message):
+        try:
+            assert self._login_successful, "Initialize first"
+            server = smtplib.SMTP(self._server)
+            res_code, res_message = server.starttls()
+            assert res_code == 220, "SMTP is not ready"
+            res_code, res_message = server.login(self._login, self._password)
+            assert res_code == 235, "Authentication unseccessful"
+            res_code, res_message = server.mail(self._my_address)
+            assert res_code == 250, "Sender FAILURE"
+            res_code, res_message = server.rcpt(self._my_address)
+            assert res_code == 250, "Sender FAILURE"
+
+            message = self.message_format.format(f = self._my_address, t = self._my_address, s = subject, msg = message)
+
+            res_code, res_message = server.data(message)
+            assert res_code == 250, "Message sending error"
+            res_code, res_message = server.quit()
+            assert res_code == 221, "Quit error"
+            print("message is queued")
+            return True
+            
+        except Exception as e:
+            print(str(e))
+            return False
+
+        
+
+
+
+
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -532,9 +620,24 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer = QtCore.QTimer(self)
         self.ui_refresh_timer.setInterval(50)
         self.ui_refresh_timer.timeout.connect(self.update_ui)
+        self.email_sender = None
+        self.login_to_email_sender()
 
         #self.wa = WhatsAppSender()
         #self.initialize_experiment()
+
+    def login_to_email_sender(self):
+        dialog = EmailAuthForm()
+        result = dialog.exec_()
+        if result:
+            self.email_sender = EmailSender()
+            result = self.email_sender.initialize(dialog.username, dialog.password)
+            if result:
+                self.email_sender.send_message("FANS LOGIN", "You are logged in as a FANS user")
+
+    def send_message_via_email(self, message):
+        if self.email_sender:
+            self.email_sender.send_message("FANS Message", message)
 
     def load_settings(self):
         self.load_settings_from_file()
@@ -644,6 +747,7 @@ class FANS_UI_Controller(QtCore.QObject):
         msg = "Experiment \"{0}\" started".format(experiment_name)
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
+        self.send_message_via_email(msg)
 
     def on_experiment_finished(self):
         msg = "Experiment finished"
