@@ -343,32 +343,6 @@
          </property>
         </widget>
        </item>
-       <item row="26" column="1" colspan="5">
-        <widget class="QFrame" name="frame_2">
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QPushButton" name="ui_startButton">
-            <property name="text">
-             <string>Start</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="ui_stopButton">
-            <property name="text">
-             <string>Stop</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
        <item row="23" column="1" colspan="6">
         <widget class="QGroupBox" name="groupBox">
          <property name="sizePolicy">
@@ -625,6 +599,32 @@
          </property>
         </widget>
        </item>
+       <item row="26" column="1" colspan="6">
+        <widget class="QFrame" name="frame_2">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="ui_startButton">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="ui_stopButton">
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -636,7 +636,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
