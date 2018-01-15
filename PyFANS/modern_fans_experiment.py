@@ -280,6 +280,11 @@ class Experiment:
     def perform_non_gated_single_value_measurement(self):
         raise NotImplementedError()
 
+    def assert_experiment_abort(self):
+        raise NotImplementedError()
+
+    def report_progress(self, progress):
+        raise NotImplementedError()
 
     ##replace name to prepare_single_value_measurement
     def single_value_measurement(self, drain_source_voltage, gate_voltage):
@@ -705,10 +710,6 @@ class FANSExperiment(Experiment):
                 f, psd = periodogram(data, fs)
                 self.update_spectrum(psd,1,1)
 
-                if write_timetrace_confition() :
-                    self._experiment_writer.write_timetrace_data(data)
-                    seconds_counter += time_step_sec
-
                 if new_fill_value % fs == 0:
                     decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
                     f, psd = periodogram(decimated, new_fs)
@@ -716,6 +717,10 @@ class FANSExperiment(Experiment):
                     fill_value = 0
                     counter+=1
                
+                if write_timetrace_confition() :
+                    self._experiment_writer.write_timetrace_data(data)
+                    seconds_counter += time_step_sec
+
             except Exception as e:
                 print(e)
                 break
