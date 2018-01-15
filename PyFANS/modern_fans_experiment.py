@@ -231,8 +231,9 @@ class Experiment:
 
         
     def set_voltages_to_zero(self):
-        self.set_drain_source_voltage(0)
-        self.set_front_gate_voltage(0)
+        print("setting to zero is off")
+        #self.set_drain_source_voltage(0)
+        #self.set_front_gate_voltage(0)
         #self.
 
 
