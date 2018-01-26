@@ -132,9 +132,9 @@ class Experiment:
         #self._calibration.init_values()
         #pass
     
-    def assert_need_exit(self):
-        if self.need_exit:
-            raise StopExperiment("Experiment stop was raised")
+    #def assert_need_exit(self):
+    #    if self.need_exit:
+    #        raise StopExperiment("Experiment stop was raised")
 
     def get_meas_ranges(self):
         fg_range = self.experiment_settings.vfg_range
@@ -289,16 +289,19 @@ class Experiment:
         raise NotImplementedError()
 
     def assert_experiment_abort(self):
-        raise NotImplementedError()
+        if self.need_exit:
+            raise StopExperiment()
+        #raise NotImplementedError()
 
     def report_progress(self, progress):
         raise NotImplementedError()
 
     ##replace name to prepare_single_value_measurement
     def single_value_measurement(self, drain_source_voltage, gate_voltage):
-        if self.need_exit:
-            return
-        
+        #if self.need_exit:
+        #    return
+        self.assert_experiment_abort()
+
         # utilize here with statement to be sure all files are properly opened and closed
         self.open_measurement()
         
@@ -327,8 +330,10 @@ class Experiment:
 
     ##replace name to prepare_non_gated_single_value_measurement
     def non_gated_single_value_measurement(self, drain_source_voltage):
-        if self.need_exit:
-            return
+        self.assert_experiment_abort()
+        #self.assert_need_exit()
+        #if self.need_exit:
+        #    return
         self.open_measurement()
         
         if self.experiment_settings.use_automated_voltage_control:
