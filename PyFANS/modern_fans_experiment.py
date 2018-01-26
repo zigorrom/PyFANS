@@ -32,6 +32,8 @@ import measurement_data_structures as mds
 #    assert (number>0 and number<17),"Wrong channel number!"
 #    return mfans.FANS_AO_CHANNELS(number)
 
+class StopExperiment(Exception):
+    pass
 
 
 class Experiment:
@@ -174,6 +176,9 @@ class Experiment:
                     self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
             else:
                 raise ValueError("range handlers are not properly defined")
+
+        except StopExperiment:
+            print("Stop experiment exception raised")
         except Exception as exc:
             print(str(exc))
             #pass
@@ -209,6 +214,9 @@ class Experiment:
                      self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
             else:
                 raise ValueError("range handlers are not properly defined")
+
+        except StopExperiment:
+            print("Stop experiment exception raised")
         except:
             pass
         finally:
