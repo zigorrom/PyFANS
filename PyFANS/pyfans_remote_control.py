@@ -7,6 +7,10 @@ from PIL import Image
 from PIL.ImageQt import ImageQt
 import pyfans_v2 as pyf
 from flask import Flask
+from flask import render_template
+from flask_wtf import FlaskForm
+from wtforms import StringField, BooleanField, SubmitField
+from wtforms.validators import DataRequired
 import socket
 
 qr = qrcode.QRCode(
@@ -59,6 +63,16 @@ class ImageLabel(QtGui.QLabel):
         self.pix = PILimageToQPixmap(img)
         self.setPixmap(self.pix)
 
+def get_file(filename):
+    with open(filename, "r") as file:
+        return file.read()
+
+class FANS_ControlWebView(FlaskForm):
+    measurement_name = StringField("MeasurementName", validators=[DataRequired()])
+    experiment_name = StringField("ExperimentName", validators=[DataRequired()])
+    start_experiment = SubmitField("Start Experiment")
+
+
 
 class FANS_RemoteController:
     def __init__(self, fans_ui_controller = None):
@@ -79,29 +93,18 @@ class FANS_RemoteController:
         return self._ip_addresses
 
     def index(self):
-        return """
-        <!DOCTYPE html>
-<head>
-	<title>HTML and CSS "Hello World"</title>
-	<style>		
-		h1 {
-			color: #C26356;
-			font-size: 60px;
-			font-family: Menlo, Monaco, fixed-width;
-		}
-	</style>
-</head>
-<body>
-	<h1>Hello World Example</h1>
-</body>
-</html>
-        """
+        form  = FANS_ControlWebView()
+        return render_template("index.html", form = form)
+        #content = get_file("index.html")
+        #return content
 
-        return self._test_var
+        #return self._test_var
 
     def initialize_flask_app(self):
         self.flask_app = Flask("FANS controller") 
         self.flask_app.add_url_rule("/", "index", self.index)
+
+
 
     def initialize_list_of_ip_addresses(self):
         hostname=socket.gethostname()   

@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="iso-8859-1"/>
+    <title>PyFANS</title>
+</head>
+<body>
+    <h1>Welcome to PyFANS remote control page!</h1>
+    <form action="" method="post">
+        <div style="border: 2px solid #000000; display: inline-block" >
+            <h1> Save Data Details</h1>
+            <table>
+                <tr>
+                    <td>{{form.experiment_name.label}}</td>
+                    <td>
+                        {{form.experiment_name(size=32)}}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>{{form.measurement_name.label}}</td>
+                    <td>
+                        {{form.measurement_name(size=32)}}
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td colspan="2">
+                        {{form.start_experiment()}}
+                    </td>
+                </tr>
+                
+            </table>
+        </div>
+    </form>
+</body>
+</html>
