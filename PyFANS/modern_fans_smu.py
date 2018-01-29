@@ -440,10 +440,12 @@ class FANS_SMU:
 
 
 class VoltageSetter(object):
+    COARSE_MODE, FINE_MODE = range(2)
     def __init__(self,voltage):
         self.voltage_to_set = voltage
         self.current_voltage = 0
         self.correction_coefficient = 1
+        self.mode = COARSE_MODE
 
     def move_to_zero(self):
         pass
@@ -472,8 +474,12 @@ class VoltageSetter(object):
     def switch_to_polarity(self,polarity):
         self.move_to_zero()
 
+    def recalculate_correction_coefficient(self):
+        pass
+
     def read_current_voltage(self):
         value = 0
+        self.recalculate_correction_coefficient()
         self.current_voltage = value
         return value
 
