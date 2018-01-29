@@ -438,78 +438,214 @@ class FANS_SMU:
                 self.SAMPLE_RESISTANCE_VAR:resistance}
         #return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
 
+class MaxIterationReachedError(Exception):
+    pass
 
-class VoltageSetter(object):
-    COARSE_MODE, FINE_MODE = range(2)
+class IterationCounter(object):
+    def __init__(self, max_iteration, exception_to_call = None):
+        self._max_iteration = max_iteration
+        self._current_index = 0
+        self._exception_to_call = exception_to_call
+
+    @property
+    def max_iteration(self):
+        return self._max_iteration
+
+    @max_iteration.setter
+    def max_iteration(self,value):
+        assert isinstance(value, int), "max iteration can only be integer"
+        self._max_iteration = value
+
+    @property
+    def current_index(self):
+        return self._current_index
+
+    def increment(self):
+        self._current_index += 1
+        if self._current_index > self._max_iteration:
+            self.__call_exception()
+            #raise MaxIterationReachedError()
+
+    def __call_exception(self):
+        if self._exception_to_call:
+            self._exception_to_call()
+
+    def reset(self):
+        self._current_index = 0
+
+
+
+    
+class DesiredErrorReachedError(Exception):
+    pass
+
+class FANS_VoltageSetter(object):
+    COARSE_MODE, FINE_MODE, STABILIZATION_MODE = range(3)
+    ABS_VOLTAGE_INCREASE_DIRECTION = -1
+    ABS_VOLTAGE_DECREASE_DIRECTION = 1
+    ZERO_VOLTAGE_INTERVAL = 0.01
+    NEGATIVE_POLARITY, POSITIVE_POLARITY = (-1,1)
+    STABILIZATION_COUNTER = 50
+    MAX_ITERATIONS = 100*STABILIZATION_COUNTER
+
+
     def __init__(self,voltage):
         self.voltage_to_set = voltage
         self.current_voltage = 0
         self.correction_coefficient = 1
         self.mode = COARSE_MODE
+        self.current_polarity = self.POSITIVE_POLARITY
+        self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
+        self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
+
+    def reset(self):
+        self.current_voltage = 0
+        self.correction_coefficient = 1
+        self.mode = self.COARSE_MODE
+        self.current_polarity = self.POSITIVE_POLARITY
+        self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
+        self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
 
     def move_to_zero(self):
         pass
 
-    def move_from_zero(self):
+    def move_from_zero_trust_interval(self):
         pass
 
     def voltage_under_zero_trust_interval(self, current_voltage):
-        if current_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
+        if current_voltage < self.ZERO_VOLTAGE_INTERVAL:
             return True
         else:
             return False
 
     def check_polarity(self, current_voltage):
+        """Returns tuple with fields: need_to_switch_polarity - bool; polarity_to_switch - FANS_POSITIVE_POLARITY or FANS_NEGATIVE_POLARITY.
+        When need_to_switch_polarity==True - returns polarity to which it shoud be switched.
+        When need_to_switch_polarity==True - returns current polarity
+        """
         need_to_switch_polarity = False
         polarity_to_switch = None
         if self.voltage_to_set * current_voltage < 0:
             need_to_switch_polarity = True
             if current_voltage >= 0:
-                polarity_to_switch = FANS_POSITIVE_POLARITY
+                polarity_to_switch = self.POSITIVE_POLARITY
             else:
-                polarity_to_switch = FANS_NEGATIVE_POLARITY
-       
+                polarity_to_switch = self.NEGATIVE_POLARITY
+        else:
+            if current_voltage < 0:
+                polarity_to_switch = self.NEGATIVE_POLARITY
+            else:
+                polarity_to_switch = self.POSITIVE_POLARITY
+
         return (need_to_switch_polarity, polarity_to_switch)
 
     def switch_to_polarity(self,polarity):
         self.move_to_zero()
 
+
     def recalculate_correction_coefficient(self):
-        pass
+        return 1
 
-    def read_current_voltage(self):
-        value = 0
-        self.recalculate_correction_coefficient()
-        self.current_voltage = value
-        return value
+    def read_feedback_voltage(self):
+        raise NotImplementedError()
+        #value = 0
+        #self.recalculate_correction_coefficient()
+        #self.current_voltage = value
+        #return value
 
-    def assert_max_iteration(self):
-        pass
+    def set_mooving_voltage(self, voltage):
+        raise NotImplementedError()
 
-    def assert_error_increasing(self):
-        pass
+    def voltage_setting_function(current_value, set_value, correction_coefficient = 1):
+    # fermi-dirac-distribution
+        result = 0
+        try:
+            diff = math.fabs(current_value - set_value)
+            result = (MAX_MOVING_VOLTAGE + (MIN_MOVING_VOLTAGE-MAX_MOVING_VOLTAGE)/(1+math.pow(diff/X0_VOLTAGE_SET,POWER_VOLTAGE_SET)))
+            if result < MIN_MOVING_VOLTAGE:
+                result = MIN_MOVING_VOLTAGE
+            elif result> MAX_MOVING_VOLTAGE:
+                result = MAX_MOVING_VOLTAGE
+            result = correction_coefficient * result
 
-    def assert_achived_desired_error(self):
-        pass
-    
-    def assert_wrong_polarity_error(self):
-        pass
+        except ZeroDivisionError as err:
+            result = 0
+
+        return result
+
+    def voltage_set_sign_calculation(self, voltage_to_set, current_voltage, current_polarity):
+        assert isinstance(voltage_to_set, (int,float)) and isinstance(current_voltage, (int,float)) and isinstance(current_polarity, (int,float)), "Value error"
+        assert voltage_to_set*current_voltage >= 0, "Switch polarity first"
+
+        sign = math.copysign(1,self.ABS_VOLTAGE_INCREASE_DIRECTION * (current_voltage - voltage_to_set) * current_polarity)
+        return sign
+        #sign = 
+        #if voltage_to_set * current_voltage >= 0:
+        #    voltage_to_set = math.fabs(voltage_to_set)
+        #    current_voltage = math.fabs(current_voltage)
+        #    if current_polarity is self.POSITIVE_POLARITY:
+
+        #if voltage_to_set*current_voltage < 0:
+        #    raise ValueError("Voltage to set and current voltage must be same sign")
+
 
     def set_voltage(self):
-        value = self.read_current_voltage()
+        value = self.read_feedback_voltage()
         if self.voltage_under_zero_trust_interval(value):
-            self.move_from_zero()
+            self.move_from_zero_trust_interval()
 
         (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(value)
         if need_to_switch_polarity:
             self.switch_to_polarity(polarity_to_switch)
+        
+        self.current_polarity = polarity_to_switch
+        
+        VoltageSetError = FANS_VOLTAGE_SET_ERROR
+        VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+        try:
+            while True:
+                value = self.read_feedback_voltage()
+                difference = math.fabs(value - self.voltage_to_set)
+                motor_value_to_set = 0
+                if self.mode == self.COARSE_MODE:
+                    if difference < VoltageTuningInterval:
+                        self.mode = self.FINE_MODE
+                        continue
 
-        while True:
-            value = self.read_current_voltage()
+                    motor_value_to_set = self.voltage_setting_function(sample_voltage,voltage, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
+                    motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
+                    self.set_mooving_voltage(motor_value_to_set)
+
+                elif self.mode == self.FINE_MODE:
+                    if difference < VoltageSetError:
+                        self.mode = self.STABILIZATION_MODE
+                        self.set_mooving_voltage(0)
+                        continue
+
+                    motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
+                    self.set_mooving_voltage(motor_value_to_set)
+                    self.iteration_counter.increment()
+
+                elif self.mode == self.STABILIZATION_MODE:
+                    if difference < VoltageSetError:
+                        self.stabilization_counter.increment()
+                    else:
+                        self.mode =FINE_MODE
+                        self.stabilization_counter.reset()
+
+                else:
+                    raise ValueError("mode valiable has wrong value")
+        except DesiredErrorReachedError as err:
+            pass
+        except ValueError as err:
+            pass
+        except MaxIterationReachedError as err:
+            pass
+        finally:
+            pass
+            
 
 
-
-    
 
 
 
