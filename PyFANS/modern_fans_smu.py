@@ -1,4 +1,4 @@
-﻿import time
+﻿import timevopl
 import math
 
 import modern_fans_controller as mfc
@@ -14,7 +14,7 @@ DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
 #if value does not change the average of moving average list would be in some error range
 #if value is not changing raise error
 
-MIN_MOVING_VOLTAGE = 0.3
+MIN_MOVING_VOLTAGE = 0.6
 MAX_MOVING_VOLTAGE = 6
 VALUE_DIFFERENCE = MAX_MOVING_VOLTAGE-MIN_MOVING_VOLTAGE
 FD_CONST = -0.1
@@ -439,6 +439,73 @@ class FANS_SMU:
         #return {"Vds":ds_voltage,"Vgs":gate_voltage,"Vmain":main_voltage, "Ids":current,"Rs":resistance}
 
 
+class VoltageSetter(object):
+    def __init__(self,voltage):
+        self.voltage_to_set = voltage
+        self.current_voltage = 0
+        self.correction_coefficient = 1
+
+    def move_to_zero(self):
+        pass
+
+    def move_from_zero(self):
+        pass
+
+    def voltage_under_zero_trust_interval(self, current_voltage):
+        if current_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
+            return True
+        else:
+            return False
+
+    def check_polarity(self, current_voltage):
+        need_to_switch_polarity = False
+        polarity_to_switch = None
+        if self.voltage_to_set * current_voltage < 0:
+            need_to_switch_polarity = True
+            if current_voltage >= 0:
+                polarity_to_switch = FANS_POSITIVE_POLARITY
+            else:
+                polarity_to_switch = FANS_NEGATIVE_POLARITY
+       
+        return (need_to_switch_polarity, polarity_to_switch)
+
+    def switch_to_polarity(self,polarity):
+        self.move_to_zero()
+
+    def read_current_voltage(self):
+        value = 0
+        self.current_voltage = value
+        return value
+
+    def assert_max_iteration(self):
+        pass
+
+    def assert_error_increasing(self):
+        pass
+
+    def assert_achived_desired_error(self):
+        pass
+    
+    def assert_wrong_polarity_error(self):
+        pass
+
+    def set_voltage(self):
+        value = self.read_current_voltage()
+        if self.voltage_under_zero_trust_interval(value):
+            self.move_from_zero()
+
+        (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(value)
+        if need_to_switch_polarity:
+            self.switch_to_polarity(polarity_to_switch)
+
+        while True:
+            value = self.read_current_voltage()
+
+
+
+    
+
+
 
 
 class FANS_SMU_Specialized(FANS_SMU):
@@ -573,7 +640,7 @@ class FANS_SMU_Specialized(FANS_SMU):
             sample_voltage = res[drain_feedback]
             abs_sample_voltage = math.fabs(sample_voltage)
             main_voltage = res[main_feedback]
-            value_to_set = pid_voltage_settings_function(sample_voltage,voltage, correction_coefficient = main_voltage/sample_voltage)
+            value_to_set = voltage_setting_function(sample_voltage,voltage, correction_coefficient = main_voltage/sample_voltage)
             abs_distance = math.fabs(sample_voltage - voltage)
 
             if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
@@ -613,7 +680,7 @@ class FANS_SMU_Specialized(FANS_SMU):
 
             elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
                 fine_tuning = True
-                value_to_set = pid_voltage_settings_function(sample_voltage,voltage,True)
+                value_to_set = voltage_setting_function(sample_voltage,voltage,True)
                 iteration_counter += 1
                 if iteration_counter > MAX_ALLOWED_ITERATIONS:
                         break
@@ -1032,7 +1099,7 @@ def test_pid_smu():
 def fans_test_2():
     
     f = mfc.FANS_CONTROLLER("ADC");   #USB0::0x0957::0x1718::TW52524501::INSTR")
-    
+    f.daq_parent_device.debug_mode = False
     smu = FANS_SMU_Specialized(f, mfc.FANS_AO_CHANNELS.AO_CH_1,
                    mfc.FANS_AO_CHANNELS.AO_CH_4, 
                    mfc.FANS_AI_CHANNELS.AI_CH_6,
@@ -1052,7 +1119,7 @@ def fans_test_2():
         #    smu.read_all_test()
         #    time.sleep(0.5)
 
-        smu.smu_set_drain_source_voltage(0.5)
+        smu.smu_set_drain_source_voltage(0.45)
         #for vg in np.arange(-2,2,0.5):
         #  print("setting gate")
         #  smu.smu_set_gate_voltage(vg)

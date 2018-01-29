@@ -79,18 +79,31 @@ class SerialInstrument:
         return self.read_until_termination()
 
 class VisaInstrument:
-    def __init__(self, resource):
+    def __init__(self, resource, debug=True):
         rm = visa.ResourceManager()
         self.__instrument = rm.open_resource(resource, write_termination = '\n',read_termination='\n')
+        self.__debug_mode = debug
+
+    @property
+    def debug_mode(self):
+        return self.__debug_mode
+
+    @debug_mode.setter
+    def debug_mode(self, value):
+        if isinstance(value, bool):
+            self.__debug_mode = value
+
 
     def write(self,string):
         assert isinstance(string, str)
-        print("writing to device: {0}".format(string))
+        if self.__debug_mode:
+            print("writing to device: {0}".format(string))
         self.__instrument.write(string)
 
     def query(self,string):
         assert isinstance(string, str)
-        print("querying from device: {0}".format(string))
+        if self.__debug_mode:
+            print("querying from device: {0}".format(string))
         return self.__instrument.ask(string)
 
     def read(self):
