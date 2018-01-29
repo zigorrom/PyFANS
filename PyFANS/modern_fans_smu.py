@@ -493,12 +493,13 @@ class FANS_VoltageSetter(object):
 
     def __init__(self):#,voltage):
         #self.voltage_to_set = voltage
-        self.current_voltage = 0
-        self.correction_coefficient = 1
-        self.mode = COARSE_MODE
-        self.current_polarity = self.POSITIVE_POLARITY
-        self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
-        self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
+        self.reset()
+        #self.current_voltage = 0
+        #self.correction_coefficient = 1
+        #self.mode = COARSE_MODE
+        #self.current_polarity = self.POSITIVE_POLARITY
+        #self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
+        #self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
 
     def reset(self):
         self.current_voltage = 0
@@ -688,7 +689,6 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
         self.feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self.fans_controller, self.drain_source_feedback, self.main_feedback)
 
 
-
     def __prepare_feedback_voltage_measurement(self):
         self.output_channel, self.switch_drain_feedback_output = self.fans_controller.get_fans_output_channels(self.drain_source_motor, self.drain_source_switch_channel)
         assert self.output_channel != self.switch_drain_feedback_output, "Cannot use same channel for different functions"
@@ -700,16 +700,32 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
     #    pass
 
     def read_feedback_voltage(self):
-        return super().read_feedback_voltage()
+        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+        sample_voltage = res[self.drain_source_feedback]
+        main_voltage = res[self.main_feedback]
+        correction_coefficient = 1
+        try:
+            correction_coefficient = main_voltage/sample_voltage
+            if correction_coefficient < 1:
+                correction_coefficient = 1
+        except ZeroDivisionError:
+            correction_coefficient = 1
 
-    def set_mooving_voltage(self, voltage):
-        return super().set_moving_voltage(voltage)
+        self.set_correction_coefficient(correction_coefficient)
+
+        return sample_voltage
+        
+        #return super().read_feedback_voltage()
+
+    def set_moving_voltage(self, voltage):
+        self.output_channel.analog_write(voltage)
+
 
     def switch_to_polarity(self, polarity):
         #self.__prepare_polarity_switch()
         #switch polarities
         assert isinstance(self.drain_source_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
-        rel_ch = self.fans_controller.get_fans_output_channel(relay_channel) #.fans_ao_switch.select_channel(relay_channel)
+        rel_ch = self.fans_controller.get_fans_output_channel(self.drain_source_relay) #.fans_ao_switch.select_channel(relay_channel)
         rel_ch.analog_write(polarity)
         time.sleep(0.5)
         rel_ch.analog_write(0)
@@ -720,28 +736,51 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
         self.__prepare_feedback_voltage_measurement()
         return super().set_voltage(voltage_to_set)
 
-     #drain_motor = self.smu_ds_motor
-     #   drain_relay = self.smu_ds_relay
-     #   drain_feedback = self.smu_drain_source_feedback
-     #   drain_switch_channel = self._drain_source_switch_channel
-     #   drain_switch_voltage = self._drain_source_switch_voltage
+    
+class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
+    def __init__(self, fans_controller, gate_motor, gate_relay, gate_feedback):
+        super().__init__()
+        self.fans_controller = fans_controller
+        self.gate_motor = gate_motor
+        self.gate_relay = gate_relay
+        self.gate_feedback = gate_feedback
 
-     #   main_feedback = self.smu_main_feedback
-     #   feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
-        #output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
-        #assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-        #assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-        #additional_output_channel.analog_write(drain_switch_voltage)
-        #assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+        self.output_channel = None
 
-        #res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-        #sample_voltage = res[drain_feedback]
-        #abs_sample_voltage = math.fabs(sample_voltage)
-        #main_voltage = res[main_feedback]
+        self.feedback_channel = self.fans_controller.get_fans_channel_by_name(self.gate_feedback)#mfc.FANS_AI_MULTICHANNEL(self.fans_controller, self.drain_source_feedback, self.main_feedback)
 
 
+    def __prepare_feedback_voltage_measurement(self):
+        self.output_channel = self.fans_controller.get_fans_output_channel(self.gate_motor)
+        assert isinstance(self.output_channel, mfc.FANS_AO_CHANNEL)
+
+    #def __prepare_polarity_switch(self):
+    #    pass
+
+    def read_feedback_voltage(self):
+        gate_voltage = feedback_channel.analog_read() #self.analog_read(feedback_channel)
+        return gate_voltage
+        
+        #return super().read_feedback_voltage()
+
+    def set_moving_voltage(self, voltage):
+        self.output_channel.analog_write(voltage)
 
 
+    def switch_to_polarity(self, polarity):
+        #self.__prepare_polarity_switch()
+        #switch polarities
+        assert isinstance(self.drain_source_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
+        rel_ch = self.fans_controller.get_fans_output_channel(self.drain_source_relay) #.fans_ao_switch.select_channel(relay_channel)
+        rel_ch.analog_write(polarity)
+        time.sleep(0.5)
+        rel_ch.analog_write(0)
+        #return back to main channel
+        self.__prepare_feedback_voltage_measurement()
+
+    def set_voltage(self, voltage_to_set):
+        self.__prepare_feedback_voltage_measurement()
+        return super().set_voltage(voltage_to_set)
 
 
 class FANS_SMU_Specialized(FANS_SMU):
@@ -753,294 +792,17 @@ class FANS_SMU_Specialized(FANS_SMU):
         self._drain_source_switch_channel = drain_source_switch_channel
         self._drain_source_switch_voltage = drain_source_switch_voltage
 
+        self.drain_source_voltage_setter = FANS_DrainSourceVoltageSetter(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, drain_source_switch_channel, main_feedback, drain_source_switch_voltage)
+        self.gate_source_voltage_setter = FANS_GateSourceVoltageSetter(fans_controller, gate_motor, gate_relay, gate_feedback)
 
-    def __set_voltage_polarity(self, polarity, voltage_set_channel, relay_channel, additional_channel = None, additional_control_voltage = 0.0):
-        assert isinstance(relay_channel, mfc.FANS_AO_CHANNELS), "Wrong channel!"
-        assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS), "Wrong channel!"
-        assert isinstance(additional_control_voltage, float)
-        rel_ch = self._fans_controller.get_fans_output_channel(relay_channel) #.fans_ao_switch.select_channel(relay_channel)
-        #assert isinstance(rel_ch, mfc.FANS_AO_CHANNEL)
-        rel_ch.analog_write(polarity)
-        time.sleep(0.5)
-        rel_ch.analog_write(0)
-
-        if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
-            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(voltage_set_channel, additional_channel)
-            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-            additional_output_channel.analog_write(additional_control_voltage)
-        else:
-            self._fans_controller.get_fans_output_channel(voltage_set_channel)
 
     def smu_set_drain_source_voltage(self, voltage):
-        drain_motor = self.smu_ds_motor
-        drain_relay = self.smu_ds_relay
-        drain_feedback = self.smu_drain_source_feedback
-        drain_switch_channel = self._drain_source_switch_channel
-        drain_switch_voltage = self._drain_source_switch_voltage
+        self.drain_source_voltage_setter.reset()
+        self.drain_source_voltage_setter.set_voltage(voltage)
 
-        main_feedback = self.smu_main_feedback
-        feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
-        fine_tuning = False
-        current_polarity = None
-        
-        
-        stabilization_counter = 50
-
-        #str_name = ".".join(["pid_test_Kp{0}Ki{1}Kd{2}V{3}".format(self.Kp, self.Ki, self.Kd,voltage).replace(".","_").replace(",","_"),"dat"])
-
-        #with open(str_name,"w") as test_file:
-        # check if value is in the range of ZERO_TRUST_ERROR
-        # if it is there -> move to the direction of value increasing.
-        # check polarity
-        # check if desired value is the same polarity as current value
-        # if so = move to value
-        # else 
-        # move to zero 
-        # then switch polarity 
-        # set desired voltage
-
-        output_channel = None
-        additional_output_channel = None
-            
-        output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
-        assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-        assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-        additional_output_channel.analog_write(drain_switch_voltage)
-        assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
-
-        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-        sample_voltage = res[drain_feedback]
-        abs_sample_voltage = math.fabs(sample_voltage)
-        main_voltage = res[main_feedback]
-            
-        if abs_sample_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
-            # make small move to direction of increasing value to guess where we are in polarity terms
-            # important to do so before next block of code since it switches output channel off
-            #move to direction of increased value
-            increase_abs_voltage_control_value = ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE
-            output_channel.analog_write(increase_abs_voltage_control_value)
-            while abs_sample_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
-                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-                sample_voltage = res[drain_feedback]
-                abs_sample_voltage = math.fabs(sample_voltage)
-            output_channel.analog_write(0)
-              
-        current_polarity = FANS_NEGATIVE_POLARITY if sample_voltage < 0 else FANS_POSITIVE_POLARITY
-                      
-        #def set_zero_voltage_for_channel(output_channel, 
-                      
-        if sample_voltage * voltage < 0:
-            #desired value and current values are of different polarities
-            #set zero voltage
-            decrease_abs_voltage_control_value = ABS_VOLTAGE_DECREASE_DIRECTION * MAX_MOVING_VOLTAGE
-            error_check_length = 10
-            error_check_array = np.zeros(error_check_length)
-            error_check_counter = 0
-            output_channel.analog_write(decrease_abs_voltage_control_value)
-            while not ((np.std(error_check_array) < FANS_VOLTAGE_SET_ERROR) and (error_check_counter > error_check_length)):    #np.std(error_check_array) > self.DESIRED_ERROR or error_check_counter > error_check_length:
-                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-                sample_voltage = res[drain_feedback]
-                abs_sample_voltage = math.fabs(sample_voltage)
-                error_check_array  = np.roll(error_check_array,1)
-                error_check_array[0] = abs_sample_voltage
-                error_check_counter += 1 
-            output_channel.analog_write(0)
-                
-            #switch polarity
-            current_polarity = -current_polarity
-        
-            rel_ch = self._fans_controller.get_fans_output_channel(drain_relay)
-            rel_ch.analog_write(current_polarity)
-            time.sleep(0.5)
-            rel_ch.analog_write(0)
-
-            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
-            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-            additional_output_channel.analog_write(drain_switch_voltage)
-                
-        VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if math.fabs(sample_voltage) < math.fabs(voltage) else -ABS_VOLTAGE_INCREASE_DIRECTION
-
-        #voltage  = math.fabs(voltage)
-            
-        ref_time = time.time()
-        VoltageSetError = FANS_VOLTAGE_SET_ERROR
-        VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
-
-        MAX_ALLOWED_ITERATIONS = 1000
-        iteration_counter = 0
-
-        while True:
-            res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-            sample_voltage = res[drain_feedback]
-            abs_sample_voltage = math.fabs(sample_voltage)
-            main_voltage = res[main_feedback]
-            value_to_set = voltage_setting_function(sample_voltage,voltage, correction_coefficient = main_voltage/sample_voltage)
-            abs_distance = math.fabs(sample_voltage - voltage)
-
-            if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
-                # set high averaging, moving voltage to 0 and check condition again count times if is of return true if not repeat adjustment
-                output_channel.analog_write(0)
-                condition_sattisfied = True
-                for i in range(stabilization_counter):
-                    res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-                    sample_voltage = res[drain_feedback]
-                    abs_sample_voltage = math.fabs(sample_voltage)
-                    main_voltage = res[main_feedback]
-
-                    #current_value = self.analog_read(feedback_channel)
-                    abs_distance = math.fabs(sample_voltage - voltage)
-
-                    print("current distanse: {0}, trust_error: {1}, count: {2}, value: {3}".format(abs_distance, VoltageSetError, i, sample_voltage))
-                    iteration_counter += 1
-                    if iteration_counter > MAX_ALLOWED_ITERATIONS:
-                        break
-
-                    if abs_distance > VoltageSetError:
-                        condition_sattisfied = False
-                        iteration_counter = 0
-                        break
-
-                if condition_sattisfied:
-                    return True
-            #self.set_analog_read_averaging(fine_averaging)
-            #current_value = self.analog_read(feedback_channel)
-            #abs_distance = math.fabs(current_value - voltage)
-            #if abs_distance < VoltageSetError:
-            #    return True
-            ##for i in range(stabilization_counter):
-            ##    current_value = self.analog_read(feedback_channel)
-            #self.set_analog_read_averaging(coarse_averaging)
-
-
-            elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
-                fine_tuning = True
-                value_to_set = voltage_setting_function(sample_voltage,voltage,True)
-                iteration_counter += 1
-                if iteration_counter > MAX_ALLOWED_ITERATIONS:
-                        break
-
-                
-            value_to_set = VOLTAGE_SET_DIRECTION * value_to_set
-            abs_value_to_set = math.fabs(value_to_set)
-            if abs_value_to_set > MAX_MOVING_VOLTAGE:
-                abs_value_to_set = MAX_MOVING_VOLTAGE
-
-            value_to_set = math.copysign(abs_value_to_set, value_to_set)
-            output_channel.analog_write(value_to_set)
-        output_channel.analog_write(0)
-    #def __set_drain_source_voltage(self,voltage, voltage_set_channel, relay_channel, feedback_channel, additional_channel = None, additional_control_voltage = 0.0):
-    #    assert isinstance(voltage, float) or isinstance(voltage, int)
-    #    assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS)
-    #    assert isinstance(relay_channel, mfc.FANS_AO_CHANNELS)
-    #    assert isinstance(feedback_channel, mfc.FANS_AI_CHANNELS)
-    #    assert isinstance(additional_control_voltage, float)
-
-    #    output_channel = None
-    #    additional_output_channel = None
-
-    #    if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
-    #        output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(voltage_set_channel, additional_channel)
-    #        assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
-    #        assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
-    #        additional_output_channel.analog_write(additional_control_voltage)
-    #    else:
-    #        output_channel = self._fans_controller.get_fans_output_channel(voltage_set_channel)
-
-    #    #self._fans_controller.fans_ao_switch.select_channel(voltage_set_channel)
-    #    assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
-
-    #    #set read averaging to small value for fast acquisition
-    #    coarse_averaging = 20
-    #    fine_averaging = 50
-    #    stabilization_counter = 200
-
-    #    self.smu_averaging_number = coarse_averaging
-
-    #    prev_value = self.analog_read(feedback_channel)
-    #    fine_tuning = False
-    #    polarity_switched = False
-        
-    #    VoltageSetError = FANS_VOLTAGE_SET_ERROR
-    #    VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
-
-    #    # Adding here correction for ressitance relation
-    #    feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, self.smu_drain_source_feedback, self.smu_main_feedback)
-
-
-    #    if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL :
-    #        VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL
-    #        VoltageTuningInterval =  VoltageTuningInterval+VoltageSetError     #5*VoltageSetError   
-
-    #    while True: #continue_setting:    
-    #        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
-    #        current_value  = res[self.smu_drain_source_feedback]
-    #        main_voltage = res[self.smu_main_feedback]
-
-    #        #current_value = self.analog_read(feedback_channel)
-
-    #        if current_value*voltage<0 and not polarity_switched:
-    #            set_result = self.__set_drain_source_voltage(0, voltage_set_channel, relay_channel, feedback_channel,additional_channel, additional_control_voltage )
-        
-    #            if set_result:
-    #                polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
-    #                self.__set_voltage_polarity(polarity, voltage_set_channel, relay_channel, additional_channel, additional_control_voltage)
-    #                polarity_switched = True
-    #            else:
-    #                return set_result
-
-    #        value_to_set = voltage_setting_function(current_value,voltage, correction_coefficient = main_voltage/current_value)
-    #        abs_distance = math.fabs(current_value - voltage)
-
-    #        if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
-    #            # set high averaging, moving voltage to 0 and check condition again count times if is of return true if not repeat adjustment
-    #            output_channel.analog_write(0)
-    #            condition_sattisfied = True
-    #            for i in range(fine_averaging):
-    #                current_value = self.analog_read(feedback_channel)
-    #                abs_distance = math.fabs(current_value - voltage)
-
-    #                print("current distanse: {0}, trust_error: {1}, count: {2}, value: {3}".format(abs_distance, VoltageSetError, i, current_value))
-    #                if abs_distance > VoltageSetError:
-    #                    condition_sattisfied = False
-    #                    break
-
-    #            if condition_sattisfied:
-    #                return True
-    #            #self.set_analog_read_averaging(fine_averaging)
-    #            #current_value = self.analog_read(feedback_channel)
-    #            #abs_distance = math.fabs(current_value - voltage)
-    #            #if abs_distance < VoltageSetError:
-    #            #    return True
-    #            ##for i in range(stabilization_counter):
-    #            ##    current_value = self.analog_read(feedback_channel)
-    #            #self.set_analog_read_averaging(coarse_averaging)
-
-
-    #        elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
-    #            fine_tuning = True
-    #            value_to_set = voltage_setting_function(current_value,voltage,True)
-            
-            
-            
-    #        if polarity_switched:
-    #            abs_value = math.fabs(value_to_set)
-    #            if voltage * current_value < 0:
-    #                if voltage > 0:
-    #                    value_to_set = abs_value
-    #                else:
-    #                    value_to_set = -abs_value
-    #        print("current: {0}; goal: {1};to set: {2};".format(current_value,voltage, value_to_set))    
-    #        output_channel.analog_write(value_to_set)
-    #        #output_channel.ao_voltage = value_to_set 
-
-    #def smu_set_drain_source_voltage(self, voltage):
-    #    self.__set_drain_source_voltage(voltage, self.smu_ds_motor, self.smu_ds_relay, self.smu_drain_source_feedback, self._drain_source_switch_channel, self._drain_source_switch_voltage)
-
-    #def smu_set_gate_voltage(self, voltage):
-    #    return super().__set
-    
+    def smu_set_gate_voltage(self, voltage):
+        self.gate_source_voltage_setter.reset()
+        self.gate_source_voltage_setter.set_voltage(voltage)
 
     def read_all_test(self):
         drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
@@ -1068,6 +830,332 @@ class FANS_SMU_Specialized(FANS_SMU):
         result = super().read_all_parameters()
         drain_source_switch_channel.analog_write(0)
         return result
+
+
+#class FANS_SMU_Specialized(FANS_SMU):
+#    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback,  gate_motor, gate_relay, gate_feedback, main_feedback, drain_source_switch_channel, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE):
+#        super().__init__(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback,  gate_motor, gate_relay, gate_feedback, main_feedback)
+#        assert isinstance(drain_source_switch_channel, mfc.FANS_AO_CHANNELS)
+#        assert isinstance(drain_source_switch_voltage, float)
+
+#        self._drain_source_switch_channel = drain_source_switch_channel
+#        self._drain_source_switch_voltage = drain_source_switch_voltage
+
+
+#    def __set_voltage_polarity(self, polarity, voltage_set_channel, relay_channel, additional_channel = None, additional_control_voltage = 0.0):
+#        assert isinstance(relay_channel, mfc.FANS_AO_CHANNELS), "Wrong channel!"
+#        assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS), "Wrong channel!"
+#        assert isinstance(additional_control_voltage, float)
+#        rel_ch = self._fans_controller.get_fans_output_channel(relay_channel) #.fans_ao_switch.select_channel(relay_channel)
+#        #assert isinstance(rel_ch, mfc.FANS_AO_CHANNEL)
+#        rel_ch.analog_write(polarity)
+#        time.sleep(0.5)
+#        rel_ch.analog_write(0)
+
+#        if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
+#            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(voltage_set_channel, additional_channel)
+#            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+#            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+#            additional_output_channel.analog_write(additional_control_voltage)
+#        else:
+#            self._fans_controller.get_fans_output_channel(voltage_set_channel)
+
+#    def smu_set_drain_source_voltage(self, voltage):
+#        drain_motor = self.smu_ds_motor
+#        drain_relay = self.smu_ds_relay
+#        drain_feedback = self.smu_drain_source_feedback
+#        drain_switch_channel = self._drain_source_switch_channel
+#        drain_switch_voltage = self._drain_source_switch_voltage
+
+#        main_feedback = self.smu_main_feedback
+#        feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
+#        fine_tuning = False
+#        current_polarity = None
+        
+        
+#        stabilization_counter = 50
+
+#        #str_name = ".".join(["pid_test_Kp{0}Ki{1}Kd{2}V{3}".format(self.Kp, self.Ki, self.Kd,voltage).replace(".","_").replace(",","_"),"dat"])
+
+#        #with open(str_name,"w") as test_file:
+#        # check if value is in the range of ZERO_TRUST_ERROR
+#        # if it is there -> move to the direction of value increasing.
+#        # check polarity
+#        # check if desired value is the same polarity as current value
+#        # if so = move to value
+#        # else 
+#        # move to zero 
+#        # then switch polarity 
+#        # set desired voltage
+
+#        output_channel = None
+#        additional_output_channel = None
+            
+#        output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
+#        assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+#        assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+#        additional_output_channel.analog_write(drain_switch_voltage)
+#        assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+
+#        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#        sample_voltage = res[drain_feedback]
+#        abs_sample_voltage = math.fabs(sample_voltage)
+#        main_voltage = res[main_feedback]
+            
+#        if abs_sample_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
+#            # make small move to direction of increasing value to guess where we are in polarity terms
+#            # important to do so before next block of code since it switches output channel off
+#            #move to direction of increased value
+#            increase_abs_voltage_control_value = ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE
+#            output_channel.analog_write(increase_abs_voltage_control_value)
+#            while abs_sample_voltage < FANS_ZERO_VOLTAGE_INTERVAL:
+#                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#                sample_voltage = res[drain_feedback]
+#                abs_sample_voltage = math.fabs(sample_voltage)
+#            output_channel.analog_write(0)
+              
+#        current_polarity = FANS_NEGATIVE_POLARITY if sample_voltage < 0 else FANS_POSITIVE_POLARITY
+                      
+#        #def set_zero_voltage_for_channel(output_channel, 
+                      
+#        if sample_voltage * voltage < 0:
+#            #desired value and current values are of different polarities
+#            #set zero voltage
+#            decrease_abs_voltage_control_value = ABS_VOLTAGE_DECREASE_DIRECTION * MAX_MOVING_VOLTAGE
+#            error_check_length = 10
+#            error_check_array = np.zeros(error_check_length)
+#            error_check_counter = 0
+#            output_channel.analog_write(decrease_abs_voltage_control_value)
+#            while not ((np.std(error_check_array) < FANS_VOLTAGE_SET_ERROR) and (error_check_counter > error_check_length)):    #np.std(error_check_array) > self.DESIRED_ERROR or error_check_counter > error_check_length:
+#                res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#                sample_voltage = res[drain_feedback]
+#                abs_sample_voltage = math.fabs(sample_voltage)
+#                error_check_array  = np.roll(error_check_array,1)
+#                error_check_array[0] = abs_sample_voltage
+#                error_check_counter += 1 
+#            output_channel.analog_write(0)
+                
+#            #switch polarity
+#            current_polarity = -current_polarity
+        
+#            rel_ch = self._fans_controller.get_fans_output_channel(drain_relay)
+#            rel_ch.analog_write(current_polarity)
+#            time.sleep(0.5)
+#            rel_ch.analog_write(0)
+
+#            output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
+#            assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+#            assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+#            additional_output_channel.analog_write(drain_switch_voltage)
+                
+#        VOLTAGE_SET_DIRECTION = ABS_VOLTAGE_INCREASE_DIRECTION if math.fabs(sample_voltage) < math.fabs(voltage) else -ABS_VOLTAGE_INCREASE_DIRECTION
+
+#        #voltage  = math.fabs(voltage)
+            
+#        ref_time = time.time()
+#        VoltageSetError = FANS_VOLTAGE_SET_ERROR
+#        VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+
+#        MAX_ALLOWED_ITERATIONS = 1000
+#        iteration_counter = 0
+
+#        while True:
+#            res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#            sample_voltage = res[drain_feedback]
+#            abs_sample_voltage = math.fabs(sample_voltage)
+#            main_voltage = res[main_feedback]
+#            value_to_set = voltage_setting_function(sample_voltage,voltage, correction_coefficient = main_voltage/sample_voltage)
+#            abs_distance = math.fabs(sample_voltage - voltage)
+
+#            if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
+#                # set high averaging, moving voltage to 0 and check condition again count times if is of return true if not repeat adjustment
+#                output_channel.analog_write(0)
+#                condition_sattisfied = True
+#                for i in range(stabilization_counter):
+#                    res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#                    sample_voltage = res[drain_feedback]
+#                    abs_sample_voltage = math.fabs(sample_voltage)
+#                    main_voltage = res[main_feedback]
+
+#                    #current_value = self.analog_read(feedback_channel)
+#                    abs_distance = math.fabs(sample_voltage - voltage)
+
+#                    print("current distanse: {0}, trust_error: {1}, count: {2}, value: {3}".format(abs_distance, VoltageSetError, i, sample_voltage))
+#                    iteration_counter += 1
+#                    if iteration_counter > MAX_ALLOWED_ITERATIONS:
+#                        break
+
+#                    if abs_distance > VoltageSetError:
+#                        condition_sattisfied = False
+#                        iteration_counter = 0
+#                        break
+
+#                if condition_sattisfied:
+#                    return True
+#            #self.set_analog_read_averaging(fine_averaging)
+#            #current_value = self.analog_read(feedback_channel)
+#            #abs_distance = math.fabs(current_value - voltage)
+#            #if abs_distance < VoltageSetError:
+#            #    return True
+#            ##for i in range(stabilization_counter):
+#            ##    current_value = self.analog_read(feedback_channel)
+#            #self.set_analog_read_averaging(coarse_averaging)
+
+
+#            elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
+#                fine_tuning = True
+#                value_to_set = voltage_setting_function(sample_voltage,voltage,True)
+#                iteration_counter += 1
+#                if iteration_counter > MAX_ALLOWED_ITERATIONS:
+#                        break
+
+                
+#            value_to_set = VOLTAGE_SET_DIRECTION * value_to_set
+#            abs_value_to_set = math.fabs(value_to_set)
+#            if abs_value_to_set > MAX_MOVING_VOLTAGE:
+#                abs_value_to_set = MAX_MOVING_VOLTAGE
+
+#            value_to_set = math.copysign(abs_value_to_set, value_to_set)
+#            output_channel.analog_write(value_to_set)
+#        output_channel.analog_write(0)
+#    #def __set_drain_source_voltage(self,voltage, voltage_set_channel, relay_channel, feedback_channel, additional_channel = None, additional_control_voltage = 0.0):
+#    #    assert isinstance(voltage, float) or isinstance(voltage, int)
+#    #    assert isinstance(voltage_set_channel, mfc.FANS_AO_CHANNELS)
+#    #    assert isinstance(relay_channel, mfc.FANS_AO_CHANNELS)
+#    #    assert isinstance(feedback_channel, mfc.FANS_AI_CHANNELS)
+#    #    assert isinstance(additional_control_voltage, float)
+
+#    #    output_channel = None
+#    #    additional_output_channel = None
+
+#    #    if isinstance(additional_channel, mfc.FANS_AO_CHANNELS):
+#    #        output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(voltage_set_channel, additional_channel)
+#    #        assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+#    #        assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+#    #        additional_output_channel.analog_write(additional_control_voltage)
+#    #    else:
+#    #        output_channel = self._fans_controller.get_fans_output_channel(voltage_set_channel)
+
+#    #    #self._fans_controller.fans_ao_switch.select_channel(voltage_set_channel)
+#    #    assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+
+#    #    #set read averaging to small value for fast acquisition
+#    #    coarse_averaging = 20
+#    #    fine_averaging = 50
+#    #    stabilization_counter = 200
+
+#    #    self.smu_averaging_number = coarse_averaging
+
+#    #    prev_value = self.analog_read(feedback_channel)
+#    #    fine_tuning = False
+#    #    polarity_switched = False
+        
+#    #    VoltageSetError = FANS_VOLTAGE_SET_ERROR
+#    #    VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+
+#    #    # Adding here correction for ressitance relation
+#    #    feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, self.smu_drain_source_feedback, self.smu_main_feedback)
+
+
+#    #    if math.fabs(voltage) < FANS_ZERO_VOLTAGE_INTERVAL :
+#    #        VoltageSetError = FANS_ZERO_VOLTAGE_INTERVAL
+#    #        VoltageTuningInterval =  VoltageTuningInterval+VoltageSetError     #5*VoltageSetError   
+
+#    #    while True: #continue_setting:    
+#    #        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+#    #        current_value  = res[self.smu_drain_source_feedback]
+#    #        main_voltage = res[self.smu_main_feedback]
+
+#    #        #current_value = self.analog_read(feedback_channel)
+
+#    #        if current_value*voltage<0 and not polarity_switched:
+#    #            set_result = self.__set_drain_source_voltage(0, voltage_set_channel, relay_channel, feedback_channel,additional_channel, additional_control_voltage )
+        
+#    #            if set_result:
+#    #                polarity = FANS_NEGATIVE_POLARITY if voltage<0 else FANS_POSITIVE_POLARITY
+#    #                self.__set_voltage_polarity(polarity, voltage_set_channel, relay_channel, additional_channel, additional_control_voltage)
+#    #                polarity_switched = True
+#    #            else:
+#    #                return set_result
+
+#    #        value_to_set = voltage_setting_function(current_value,voltage, correction_coefficient = main_voltage/current_value)
+#    #        abs_distance = math.fabs(current_value - voltage)
+
+#    #        if abs_distance < VoltageSetError and fine_tuning: #FANS_VOLTAGE_SET_ERROR and fine_tuning:
+#    #            # set high averaging, moving voltage to 0 and check condition again count times if is of return true if not repeat adjustment
+#    #            output_channel.analog_write(0)
+#    #            condition_sattisfied = True
+#    #            for i in range(fine_averaging):
+#    #                current_value = self.analog_read(feedback_channel)
+#    #                abs_distance = math.fabs(current_value - voltage)
+
+#    #                print("current distanse: {0}, trust_error: {1}, count: {2}, value: {3}".format(abs_distance, VoltageSetError, i, current_value))
+#    #                if abs_distance > VoltageSetError:
+#    #                    condition_sattisfied = False
+#    #                    break
+
+#    #            if condition_sattisfied:
+#    #                return True
+#    #            #self.set_analog_read_averaging(fine_averaging)
+#    #            #current_value = self.analog_read(feedback_channel)
+#    #            #abs_distance = math.fabs(current_value - voltage)
+#    #            #if abs_distance < VoltageSetError:
+#    #            #    return True
+#    #            ##for i in range(stabilization_counter):
+#    #            ##    current_value = self.analog_read(feedback_channel)
+#    #            #self.set_analog_read_averaging(coarse_averaging)
+
+
+#    #        elif abs_distance < VoltageTuningInterval or fine_tuning: #FANS_VOLTAGE_FINE_TUNING_INTERVAL:
+#    #            fine_tuning = True
+#    #            value_to_set = voltage_setting_function(current_value,voltage,True)
+            
+            
+            
+#    #        if polarity_switched:
+#    #            abs_value = math.fabs(value_to_set)
+#    #            if voltage * current_value < 0:
+#    #                if voltage > 0:
+#    #                    value_to_set = abs_value
+#    #                else:
+#    #                    value_to_set = -abs_value
+#    #        print("current: {0}; goal: {1};to set: {2};".format(current_value,voltage, value_to_set))    
+#    #        output_channel.analog_write(value_to_set)
+#    #        #output_channel.ao_voltage = value_to_set 
+
+#    #def smu_set_drain_source_voltage(self, voltage):
+#    #    self.__set_drain_source_voltage(voltage, self.smu_ds_motor, self.smu_ds_relay, self.smu_drain_source_feedback, self._drain_source_switch_channel, self._drain_source_switch_voltage)
+
+#    #def smu_set_gate_voltage(self, voltage):
+#    #    return super().__set
+    
+
+#    def read_all_test(self):
+#        drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
+#        drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+#        print ("stabilizing voltages after drain switch on. waiting...")
+#        time.sleep(5)
+#        result = super().read_all_test() 
+#        drain_source_switch_channel.analog_write(0)
+#        return result
+
+#    def read_feedback_voltages(self):
+#        drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
+#        drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+#        print ("stabilizing voltages after drain switch on. waiting...")
+#        time.sleep(5)
+#        result = super().read_feedback_voltages()
+#        drain_source_switch_channel.analog_write(0)
+#        return result
+
+#    def read_all_parameters(self):
+#        drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)
+#        drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
+#        print ("stabilizing voltages after drain switch on. waiting...")
+#        time.sleep(5)
+#        result = super().read_all_parameters()
+#        drain_source_switch_channel.analog_write(0)
+#        return result
 
 ZERO_TRUST_INTERVAL = 0.02
 ABS_VOLTAGE_INCREASE_DIRECTION = -1
