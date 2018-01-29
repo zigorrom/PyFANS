@@ -441,6 +441,10 @@ class FANS_SMU:
 class MaxIterationReachedError(Exception):
     pass
 
+class DesiredErrorReachedError(Exception):
+    pass
+
+
 class IterationCounter(object):
     def __init__(self, max_iteration, exception_to_call = None):
         self._max_iteration = max_iteration
@@ -468,7 +472,8 @@ class IterationCounter(object):
 
     def __call_exception(self):
         if self._exception_to_call:
-            self._exception_to_call()
+            if issubclass(self._exception_to_call, Exception):
+                self._exception_to_call()
 
     def reset(self):
         self._current_index = 0
@@ -476,21 +481,18 @@ class IterationCounter(object):
 
 
     
-class DesiredErrorReachedError(Exception):
-    pass
 
 class FANS_VoltageSetter(object):
     COARSE_MODE, FINE_MODE, STABILIZATION_MODE = range(3)
     ABS_VOLTAGE_INCREASE_DIRECTION = -1
-    ABS_VOLTAGE_DECREASE_DIRECTION = 1
+    ABS_VOLTAGE_DECREASE_DIRECTION = -ABS_VOLTAGE_INCREASE_DIRECTION 
     ZERO_VOLTAGE_INTERVAL = 0.01
     NEGATIVE_POLARITY, POSITIVE_POLARITY = (-1,1)
     STABILIZATION_COUNTER = 50
     MAX_ITERATIONS = 100*STABILIZATION_COUNTER
 
-
-    def __init__(self,voltage):
-        self.voltage_to_set = voltage
+    def __init__(self):#,voltage):
+        #self.voltage_to_set = voltage
         self.current_voltage = 0
         self.correction_coefficient = 1
         self.mode = COARSE_MODE
@@ -507,10 +509,32 @@ class FANS_VoltageSetter(object):
         self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
 
     def move_to_zero(self):
-        pass
+        try:
+            self.zero_reached_counter = IterationCounter(10, DesiredErrorReachedError)
+            self.set_moving_voltage(ABS_VOLTAGE_DECREASE_DIRECTION *  MAX_MOVING_VOLTAGE)
+            while True:
+                value = math.fabs(self.read_feedback_voltage())
+                if value < self.ZERO_VOLTAGE_INTERVAL:
+                    self.zero_reached_counter.increment()
+
+        except DesiredErrorReachedError as err:
+            print("Zero volts reached")
+        finally:
+            self.set_moving_voltage(0)
 
     def move_from_zero_trust_interval(self):
-        pass
+        try:
+            self.out_of_zero_interval_countert = IterationCounter(10, DesiredErrorReachedError)
+            self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
+            while True:
+                value = math.fabs(self.read_feedback_voltage())
+                if value > self.ZERO_VOLTAGE_INTERVAL:
+                    self.out_of_zero_interval_countert.increment()
+
+        except DesiredErrorReachedError as err:
+            print("Zero volts reached")
+        finally:
+            self.set_moving_voltage(0)
 
     def voltage_under_zero_trust_interval(self, current_voltage):
         if current_voltage < self.ZERO_VOLTAGE_INTERVAL:
@@ -540,11 +564,12 @@ class FANS_VoltageSetter(object):
         return (need_to_switch_polarity, polarity_to_switch)
 
     def switch_to_polarity(self,polarity):
-        self.move_to_zero()
+        raise NotImplementedError()
+        #self.move_to_zero()
 
-
-    def recalculate_correction_coefficient(self):
-        return 1
+    def set_correction_coefficient(self, coefficient):
+        if coefficient >= 1:
+            self.correction_coefficient = coefficient
 
     def read_feedback_voltage(self):
         raise NotImplementedError()
@@ -553,7 +578,7 @@ class FANS_VoltageSetter(object):
         #self.current_voltage = value
         #return value
 
-    def set_mooving_voltage(self, voltage):
+    def set_moving_voltage(self, voltage):
         raise NotImplementedError()
 
     def voltage_setting_function(current_value, set_value, correction_coefficient = 1):
@@ -589,7 +614,8 @@ class FANS_VoltageSetter(object):
         #    raise ValueError("Voltage to set and current voltage must be same sign")
 
 
-    def set_voltage(self):
+    def set_voltage(self, voltage_to_set):
+        self.voltage_to_set = voltage_to_set
         value = self.read_feedback_voltage()
         if self.voltage_under_zero_trust_interval(value):
             self.move_from_zero_trust_interval()
@@ -614,16 +640,16 @@ class FANS_VoltageSetter(object):
 
                     motor_value_to_set = self.voltage_setting_function(sample_voltage,voltage, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
                     motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
-                    self.set_mooving_voltage(motor_value_to_set)
+                    self.set_moving_voltage(motor_value_to_set)
 
                 elif self.mode == self.FINE_MODE:
                     if difference < VoltageSetError:
                         self.mode = self.STABILIZATION_MODE
-                        self.set_mooving_voltage(0)
+                        self.set_moving_voltage(0)
                         continue
 
                     motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
-                    self.set_mooving_voltage(motor_value_to_set)
+                    self.set_moving_voltage(motor_value_to_set)
                     self.iteration_counter.increment()
 
                 elif self.mode == self.STABILIZATION_MODE:
@@ -636,14 +662,82 @@ class FANS_VoltageSetter(object):
                 else:
                     raise ValueError("mode valiable has wrong value")
         except DesiredErrorReachedError as err:
-            pass
+            print("Desired error is reached")
         except ValueError as err:
-            pass
+            print(str(err))
         except MaxIterationReachedError as err:
-            pass
+            print("Max iteratuions achieved")
         finally:
-            pass
-            
+            self.set_moving_voltage(0)
+
+
+class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
+    def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, drain_source_switch_channel, main_feedback, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE):
+        super().__init__()
+        self.fans_controller = fans_controller
+        self.drain_source_motor = drain_source_motor
+        self.drain_source_relay = drain_source_relay
+        self.drain_source_feedback = drain_source_feedback
+        self.drain_source_switch_channel = drain_source_switch_channel
+        self.drain_source_switch_voltage = drain_source_switch_voltage
+        self.main_feedback = main_feedback
+
+        self.output_channel = None
+        self.switch_drain_feedback_output = None
+
+        self.feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self.fans_controller, self.drain_source_feedback, self.main_feedback)
+
+
+
+    def __prepare_feedback_voltage_measurement(self):
+        self.output_channel, self.switch_drain_feedback_output = self.fans_controller.get_fans_output_channels(self.drain_source_motor, self.drain_source_switch_channel)
+        assert self.output_channel != self.switch_drain_feedback_output, "Cannot use same channel for different functions"
+        assert isinstance(self.switch_drain_feedback_output, mfc.FANS_AO_CHANNEL)
+        self.switch_drain_feedback_output.analog_write(self.drain_source_switch_voltage)
+        assert isinstance(self.output_channel, mfc.FANS_AO_CHANNEL)
+
+    #def __prepare_polarity_switch(self):
+    #    pass
+
+    def read_feedback_voltage(self):
+        return super().read_feedback_voltage()
+
+    def set_mooving_voltage(self, voltage):
+        return super().set_moving_voltage(voltage)
+
+    def switch_to_polarity(self, polarity):
+        #self.__prepare_polarity_switch()
+        #switch polarities
+        assert isinstance(self.drain_source_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
+        rel_ch = self.fans_controller.get_fans_output_channel(relay_channel) #.fans_ao_switch.select_channel(relay_channel)
+        rel_ch.analog_write(polarity)
+        time.sleep(0.5)
+        rel_ch.analog_write(0)
+        #return back to main channel
+        self.__prepare_feedback_voltage_measurement()
+
+    def set_voltage(self, voltage_to_set):
+        self.__prepare_feedback_voltage_measurement()
+        return super().set_voltage(voltage_to_set)
+
+     #drain_motor = self.smu_ds_motor
+     #   drain_relay = self.smu_ds_relay
+     #   drain_feedback = self.smu_drain_source_feedback
+     #   drain_switch_channel = self._drain_source_switch_channel
+     #   drain_switch_voltage = self._drain_source_switch_voltage
+
+     #   main_feedback = self.smu_main_feedback
+     #   feedback_multichannel = mfc.FANS_AI_MULTICHANNEL(self._fans_controller, drain_feedback, main_feedback)
+        #output_channel, additional_output_channel = self._fans_controller.get_fans_output_channels(drain_motor, drain_switch_channel)
+        #assert output_channel != additional_output_channel, "Cannot use same channel for different functions"
+        #assert isinstance(additional_output_channel, mfc.FANS_AO_CHANNEL)
+        #additional_output_channel.analog_write(drain_switch_voltage)
+        #assert isinstance(output_channel, mfc.FANS_AO_CHANNEL)
+
+        #res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+        #sample_voltage = res[drain_feedback]
+        #abs_sample_voltage = math.fabs(sample_voltage)
+        #main_voltage = res[main_feedback]
 
 
 
@@ -1218,25 +1312,7 @@ def test_pid_smu():
     finally:
         f.switch_all_fans_output_state(mfc.SWITCH_STATES.OFF)
 
-    #set_of_kp = [1,2,4,6,10]
-    #set_of_ki = [0, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]
-    #set_of_kd = [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]
-
-    #for kd in set_of_kd:
-    #    for ki in set_of_ki:
-    #        for kp in set_of_kp:
-    #            smu.Kp = kp
-    #            smu.Ki = ki #0.01 #0.5#10000
-    #            smu.Kd = kd
-    #            try:
-    #                smu.smu_set_drain_source_voltage(0.5)
-    #                smu.smu_set_drain_source_voltage(0)
-
-    #            except Exception as e:
-    #                #raise
-    #                print(str(e))
-    #            finally:
-    #                f.switch_all_fans_output_state(mfc.SWITCH_STATES.OFF)
+   
 
 def fans_test_2():
     
