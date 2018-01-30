@@ -1,4 +1,4 @@
-﻿import timevopl
+﻿import time
 import math
 
 import modern_fans_controller as mfc
@@ -473,7 +473,7 @@ class IterationCounter(object):
     def __call_exception(self):
         if self._exception_to_call:
             if issubclass(self._exception_to_call, Exception):
-                self._exception_to_call()
+                raise self._exception_to_call()
 
     def reset(self):
         self._current_index = 0
@@ -525,7 +525,7 @@ class FANS_VoltageSetter(object):
 
     def move_from_zero_trust_interval(self):
         try:
-            self.out_of_zero_interval_countert = IterationCounter(10, DesiredErrorReachedError)
+            self.out_of_zero_interval_countert = IterationCounter(2, DesiredErrorReachedError)
             self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
             while True:
                 value = math.fabs(self.read_feedback_voltage())
@@ -533,26 +533,26 @@ class FANS_VoltageSetter(object):
                     self.out_of_zero_interval_countert.increment()
 
         except DesiredErrorReachedError as err:
-            print("Zero volts reached")
+            print("Out of zero interval")
         finally:
             self.set_moving_voltage(0)
 
     def voltage_under_zero_trust_interval(self, current_voltage):
-        if current_voltage < self.ZERO_VOLTAGE_INTERVAL:
+        if math.fabs(current_voltage) < self.ZERO_VOLTAGE_INTERVAL:
             return True
         else:
             return False
 
-    def check_polarity(self, current_voltage):
+    def check_polarity(self, voltage_to_set,current_voltage):
         """Returns tuple with fields: need_to_switch_polarity - bool; polarity_to_switch - FANS_POSITIVE_POLARITY or FANS_NEGATIVE_POLARITY.
         When need_to_switch_polarity==True - returns polarity to which it shoud be switched.
         When need_to_switch_polarity==True - returns current polarity
         """
         need_to_switch_polarity = False
         polarity_to_switch = None
-        if self.voltage_to_set * current_voltage < 0:
+        if voltage_to_set * current_voltage < 0:
             need_to_switch_polarity = True
-            if current_voltage >= 0:
+            if voltage_to_set >= 0:
                 polarity_to_switch = self.POSITIVE_POLARITY
             else:
                 polarity_to_switch = self.NEGATIVE_POLARITY
@@ -582,7 +582,7 @@ class FANS_VoltageSetter(object):
     def set_moving_voltage(self, voltage):
         raise NotImplementedError()
 
-    def voltage_setting_function(current_value, set_value, correction_coefficient = 1):
+    def voltage_setting_function(self,current_value, set_value, correction_coefficient = 1):
     # fermi-dirac-distribution
         result = 0
         try:
@@ -601,9 +601,9 @@ class FANS_VoltageSetter(object):
 
     def voltage_set_sign_calculation(self, voltage_to_set, current_voltage, current_polarity):
         assert isinstance(voltage_to_set, (int,float)) and isinstance(current_voltage, (int,float)) and isinstance(current_polarity, (int,float)), "Value error"
-        assert voltage_to_set*current_voltage >= 0, "Switch polarity first"
+        #assert voltage_to_set*current_voltage >= 0, "Switch polarity first"
 
-        sign = math.copysign(1,self.ABS_VOLTAGE_INCREASE_DIRECTION * (current_voltage - voltage_to_set) * current_polarity)
+        sign = math.copysign(1,(current_voltage - voltage_to_set) * current_polarity) #self.ABS_VOLTAGE_INCREASE_DIRECTION * (current_voltage - voltage_to_set) * current_polarity)
         return sign
         #sign = 
         #if voltage_to_set * current_voltage >= 0:
@@ -614,15 +614,28 @@ class FANS_VoltageSetter(object):
         #if voltage_to_set*current_voltage < 0:
         #    raise ValueError("Voltage to set and current voltage must be same sign")
 
+    def normalize_motor_value(self,motor_value):
+        abs_motor_value = math.fabs(motor_value)
+        if abs_motor_value > MAX_MOVING_VOLTAGE:
+            abs_motor_value = MAX_MOVING_VOLTAGE
+        elif abs_motor_value < MIN_MOVING_VOLTAGE:
+            abs_motor_value = MIN_MOVING_VOLTAGE
+
+        motor_value = math.copysign(abs_motor_value, motor_value)
+        return motor_value
+
 
     def set_voltage(self, voltage_to_set):
         self.voltage_to_set = voltage_to_set
+        abs_voltage_to_set = math.fabs(voltage_to_set)
         value = self.read_feedback_voltage()
         if self.voltage_under_zero_trust_interval(value):
             self.move_from_zero_trust_interval()
 
-        (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(value)
+        value = self.read_feedback_voltage()
+        (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(voltage_to_set,value)
         if need_to_switch_polarity:
+            self.move_to_zero()
             self.switch_to_polarity(polarity_to_switch)
         
         self.current_polarity = polarity_to_switch
@@ -632,15 +645,20 @@ class FANS_VoltageSetter(object):
         try:
             while True:
                 value = self.read_feedback_voltage()
+                abs_value = math.fabs(value)
                 difference = math.fabs(value - self.voltage_to_set)
                 motor_value_to_set = 0
+
+               
+
                 if self.mode == self.COARSE_MODE:
                     if difference < VoltageTuningInterval:
                         self.mode = self.FINE_MODE
                         continue
 
-                    motor_value_to_set = self.voltage_setting_function(sample_voltage,voltage, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
-                    motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
+                    motor_value_to_set = self.voltage_setting_function(value,voltage_to_set, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
+                    motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY))  #self.voltage_set_sign_calculation(voltage_to_set, value, self.current_polarity)) 
+                    motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
                     self.set_moving_voltage(motor_value_to_set)
 
                 elif self.mode == self.FINE_MODE:
@@ -649,7 +667,8 @@ class FANS_VoltageSetter(object):
                         self.set_moving_voltage(0)
                         continue
 
-                    motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(voltage, sample_voltage, self.current_polarity)) 
+                    motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY)) 
+                    motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
                     self.set_moving_voltage(motor_value_to_set)
                     self.iteration_counter.increment()
 
@@ -657,11 +676,14 @@ class FANS_VoltageSetter(object):
                     if difference < VoltageSetError:
                         self.stabilization_counter.increment()
                     else:
-                        self.mode =FINE_MODE
+                        self.mode = self.FINE_MODE
                         self.stabilization_counter.reset()
 
                 else:
                     raise ValueError("mode valiable has wrong value")
+
+                print("CURRENT VALUE:{0}; GOAL:{1}; MOTOR:{2}; MODE:{3}".format(value, voltage_to_set, motor_value_to_set,self.mode))
+
         except DesiredErrorReachedError as err:
             print("Desired error is reached")
         except ValueError as err:
@@ -700,7 +722,7 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
     #    pass
 
     def read_feedback_voltage(self):
-        res = feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
+        res = self.feedback_multichannel.analog_read() #self.analog_read(feedback_channel)
         sample_voltage = res[self.drain_source_feedback]
         main_voltage = res[self.main_feedback]
         correction_coefficient = 1
@@ -724,6 +746,7 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
     def switch_to_polarity(self, polarity):
         #self.__prepare_polarity_switch()
         #switch polarities
+        polarity = math.copysign(FANS_POLARITY_SWITCH_VOLTAGE, polarity)
         assert isinstance(self.drain_source_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
         rel_ch = self.fans_controller.get_fans_output_channel(self.drain_source_relay) #.fans_ao_switch.select_channel(relay_channel)
         rel_ch.analog_write(polarity)
@@ -758,7 +781,7 @@ class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
     #    pass
 
     def read_feedback_voltage(self):
-        gate_voltage = feedback_channel.analog_read() #self.analog_read(feedback_channel)
+        gate_voltage = self.feedback_channel.analog_read() #self.analog_read(feedback_channel)
         return gate_voltage
         
         #return super().read_feedback_voltage()
@@ -770,8 +793,9 @@ class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
     def switch_to_polarity(self, polarity):
         #self.__prepare_polarity_switch()
         #switch polarities
-        assert isinstance(self.drain_source_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
-        rel_ch = self.fans_controller.get_fans_output_channel(self.drain_source_relay) #.fans_ao_switch.select_channel(relay_channel)
+        polarity = math.copysign(FANS_POLARITY_SWITCH_VOLTAGE, polarity)
+        assert isinstance(self.gate_relay, mfc.FANS_AO_CHANNELS), "Wrong channel!"
+        rel_ch = self.fans_controller.get_fans_output_channel(self.gate_relay) #.fans_ao_switch.select_channel(relay_channel)
         rel_ch.analog_write(polarity)
         time.sleep(0.5)
         rel_ch.analog_write(0)
@@ -1425,7 +1449,7 @@ def fans_test_2():
         #    smu.read_all_test()
         #    time.sleep(0.5)
 
-        smu.smu_set_drain_source_voltage(0.45)
+        smu.smu_set_drain_source_voltage(-0.1)
         #for vg in np.arange(-2,2,0.5):
         #  print("setting gate")
         #  smu.smu_set_gate_voltage(vg)

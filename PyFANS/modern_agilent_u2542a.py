@@ -194,8 +194,8 @@ def acqusition_convert_raw_data(raw_data, conversion_header):
 
 
 class AgilentU2542A_DSP(VisaInstrument):
-    def __init__(self, resource):
-        super().__init__(resource)
+    def __init__(self, resource, debug = False):
+        super().__init__(resource, debug)
         self.conversion_header = None
         
 

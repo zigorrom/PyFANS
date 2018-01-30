@@ -239,10 +239,12 @@ class Experiment:
 
         
     def set_voltages_to_zero(self):
-        print("setting to zero is off")
-        #self.set_drain_source_voltage(0)
-        #self.set_front_gate_voltage(0)
-        #self.
+        #print("setting to zero is off")
+        print("Setting DS to 0")
+        self.set_drain_source_voltage(0)
+        print("Setting GS to 0")
+        self.set_front_gate_voltage(0)
+        print("Setting 0 completed!")
 
 
     def handle_measurement_abort(self):
