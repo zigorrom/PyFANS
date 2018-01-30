@@ -511,6 +511,7 @@ class FANS_VoltageSetter(object):
 
     def move_to_zero(self):
         try:
+            print("Moving to zero voltage")
             self.zero_reached_counter = IterationCounter(10, DesiredErrorReachedError)
             self.set_moving_voltage(ABS_VOLTAGE_DECREASE_DIRECTION *  MAX_MOVING_VOLTAGE)
             while True:
@@ -525,6 +526,7 @@ class FANS_VoltageSetter(object):
 
     def move_from_zero_trust_interval(self):
         try:
+            print("Moving out of zero interval voltage")
             self.out_of_zero_interval_countert = IterationCounter(2, DesiredErrorReachedError)
             self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
             while True:
