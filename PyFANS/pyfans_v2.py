@@ -365,6 +365,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
             self.sample_voltage_start = measurement_info.start_sample_voltage
             self.sample_current_start = measurement_info.sample_current_start
             self.sample_resistance_start = measurement_info.sample_resistance_start
+            self.current_temperature = measurement_info.start_temperature
             
     def ui_set_measurement_info_end(self, measurement_info):
         if isinstance(measurement_info, MeasurementInfo):
@@ -372,6 +373,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
             self.sample_voltage_end = measurement_info.end_sample_voltage
             self.sample_current_end = measurement_info.sample_current_end
             self.sample_resistance_end = measurement_info.sample_resistance_end
+            self.current_temperature = measurement_info.end_temperature
 
     def ui_set_measurement_count(self, measurement_count):
         self.measurementCount = measurement_count

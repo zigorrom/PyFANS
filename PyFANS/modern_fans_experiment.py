@@ -603,7 +603,7 @@ class FANSExperiment(Experiment):
         self.fans_smu.set_smu_parameters(100, self.load_resistance)
 
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)
-        #self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
+        self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
      
     def create_calibration(self):
         dir = os.path.join(os.path.dirname(__file__), "calibration_data")
@@ -650,8 +650,8 @@ class FANSExperiment(Experiment):
     def perform_param_measurement(self):
         (sample_voltage,main_voltage, gate_voltage) = self.fans_smu.read_feedback_voltages()
         
-        #temperature = self.temperature_controller.temperature
-        return (sample_voltage,main_voltage, gate_voltage, 0)
+        temperature = self.temperature_controller.temperature
+        return (sample_voltage,main_voltage, gate_voltage, temperature)
 
     def perform_start_param_measurement(self):
         sample_voltage,main_voltage, gate_voltage, temperature = self.perform_param_measurement()

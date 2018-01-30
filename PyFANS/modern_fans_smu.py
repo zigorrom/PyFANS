@@ -640,6 +640,11 @@ class FANS_VoltageSetter(object):
             self.move_to_zero()
             self.switch_to_polarity(polarity_to_switch)
         
+        value = self.read_feedback_voltage()
+        (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(voltage_to_set,value)
+        if need_to_switch_polarity:
+            raise Exception("Cannot switch polarity")
+
         self.current_polarity = polarity_to_switch
         
         VoltageSetError = FANS_VOLTAGE_SET_ERROR
