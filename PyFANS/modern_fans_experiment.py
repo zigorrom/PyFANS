@@ -706,14 +706,14 @@ class FANSExperiment(Experiment):
 
                 f, psd = periodogram(data, fs)
                 self.update_spectrum(psd,1,1)
-                print(counter)
+                
                 if new_fill_value % fs == 0:
                     decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
                     f, psd = periodogram(decimated, new_fs)
                     self.update_spectrum(psd, 0,1)
                     fill_value = 0
                     counter+=1
-                    print("1_rng")
+                    #print(counter)
                
                 if write_timetrace_confition():
                     self._experiment_writer.write_timetrace_data(data)
@@ -723,6 +723,7 @@ class FANSExperiment(Experiment):
                 print(e)
                 break
         adc.stop()
+        print("Counter reached: {0}".format(counter))
         data = self.update_resulting_spectrum()
         data = data.transpose()
         self._experiment_writer.write_measurement(data)
