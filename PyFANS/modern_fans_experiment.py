@@ -634,8 +634,9 @@ class FANSExperiment(Experiment):
 
     def perform_param_measurement(self):
         (sample_voltage,main_voltage, gate_voltage) = self.fans_smu.read_feedback_voltages()
-        
-        temperature = self.temperature_controller.temperature
+        temperature = self.experiment_settings.current_temperature
+        if self.experiment_settings.need_measure_temperature:
+            temperature = self.temperature_controller.temperature
         return (sample_voltage,main_voltage, gate_voltage, temperature)
 
     def perform_start_param_measurement(self):
