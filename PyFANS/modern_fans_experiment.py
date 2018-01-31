@@ -232,6 +232,8 @@ class Experiment:
                      self.non_gated_single_value_measurement(vds)
             else:
                 self.non_gated_single_value_measurement(self.__exp_settings.drain_source_voltage)
+        except StopExperiment:
+            print("Stop experiment exception raised")
         except:
             pass
         finally:
@@ -446,9 +448,6 @@ class Experiment:
             
     def update_resulting_spectrum(self):
         freq, data = spectrum = self.get_resulting_spectrum()
-
-
-
         result = {pcp.COMMAND: pcp.ExperimentCommands.SPECTRUM_DATA, pcp.FREQUENCIES: freq, pcp.DATA: data}
         q = self._input_data_queue
         if q:
@@ -566,7 +565,6 @@ class SimulateExperiment(Experiment):
         self.open_measurement()
         print("simulating non gated single measurement vds:{0}".format(drain_source_voltage))
         self.close_measurement()
-
 
 class FANSExperiment(Experiment):
     def __init__(self, input_data_queue = None, stop_event = None):
