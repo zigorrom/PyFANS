@@ -222,7 +222,6 @@ class Experiment:
         finally:
             self.set_voltages_to_zero()
 
-
     def non_gated_structure_meaurement_function(self):
         try:
             if self.__exp_settings.use_set_vds_range:
@@ -247,7 +246,6 @@ class Experiment:
         print("Setting GS to 0")
         self.set_front_gate_voltage(0)
         print("Setting 0 completed!")
-
 
     def handle_measurement_abort(self):
         raise NotImplementedError()
@@ -280,10 +278,10 @@ class Experiment:
     def prepare_to_measure_timetrace(self):
         raise NotImplementedError()
 
-    def set_front_gate_voltage(self,voltage):
+    def set_front_gate_voltage(self,voltage, error = None):
         raise NotImplementedError()
 
-    def set_drain_source_voltage(self,voltage):
+    def set_drain_source_voltage(self,voltage, error = None):
         raise NotImplementedError()
 
     def perform_single_value_measurement(self):
@@ -574,9 +572,7 @@ class FANSExperiment(Experiment):
         self._frequencies = self._get_frequencies(self._spectrum_ranges)
         self._frequency_indexes = self._get_frequency_linking_indexes(self._spectrum_ranges, self._spectrum_linking_frequencies)
         self._max_timetrace_length = -1 # -1 - means all data, 0 - means no data, number means number seconds
-
-
-         
+    
     def initialize_hardware(self):
         resource = self.hardware_settings.fans_controller_resource
         self.fans_controller = mfans.FANS_CONTROLLER(resource)
@@ -615,31 +611,22 @@ class FANSExperiment(Experiment):
             
     def prepare_to_set_voltages(self):
         self.fans_smu.init_smu_mode()
-
+    
     def prepare_to_measure_voltages(self):
         self.fans_smu.init_smu_mode()
         self.wait_for_stabilization_after_switch(10)
     
     
-
     def prepare_to_measure_spectrum(self):
         self.fans_acquisition.initialize_acquisition(self.acquistion_channel, mfans.FILTER_CUTOFF_FREQUENCIES.F150, mfans.FILTER_GAINS.G1, mfans.PGA_GAINS.PGA_1)
         self.fans_acquisition.initialize_acquisition_params(self.sample_rate, self.points_per_shot, mfans.ACQUISITION_TYPE.CONT) 
         #switch off all output to the control circuit in order to reduce noiseness of the system
         self.fans_controller.switch_all_fans_output_state(mfans.SWITCH_STATES.OFF)
-
         #HARDCODE
         ch = self.fans_controller.get_fans_output_channel(mfans.FANS_AO_CHANNELS.AO_CH_7)
         ch.analog_write(8.4)
         time.sleep(5)
         ch.analog_write(0)
-
-        # drain_source_switch_channel.analog_write(self._drain_source_switch_voltage)
-        #print ("stabilizing voltages after drain switch on. waiting...")
-        #time.sleep(5)
-        #result = super().read_all_test() 
-        #drain_source_switch_channel.analog_write(0)
-
         self.wait_for_stabilization_after_switch(30)
 
     def prepare_to_measure_timetrace(self):
@@ -660,8 +647,6 @@ class FANSExperiment(Experiment):
         sample_voltage,main_voltage, gate_voltage, temperature = self.perform_param_measurement()
         self._measurement_info.update_end_values(main_voltage, sample_voltage, gate_voltage,temperature)
         self.send_end_measurement_info()
-
-    
 
     def perform_single_value_measurement(self):
         assert isinstance(self.experiment_settings, ExperimentSettings)
@@ -713,8 +698,7 @@ class FANSExperiment(Experiment):
         
         while counter < total_averaging:
             try:
-                
-                #f2_aver_counter += 1
+                ####f2_aver_counter += 1####
                 new_fill_value = fill_value + npoints
                 data = read_data()[0]
                 total_array[fill_value:new_fill_value] = data
@@ -730,7 +714,7 @@ class FANSExperiment(Experiment):
                     fill_value = 0
                     counter+=1
                
-                if write_timetrace_confition() :
+                if write_timetrace_confition():
                     self._experiment_writer.write_timetrace_data(data)
                     seconds_counter += time_step_sec
 
@@ -751,11 +735,11 @@ class FANSExperiment(Experiment):
     def switch_transistor(self, transistor):
         return super().switch_transistor(transistor)
 
-    def set_front_gate_voltage(self, voltage):
+    def set_front_gate_voltage(self, voltage, error = None):
         print("setting gate voltage")
         self.fans_smu.smu_set_gate_voltage(voltage)
 
-    def set_drain_source_voltage(self, voltage):
+    def set_drain_source_voltage(self, voltage, error = None):
         print("setting drain voltage")
         self.fans_smu.smu_set_drain_source_voltage(voltage)
 

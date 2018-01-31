@@ -627,7 +627,7 @@ class FANS_VoltageSetter(object):
         return motor_value
 
 
-    def set_voltage(self, voltage_to_set):
+    def set_voltage(self, voltage_to_set, error = None):
         self.voltage_to_set = voltage_to_set
         abs_voltage_to_set = math.fabs(voltage_to_set)
         value = self.read_feedback_voltage()
@@ -648,7 +648,14 @@ class FANS_VoltageSetter(object):
         self.current_polarity = polarity_to_switch
         
         VoltageSetError = FANS_VOLTAGE_SET_ERROR
+        if isinstance(error, (int,float)):
+            VoltageSetError = math.fabs(error)
+
+        if self.voltage_under_zero_trust_interval(abs_voltage_to_set):
+            VoltageSetError = self.ZERO_VOLTAGE_INTERVAL
+
         VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
+        
         try:
             while True:
                 value = self.read_feedback_voltage()
@@ -702,6 +709,7 @@ class FANS_VoltageSetter(object):
 
 
 class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
+    ZERO_VOLTAGE_INTERVAL = 0.005
     def __init__(self, fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, drain_source_switch_channel, main_feedback, drain_source_switch_voltage = DRAIN_SOURCE_SWITCH_VOLTAGE):
         super().__init__()
         self.fans_controller = fans_controller
@@ -768,6 +776,7 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
 
     
 class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
+    ZERO_VOLTAGE_INTERVAL = 0.01
     def __init__(self, fans_controller, gate_motor, gate_relay, gate_feedback):
         super().__init__()
         self.fans_controller = fans_controller
@@ -809,9 +818,9 @@ class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
         #return back to main channel
         self.__prepare_feedback_voltage_measurement()
 
-    def set_voltage(self, voltage_to_set):
+    def set_voltage(self, voltage_to_set, error = None):
         self.__prepare_feedback_voltage_measurement()
-        return super().set_voltage(voltage_to_set)
+        return super().set_voltage(voltage_to_set, error)
 
 
 class FANS_SMU_Specialized(FANS_SMU):
@@ -827,11 +836,11 @@ class FANS_SMU_Specialized(FANS_SMU):
         self.gate_source_voltage_setter = FANS_GateSourceVoltageSetter(fans_controller, gate_motor, gate_relay, gate_feedback)
 
 
-    def smu_set_drain_source_voltage(self, voltage):
+    def smu_set_drain_source_voltage(self, voltage, error = None):
         self.drain_source_voltage_setter.reset()
         self.drain_source_voltage_setter.set_voltage(voltage)
 
-    def smu_set_gate_voltage(self, voltage):
+    def smu_set_gate_voltage(self, voltage, error = None):
         self.gate_source_voltage_setter.reset()
         self.gate_source_voltage_setter.set_voltage(voltage)
 
