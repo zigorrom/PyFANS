@@ -22,7 +22,7 @@ FD_CONST = -0.1
 FANS_VOLTAGE_SET_ERROR  = 0.002  #mV
 FANS_VOLTAGE_FINE_TUNING_INTERVAL = 5*FANS_VOLTAGE_SET_ERROR  #### set here function for interval selection
 
-A1 = 0.01
+A1 = 0.02
 A2 = 0.002
 X0 = 0.007
 p = 3
@@ -652,7 +652,7 @@ class FANS_VoltageSetter(object):
             VoltageSetError = math.fabs(error)
 
         if self.voltage_under_zero_trust_interval(abs_voltage_to_set):
-            VoltageSetError = self.ZERO_VOLTAGE_INTERVAL
+            VoltageSetError = self.ZERO_VOLTAGE_INTERVAL + VoltageSetError
 
         VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
         
@@ -696,7 +696,7 @@ class FANS_VoltageSetter(object):
                 else:
                     raise ValueError("mode valiable has wrong value")
 
-                print("CURRENT VALUE:{0}; GOAL:{1}; MOTOR:{2}; MODE:{3}".format(value, voltage_to_set, motor_value_to_set,self.mode))
+                print("CURRENT VALUE:{0}; GOAL:{1}; MOTOR:{2}; MODE:{3}; ERR:{4}".format(value, voltage_to_set, motor_value_to_set,self.mode, VoltageSetError))
 
         except DesiredErrorReachedError as err:
             print("Desired error is reached")
