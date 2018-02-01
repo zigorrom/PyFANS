@@ -702,6 +702,10 @@ class FANSExperiment(Experiment):
         print("WRITE TIMETRACE CONDITION: {0}".format(write_timetrace_confition()))
         print("*"*10)
 
+        write_timetrace_function = self._experiment_writer.write_timetrace_data
+        update_spectrum_func = self.update_spectrum
+        #time_now = time.time()
+        #time_after = time.time()
         adc.start()
         
         while counter < total_averaging:
@@ -713,20 +717,25 @@ class FANSExperiment(Experiment):
                 fill_value = new_fill_value
 
                 f, psd = periodogram(data, fs)
-                self.update_spectrum(psd,1,1)
+                update_spectrum_func(psd,1,1) #self.update_spectrum(psd,1,1)
                 
                 if new_fill_value % fs == 0:
                     decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
                     f, psd = periodogram(decimated, new_fs)
-                    self.update_spectrum(psd, 0,1)
+                    update_spectrum_func(psd,0,1)#self.update_spectrum(psd, 0,1)
                     fill_value = 0
                     counter+=1
                     #print(counter)
-                    
-                    if write_timetrace_confition():
-                        #this should be under previous IF confition!!!
-                        self._experiment_writer.write_timetrace_data(total_array) #data)
-                    
+                   
+                    #if write_timetrace_confition():
+                    #    print(counter)
+                    #    #this should be under previous IF confition!!!
+                    #    self._experiment_writer.write_timetrace_data(total_array) #data)
+                #time_now = time.time()
+                write_timetrace_function(data)
+                #time_after = time.time()
+                #print(time_after - time_now)
+                
                 seconds_counter += time_step_sec
 
             except Exception as e:

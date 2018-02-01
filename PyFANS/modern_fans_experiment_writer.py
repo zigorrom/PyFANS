@@ -13,7 +13,7 @@ class FANSExperimentWriter(expw.ExperimentWriter):
         #self.__experiment_file_extension = "dat"
         #self.__measurement_file_extension = "dat"
         self.__sample_rate = sample_rate
-        self.__timetrace_measurement_file_extension = "dat"
+        self.__timetrace_measurement_file_extension = "npy"#"dat"
 
         self._timetrace_measurement_file = None
 
@@ -36,8 +36,9 @@ class FANSExperimentWriter(expw.ExperimentWriter):
         super().write_measurement(data)
 
     def write_timetrace_data(self, data):
-        if self._timetrace_measurement_file:
-            np.savetxt(self._timetrace_measurement_file, data, delimiter = "\t")
+        #if self._timetrace_measurement_file:
+        #np.savetxt(self._timetrace_measurement_file, data)#, delimiter = "\t")
+        np.save(self._timetrace_measurement_file, data)
     
 
 
