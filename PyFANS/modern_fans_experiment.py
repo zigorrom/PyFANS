@@ -695,6 +695,13 @@ class FANSExperiment(Experiment):
         f2_aver_counter = 0
         fill_value = 0
 
+        print("ACQUISITION PARAMETERS")
+        print("SAMPLING RATE: {0}".format(fs))
+        print("SCREEN UPDATE: {0}".format(screen_update))
+        print("TIME STEP: {0}".format(time_step_sec))
+        print("WRITE TIMETRACE CONDITION: {0}".format(write_timetrace_confition()))
+        print("*"*10)
+
         adc.start()
         
         while counter < total_averaging:
@@ -718,8 +725,9 @@ class FANSExperiment(Experiment):
                     
                     if write_timetrace_confition():
                         #this should be under previous IF confition!!!
-                        self._experiment_writer.write_timetrace_data(data)
-                        seconds_counter += time_step_sec
+                        self._experiment_writer.write_timetrace_data(total_array) #data)
+                    
+                seconds_counter += time_step_sec
 
             except Exception as e:
                 print(e)
