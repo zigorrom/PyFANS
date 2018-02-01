@@ -655,7 +655,9 @@ class FANS_VoltageSetter(object):
             VoltageSetError = self.ZERO_VOLTAGE_INTERVAL + VoltageSetError
 
         VoltageTuningInterval = FANS_VOLTAGE_FINE_TUNING_INTERVAL_FUNCTION(VoltageSetError)
-        
+        if VoltageTuningInterval<VoltageSetError:
+            VoltageTuningInterval += VoltageSetError
+
         try:
             while True:
                 value = self.read_feedback_voltage()
