@@ -715,8 +715,9 @@ class FANSExperiment(Experiment):
                     fill_value = 0
                     counter+=1
                     #print(counter)
-               
+                    
                     if write_timetrace_confition():
+                        #this should be under previous IF confition!!!
                         self._experiment_writer.write_timetrace_data(data)
                         seconds_counter += time_step_sec
 
