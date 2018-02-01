@@ -36,6 +36,9 @@
     <Compile Include="fans_hardware_settings.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="modern_fans_measurement.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="modern_fans_pid_controller.py">
       <SubType>Code</SubType>
     </Compile>
