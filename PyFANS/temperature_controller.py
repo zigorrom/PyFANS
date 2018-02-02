@@ -104,7 +104,7 @@ class LeyboldStirlingCooler(object):
 class TemperatureController(mfpid.FANS_PID):
     def __init__(self, temperature_sensor, temperature_setter, filename = None):
         super().__init__(20,1,0,0.02, 60, 1200)
-        self.sampling_time = 1
+        self.sampling_time = 1.0
         assert isinstance(temperature_sensor, LakeShore211TemperatureSensor), "Wrong type of temperature sensor"
         assert isinstance(temperature_setter, LeyboldStirlingCooler), "Wrong type of cooler"
 
@@ -121,8 +121,11 @@ class TemperatureController(mfpid.FANS_PID):
             self.SetPoint = temperature
             counter = 0
             while True:
+                print("reading feedback")
                 feedback = self._temperature_sensor.temperature
-                update = self.update(feedback)
+                print("updating pid")
+                update = self.update(feedback) + feedback
+                print("setting temperature")
                 self._temperature_setter.set_temperature_value(update)
                 counter +=1 
                 print("{0} - CURRENT TEMPERATURE: {1}".format(counter,feedback))
@@ -152,17 +155,17 @@ def test_sensor():
 def test_cooler():
     c = LeyboldStirlingCooler("COM11")
     c.read_info()
-    c.write_to_device()
+    c.set_temperature_value(170)
 
 def test_controller():
     ts = LakeShore211TemperatureSensor("COM9")
     c = LeyboldStirlingCooler("COM11")
     controller = TemperatureController(ts, c)
-    controller.set_temperature(190)
+    controller.set_temperature(170)
 
 
 
 if __name__ == "__main__":
     #test_sensor()      
-    #test_cooler()
+##    test_cooler()
     test_controller()
