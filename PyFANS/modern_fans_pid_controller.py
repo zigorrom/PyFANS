@@ -97,7 +97,6 @@ class FANS_PID:
                 raise PID_ReachedMaximumAllowedUpdatesException()
 
 
-
             self.updates_counter+=1
             self.output = self.p_term + (self.Ki * self.i_term) + (self.Kd * self.d_term)
             

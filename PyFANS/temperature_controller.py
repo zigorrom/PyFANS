@@ -1,4 +1,6 @@
-﻿import serial
+﻿import modern_fans_pid_controller as mfpid
+
+import serial
 class LakeShore211TemperatureSensor:
     def __init__(self, resource):
         
@@ -57,13 +59,38 @@ class LeyboldStirlingCooler(object):
         print(result)
 
 
-class TemperatureController:
-    def __init__(self, temperature_sensor):
-        self.temperature_sensor = temperature_sensor
+class TemperatureController(mfpid.FANS_PID):
+    def __init__(self, temperature_sensor, temperature_setter):
+        super().__init__(10,1,0,0.02, 60, 1200)
+        self.sampling_time = 1
+        assert isinstance(temperature_sensor, LakeShore211TemperatureSensor), "Wrong type of temperature sensor"
+        assert isinstance(temperature_setter, LeyboldStirlingCooler), "Wrong type of cooler"
+
+        self._temperature_sensor = temperature_sensor
+        self._temperature_setter = temperature_setter
+
+
 
     def set_temperature(self,temperature):
-        pass
+        try:
+            self.SetPoint = temperature
+            counter = 0
+            while True:
+                feedback = self._temperature_sensor.temperature
+                update = self.update(feedback)
+                self._temperature_setter.set_temperature_value(update)
+                counter +=1 
+                print("{0} - CURRENT TEMPERATURE: {1}".format(counter,feedback))
 
+
+        except mfpid.PID_ErrorNotChangingException as e:
+            print("error not changing")
+        except mfpid.PID_ReachedDesiredErrorException as e:
+            print("temperature is set")
+        except mfpid.PID_ReachedMaximumAllowedUpdatesException as e:
+            print("max counts reached")
+        finally:
+            return True
 
 
 
