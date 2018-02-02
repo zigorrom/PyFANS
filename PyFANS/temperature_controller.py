@@ -28,8 +28,50 @@ class LakeShore211TemperatureSensor:
 class LeyboldStirlingCooler(object):
     MIN_ALLOWABLE_TEMP = 70
     MAX_ALLOWABLE_TEMP = 300
-    def __init__(self, resource):
+
+    STATE_ON, STATE_OFF, RESET = STATES = (1,0,3)
+    START_CHAR = chr(2)
+    END_CHAR = chr(13)
+
+    def __init__(self, resource, drive_number = 18):
         self.instrument = serial.Serial(resource, baudrate = 9600, parity=serial.PARITY_EVEN, bytesize=serial.SEVENBITS,stopbits=serial.STOPBITS_ONE)
+        self._drive_number = drive_number
+    
+    def write(self, message):
+        #if not isinstance(message, str):
+        #    message = str(message).encode()
+        self.instrument.write(message)
+
+    def readline(self):
+        return self.instrument.readline()
+
+    def set_state(self, state):
+        assert state in self.STATES, "wrong state"
+        query = "{0}SYS{1}{2}{3}".format(self.START_CHAR,self._drive_number,state, END_CHAR)
+        self.write(query.encode())
+        result = self.readline()
+        print(result)
+
+    def switch_on(self):
+        self.set_state(self.STATE_ON)
+
+    def switch_off(self):
+        self.set_state(self.STATE_OFF)
+
+    def set_temperature_setpoint(self, temperature):
+        if temperature< self.MIN_ALLOWABLE_TEMP:
+            temperature = self.MIN_ALLOWABLE_TEMP
+        elif temperature> self.MAX_ALLOWABLE_TEMP:
+            temperature = self.MAX_ALLOWABLE_TEMP
+
+        temperature = round(temperature*10)
+
+        query = "{0}TMP{1}{2}{3}".format(start_char,self._drive_number,temperature ,end_char)
+        self.write(query.encode())
+        print("RESULT")
+        result = self.instrument.readline()
+        print(result)
+
 
     def read_info(self):
         start_char = chr(2)
