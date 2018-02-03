@@ -156,3 +156,5 @@ $RECYCLE.BIN/
 .DS_Store
 PyFANS/em.cfg
 PyFANS/wa.cfg
+*.pyc
+PyFANS/__pycache__/calibration.cpython-34.pyc
