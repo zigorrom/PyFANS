@@ -24,7 +24,7 @@ import modern_fans_experiment as mfexp
 import process_communication_protocol as pcp
 from measurement_data_structures import MeasurementInfo
 
-mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v3.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v4.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     ureg = UnitRegistry()
     calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
@@ -68,6 +68,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def setupUi(self):
         print("setting the ui up")
         super().setupUi(self)
+        self.ui_timetrace_mode.currentIndexChanged.connect(self.timetrace_mode_changed)
         self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
         self.ui_load_resistance.setValidator(QtGui.QIntValidator())
         self.ui_drain_source_voltage.setValidator(uih.QVoltageValidator())
@@ -78,6 +79,20 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.progressBar.setVisible(True)
         self.statusbar.addPermanentWidget(self.progressBar)
 
+    TIMETRACE_NONE, TIMETRACE_PARTIAL, TIMETRACE_FULL = range(3)
+    def timetrace_mode_changed(self, index):
+        print("timetrace mode changed to")
+        print(index)
+        if index is self.TIMETRACE_NONE:
+            self.ui_timetrace_length.hide()
+
+        elif index is self.TIMETRACE_PARTIAL:
+            self.ui_timetrace_length.show()
+ 
+        elif index is self.TIMETRACE_FULL:
+            self.ui_timetrace_length.hide()
+        else:
+            return
 
     @property
     def controller(self):

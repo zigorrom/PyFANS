@@ -128,10 +128,19 @@ class VoltageControl(voltageControlBase, voltageControlForm):
         self.set_gate_source_voltage(0)
 
 def test_voltage_control():
+    import time
     app = QtGui.QApplication(sys.argv)
     widget = VoltageControl()
     widget.show()
     widget.set_drain_source_voltage(12.4211351313)
+    widget.set_okay_state()
+    #time.sleep(0.5)
+    #widget.set_warning_state()
+    #time.sleep(0.5)
+    #widget.set_in_progress_state()
+    #time.sleep(0.5)
+    #widget.set_error_state()
+
     return app.exec_()
 
 

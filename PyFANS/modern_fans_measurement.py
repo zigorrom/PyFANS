@@ -87,6 +87,7 @@ class FANSMeasurement(object):
     def execute_measurement(self, cancellation_token = None, progress_reporter = None):
         self.assert_ready_to_start()
         #with open measurement data file
+
         
             
 
