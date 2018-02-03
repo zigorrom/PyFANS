@@ -808,6 +808,10 @@ class FANS_UI_Controller(QtCore.QObject):
 
 
 def test_ui():
+    import ctypes
+    myappid = "fzj.pyfans.pyfans.21" # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
@@ -821,7 +825,7 @@ def test_ui():
     app_icon.addFile(icon_file, QtCore.QSize(256,256))
     app.setWindowIcon(app_icon)
     #app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
-
+    
     wnd = FANS_UI_MainView()
     controller = FANS_UI_Controller(wnd)
     controller.show_main_view()
@@ -840,7 +844,7 @@ def test_cmd():
 if __name__== "__main__":
     sys.exit(test_ui())
     #sys.exit(test_cmd())
-    sys.exit(test_xml_serializer())
+    #sys.exit(test_xml_serializer())
 
 
  
