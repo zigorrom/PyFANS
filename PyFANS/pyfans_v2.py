@@ -244,6 +244,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
         self.timetrace_mode = mode
         self.timetrace_length = length 
+        self.on_ui_timetrace_mode_currentIndexChanged(mode)
 
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
