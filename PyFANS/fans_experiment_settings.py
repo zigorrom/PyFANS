@@ -33,7 +33,7 @@ class ExperimentSettings():
         self.__front_gate_voltage = None
         self.__drain_source_voltage = None
         self.__write_timetrace = None
-        
+        self.__set_zero_after_measurement = None
 
 
     @property
@@ -303,6 +303,15 @@ class ExperimentSettings():
     def write_timetrace(self, value):
         self.__write_timetrace = value
 
+    #self.__set_zero_after_measurement = None
+    @property
+    def set_zero_after_measurement(self):
+        return self.__set_zero_after_measurement
+
+    @set_zero_after_measurement.setter
+    @uih.assert_boolean_argument
+    def set_zero_after_measurement(self, value):
+        self.__set_zero_after_measurement = value
 
 if __name__ == "__main__":
     pass

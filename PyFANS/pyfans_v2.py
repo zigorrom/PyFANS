@@ -58,6 +58,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     measurementCount = uih.bind("ui_measurementCount", "value", int)
     timetrace_mode = uih.bind("ui_timetrace_mode", "currentIndex", int)
     timetrace_length = uih.bind("ui_timetrace_length", "value", int)
+    set_zero_after_measurement = uih.bind("ui_set_zero_after_measurement", "checked", bool)
     valueChanged = QtCore.pyqtSignal(str, object) #str - name of the object, object - new value
 
     def __init__(self, parent = None):
@@ -180,6 +181,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.front_gate_voltage = settings.front_gate_voltage
         self.use_gate_source_range = settings.use_set_vfg_range
         self.load_timetrace_settings(settings)
+        self.set_zero_after_measurement = settings.set_zero_after_measurement
 
         self.experimentName = settings.experiment_name
         self.measurementName = settings.measurement_name
@@ -210,7 +212,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.save_timetrace_settings(self.experiment_settings)
 
     def save_timetrace_settings(self, experiment_settings):
-        assert isinstance(experimen_settings, ExperimentSettings), "Cannot save timetrace data"
+        assert isinstance(experiment_settings, ExperimentSettings), "Cannot save timetrace data"
         mode = self.timetrace_mode
         length = self.timetrace_length
         write_timetrace_value = 0
@@ -366,7 +368,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         if res:
             self.experiment_settings.vfg_range = dialog.get_range()
 
-    
+    @QtCore.pyqtSlot(int)
+    def on_ui_set_zero_after_measurement_stateChanged(self, value):
+        #print("set zero after measurement changed to {0}".format(value))
+        self.experiment_settings.set_zero_after_measurement = self.set_zero_after_measurement
+
+
     @QtCore.pyqtSlot(str)
     def on_ui_experimentName_textChanged(self, value):
         self.experiment_settings.experiment_name = self.experimentName
@@ -386,6 +393,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_ui_stopButton_clicked(self):
         self.controller.stop_experiment()
+
+    
+
 
     def closeEvent(self, event):
         self.controller.on_main_view_closing()
@@ -668,6 +678,7 @@ class FANS_UI_Controller(QtCore.QObject):
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
         self.main_view.set_controller(self)
+        self.show_main_view()
         self.experiment_settings = None
         self.hardware_settings = None
         self.load_settings()
@@ -753,7 +764,8 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def show_main_view(self):
         assert isinstance(self.main_view, FANS_UI_MainView)
-        self.main_view.show()
+        #self.main_view.show()
+        self.main_view.showMaximized()
 
     def on_main_view_closing(self):
         print("closing main view")
@@ -874,7 +886,7 @@ def test_ui():
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
     #icon_file = "pyfans.ico"
-    icon_file = "Icons/pyfans.png"
+    icon_file = "UI/Icons/pyfans.png"
     app_icon = QtGui.QIcon()
     app_icon.addFile(icon_file, QtCore.QSize(16,16))
     app_icon.addFile(icon_file, QtCore.QSize(24,24))
@@ -886,7 +898,7 @@ def test_ui():
     
     wnd = FANS_UI_MainView()
     controller = FANS_UI_Controller(wnd)
-    controller.show_main_view()
+    #controller.show_main_view()
     return app.exec_()
     
 def test_cmd():

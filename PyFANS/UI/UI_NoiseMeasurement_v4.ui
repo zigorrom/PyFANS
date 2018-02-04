@@ -1164,7 +1164,13 @@
     <addaction name="separator"/>
     <addaction name="actionWorking_folder"/>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -1190,6 +1196,7 @@
    <addaction name="actionOpenTimetraceWindow"/>
    <addaction name="actionOpenRealtimeNoiseWindow"/>
    <addaction name="actionHardwareSettings"/>
+   <addaction name="actionAbout"/>
   </widget>
   <action name="actionOpen_folder">
    <property name="text">
@@ -1203,8 +1210,8 @@
   </action>
   <action name="actionLoginEmail">
    <property name="icon">
-    <iconset>
-     <normaloff>Icons/mail_64x64.png</normaloff>Icons/mail_64x64.png</iconset>
+    <iconset resource="icon_resource_files.qrc">
+     <normaloff>:/icons/Icons/mail_64x64.png</normaloff>:/icons/Icons/mail_64x64.png</iconset>
    </property>
    <property name="text">
     <string>Login</string>
@@ -1215,8 +1222,8 @@
   </action>
   <action name="actionHardwareSettings">
    <property name="icon">
-    <iconset>
-     <normaloff>Icons/settings_64x64.png</normaloff>Icons/settings_64x64.png</iconset>
+    <iconset resource="icon_resource_files.qrc">
+     <normaloff>:/icons/Icons/settings_64x64.png</normaloff>:/icons/Icons/settings_64x64.png</iconset>
    </property>
    <property name="text">
     <string>HardwareSettings</string>
@@ -1227,8 +1234,8 @@
   </action>
   <action name="actionOpenTimetraceWindow">
    <property name="icon">
-    <iconset>
-     <normaloff>Icons/timetrace_64x64.png</normaloff>Icons/timetrace_64x64.png</iconset>
+    <iconset resource="icon_resource_files.qrc">
+     <normaloff>:/icons/Icons/timetrace_64x64.png</normaloff>:/icons/Icons/timetrace_64x64.png</iconset>
    </property>
    <property name="text">
     <string>Timetrace</string>
@@ -1236,11 +1243,20 @@
   </action>
   <action name="actionOpenRealtimeNoiseWindow">
    <property name="icon">
-    <iconset>
-     <normaloff>Icons/realtime_noise_64x64.png</normaloff>Icons/realtime_noise_64x64.png</iconset>
+    <iconset resource="icon_resource_files.qrc">
+     <normaloff>:/icons/Icons/realtime_noise_64x64.png</normaloff>:/icons/Icons/realtime_noise_64x64.png</iconset>
    </property>
    <property name="text">
     <string>Realtime Noise</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="icon_resource_files.qrc">
+     <normaloff>:/icons/Icons/info_64x64.png</normaloff>:/icons/Icons/info_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
    </property>
   </action>
  </widget>
@@ -1293,6 +1309,8 @@
   <tabstop>ui_sample_resistance_end</tabstop>
   <tabstop>ui_plot</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="icon_resource_files.qrc"/>
+ </resources>
  <connections/>
 </ui>

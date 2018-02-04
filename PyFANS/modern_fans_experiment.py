@@ -240,6 +240,9 @@ class Experiment:
 
         
     def set_voltages_to_zero(self):
+        if not self.experiment_settings.set_zero_after_measurement:
+            print("Setting to zero is switched off. Leaving voltages at the same level")
+            return
         #print("setting to zero is off")
         print("Setting DS to 0")
         self.set_drain_source_voltage(0)
@@ -660,7 +663,9 @@ class FANSExperiment(Experiment):
         npoints = self.points_per_shot
 
         seconds_counter = 0.0
-        max_seconds_to_write = self._max_timetrace_length
+        max_seconds_to_write = self.experiment_settings.write_timetrace #self._max_timetrace_length
+        if not isinstance(max_seconds_to_write, int):
+            max_seconds_to_write = self._max_timetrace_length
         time_step_sec = npoints * 1.0 / fs
 
         write_timetrace_confition = lambda: False
