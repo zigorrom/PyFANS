@@ -69,7 +69,7 @@ def test_led():
     return app.exec_()
 
 
-voltageControlBase, voltageControlForm = uic.loadUiType("UI_VoltageView.ui")
+voltageControlBase, voltageControlForm = uic.loadUiType("UI/UI_VoltageView.ui")
 class VoltageControl(voltageControlBase, voltageControlForm):
     OK, WARNING, ERROR, IN_PROGRESS = states = range(4)
     OK_COLOR = QtCore.Qt.green

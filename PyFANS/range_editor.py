@@ -4,7 +4,7 @@ from PyQt4 import uic, QtGui, QtCore
 import ui_helper as uih
 import range_handlers as rh
 
-rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI_RangeSelector_v3.ui")
+rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI/UI_RangeSelector_v3.ui")
 class RangeSelectorView(rangeSelectorBase,rangeSelectorForm):
     ureg = UnitRegistry()
     voltage_start = uih.bind("ui_start_val", "text", uih.string_to_volt_converter(ureg))

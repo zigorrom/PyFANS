@@ -24,7 +24,7 @@ import modern_fans_experiment as mfexp
 import process_communication_protocol as pcp
 from measurement_data_structures import MeasurementInfo
 
-mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v4.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v4.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     ureg = UnitRegistry()
     calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
@@ -56,6 +56,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     experimentName = uih.bind("ui_experimentName", "text", str)
     measurementName = uih.bind("ui_measurementName", "text", str)
     measurementCount = uih.bind("ui_measurementCount", "value", int)
+    timetrace_mode = uih.bind("ui_timetrace_mode", "currentIndex", int)
+    timetrace_length = uih.bind("ui_timetrace_length", "value", int)
     valueChanged = QtCore.pyqtSignal(str, object) #str - name of the object, object - new value
 
     def __init__(self, parent = None):
@@ -68,7 +70,6 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def setupUi(self):
         print("setting the ui up")
         super().setupUi(self)
-        self.ui_timetrace_mode.currentIndexChanged.connect(self.timetrace_mode_changed)
         self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
         self.ui_load_resistance.setValidator(QtGui.QIntValidator())
         self.ui_drain_source_voltage.setValidator(uih.QVoltageValidator())
@@ -79,20 +80,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.progressBar.setVisible(True)
         self.statusbar.addPermanentWidget(self.progressBar)
 
-    TIMETRACE_NONE, TIMETRACE_PARTIAL, TIMETRACE_FULL = range(3)
-    def timetrace_mode_changed(self, index):
-        print("timetrace mode changed to")
-        print(index)
-        if index is self.TIMETRACE_NONE:
-            self.ui_timetrace_length.hide()
-
-        elif index is self.TIMETRACE_PARTIAL:
-            self.ui_timetrace_length.show()
- 
-        elif index is self.TIMETRACE_FULL:
-            self.ui_timetrace_length.hide()
-        else:
-            return
+    
 
     @property
     def controller(self):
@@ -191,6 +179,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.use_drain_source_range = settings.use_set_vds_range
         self.front_gate_voltage = settings.front_gate_voltage
         self.use_gate_source_range = settings.use_set_vfg_range
+        self.load_timetrace_settings(settings)
 
         self.experimentName = settings.experiment_name
         self.measurementName = settings.measurement_name
@@ -199,6 +188,60 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     #**************
     #event handlers
     #**************
+
+    TIMETRACE_NONE, TIMETRACE_PARTIAL, TIMETRACE_FULL = range(3)
+    @QtCore.pyqtSlot(int)
+    def on_ui_timetrace_mode_currentIndexChanged(self, index):
+        print("timetrace mode changed to {0}".format(index))
+        
+        if index is self.TIMETRACE_NONE:
+            self.ui_timetrace_length.hide()
+        elif index is self.TIMETRACE_PARTIAL:
+            self.ui_timetrace_length.show()
+        elif index is self.TIMETRACE_FULL:
+            self.ui_timetrace_length.hide()
+        else:
+            return
+        self.save_timetrace_settings(self.experiment_settings)
+
+    @QtCore.pyqtSlot(int)
+    def on_ui_timetrace_length_valueChanged(self, value):
+        print("timetrace length changed to {0}".format(value))
+        self.save_timetrace_settings(self.experiment_settings)
+
+    def save_timetrace_settings(self, experiment_settings):
+        assert isinstance(experimen_settings, ExperimentSettings), "Cannot save timetrace data"
+        mode = self.timetrace_mode
+        length = self.timetrace_length
+        write_timetrace_value = 0
+        if mode is self.TIMETRACE_NONE:
+            write_timetrace_value = 0    
+        elif mode is self.TIMETRACE_PARTIAL:
+            write_timetrace_value = length
+        elif mode is self.TIMETRACE_FULL:
+            write_timetrace_value = -1
+        else:
+            return
+        experiment_settings.write_timetrace = write_timetrace_value
+
+
+    def load_timetrace_settings(self, experiment_settings):
+        assert isinstance(experiment_settings, ExperimentSettings), "Cannot load timetrace data"
+        write_timetrace_value = experiment_settings.write_timetrace
+        if write_timetrace_value is None:
+            write_timetrace_value  = 0
+        mode = self.TIMETRACE_NONE
+        length = 1
+        if write_timetrace_value < 0:
+            mode = self.TIMETRACE_FULL
+        elif write_timetrace_value == 0:
+            mode = self.TIMETRACE_NONE
+        elif write_timetrace_value > 0:
+            mode = self.TIMETRACE_PARTIAL
+            length = write_timetrace_value
+
+        self.timetrace_mode = mode
+        self.timetrace_length = length 
 
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
@@ -529,7 +572,7 @@ class ProcessingThread(QtCore.QThread):
 #    def send_hello(self):
 #        pass
 
-emailAuthBase, emailAuthForm = uic.loadUiType("UI_email_auth.ui")
+emailAuthBase, emailAuthForm = uic.loadUiType("UI/UI_email_auth.ui")
 class EmailAuthForm(emailAuthBase, emailAuthForm):
     #email_cfg = "em.cfg"
 
@@ -831,7 +874,7 @@ def test_ui():
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
     #icon_file = "pyfans.ico"
-    icon_file = "pyfans.png"
+    icon_file = "Icons/pyfans.png"
     app_icon = QtGui.QIcon()
     app_icon.addFile(icon_file, QtCore.QSize(16,16))
     app_icon.addFile(icon_file, QtCore.QSize(24,24))

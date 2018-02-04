@@ -53,7 +53,7 @@ class StatusObject(QtCore.QObject):
         self.progress_changed.emit(progress_value)
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI_NoiseMeasurement_v2.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v2.ui")
 class MainView(mainViewBase,mainViewForm):
     def __init__(self, parent = None):
        super(mainViewBase,self).__init__(parent)
@@ -382,7 +382,7 @@ class MainView(mainViewBase,mainViewForm):
         self._config.save_config()
 
 
-HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_new.ui")
+HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI/UI_HardwareSettings_new.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -443,14 +443,14 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
 
 
 
-DUTselectorViewBase, DUTselectorViewForm = uic.loadUiType("UI_TransistorSelector.ui")
+DUTselectorViewBase, DUTselectorViewForm = uic.loadUiType("UI/UI_TransistorSelector.ui")
 class DUTselectorView(DUTselectorViewBase,DUTselectorViewForm):
     def __init__(self,parent = None):
         super(DUTselectorViewBase,self).__init__(parent)
         self.setupUi(self)
 
 
-rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI_RangeSelector.ui")
+rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI/UI_RangeSelector.ui")
 class RangeSelectorView(rangeSelectorBase,rangeSelectorForm):
     def __init__(self,parent = None):
         super(rangeSelectorBase,self).__init__(parent)

@@ -32,6 +32,9 @@ class ExperimentSettings():
         self.__vfg_range = None
         self.__front_gate_voltage = None
         self.__drain_source_voltage = None
+        self.__write_timetrace = None
+        
+
 
     @property
     def vds_range(self):
@@ -289,6 +292,17 @@ class ExperimentSettings():
     @uih.assert_boolean_argument
     def use_set_vfg_range(self,value):
         self.__use_set_vfg_range= value
+
+    #self.__write_timetrace = None
+    @property
+    def write_timetrace(self):
+        return self.__write_timetrace
+
+    @write_timetrace.setter
+    @uih.assert_integer_argument
+    def write_timetrace(self, value):
+        self.__write_timetrace = value
+
 
 if __name__ == "__main__":
     pass

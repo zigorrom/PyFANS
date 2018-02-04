@@ -5,7 +5,7 @@ from PyQt4 import uic, QtCore
 from communication_layer import get_available_gpib_resources, get_available_com_resources
 
 
-HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI_HardwareSettings_v3.ui")
+HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI/UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     
     fans_controller_resource = uih.bind("ui_fans_controller", "currentText", str)

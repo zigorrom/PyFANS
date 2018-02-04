@@ -17,7 +17,7 @@ from communication_layer import get_available_gpib_resources, get_available_com_
 #from fans_smu import HybridSMU_System
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI_VoltageControl.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI/UI_VoltageControl.ui")
 class VoltageControlView(mainViewBase,mainViewForm):
     def __init__(self,parent = None, parent_fans_smu = None ):
         super(mainViewBase,self).__init__(parent)
