@@ -80,8 +80,22 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.progressBar = QtGui.QProgressBar(self)
         self.progressBar.setVisible(True)
         self.statusbar.addPermanentWidget(self.progressBar)
+        
 
-    
+
+    def connect(self, signal, slot):
+        #assert isinstance(signal, QtCore.pyqtSignal), "signal should be of pyqtSignal type"
+        signal.connect(slot)
+
+    def disconnect(self, signal, slot):
+        #assert isinstance(signal, QtCore.pyqtSignal), "signal should be of pyqtSignal type"
+        signal.disconnect(slot)
+
+    def subscribe_to_email_login_action(self, slot):
+        self.connect(self.actionLoginEmail.triggered, slot)
+
+    def subscribe_to_hardware_settings_action(self, slot):
+        self.connect(self.actionHardwareSettings.triggered, slot)
 
     @property
     def controller(self):
@@ -249,7 +263,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
         print("open hardware settings")
-        self.controller.show_hardware_settings_view()
+        #self.controller.show_hardware_settings_view()
+        self.actionHardwareSettings.trigger()
                 
     @QtCore.pyqtSlot(int)
     def on_ui_calibrate_stateChanged(self, value):
@@ -559,29 +574,6 @@ class ProcessingThread(QtCore.QThread):
 
         self.alive = False
 
-#import pywhatsapp as wa
-
-#class WhatsAppSender:
-#    wa_config = "wa.cfg"
-
-#    def __init__(self):
-#        self.user = None
-#        self.wa_client = None
-#        with open(self.wa_config) as cfg:
-#            self.user = cfg.readline()
-            
-
-#        if self.user and self.pwd:
-#            self.wa_client = wa.Client(login = self.user, password = self.pwd)
-
-
-#    def send_message(self, message):
-#        assert isinstance(message, str)
-#        if self.wa_client:
-#            self.wa_client.send_message(self.user, message)
-
-#    def send_hello(self):
-#        pass
 
 emailAuthBase, emailAuthForm = uic.loadUiType("UI/UI_email_auth.ui")
 class EmailAuthForm(emailAuthBase, emailAuthForm):
@@ -612,7 +604,6 @@ class EmailSender:
         self._password = ""
         self._login_successful = False
         
-
         with open("em.cfg") as cfg:
             self._server = cfg.readline().rstrip()
             self._my_address = cfg.readline().rstrip()
@@ -640,6 +631,12 @@ class EmailSender:
         finally:
             return self._login_successful 
 
+    def logoff(self):
+        self._login_successful = False
+        self._login = ""
+        self._password = ""
+        print("logoff successful")
+
     def send_message(self, subject, message):
         try:
             assert self._login_successful, "Initialize first"
@@ -653,7 +650,7 @@ class EmailSender:
             res_code, res_message = server.rcpt(self._my_address)
             assert res_code == 250, "Sender FAILURE"
 
-            message = self.message_format.format(f = self._my_address, t = self._my_address, s = subject, msg = message)
+            message = self.message_format.format(f = self._my_address, t = self._my_address.format(login = self._login), s = subject, msg = message)
 
             res_code, res_message = server.data(message)
             assert res_code == 250, "Message sending error"
@@ -680,6 +677,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view = view
         self.main_view.set_controller(self)
         self.show_main_view()
+        self.subscribe_to_ui_signals()
         self.experiment_settings = None
         self.hardware_settings = None
         self.load_settings()
@@ -693,10 +691,16 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer.setInterval(50)
         self.ui_refresh_timer.timeout.connect(self.update_ui)
         self.email_sender = None
-        self.login_to_email_sender()
+        #self.login_to_email_sender()
 
         #self.wa = WhatsAppSender()
         #self.initialize_experiment()
+    def subscribe_to_ui_signals(self):
+        self.main_view.subscribe_to_email_login_action(self.login_to_email_sender)
+        self.main_view.subscribe_to_hardware_settings_action(self.show_hardware_settings_view)
+        #pass
+    #def login_test(self):
+    #    print("test")
 
     def login_to_email_sender(self):
         dialog = EmailAuthForm()
@@ -706,6 +710,16 @@ class FANS_UI_Controller(QtCore.QObject):
             result = self.email_sender.initialize(dialog.username, dialog.password)
             if result:
                 self.email_sender.send_message("FANS LOGIN", "You are logged in as a FANS user")
+                self.main_view.ui_show_message_in_popup_window("Successfully logged in")
+            else:
+                self.email_sender.logoff()
+                self.main_view.ui_show_message_in_popup_window("Log in failed!")
+        else:
+            if self.email_sender:
+                self.email_sender.logoff()     
+                self.main_view.ui_show_message_in_popup_window("Log in failed!")
+
+
 
     def send_message_via_email(self, message):
         if self.email_sender:
@@ -760,7 +774,8 @@ class FANS_UI_Controller(QtCore.QObject):
         self.experiment_settings.experiment_name = mv.experimentName
         self.experiment_settings.measurement_name = mv.measurementName
         self.experiment_settings.measurement_count = mv.measurementCount
-        
+        mv.save_timetrace_settings(self.experiment_settings)
+        self.experiment_settings.set_zero_after_measurement = mv.set_zero_after_measurement
     
 
     def show_main_view(self):
@@ -826,8 +841,19 @@ class FANS_UI_Controller(QtCore.QObject):
         msg = "Experiment finished"
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
+        self.send_message_via_email(msg)
         self.stop_experiment()
         
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Information)
+        msg.setText("Experiment completed!!!")
+        msg.setInformativeText("Additional info about measurement")
+        msg.setWindowTitle("Measurement completed")
+        msg.setDetailedText("Data saved in folder: {0}".format(self.experiment_settings.working_directory))
+        msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        retval = msg.exec_()
+        
+    
 
     def on_measurement_started(self, params):
         measurement_name = params.get("measurement_name")
