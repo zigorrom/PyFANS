@@ -94,7 +94,7 @@ class LeyboldStirlingCooler(object):
 
         start_char = chr(2)
         end_char = chr(13)
-        query = "{0}TMP18{1}{2}".format(start_char,temp,end_char)
+        query = "{0}TMP18{1:04d}{2}".format(start_char,temp,end_char)
         self.instrument.write(query.encode())
         print("RESULT")
         result = self.instrument.readline()
@@ -150,7 +150,8 @@ def test_sensor():
     import time
 
     ts = LakeShore211TemperatureSensor("COM9")
-    for i in range(100):
+##    for i in range(100):
+    while True:
         print(ts.temperature)
         time.sleep(0.5)
     
@@ -158,17 +159,17 @@ def test_sensor():
 def test_cooler():
     c = LeyboldStirlingCooler("COM11")
     c.read_info()
-    c.set_temperature_value(170)
+    c.set_temperature_value(200)
 
 def test_controller():
     ts = LakeShore211TemperatureSensor("COM9")
     c = LeyboldStirlingCooler("COM11")
     controller = TemperatureController(ts, c)
-    controller.set_temperature(150)
+    controller.set_temperature(110)
 
 
 
 if __name__ == "__main__":
-    #test_sensor()      
+    test_sensor()      
 ##    test_cooler()
-    test_controller()
+##    test_controller()
