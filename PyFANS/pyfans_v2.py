@@ -30,6 +30,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     voltage_format = "{:8.6f}"
     resistance_format = "{:.3f}"
     current_format = "{:.5e}"
+    temperature_format = "{:.2f}"
     calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
     overload_reject = uih.bind("ui_overload_reject", "checked", bool)
     display_refresh = uih.bind("ui_display_refresh", "value", int)
@@ -38,14 +39,14 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     use_homemade_amplifier = uih.bind("ui_use_homemade_amplifier", "checked", bool)
     second_amplifier_gain = uih.bind("ui_second_amp_coeff", "currentText", int)
     perform_temperature_measurement = uih.bind("ui_need_meas_temp","checked", bool)
-    current_temperature = uih.bind("ui_current_temp", "text", float)
+    current_temperature = uih.bind("ui_current_temp", "text", float, temperature_format)
     load_resistance = uih.bind("ui_load_resistance", "text", float)
     perform_measurement_of_gated_structure = uih.bind("ui_meas_gated_structure", "checked", bool)
     use_dut_selector = uih.bind("ui_use_dut_selector", "checked", bool)
     use_automated_voltage_control = uih.bind("ui_use_automated_voltage_control", "checked", bool)
     measurement_characteristic_type = uih.bind("ui_meas_characteristic_type", "currentIndex", int)
-    drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg)) # ureg) #
-    front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg)) # ureg) #
+    drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
+    front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
     use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
     use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
     sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
@@ -82,8 +83,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
         self.progressBar = QtGui.QProgressBar(self)
         self.progressBar.setVisible(True)
+        self.progressBar.setRange(0,100)
         self.statusbar.addPermanentWidget(self.progressBar)
-        
+        self.set_ui_idle()
 
 
     def connect(self, signal, slot):
@@ -204,6 +206,36 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.measurementName = settings.measurement_name
         self.measurementCount = settings.measurement_count
         uih.setAllChildObjectSignaling(self,False)
+
+    UI_STATE_IDLE, UI_STATE_STARTED, UI_STATE_STOPPING = ui_states = range(3)
+    def set_ui_state(self, state):
+        if not state in self.ui_states:
+            return
+
+        if state is self.UI_STATE_IDLE:
+            self.ui_startButton.setEnabled(True)
+            self.ui_stopButton.setEnabled(True)
+            self.progressBar.setVisible(False)
+            self.progressBar.setValue(0)
+        elif state is self.UI_STATE_STARTED:
+            self.ui_startButton.setEnabled(False)
+            self.ui_stopButton.setEnabled(True)
+            self.progressBar.setVisible(True)
+            self.progressBar.setValue(0)
+        elif state is self.UI_STATE_STOPPING:
+            self.ui_startButton.setEnabled(False)
+            self.ui_stopButton.setEnabled(False)
+            self.progressBar.setVisible(True)
+
+    def set_ui_idle(self):
+        self.set_ui_state(self.UI_STATE_IDLE)
+
+    def set_ui_started(self):
+        self.set_ui_state(self.UI_STATE_STARTED)
+
+    def set_ui_stopping(self):
+        self.set_ui_state(self.UI_STATE_STOPPING)
+
     #**************
     #event handlers
     #**************
@@ -407,10 +439,13 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot()
     def on_ui_startButton_clicked(self):
+        self.set_ui_started()
         self.controller.start_experiment()
+        
 
     @QtCore.pyqtSlot()
     def on_ui_stopButton_clicked(self):
+        self.set_ui_stopping()
         self.controller.stop_experiment()
 
     
@@ -477,13 +512,15 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self._spectrumPlotWidget.updata_resulting_spectrum(frequency,spectrum_data)
 
     def ui_update_calculated_thermal_noise(self, data):
-        pass
+        frequency = data[pcp.FREQUENCIES]
+        spectrum_data = data[pcp.DATA]
+        self._spectrumPlotWidget.update_thermal_noise(frequency,spectrum_data)
 
     def ui_update_timetrace(self, data):
         pass
 
     def ui_update_progress(self, progress):
-        pass
+        self.progressBar.setValue(progress)
 
 class ProcessingThread(QtCore.QThread):
     
@@ -500,6 +537,7 @@ class ProcessingThread(QtCore.QThread):
     resulting_spectrum_update = QtCore.pyqtSignal(dict)
     log_message_received = QtCore.pyqtSignal(str)
     progressChanged = QtCore.pyqtSignal(int)
+    thermal_noise_update = QtCore.pyqtSignal(dict)
 
     def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
         super().__init__(parent)
@@ -568,6 +606,9 @@ class ProcessingThread(QtCore.QThread):
 
                 elif cmd is pcp.ExperimentCommands.PROGRESS_CHANGED:
                     self.progressChanged.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.THERMAL_NOISE:
+                    self.thermal_noise_update.emit(data)
 
             except EOFError as e:
                 print(str(e))
@@ -745,6 +786,7 @@ class FANS_UI_Controller(QtCore.QObject):
     def start_experiment(self):
         print("start experiment")
         self.copy_main_view_settings_to_settings_object()
+        #self.main_view.set_ui_started()
         self.initialize_experiment()
         self.ui_refresh_timer.start()
         self.experiment_thread.start()
@@ -761,7 +803,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.stop()
         self.ui_refresh_timer.stop()
         self.experiment_thread.join()
-        
+        self.main_view.set_ui_idle()
         #self.save_settings_to_file()
 
     def copy_main_view_settings_to_settings_object(self):
@@ -838,13 +880,14 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.log_message_received.connect(self.on_log_message_received)
         self.processing_thread.commandReceived.connect(self.on_command_received)
         self.processing_thread.progressChanged.connect(self.on_progress_changed)
+        self.processing_thread.thermal_noise_update.connect(self.on_thermal_noise_received)
 
         self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
 
 
     def on_experiment_started(self, params):
-        experiment_name = params.get("experiment name")
+        experiment_name = params.get("experiment_name") #experiment_name
         msg = "Experiment \"{0}\" started".format(experiment_name)
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
@@ -887,6 +930,9 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_resulting_spectrum_received(self,data):
         self.main_view.ui_update_resulting_spectrum_data(data)
+
+    def on_thermal_noise_received(self, data):
+        self.main_view.ui_update_calculated_thermal_noise(data)
 
     def on_progress_changed(self, progress):
         self.main_view.ui_update_progress(progress)
