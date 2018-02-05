@@ -591,15 +591,17 @@ class EmailAuthForm(emailAuthBase, emailAuthForm):
 
 
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 class EmailSender:
     email_cfg = "em.cfg"
-    message_format = """
-    From: {f}
-    To: {t}
-    Subject: {s}
-    {msg}
-    """
+    #message_format = """
+    #From: {f}
+    #To: {t}
+    #Subject: {s}
+    #{msg}
+    #"""
     def __init__(self):
         self._server = ""
         self._my_address = ""
@@ -653,7 +655,15 @@ class EmailSender:
             res_code, res_message = server.rcpt(self._my_address)
             assert res_code == 250, "Sender FAILURE"
 
-            message = self.message_format.format(f = self._my_address, t = self._my_address.format(login = self._login), s = subject, msg = message)
+            my_address = self._my_address.format(login = self._login)
+            msg = MIMEMultipart()
+            msg['From'] = my_address
+            msg['To'] = my_address
+            msg['Subject'] = subject
+            msg.attach(MIMEText(message))
+
+            #message = self.message_format.format(f = self._my_address, t = self._my_address.format(login = self._login), s = subject, msg = message)
+            message = msg.as_string()
 
             res_code, res_message = server.data(message)
             assert res_code == 250, "Message sending error"

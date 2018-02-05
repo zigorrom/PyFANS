@@ -86,12 +86,12 @@ class FANS_PID:
             print("current value {2} last error {0}; delta_error {1}".format(error,delta_error, current_value))
             if self.updates_counter >= self._points_to_check_error:
                 average_error = np.sqrt(np.mean(np.power(self.last_error_array,2))) #np.std(self.last_error_array) #np.sqrt(np.mean(np.power(self.last_error_array,2))) #np.fabs(np.average(self.last_error_array))
-                average_delta_error = np.std(self.error_change_array) # np.fabs(np.average(self.error_change_array))
+                #average_delta_error = np.std(self.error_change_array) # np.fabs(np.average(self.error_change_array))
                 print("last average error {0}; average delta_error {1}".format(average_error, average_delta_error))
                 if average_error<= self.desired_error:
                     raise PID_ReachedDesiredErrorException()
-                elif average_delta_error <= self.desired_error:
-                    raise PID_ErrorNotChangingException()
+                #elif average_delta_error <= self.desired_error:
+                #    raise PID_ErrorNotChangingException()
 
             if self.updates_counter >= self._max_point_to_set_value:
                 raise PID_ReachedMaximumAllowedUpdatesException()

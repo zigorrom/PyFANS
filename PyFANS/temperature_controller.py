@@ -121,13 +121,15 @@ class TemperatureController(mfpid.FANS_PID):
         try:
             self.SetPoint = temperature
             counter = 0
+            last_update = self._temperature_sensor.temperature
             while True:
                 print("reading feedback")
                 feedback = self._temperature_sensor.temperature
                 print("updating pid")
-                update = self.update(feedback) + feedback
+                update = self.update(feedback) + last_update
                 print("setting temperature")
                 self._temperature_setter.set_temperature_value(update)
+                last_update = update
                 counter +=1 
                 print("{0} - CURRENT TEMPERATURE: {1}".format(counter,feedback))
 
@@ -162,7 +164,7 @@ def test_controller():
     ts = LakeShore211TemperatureSensor("COM9")
     c = LeyboldStirlingCooler("COM11")
     controller = TemperatureController(ts, c)
-    controller.set_temperature(170)
+    controller.set_temperature(150)
 
 
 
