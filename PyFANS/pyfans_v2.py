@@ -27,6 +27,9 @@ from measurement_data_structures import MeasurementInfo
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v4.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     ureg = UnitRegistry()
+    voltage_format = "{:8.6f}"
+    resistance_format = "{:.3f}"
+    current_format = "{:.5e}"
     calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
     overload_reject = uih.bind("ui_overload_reject", "checked", bool)
     display_refresh = uih.bind("ui_display_refresh", "value", int)
@@ -45,14 +48,14 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg)) # ureg) #
     use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
     use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
-    sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float)
-    sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float)
-    front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float)
-    front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float)
-    sample_current_start = uih.bind("ui_sample_current_start", "text", float)
-    sample_current_end = uih.bind("ui_sample_current_end", "text", float)
-    sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float)
-    sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float)
+    sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
+    sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float, voltage_format)
+    front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float, voltage_format)
+    front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float, voltage_format)
+    sample_current_start = uih.bind("ui_sample_current_start", "text", float, current_format)
+    sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
+    sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
+    sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
     experimentName = uih.bind("ui_experimentName", "text", str)
     measurementName = uih.bind("ui_measurementName", "text", str)
     measurementCount = uih.bind("ui_measurementCount", "value", int)

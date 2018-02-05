@@ -103,8 +103,9 @@ class LeyboldStirlingCooler(object):
 
 class TemperatureController(mfpid.FANS_PID):
     def __init__(self, temperature_sensor, temperature_setter, filename = None):
-        super().__init__(20,1,0,0.02, 60, 1200)
+        super().__init__(1,1,0,0.02, 60, 1200)
         self.sampling_time = 1.0
+        self.guard = 10
         assert isinstance(temperature_sensor, LakeShore211TemperatureSensor), "Wrong type of temperature sensor"
         assert isinstance(temperature_setter, LeyboldStirlingCooler), "Wrong type of cooler"
 

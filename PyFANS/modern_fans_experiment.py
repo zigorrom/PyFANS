@@ -240,6 +240,9 @@ class Experiment:
 
         
     def set_voltages_to_zero(self):
+        if not self.experiment_settings.use_automated_voltage_control:
+            return
+
         if not self.experiment_settings.set_zero_after_measurement:
             print("Setting to zero is switched off. Leaving voltages at the same level")
             return
@@ -737,7 +740,8 @@ class FANSExperiment(Experiment):
                     #    #this should be under previous IF confition!!!
                     #    self._experiment_writer.write_timetrace_data(total_array) #data)
                 #time_now = time.time()
-                write_timetrace_function(data)
+                if write_timetrace_confition():
+                    write_timetrace_function(data)
                 #time_after = time.time()
                 #print(time_after - time_now)
                 

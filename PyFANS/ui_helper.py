@@ -1,4 +1,4 @@
-import pint
+﻿import pint
 from pint import UnitRegistry
 from PyQt4 import QtGui, QtCore
 import modern_fans_controller as mfc
@@ -71,7 +71,7 @@ def setAllChildObjectSignaling(parentObj, Signaling):
         res = child.blockSignals(Signaling)
         #print(res)
 
-def bind(objectName, propertyName, value_type):#, set_value_type):
+def bind(objectName, propertyName, value_type, string_format = None):#, set_value_type):
     def getter(self):
         prop_val = self.findChild(QtCore.QObject, objectName).property(propertyName)
         value = None
@@ -83,6 +83,8 @@ def bind(objectName, propertyName, value_type):#, set_value_type):
         return value
 
     def setter(self,value):
+        if isinstance(string_format, str):
+            value = string_format.format(value)
         #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
         self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)
 
