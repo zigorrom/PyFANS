@@ -246,8 +246,8 @@ class Experiment:
 
         except StopExperiment:
             print("Stop experiment exception raised")
-        except:
-            pass
+        except Exception as exc:
+            print(str(exc))
         finally:
             self.set_voltages_to_zero()
 
@@ -337,11 +337,13 @@ class Experiment:
     def report_progress(self, current_iteration, max_iterations):
         progress = 0
         try:
-            progress = math.floor(current_iteration/max_iterations)
+            progress = math.floor(100.0 * current_iteration / max_iterations)
             
         except ZeroDivisionError as e:
             progress = 0
         finally:
+            print("current iter: {0}; max_iter: {1}".format(current_iteration, max_iterations))
+            print("Progress changed to {0}".format(progress))
             self.send_progress_changed(progress)
         #raise NotImplementedError()
 
@@ -514,7 +516,7 @@ class Experiment:
             list_of_frequency_slices.append(freq)
         result_freq = np.hstack(list_of_frequency_slices)
         thermal_noise_data = np.full_like(result_freq, thermal_noise, dtype = np.float)
-        result = {pcp.COMMAND: pcp.ExperimentCommands.THERMAL_NOISE, pcp.FREQUENCIES: freq, pcp.DATA: data}
+        result = {pcp.COMMAND: pcp.ExperimentCommands.THERMAL_NOISE, pcp.FREQUENCIES: result_freq, pcp.DATA: thermal_noise_data}
         q = self._input_data_queue
         if q:
             q.put_nowait(result)

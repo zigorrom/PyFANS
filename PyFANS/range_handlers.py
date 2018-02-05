@@ -49,6 +49,7 @@ class RangeObject:
         assert value > 0
         self._repeats = value
 
+    @property
     def total_iterations(self):
         return self.rangeRepeats * self.floatRange.length
 

@@ -22,7 +22,7 @@ class SpectrumPlotWidget:
         
         self.main_curve_color = pg.mkColor("b")
         self.resulting_curve_color = pg.mkColor("r")
-        self.thermal_curve_color = pg.mkColor("p")
+        self.thermal_curve_color = pg.mkColor("m")
         self.curves = {}
 
         self.create_plot()
