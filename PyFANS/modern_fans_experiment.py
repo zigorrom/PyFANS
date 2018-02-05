@@ -56,6 +56,7 @@ class Experiment:
         self._measurement_counter = 0
         self._experiment_writer = None    
         self._calibration = None
+        self._total_measurement_iterations = 100
         
                                                                                                                                              
     
@@ -147,14 +148,21 @@ class Experiment:
         #    assert isinstance(fg_range, ns.ValueRange)
         return (ds_range, fg_range)
 
+    
+
     def output_curve_measurement_function(self):
         try:
+            iteration_counter = 0
             ds_range, fg_range = self.get_meas_ranges()
-        
+            
             if (not self.__exp_settings.use_set_vfg_range) and (not self.__exp_settings.use_set_vds_range) and (not self.need_exit):
+                self._total_measurement_iterations = 1
                 self.single_value_measurement(self.__exp_settings.drain_source_voltage,self.__exp_settings.front_gate_voltage)
+                iteration_counter += 1
+                self.report_progress(iteration_counter, self._total_measurement_iterations)
 
             elif self.__exp_settings.use_set_vds_range and self.__exp_settings.use_set_vfg_range and (not self.need_exit):
+                self._total_measurement_iterations = ds_range.total_iterations * fg_range.total_iterations
                 for vfg in fg_range: #fg_range.get_range_handler():
                     if self.need_exit:
                         return
@@ -162,18 +170,26 @@ class Experiment:
                         if self.need_exit:
                             return
                         self.single_value_measurement(vds, vfg)
+                        iteration_counter += 1
+                        self.report_progress(iteration_counter, self._total_measurement_iterations)
            
             elif not self.__exp_settings.use_set_vfg_range:
+                self._total_measurement_iterations = ds_range.total_iterations
                 for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(vds, self.__exp_settings.front_gate_voltage)
-                    
+                    iteration_counter += 1
+                    self.report_progress(iteration_counter, self._total_measurement_iterations)
+
             elif not self.__exp_settings.use_set_vds_range:
+                self._total_measurement_iterations = fg_range.total_iterations
                 for vfg in fg_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
+                    iteration_counter += 1
+                    self.report_progress(iteration_counter, self._total_measurement_iterations)
             else:
                 raise ValueError("range handlers are not properly defined")
 
@@ -188,11 +204,16 @@ class Experiment:
 
     def transfer_curve_measurement_function(self):
         try:
+            iteration_counter=0
             ds_range, fg_range = self.get_meas_ranges()
             if (not self.__exp_settings.use_set_vds_range) and (not self.__exp_settings.use_set_vfg_range) and not self.need_exit:
-                 self.single_value_measurement(self.__exp_settings.drain_source_voltage,self.__exp_settings.front_gate_voltage)
+                self._total_measurement_iterations = 1
+                self.single_value_measurement(self.__exp_settings.drain_source_voltage,self.__exp_settings.front_gate_voltage)
+                iteration_counter += 1
+                self.report_progress(iteration_counter, self._total_measurement_iterations)
 
             elif self.__exp_settings.use_set_vds_range and self.__exp_settings.use_set_vfg_range:
+                self._total_measurement_iterations = ds_range.total_iterations * fg_range.total_iterations
                 for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
@@ -200,18 +221,26 @@ class Experiment:
                         if self.need_exit:
                             return
                         self.single_value_measurement(vds, vfg)
+                        iteration_counter += 1
+                        self.report_progress(iteration_counter, self._total_measurement_iterations)
            
             elif not self.__exp_settings.use_set_vfg_range:
+                self._total_measurement_iterations = ds_range.total_iterations
                 for vds in ds_range: #.get_range_handler():
                     if self.need_exit:
                         return
                     self.single_value_measurement(vds, self.__exp_settings.front_gate_voltage)
-                    
+                    iteration_counter += 1
+                    self.report_progress(iteration_counter, self._total_measurement_iterations)
+
             elif not self.__exp_settings.use_set_vds_range:
-                 for vfg in fg_range: #.get_range_handler():
-                     if self.need_exit:
+                self._total_measurement_iterations = fg_range.total_iterations
+                for vfg in fg_range: #.get_range_handler():
+                    if self.need_exit:
                         return
-                     self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
+                    self.single_value_measurement(self.__exp_settings.drain_source_voltage, vfg)
+                    iteration_counter += 1
+                    self.report_progress(iteration_counter, self._total_measurement_iterations)
             else:
                 raise ValueError("range handlers are not properly defined")
 
@@ -224,11 +253,15 @@ class Experiment:
 
     def non_gated_structure_meaurement_function(self):
         try:
+            iteration_counter = 0 
             if self.__exp_settings.use_set_vds_range:
-                 for vds in self.__exp_settings.vds_range:
-                     if self.need_exit:
+                self._total_measurement_iterations = ds_range.total_iterations
+                for vds in self.__exp_settings.vds_range:
+                    if self.need_exit:
                         return
-                     self.non_gated_single_value_measurement(vds)
+                    self.non_gated_single_value_measurement(vds)
+                    iteration_counter += 1
+                    self.report_progress(iteration_counter, self._total_measurement_iterations)
             else:
                 self.non_gated_single_value_measurement(self.__exp_settings.drain_source_voltage)
         except StopExperiment:
@@ -301,8 +334,16 @@ class Experiment:
             raise StopExperiment()
         #raise NotImplementedError()
 
-    def report_progress(self, progress):
-        raise NotImplementedError()
+    def report_progress(self, current_iteration, max_iterations):
+        progress = 0
+        try:
+            progress = math.floor(current_iteration/max_iterations)
+            
+        except ZeroDivisionError as e:
+            progress = 0
+        finally:
+            self.send_progress_changed(progress)
+        #raise NotImplementedError()
 
     ##replace name to prepare_single_value_measurement
     def single_value_measurement(self, drain_source_voltage, gate_voltage):

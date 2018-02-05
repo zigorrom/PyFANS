@@ -49,6 +49,9 @@ class RangeObject:
         assert value > 0
         self._repeats = value
 
+    def total_iterations(self):
+        return self.rangeRepeats * self.floatRange.length
+
     def copy_object(self):
         rng = None
         if self.floatRange:
