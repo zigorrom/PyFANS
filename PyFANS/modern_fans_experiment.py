@@ -465,6 +465,7 @@ class Experiment:
 
     def send_end_measurement_info(self):
         self._send_command_with_param(pcp.ExperimentCommands.MEASUREMENT_INFO_END, self._measurement_info)
+        self.update_thermal_noise(self._measurement_info.equivalent_resistance_end, self._measurement_info.end_temperature)
 
     def update_spectrum(self, data,rang = 0, averages = 1):
         #range numeration from 0:   0 - 0 to 1600HZ
@@ -499,6 +500,26 @@ class Experiment:
             q.put_nowait(result)
 
         return spectrum
+
+
+    def update_thermal_noise(self, equivalent_resistance, temperature):
+        equivalent_resistance = math.fabs(equivalent_resistance)
+        kB = 1.38064852e-23
+        thermal_noise = 4 * kB * temperature * equivalent_resistance
+        
+        list_of_frequency_slices= []
+        for rng, spectrum_data in self._spectrum_data.items():
+            start_idx, stop_idx = self._frequency_indexes[rng]
+            freq = self._frequencies[rng][start_idx:stop_idx]
+            list_of_frequency_slices.append(freq)
+        result_freq = np.hstack(list_of_frequency_slices)
+        thermal_noise_data = np.full_like(result_freq, thermal_noise, dtype = np.float)
+        result = {pcp.COMMAND: pcp.ExperimentCommands.THERMAL_NOISE, pcp.FREQUENCIES: freq, pcp.DATA: data}
+        q = self._input_data_queue
+        if q:
+            q.put_nowait(result)
+
+        return None
 
     def get_resulting_spectrum(self):
         list_of_spectrum_slices = []

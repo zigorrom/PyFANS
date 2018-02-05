@@ -22,6 +22,7 @@ class SpectrumPlotWidget:
         
         self.main_curve_color = pg.mkColor("b")
         self.resulting_curve_color = pg.mkColor("r")
+        self.thermal_curve_color = pg.mkColor("p")
         self.curves = {}
 
         self.create_plot()
@@ -48,6 +49,10 @@ class SpectrumPlotWidget:
         curve.setZValue(1000)
         curve.setVisible(True)
         self.curves[-1] = curve
+        thermal_noise_curve = self.plot.plot(pen = self.thermal_curve_color)
+        thermal_noise_curve.setZValue(800)
+        thermal_noise_curve.setVisible(True)
+        self.curves[-2] = thermal_noise_curve
 
 
     def clear_curves(self):
@@ -93,6 +98,10 @@ class SpectrumPlotWidget:
     def updata_resulting_spectrum(self, freq,data, force = False):
         curve = self.curves[-1]
         curve.setData(freq,data)
+
+    def update_thermal_noise(self, freq, data, force = False):
+        curve = self.curves[-2]
+        curve.setData(freq, data)
 
     def update_spectrum(self, rang, data, force = False):
         curve = self.curves[rang]
