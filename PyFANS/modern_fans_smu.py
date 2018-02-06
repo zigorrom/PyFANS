@@ -514,7 +514,7 @@ class FANS_VoltageSetter(Observable):
         self.addObserver("set_voltage", callback)
 
     def on_voltage_changed(self, voltage):
-        self._Observable__fireCallbacks("set_voltage",voltage = value)
+        self._Observable__fireCallbacks("set_voltage",voltage = voltage)
 
     def move_to_zero(self):
         try:

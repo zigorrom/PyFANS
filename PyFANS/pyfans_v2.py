@@ -542,8 +542,8 @@ class ProcessingThread(QtCore.QThread):
     thermal_noise_update = QtCore.pyqtSignal(dict)
     voltageSettingStarted = QtCore.pyqtSignal()
     voltageSettingStopped = QtCore.pyqtSignal(int)
-    drainSourceVoltageChanged = QtCore.pyqtProperty(float)
-    gateSourceVoltageChanged = QtCore.pyqtProperty(float)
+    drainSourceVoltageChanged = QtCore.pyqtSignal(float)
+    gateSourceVoltageChanged = QtCore.pyqtSignal(float)
 
     def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
         super().__init__(parent)
@@ -961,7 +961,7 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_setting_voltage_start(self):
         print("UI: voltage setting started")
-        self.voltage_control.setWindowModality(QtCore.Qt.ApplicationModal)
+        #self.voltage_control.setWindowModality(QtCore.Qt.ApplicationModal)
         self.voltage_control.show()
         self.voltage_control.set_in_progress_state()
 
@@ -971,7 +971,7 @@ class FANS_UI_Controller(QtCore.QObject):
             self.voltage_control.set_okay_state()
         else:
             self.voltage_control.set_error_state()
-        time.sleep(500)
+        time.sleep(0.5)
         self.voltage_control.hide()
 
     def on_drain_source_voltage_changed(self, voltage):

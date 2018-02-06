@@ -279,12 +279,15 @@ class Experiment:
         if not self.experiment_settings.set_zero_after_measurement:
             print("Setting to zero is switched off. Leaving voltages at the same level")
             return
+        
+        self.report_start_setting_voltages()
         #print("setting to zero is off")
         print("Setting DS to 0")
         self.set_drain_source_voltage(0)
         print("Setting GS to 0")
         self.set_front_gate_voltage(0)
         print("Setting 0 completed!")
+        self.report_stop_setting_voltages(0)
 
     def handle_measurement_abort(self):
         raise NotImplementedError()
