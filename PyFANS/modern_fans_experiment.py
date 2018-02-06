@@ -347,6 +347,12 @@ class Experiment:
             self.send_progress_changed(progress)
         #raise NotImplementedError()
 
+    def report_start_setting_voltages(self):
+        self._send_command(pcp.ExperimentCommands.VOLTAGE_SETTING_STARTED)
+
+    def report_stop_setting_voltages(self, error_code):
+        self._send_command_with_param(pcp.ExperimentCommands.VOLTAGE_SETTING_STOPPED, error_code)
+
     ##replace name to prepare_single_value_measurement
     def single_value_measurement(self, drain_source_voltage, gate_voltage):
         #if self.need_exit:
@@ -358,11 +364,13 @@ class Experiment:
         
         #assert isinstance(self.experiment_settings, ExperimentSettings)
         if self.experiment_settings.use_automated_voltage_control:
+            self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
             self.set_drain_source_voltage(drain_source_voltage)
             self.set_front_gate_voltage(gate_voltage)
             #specific of measurement setup!!!
             self.set_drain_source_voltage(drain_source_voltage)
+            self.report_stop_setting_voltages(0)
         
         self.prepare_to_measure_voltages()
         self.perform_start_param_measurement()
@@ -388,8 +396,10 @@ class Experiment:
         self.open_measurement()
         
         if self.experiment_settings.use_automated_voltage_control:
+            self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
             self.set_drain_source_voltage(drain_source_voltage)
+            self.report_stop_setting_voltages(0)
         
         self.prepare_to_measure_voltages()
         self.perform_start_param_measurement()
@@ -665,6 +675,8 @@ class FANSExperiment(Experiment):
         #self.fans_smu = msmu.FANS_SMU_PID(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
         self.fans_smu = msmu.FANS_SMU_Specialized(self.fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
         self.fans_smu.set_smu_parameters(100, self.load_resistance)
+        self.fans_smu.subscribe_to_drain_source_voltage_change(self.on_drain_source_voltage_changed)
+        self.fans_smu.subscribe_to_gate_source_voltage_change(self.on_gate_source_voltage_changed)
 
         self.fans_acquisition = mfans.FANS_ACQUISITION(self.fans_controller)
         self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
@@ -828,6 +840,12 @@ class FANSExperiment(Experiment):
 
     def switch_transistor(self, transistor):
         return super().switch_transistor(transistor)
+
+    def on_drain_source_voltage_changed(self, voltage):
+        self._send_command_with_param(pcp.ExperimentCommands.DRAIN_SOURCE_VOLTAGE_CHANGED, voltage)
+
+    def on_gate_source_voltage_changed(self, voltage):
+        self._send_command_with_param(pcp.ExperimentCommands.GATE_SOURCE_VOLTAGE_CHANGED, voltage)
 
     def set_front_gate_voltage(self, voltage, error = None):
         print("setting gate voltage")

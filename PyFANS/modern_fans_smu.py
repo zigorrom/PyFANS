@@ -480,9 +480,9 @@ class IterationCounter(object):
 
 
 
-    
+from binding import Observable
 
-class FANS_VoltageSetter(object):
+class FANS_VoltageSetter(Observable):
     COARSE_MODE, FINE_MODE, STABILIZATION_MODE = range(3)
     ABS_VOLTAGE_INCREASE_DIRECTION = -1
     ABS_VOLTAGE_DECREASE_DIRECTION = -ABS_VOLTAGE_INCREASE_DIRECTION 
@@ -492,6 +492,7 @@ class FANS_VoltageSetter(object):
     MAX_ITERATIONS = 100*STABILIZATION_COUNTER
 
     def __init__(self):#,voltage):
+        super().__init__()
         #self.voltage_to_set = voltage
         self.reset()
         #self.current_voltage = 0
@@ -509,6 +510,12 @@ class FANS_VoltageSetter(object):
         self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
         self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
 
+    def subscribe_to_voltage_change(self, callback):
+        self.addObserver("set_voltage", callback)
+
+    def on_voltage_changed(self, voltage):
+        self._Observable__fireCallbacks("set_voltage",voltage = value)
+
     def move_to_zero(self):
         try:
             print("Moving to zero voltage")
@@ -516,6 +523,7 @@ class FANS_VoltageSetter(object):
             self.set_moving_voltage(ABS_VOLTAGE_DECREASE_DIRECTION *  MAX_MOVING_VOLTAGE)
             while True:
                 value = math.fabs(self.read_feedback_voltage())
+                self.on_voltage_changed(value)
                 if value < self.ZERO_VOLTAGE_INTERVAL:
                     self.zero_reached_counter.increment()
 
@@ -531,6 +539,7 @@ class FANS_VoltageSetter(object):
             self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
             while True:
                 value = math.fabs(self.read_feedback_voltage())
+                self.on_voltage_changed(value)
                 if value > self.ZERO_VOLTAGE_INTERVAL:
                     self.out_of_zero_interval_countert.increment()
 
@@ -664,7 +673,7 @@ class FANS_VoltageSetter(object):
                 abs_value = math.fabs(value)
                 difference = math.fabs(value - self.voltage_to_set)
                 motor_value_to_set = 0
-
+                self.on_voltage_changed(value)
                
 
                 if self.mode == self.COARSE_MODE:
@@ -837,6 +846,11 @@ class FANS_SMU_Specialized(FANS_SMU):
         self.drain_source_voltage_setter = FANS_DrainSourceVoltageSetter(fans_controller, drain_source_motor, drain_source_relay, drain_source_feedback, drain_source_switch_channel, main_feedback, drain_source_switch_voltage)
         self.gate_source_voltage_setter = FANS_GateSourceVoltageSetter(fans_controller, gate_motor, gate_relay, gate_feedback)
 
+    def subscribe_to_drain_source_voltage_change(self, callback):
+        self.drain_source_voltage_setter.subscribe_to_voltage_change(callback)
+
+    def subscribe_to_gate_source_voltage_change(self, callback):
+        self.gate_source_voltage_setter.subscribe_to_voltage_change(callback)
 
     def smu_set_drain_source_voltage(self, voltage, error = None):
         self.drain_source_voltage_setter.reset()

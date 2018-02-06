@@ -1,5 +1,6 @@
 ﻿import os
 import sys
+import time
 import pint
 import pickle
 
@@ -23,6 +24,7 @@ from fans_hardware_settings import HardwareSettingsView, HardwareSettings
 import modern_fans_experiment as mfexp
 import process_communication_protocol as pcp
 from measurement_data_structures import MeasurementInfo
+from modern_fans_voltage_control import VoltageControl
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v4.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -538,6 +540,10 @@ class ProcessingThread(QtCore.QThread):
     log_message_received = QtCore.pyqtSignal(str)
     progressChanged = QtCore.pyqtSignal(int)
     thermal_noise_update = QtCore.pyqtSignal(dict)
+    voltageSettingStarted = QtCore.pyqtSignal()
+    voltageSettingStopped = QtCore.pyqtSignal(int)
+    drainSourceVoltageChanged = QtCore.pyqtProperty(float)
+    gateSourceVoltageChanged = QtCore.pyqtProperty(float)
 
     def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
         super().__init__(parent)
@@ -609,6 +615,18 @@ class ProcessingThread(QtCore.QThread):
 
                 elif cmd is pcp.ExperimentCommands.THERMAL_NOISE:
                     self.thermal_noise_update.emit(data)
+
+                elif cmd is pcp.ExperimentCommands.VOLTAGE_SETTING_STARTED:
+                    self.voltageSettingStarted.emit()
+
+                elif cmd is pcp.ExperimentCommands.VOLTAGE_SETTING_STOPPED:
+                    self.voltageSettingStopped.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.DRAIN_SOURCE_VOLTAGE_CHANGED:
+                    self.drainSourceVoltageChanged.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.GATE_SOURCE_VOLTAGE_CHANGED:
+                    self.gateSourceVoltageChanged.emit(param)
 
             except EOFError as e:
                 print(str(e))
@@ -731,6 +749,9 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view = view
         self.main_view.set_controller(self)
         self.show_main_view()
+
+        self.voltage_control = VoltageControl()
+
         self.subscribe_to_ui_signals()
         self.experiment_settings = None
         self.hardware_settings = None
@@ -881,6 +902,10 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.commandReceived.connect(self.on_command_received)
         self.processing_thread.progressChanged.connect(self.on_progress_changed)
         self.processing_thread.thermal_noise_update.connect(self.on_thermal_noise_received)
+        self.processing_thread.voltageSettingStarted.connect(self.on_setting_voltage_start)
+        self.processing_thread.voltageSettingStopped.connect(self.on_setting_voltage_stop)
+        self.processing_thread.drainSourceVoltageChanged.connect(self.on_drain_source_voltage_changed)
+        self.processing_thread.gateSourceVoltageChanged.connect(self.on_gate_source_voltage_changed)
 
         self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
@@ -933,6 +958,26 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_thermal_noise_received(self, data):
         self.main_view.ui_update_calculated_thermal_noise(data)
+
+    def on_setting_voltage_start(self):
+        print("UI: voltage setting started")
+        self.voltage_control.set_in_progress_state()
+
+    def on_setting_voltage_stop(self, error_code):
+        print("UI: voltage setting stopped")
+        if error_code == 0:
+            self.voltage_control.set_okay_state()
+        else:
+            self.voltage_control.set_error_state()
+        time.sleep(500)
+
+    def on_drain_source_voltage_changed(self, voltage):
+        print("UI: voltage {0}".format(voltage))
+        self.voltage_control.set_drain_source_voltage(voltage)
+
+    def on_gate_source_voltage_changed(self, voltage):
+        print("UI: voltage {0}".format(voltage))
+        self.voltage_control.set_gate_source_voltage(voltage)
 
     def on_progress_changed(self, progress):
         self.main_view.ui_update_progress(progress)
