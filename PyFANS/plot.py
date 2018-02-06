@@ -148,3 +148,70 @@ class SpectrumPlotWidget:
             self.hLine.setPos(mousePoint.y())
 
     
+class WaterfallPlotWidget:
+    """Waterfall plot"""
+    def __init__(self, layout, histogram_layout=None):
+        if not isinstance(layout, pg.GraphicsLayoutWidget):
+            raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
+
+        if histogram_layout and not isinstance(histogram_layout, pg.GraphicsLayoutWidget):
+            raise ValueError("histogram_layout must be instance of pyqtgraph.GraphicsLayoutWidget")
+
+        self.layout = layout
+        self.histogram_layout = histogram_layout
+
+        self.history_size = 100
+        self.counter = 0
+
+        self.create_plot()
+
+    def create_plot(self):
+        """Create waterfall plot"""
+        self.plot = self.layout.addPlot()
+        self.plot.setLabel("bottom", "Frequency", units="Hz")
+        self.plot.setLabel("left", "Time")
+
+        self.plot.setYRange(-self.history_size, 0)
+        self.plot.setLimits(xMin=0, yMax=0)
+        self.plot.showButtons()
+        #self.plot.setAspectLocked(True)
+        #self.plot.setDownsampling(mode="peak")
+        #self.plot.setClipToView(True)
+
+        # Setup histogram widget (for controlling waterfall plot levels and gradients)
+        if self.histogram_layout:
+            self.histogram = pg.HistogramLUTItem()
+            self.histogram_layout.addItem(self.histogram)
+            self.histogram.gradient.loadPreset("flame")
+            #self.histogram.setHistogramRange(-50, 0)
+            #self.histogram.setLevels(-50, 0)
+
+    def update_plot(self, data_storage):
+        """Update waterfall plot"""
+        self.counter += 1
+
+        # Create waterfall image on first run
+        if self.counter == 1:
+            self.waterfallImg = pg.ImageItem()
+            self.waterfallImg.scale((data_storage.frequency_bins[-1] - data_storage.frequency_bins[0]) / len(data_storage.frequency_bins), 1)
+            self.plot.clear()
+            self.plot.addItem(self.waterfallImg)
+
+        # Roll down one and replace leading edge with new data
+        self.waterfallImg.setImage(data_storage.history.buffer[-self.counter:].T,
+                                   autoLevels=False, autoRange=False)
+
+        # Move waterfall image to always start at 0
+        self.waterfallImg.setPos(
+            data_storage.frequency_bins[0],
+            -self.counter if self.counter < self.history_size else -self.history_size
+        )
+
+        # Link histogram widget to waterfall image on first run
+        # (must be done after first data is received or else levels would be wrong)
+        if self.counter == 1 and self.histogram_layout:
+            self.histogram.setImageItem(self.waterfallImg)
+
+    def clear_plot(self):
+        """Clear waterfall plot"""
+        self.counter = 0
