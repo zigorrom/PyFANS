@@ -108,6 +108,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_hardware_settings_action(self, slot):
         self.connect(self.actionHardwareSettings.triggered, slot)
 
+    def subscribe_to_waterfall_noise_action(self, slot):
+        self.connect(self.actionOpenRealtimeNoiseWindow.triggered, slot)
+
+    def subscribe_to_timetrace_action(self, slot):
+        self.connect(self.actionOpenTimetraceWindow,slot)
+
     @property
     def controller(self):
         return self._controller
@@ -756,6 +762,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.show_main_view()
 
         self.voltage_control = VoltageControl()
+        self.waterfall_noise_window = plt.WaterfallNoiseWindow()
 
         self.subscribe_to_ui_signals()
         self.experiment_settings = None
@@ -778,6 +785,7 @@ class FANS_UI_Controller(QtCore.QObject):
     def subscribe_to_ui_signals(self):
         self.main_view.subscribe_to_email_login_action(self.login_to_email_sender)
         self.main_view.subscribe_to_hardware_settings_action(self.show_hardware_settings_view)
+        self.main_view.subscribe_to_waterfall_noise_action(self.show_waterfall_noise_window)
         #pass
     #def login_test(self):
     #    print("test")
@@ -868,6 +876,9 @@ class FANS_UI_Controller(QtCore.QObject):
         print("closing main view")
         self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
+
+    def show_waterfall_noise_window(self):
+        self.waterfall_noise_window.show()
 
     def show_hardware_settings_view(self):
         dialog = HardwareSettingsView()
