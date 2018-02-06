@@ -25,6 +25,10 @@ import modern_fans_experiment as mfexp
 import process_communication_protocol as pcp
 from measurement_data_structures import MeasurementInfo
 from modern_fans_voltage_control import VoltageControl
+from StandAloneVoltageControl import VoltageControlView
+import modern_fans_controller as mfans
+#import modern_agilent_u2542a as mdaq
+import modern_fans_smu as msmu
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v4.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -362,7 +366,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     
     @QtCore.pyqtSlot()
     def on_ui_voltage_control_clicked(self):
-        self._print_test()
+        self.controller.on_voltage_control_view_clicked()
+        
     
     @QtCore.pyqtSlot(int)
     def on_ui_meas_characteristic_type_currentIndexChanged(self, value):
@@ -934,7 +939,27 @@ class FANS_UI_Controller(QtCore.QObject):
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
         
-    
+    def on_voltage_control_view_clicked(self):
+        resource = self.hardware_settings.fans_controller_resource
+        fans_controller = mfans.FANS_CONTROLLER(resource)
+
+        sample_motor_pin = self.hardware_settings.sample_motor_channel #get_fans_ao_channels_from_number(self.hardware_settings.sample_motor_channel)
+        gate_motor_pin = self.hardware_settings.gate_motor_channel #get_fans_ao_channels_from_number(self.hardware_settings.gate_motor_channel)
+        sample_relay = self.hardware_settings.sample_relay_channel #get_fans_ao_channels_from_number(self.hardware_settings.sample_relay_channel)
+        gate_relay = self.hardware_settings.gate_relay_channel #get_fans_ao_channels_from_number(self.hardware_settings.gate_relay_channel)
+
+        sample_feedback_pin = self.hardware_settings.sample_feedback_channel  #mfans.FANS_AI_CHANNELS.AI_CH_6
+        gate_feedback_pin = self.hardware_settings.gate_feedback_channel #mfans.FANS_AI_CHANNELS.AI_CH_8
+        main_feedback_pin = self.hardware_settings.main_feedback_channel #mfans.FANS_AI_CHANNELS.AI_CH_7
+        
+        drain_source_voltage_switch_channel = mfans.FANS_AO_CHANNELS.AO_CH_10
+
+        load_resistance = self.experiment_settings.load_resistance
+        fans_smu = msmu.FANS_SMU_Specialized(fans_controller, sample_motor_pin, sample_relay, sample_feedback_pin, gate_motor_pin, gate_relay, gate_feedback_pin, main_feedback_pin, drain_source_voltage_switch_channel)
+        fans_smu.set_smu_parameters(100, load_resistance)
+
+        self._voltage_control = VoltageControlView(parent_fans_smu = fans_smu)
+        self._voltage_control.show()
 
     def on_measurement_started(self, params):
         measurement_name = params.get("measurement_name")
