@@ -961,6 +961,8 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_setting_voltage_start(self):
         print("UI: voltage setting started")
+        self.voltage_control.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.voltage_control.show()
         self.voltage_control.set_in_progress_state()
 
     def on_setting_voltage_stop(self, error_code):
@@ -970,6 +972,7 @@ class FANS_UI_Controller(QtCore.QObject):
         else:
             self.voltage_control.set_error_state()
         time.sleep(500)
+        self.voltage_control.hide()
 
     def on_drain_source_voltage_changed(self, voltage):
         print("UI: voltage {0}".format(voltage))
