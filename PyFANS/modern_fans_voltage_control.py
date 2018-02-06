@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 from PyQt4 import QtCore, QtGui, uic
 
 class LedWidget(QtGui.QWidget):
@@ -117,10 +117,10 @@ class VoltageControl(voltageControlBase, voltageControlForm):
         self.set_state(self.IN_PROGRESS)
 
     def set_drain_source_voltage(self, voltage):
-        self.ui_drain_source_voltage.setText("{0:6.3f}".format(voltage))
+        self.ui_drain_source_voltage.setText("{0:9.6f}".format(voltage))
 
     def set_gate_source_voltage(self, voltage):
-        self.ui_gate_source_voltage.setText("{0:6.3f}".format(voltage))
+        self.ui_gate_source_voltage.setText("{0:9.6f}".format(voltage))
 
     def reset(self):
         self.set_okay_state()
