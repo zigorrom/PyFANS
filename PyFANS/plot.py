@@ -183,11 +183,16 @@ class WaterfallPlotWidget:
 
         if histogram_layout and not isinstance(histogram_layout, pg.GraphicsLayoutWidget):
             raise ValueError("histogram_layout must be instance of pyqtgraph.GraphicsLayoutWidget")
-
+        self.spectral_ranges = {0:(0,1600,1),1:(0,102400,64)}
+        self.display_range = 0
         self.layout = layout
         self.histogram_layout = histogram_layout
-        self.display_range = 0
+        
+        start, stop, step = self.spectral_ranges[self.display_range]
+        self.data_size = int(stop/step)
         self.history_size = 100
+        self.history = HistoryBuffer(self.data_size, self.history_size)
+        
         self.counter = 0
 
         self.create_plot()
@@ -217,14 +222,16 @@ class WaterfallPlotWidget:
     #    curve = self.curves[rang]
     #    curve.setData(data['f'],data['d'])
 
-    def update_plot(self, range, data):
+    def update_plot(self, rang, data):
         """Update waterfall plot"""
-        if range != self.display_range:
+        if rang != self.display_range:
             return
 
         self.counter += 1
         spectral_data = data['d']
         frequencies = data['f']
+
+        self.history.append(spectral_data)
 
         # Create waterfall image on first run
         if self.counter == 1:
@@ -234,7 +241,7 @@ class WaterfallPlotWidget:
             self.plot.addItem(self.waterfallImg)
 
         # Roll down one and replace leading edge with new data
-        self.waterfallImg.setImage(data_storage.history.buffer[-self.counter:].T,
+        self.waterfallImg.setImage(self.history.buffer[-self.counter:].T,
                                    autoLevels=False, autoRange=False)
 
         # Move waterfall image to always start at 0
@@ -259,6 +266,9 @@ class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
         super(waterfallViewBase, self).__init__(parent)
         self.setupUi(self)
         self.waterfall_widget = WaterfallPlotWidget(self.ui_waterfall_plot, self.ui_histogram_layout)
+
+    def update_data(self, rang, data):
+        self.waterfall_widget.update_plot(rang, data)
 
 if __name__ == "__main__":
     import sys

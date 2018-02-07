@@ -1043,6 +1043,7 @@ class FANS_UI_Controller(QtCore.QObject):
                 rang = data[pcp.SPECTRUM_RANGE]
                 #print("visualized data index: {0}".format(index))
                 self.main_view.ui_update_spectrum_data(rang ,data)
+                self.waterfall_noise_window.update_data(rang,data)
         except Exception as e:
             pass
 
