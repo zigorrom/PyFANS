@@ -2,6 +2,7 @@
 
 from PyQt4 import QtCore
 import pyqtgraph as pg
+from PyQt4 import uic, QtGui, QtCore
 
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
@@ -147,4 +148,131 @@ class SpectrumPlotWidget:
             self.vLine.setPos(mousePoint.x())
             self.hLine.setPos(mousePoint.y())
 
+class HistoryBuffer:
+    """Fixed-size NumPy array ring buffer"""
+    def __init__(self, data_size, max_history_size, dtype=float):
+        self.data_size = data_size
+        self.max_history_size = max_history_size
+        self.history_size = 0
+        self.counter = 0
+        self.buffer = np.empty(shape=(max_history_size, data_size), dtype=dtype)
+
+    def append(self, data):
+        """Append new data to ring buffer"""
+        self.counter += 1
+        if self.history_size < self.max_history_size:
+            self.history_size += 1
+        self.buffer = np.roll(self.buffer, -1, axis=0)
+        self.buffer[-1] = data
+
+    def get_buffer(self):
+        """Return buffer stripped to size of actual data"""
+        if self.history_size < self.max_history_size:
+            return self.buffer[-self.history_size:]
+        else:
+            return self.buffer
+
+    def __getitem__(self, key):
+        return self.buffer[key]
     
+class WaterfallPlotWidget:
+    """Waterfall plot"""
+    def __init__(self, layout, histogram_layout=None):
+        if not isinstance(layout, pg.GraphicsLayoutWidget):
+            raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
+
+        if histogram_layout and not isinstance(histogram_layout, pg.GraphicsLayoutWidget):
+            raise ValueError("histogram_layout must be instance of pyqtgraph.GraphicsLayoutWidget")
+        self.spectral_ranges = {0:(0,1600,1),1:(0,102400,64)}
+        self.display_range = 0
+        self.layout = layout
+        self.histogram_layout = histogram_layout
+        
+        start, stop, step = self.spectral_ranges[self.display_range]
+        self.data_size = int(stop/step)
+        self.history_size = 100
+        self.history = HistoryBuffer(self.data_size, self.history_size)
+        
+        self.counter = 0
+
+        self.create_plot()
+
+    def create_plot(self):
+        """Create waterfall plot"""
+        self.plot = self.layout.addPlot()
+        self.plot.setLabel("bottom", "Frequency", units="Hz")
+        self.plot.setLabel("left", "Time")
+
+        self.plot.setYRange(-self.history_size, 0)
+        self.plot.setLimits(xMin=0, yMax=0)
+        self.plot.showButtons()
+        #self.plot.setAspectLocked(True)
+        #self.plot.setDownsampling(mode="peak")
+        #self.plot.setClipToView(True)
+
+        # Setup histogram widget (for controlling waterfall plot levels and gradients)
+        if self.histogram_layout:
+            self.histogram = pg.HistogramLUTItem()
+            self.histogram_layout.addItem(self.histogram)
+            self.histogram.gradient.loadPreset("flame")
+            #self.histogram.setHistogramRange(-50, 0)
+            #self.histogram.setLevels(-50, 0)
+
+    #def update_spectrum(self, rang, data, force = False):
+    #    curve = self.curves[rang]
+    #    curve.setData(data['f'],data['d'])
+
+    def update_plot(self, rang, data):
+        """Update waterfall plot"""
+        if rang != self.display_range:
+            return
+
+        self.counter += 1
+        spectral_data = data['d']
+        frequencies = data['f']
+
+        self.history.append(spectral_data)
+
+        # Create waterfall image on first run
+        if self.counter == 1:
+            self.waterfallImg = pg.ImageItem()
+            self.waterfallImg.scale((frequencies[-1] - frequencies[0]) / len(frequencies), 1)
+            self.plot.clear()
+            self.plot.addItem(self.waterfallImg)
+
+        # Roll down one and replace leading edge with new data
+        self.waterfallImg.setImage(self.history.buffer[-self.counter:].T,
+                                   autoLevels=False, autoRange=False)
+
+        # Move waterfall image to always start at 0
+        self.waterfallImg.setPos(
+            frequencies[0],
+            -self.counter if self.counter < self.history_size else -self.history_size
+        )
+
+        # Link histogram widget to waterfall image on first run
+        # (must be done after first data is received or else levels would be wrong)
+        if self.counter == 1 and self.histogram_layout:
+            self.histogram.setImageItem(self.waterfallImg)
+
+    def clear_plot(self):
+        """Clear waterfall plot"""
+        self.counter = 0
+
+
+waterfallViewBase, waterfallViewForm = uic.loadUiType("UI/UI_WaterfallNoise.ui")
+class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
+    def __init__(self, parent = None):
+        super(waterfallViewBase, self).__init__(parent)
+        self.setupUi(self)
+        self.waterfall_widget = WaterfallPlotWidget(self.ui_waterfall_plot, self.ui_histogram_layout)
+
+    def update_data(self, rang, data):
+        self.waterfall_widget.update_plot(rang, data)
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    wnd = WaterfallNoiseWindow()
+    wnd.show()
+    sys.exit(app.exec_())
