@@ -84,6 +84,8 @@ def bind(objectName, propertyName, value_type, string_format = None):#, set_valu
 
     def setter(self,value):
         if isinstance(string_format, str):
+            if value is None:
+                return
             value = string_format.format(value)
         #assert isinstance(value, set_value_type), "expected type {0}, reveiver {1}".format(set_value_type, type(value))
         self.findChild(QtCore.QObject, objectName).setProperty(propertyName, value)

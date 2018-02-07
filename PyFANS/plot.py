@@ -1,5 +1,5 @@
 ﻿import collections, math
-
+import numpy as np
 from PyQt4 import QtCore
 import pyqtgraph as pg
 from PyQt4 import uic, QtGui, QtCore
@@ -163,7 +163,7 @@ class HistoryBuffer:
         if self.history_size < self.max_history_size:
             self.history_size += 1
         self.buffer = np.roll(self.buffer, -1, axis=0)
-        self.buffer[-1] = data
+        self.buffer[-1] = data[:self.data_size]
 
     def get_buffer(self):
         """Return buffer stripped to size of actual data"""
