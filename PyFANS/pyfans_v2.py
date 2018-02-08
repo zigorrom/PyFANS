@@ -30,7 +30,7 @@ import modern_fans_controller as mfans
 #import modern_agilent_u2542a as mdaq
 import modern_fans_smu as msmu
 
-mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v4.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
     ureg = UnitRegistry()
     voltage_format = "{:8.6f}"

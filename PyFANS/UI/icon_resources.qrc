@@ -1,8 +1,11 @@
+<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="icons">
+    <file>Icons/console_64x64.png</file>
     <file>Icons/info_64x64.png</file>
     <file>Icons/mail_64x64.png</file>
     <file>Icons/realtime_noise_64x64.png</file>
+    <file>Icons/remote_64x64.png</file>
     <file>Icons/settings_64x64.png</file>
     <file>Icons/timetrace_64x64.png</file>
   </qresource>
