@@ -765,7 +765,7 @@ class UI_Console(consoleViewBase, consoleViewForm):
     def setupUi(self):
         super().setupUi(self)
 
-
+    @QtCore.pyqtSlot(str)
     def append_text(self, text):
         self.console_widget.appendPlainText(text)
 
@@ -784,10 +784,10 @@ class FANS_UI_Controller(QtCore.QObject):
 
         self.voltage_control = VoltageControl()
         self.waterfall_noise_window = plt.WaterfallNoiseWindow()
-        self.console_window = UI_Console()
+        self._console_window = UI_Console()
 
-        self.script_executed_with_console = self.check_if_script_executed_with_console()
-        print("Script is executed with console: {0}".format(self.script_executed_with_console))
+        self._script_executed_with_console = True #self.check_if_script_executed_with_console()
+        #print("Script is executed with console: {0}".format(self.script_executed_with_console))
         #if self.script_executed_with_console:
         #    self.console_window = UI_Console()
 
@@ -811,6 +811,17 @@ class FANS_UI_Controller(QtCore.QObject):
 
         #self.wa = WhatsAppSender()
         #self.initialize_experiment()
+    @property
+    def script_executed_with_console(self):
+        return self._script_executed_with_console
+
+    @script_executed_with_console.setter
+    def script_executed_with_console(self, value):
+        self._script_executed_with_console = value
+
+    @property
+    def console_window(self):
+        return self._console_window
 
     def play_on_startup(self):
         from playsound import playsound
@@ -819,13 +830,7 @@ class FANS_UI_Controller(QtCore.QObject):
             playsound(filename)
 
 
-    def check_if_script_executed_with_console(self):
-        executable = sys.executable
-        filename, file_extention = os.path.splitext(executable)
-        if filename == "pythonw":
-            return False
-        else:
-            return True
+   
 
     def subscribe_to_ui_signals(self):
         self.main_view.subscribe_to_email_login_action(self.login_to_email_sender)
@@ -924,8 +929,14 @@ class FANS_UI_Controller(QtCore.QObject):
         self.save_settings_to_file()
 
     def show_console_window(self):
-        print("opening console window")
-        self.console_window.show()
+        #
+        if self.script_executed_with_console:
+            msg = "program is started in console mode"
+            print(msg)
+            self.main_view.ui_show_message_in_status_bar(msg,3000)
+        else:
+            print("opening console window")
+            self.console_window.show()
 
     def show_waterfall_noise_window(self):
         self.waterfall_noise_window.show()
@@ -1098,11 +1109,54 @@ class FANS_UI_Controller(QtCore.QObject):
             pass
 
 
+def check_if_script_executed_with_console():
+    executable = sys.executable
+    basename = os.path.basename(executable)
+    filename, file_extention = os.path.splitext(basename)
+    if filename == "pythonw":
+        return False
+    else:
+        return True
+
+from queue import Queue
+
+# The new Stream Object which replaces the default stream associated with sys.stdout
+# This object just puts data in a queue!
+class WriteStream(object):
+    def __init__(self,queue):
+        self.queue = queue
+
+    def write(self, text):
+        self.queue.put(text)
+
+    def flush(self):
+        pass
+
+# A QObject (to be run in a QThread) which sits waiting for data to come through a Queue.Queue().
+# It blocks until data is available, and one it has got something from the queue, it sends
+# it to the "MainThread" by emitting a Qt Signal 
+class MyReceiver(QtCore.QObject):
+    mysignal = QtCore.pyqtSignal(str)
+
+    def __init__(self,queue,*args,**kwargs):
+        QtCore.QObject.__init__(self,*args,**kwargs)
+        self.queue = queue
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        while True:
+            text = self.queue.get()
+            self.mysignal.emit(text)
+
+
+
 def test_ui():
     import ctypes
     myappid = "fzj.pyfans.pyfans.21" # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     
+   
+
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
@@ -1119,6 +1173,21 @@ def test_ui():
     
     wnd = FANS_UI_MainView()
     controller = FANS_UI_Controller(wnd)
+    script_executed_with_console = check_if_script_executed_with_console()
+    controller.script_executed_with_console = script_executed_with_console
+    wnd.ui_show_message_in_status_bar("Execution in {0} mode".format("console" if script_executed_with_console else "window"), 5000)
+    #filename, file_extention = os.path.splitext(sys.executable)
+    #wnd.ui_show_message_in_status_bar("Execution with {0}".format(filename))
+    if not script_executed_with_console:
+        queue = Queue()
+        sys.stdout = WriteStream(queue)
+        console_thread = QtCore.QThread()
+        receiver = MyReceiver(queue)
+        receiver.mysignal.connect(controller.console_window.append_text)
+        receiver.moveToThread(console_thread)
+        console_thread.started.connect(receiver.run)
+        console_thread.start()
+    
     #controller.show_main_view()
     return app.exec_()
     
