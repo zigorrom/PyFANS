@@ -112,7 +112,13 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.connect(self.actionOpenRealtimeNoiseWindow.triggered, slot)
 
     def subscribe_to_timetrace_action(self, slot):
-        self.connect(self.actionOpenTimetraceWindow,slot)
+        self.connect(self.actionOpenTimetraceWindow.triggered,slot)
+
+    def subscribe_to_open_console_window_action(self, slot):
+        self.connect(self.actionOpenConsoleWindow.triggered, slot)
+
+    def subscribe_to_open_remote_action(self, slot):
+        self.connect(self.actionOpenRemote.triggered, slot)
 
     @property
     def controller(self):
@@ -748,8 +754,23 @@ class EmailSender:
 
         
 
+consoleViewBase, consoleViewForm = uic.loadUiType("UI/UI_Console.ui")
+class UI_Console(consoleViewBase, consoleViewForm):
+    def __init__(self, parent = None):
+        super(consoleViewBase,self).__init__(parent)
+        self.setupUi()
+        #self.
 
 
+    def setupUi(self):
+        super().setupUi(self)
+
+
+    def append_text(self, text):
+        self.console_widget.appendPlainText(text)
+
+    def clear(self):
+        pass
 
 
 class FANS_UI_Controller(QtCore.QObject):
@@ -763,6 +784,13 @@ class FANS_UI_Controller(QtCore.QObject):
 
         self.voltage_control = VoltageControl()
         self.waterfall_noise_window = plt.WaterfallNoiseWindow()
+        self.console_window = UI_Console()
+
+        self.script_executed_with_console = self.check_if_script_executed_with_console()
+        print("Script is executed with console: {0}".format(self.script_executed_with_console))
+        #if self.script_executed_with_console:
+        #    self.console_window = UI_Console()
+
 
         self.subscribe_to_ui_signals()
         self.experiment_settings = None
@@ -778,14 +806,32 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer.setInterval(50)
         self.ui_refresh_timer.timeout.connect(self.update_ui)
         self.email_sender = None
+        self.play_on_startup()
         #self.login_to_email_sender()
 
         #self.wa = WhatsAppSender()
         #self.initialize_experiment()
+
+    def play_on_startup(self):
+        from playsound import playsound
+        filename = "Media/startup.mp3"
+        if os.path.isfile(filename):
+            playsound(filename)
+
+
+    def check_if_script_executed_with_console(self):
+        executable = sys.executable
+        filename, file_extention = os.path.splitext(executable)
+        if filename == "pythonw":
+            return False
+        else:
+            return True
+
     def subscribe_to_ui_signals(self):
         self.main_view.subscribe_to_email_login_action(self.login_to_email_sender)
         self.main_view.subscribe_to_hardware_settings_action(self.show_hardware_settings_view)
         self.main_view.subscribe_to_waterfall_noise_action(self.show_waterfall_noise_window)
+        self.main_view.subscribe_to_open_console_window_action(self.show_console_window)
         #pass
     #def login_test(self):
     #    print("test")
@@ -876,6 +922,10 @@ class FANS_UI_Controller(QtCore.QObject):
         print("closing main view")
         self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
+
+    def show_console_window(self):
+        print("opening console window")
+        self.console_window.show()
 
     def show_waterfall_noise_window(self):
         self.waterfall_noise_window.show()

@@ -1195,7 +1195,7 @@
    <addaction name="actionLoginEmail"/>
    <addaction name="actionOpenTimetraceWindow"/>
    <addaction name="actionOpenRealtimeNoiseWindow"/>
-   <addaction name="actionConsole"/>
+   <addaction name="actionOpenConsoleWindow"/>
    <addaction name="actionOpenRemote"/>
    <addaction name="actionHardwareSettings"/>
    <addaction name="actionAbout"/>
@@ -1261,7 +1261,7 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionConsole">
+  <action name="actionOpenConsoleWindow">
    <property name="icon">
     <iconset resource="icon_resources.qrc">
      <normaloff>:/icons/Icons/console_64x64.png</normaloff>:/icons/Icons/console_64x64.png</iconset>
