@@ -159,3 +159,4 @@ PyFANS/wa.cfg
 *.pyc
 PyFANS/__pycache__/calibration.cpython-34.pyc
 *.pyc
+PyFANS/settings.cfg
