@@ -120,6 +120,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_open_remote_action(self, slot):
         self.connect(self.actionOpenRemote.triggered, slot)
 
+    def subscribe_to_open_settings_action(self, slot):
+        self.connect(self.action_open_settings.triggered, slot)
+
+    def subscribe_to_save_settings_action(self, slot):
+        self.connect(self.action_save_settings.triggered, slot)
+
     @property
     def controller(self):
         return self._controller
@@ -837,9 +843,33 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_hardware_settings_action(self.show_hardware_settings_view)
         self.main_view.subscribe_to_waterfall_noise_action(self.show_waterfall_noise_window)
         self.main_view.subscribe_to_open_console_window_action(self.show_console_window)
+        self.main_view.subscribe_to_open_settings_action(self.on_open_settings_action)
+        self.main_view.subscribe_to_save_settings_action(self.on_save_settings_action)
         #pass
     #def login_test(self):
     #    print("test")
+
+    def on_open_settings_action(self):
+        name = QtGui.QFileDialog.getOpenFileName(self.main_view, "Open Settings File", filter = "*.pfs")
+        if os.path.isfile(name):
+            with open(name,"rb") as f:
+                exp_settings = pickle.load(f)
+                self.experiment_settings = exp_settings
+                self.main_view.experiment_settings = exp_settings
+
+    def on_save_settings_action(self):
+        #fd= 
+        #extention = ".pfs"
+        #fd.setDefaultSuffix(suffix)
+        name = QtGui.QFileDialog().getSaveFileName(self.main_view, "Save Settings File")
+        basename = os.path.basename(name)
+        filename, ext = os.path.splitext(basename)
+        if not ext:
+            name += ".pfs"
+        #elif ext 
+        self.copy_main_view_settings_to_settings_object()
+        with open(name,"wb") as f:
+            pickle.dump(self.experiment_settings, f)
 
     def login_to_email_sender(self):
         dialog = EmailAuthForm()
