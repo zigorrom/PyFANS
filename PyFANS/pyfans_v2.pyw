@@ -129,6 +129,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_time_info_action(self, slot):
         self.connect(self.actionTimeInfoWindow.triggered, slot)
 
+    def subscribe_to_about_action(self, slot):
+        self.connect(self.actionAbout.triggered, slot)
+
     @property
     def controller(self):
         return self._controller
@@ -786,6 +789,12 @@ class UI_Console(consoleViewBase, consoleViewForm):
     def clear(self):
         pass
 
+aboutViewBase, aboutViewForm = uic.loadUiType("UI/UI_About.ui")
+class UI_About(aboutViewBase, aboutViewForm):
+    def __init__(self,parent = None):
+        super(aboutViewBase, self).__init__(parent)
+        self.setupUi(self)
+
 timeinfoViewBase, timeinfoViewForm = uic.loadUiType("UI/UI_TimeInfo.ui")
 class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
     def __init__(self, parent = None):
@@ -899,6 +908,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_open_settings_action(self.on_open_settings_action)
         self.main_view.subscribe_to_save_settings_action(self.on_save_settings_action)
         self.main_view.subscribe_to_time_info_action(self.show_time_info_window)
+        self.main_view.subscribe_to_about_action(self.on_show_about_window)
         #pass
     #def login_test(self):
     #    print("test")
@@ -1173,6 +1183,10 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_experiment_time_update(self, time_dict):
         self._time_info_window.set_time(**time_dict)
+
+    def on_show_about_window(self):
+        self.aboutWnd = UI_About()
+        self.aboutWnd.show()
 
     def on_log_message_received(self, message):
         if message:
