@@ -42,8 +42,10 @@ class ParameterItem:
 class ParamGenerator(object):
     def __init__(self, *args, **kwargs):
         self._all_params = []
-        self._max_priority_level = 0
-        self._total_iterations = 0
+        self.clear()
+        self.opts = kwargs
+        #self._max_priority_level = 0
+        #self._total_iterations = 1
         self.populate_params(*args, **kwargs)
     
     def populate_params(self, *args, **kwargs):
@@ -51,37 +53,66 @@ class ParamGenerator(object):
             self.append_parameter(item)
  
 
-    def append_parameter(self, parameter_item):
+    def append_parameter(self, parameter_item, **kwargs):
+        if isinstance(parameter_item, str):
+            parameter_item = ParameterItem(parameter_item, **kwargs)
         if isinstance(parameter_item, ParameterItem):
             parameter_item.priority_level = self._max_priority_level
             self._max_priority_level += 1
             self._all_params.append(parameter_item) 
+            try:
+                self._total_iterations *= len(parameter_item.range_handler)
+            except TypeError:
+                #self._total_iterations *= 1
+                pass
+            return parameter_item
+        else:
+            raise TypeError("Unexpected parameter_item type")
+
     
     def clear(self):
         self._all_params.clear()
         self._max_priority_level = 0
-        self._total_iterations = 0
+        self._total_iterations = 1
+        self._current_index = 0
 
     @property
     def parameter_items(self):
         return self._all_params
 
+    @property
+    def current_index(self):
+        return self._current_index
+
     def __iter__(self):
+        self._current_index = 0
         return self.build_generator()
 
     def build_generator(self):
-        return self.recursive_level_iteration(0)      
+        return self.recursive_level_iteration(0, **self.opts)      
         
     def recursive_level_iteration(self, level, **kwargs):
         if self._max_priority_level == 0:
             return None
         current_level_parameters = self._all_params[level]
-        for value in current_level_parameters.range_handler:
-            kwargs[current_level_parameters.name] = value
+        try:
+            for value in current_level_parameters.range_handler:
+                kwargs[current_level_parameters.name] = value
+                if level < self._max_priority_level-1:
+                    yield from self.recursive_level_iteration(level+1, **kwargs)
+                else:
+                    yield kwargs
+                    self._current_index += 1
+
+        except TypeError:
+            kwargs[current_level_parameters.name] = current_level_parameters.range_handler
             if level < self._max_priority_level-1:
                 yield from self.recursive_level_iteration(level+1, **kwargs)
             else:
                 yield kwargs
+                self._current_index += 1
+                
+            
 
     def __str__(self):
         sio = StringIO()
@@ -89,6 +120,7 @@ class ParamGenerator(object):
         for item in iter(self._all_params):
             sio.write(str(item))
             sio.write("\n")
+        sio.write("Total iterations: {0}".format(self.total_iterations))
         return sio.getvalue()
     
     def __getitem__(self, i):
@@ -107,17 +139,18 @@ def dummy_function(transistor, temperature, drain_source_voltage, gate_source_vo
 
 
 if __name__ == "__main__":
-    m = ParamGenerator()
-    m.append_parameter(ParameterItem("temperature", rang = [240, 250]))
-    m.append_parameter(ParameterItem("transistor", rang = [1,2,3]))
-    m.append_parameter(ParameterItem("drain_source_voltage", rang = [1,2,3,4]))
-    m.append_parameter(ParameterItem("gate_source_voltage", rang = [1,2,3,4]))
+    m = ParamGenerator(test_param = False)
+    m.append_parameter("temperature", rang = [1,2,3,4])
+    m.append_parameter("transistor", rang = [1,2,3])
+    m.append_parameter(ParameterItem("drain_source_voltage", rang = None)) #[1,2,3,4]))
+    m.append_parameter(ParameterItem("gate_source_voltage", rang = [1]))
     #m.recursive_level_iteration(0)
-    for i in m:
-        print(i)
+    for idx, item in enumerate(m):
+        print("IDX: {0}; CONFIRM: {1}; Item: {2}".format(idx,m.current_index, item))
 
         #dummy_function(**i)
     
     print(m)
+    
     # m = ParamGenerator({NAME_OPTION:"vlg", PRIORITY_OPTION:0, RANGE_OPTION: 1})
     

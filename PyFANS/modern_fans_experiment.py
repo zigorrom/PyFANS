@@ -22,6 +22,7 @@ import pickle
 import process_communication_protocol as pcp
 import experiment_writer as ew
 import measurement_data_structures as mds
+from measurement_param_generator import ParameterItem, ParamGenerator
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"
 #    assert (number>0 and number<9),"Wrong channel number!"
@@ -338,8 +339,21 @@ class Experiment:
             raise StopExperiment()
         #raise NotImplementedError()
 
-    def estimate_measurement_time(self):
+    def initial_estimate_measurement_time(self):
         return 0
+
+    def estimate_experiment_timing(self, experiment_start_time, current_index, total_iterations):
+        elapsed_time = 0
+        time_left = 0
+        if current_index == 0:
+            initial_measurement_time_estimation = self.initial_estimate_measurement_time()
+            elapsed_time = 0
+            time_left = total_iterations * initial_measurement_time_estimation
+        else:
+            elapsed_time = current_index * self._average_measurement_time
+            time_left = (total_iterations - current_index) * self._average_measurement_time
+        return (experiment_start_time, elapsed_time, time_left)
+        #pass
 
     def update_average_measurement_time(self,current_measurement_index, current_measurement_time):
         if current_measurement_index == 0:
@@ -575,6 +589,51 @@ class Experiment:
         return data 
         
 
+    def future_single_value_measurement(self, *args, drain_source_voltage = None, gate_voltage = None, automatic_voltage_set = False, temperature = None, automatic_temperature_set = False, transistor = None, automatic_transistor_switch = False, **kwargs):
+        pass
+
+
+    def create_experiment_param_generator(self):
+        gated_structure = self.__exp_settings.meas_gated_structure
+        characteristic_type = self.__exp_settings.meas_characteristic_type
+        automatic_transistor_switch = self.__exp_settings.use_transistor_selector
+        automatic_voltage_control = self.__exp_settings.use_automated_voltage_control
+        automatic_temperature_control = False
+
+        table_generator = ParamGenerator(automatic_voltage_set = automatic_voltage_control, automatic_temperature_set = automatic_temperature_control,automatic_transistor_switch = automatic_transistor_switch)
+        table_generator.append_parameter("temperature")
+        if automatic_transistor_switch:
+            table_generator.append_parameter("transistor")
+
+
+        if not automatic_voltage_control:
+            table_generator.append_parameter("drain_source_voltage")
+            table_generator.append_parameter("gate_voltage")
+
+        elif not gated_structure:# non gated structure measurement
+            ds_range = self.experiment_settings.vds_range
+            table_generator.append_parameter("drain_source_voltage", rang = ds_range)
+
+        elif characteristic_type == 0: #output curve
+            ds_range, fg_range = self.get_meas_ranges()
+            table_generator.append_parameter("gate_voltage",rang = fg_range)
+            table_generator.append_parameter("drain_source_voltage", rang = ds_range)
+
+        elif characteristic_type == 1: #transfer curve
+            ds_range, fg_range = self.get_meas_ranges()
+            table_generator.append_parameter("drain_source_voltage", rang = ds_range)
+            table_generator.append_parameter("gate_voltage", rang = fg_range)
+
+        else: 
+            raise AssertionError("function was not selected properly")
+
+        return table_generator
+        #table_generator.append_parameter("drain_source_voltage")
+        #m.append_parameter(ParameterItem("temperature", rang = None))#[1,2,3,3]))
+        #m.append_parameter(ParameterItem("transistor", rang = None)) #[1,2,3]))
+        #m.append_parameter(ParameterItem("drain_source_voltage", rang = None)) #[1,2,3,4]))
+        #m.append_parameter(ParameterItem("gate_source_voltage", rang = [1]))
+
     def generate_experiment_function(self):
         func = None
         print(self.__exp_settings.meas_gated_structure)
@@ -601,6 +660,42 @@ class Experiment:
             self._execution_function = execution_function
         self._execution_function = func
         
+    def future_perform_experiment(self):
+        open_error = None
+        param_generator = self.create_experiment_param_generator()
+        try:
+            self.open_experiment()
+        except Exception as e:
+            open_error = e
+
+        if open_error:
+            return None
+
+        try:
+            start_time = time.time()
+            #estimate_experiment_timing
+            for item in param_generator:
+                t = time.time()
+                result = self.estimate_experiment_timing(start_time, param_generator.current_index, param_generator.total_iterations)
+                experiment_start_time, elapsed_time, time_left = result
+                self.report_estimated_experiment_time(experiment_start_time, elapsed_time, time_left)
+                
+                self.future_single_value_measurement(**item)
+                
+                dt = time.time() - t
+                self.update_average_measurement_time(param_generator.current_index, dt) 
+
+        except Exception as e:
+            pass
+
+        try:
+            self.close_experiment()
+        except Exception:
+            pass
+
+        return None
+            
+
     def perform_experiment(self):
         self.generate_experiment_function()
         self.open_experiment()
@@ -715,7 +810,7 @@ class FANSExperiment(Experiment):
     def create_experiment_writer(self):
         return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
            
-    def estimate_measurement_time(self):
+    def initial_estimate_measurement_time(self):
         return 2*self.wait_time_before_voltage_measurement + self.wait_time_shortcut_amplifier + self.wait_time_stabilization_before_spectrum
     
     def average_measurement_time(self):
