@@ -8,7 +8,7 @@
 from io import StringIO
 NAME_OPTION = "name"
 PRIORITY_OPTION = "priority"
-RANGE_OPTION = "range"
+RANGE_OPTION = "rang"
 
 class ParameterItem:
     def __init__(self, name, **kwargs):
@@ -43,6 +43,7 @@ class ParamGenerator(object):
     def __init__(self, *args, **kwargs):
         self._all_params = []
         self._max_priority_level = 0
+        self._total_iterations = 0
         self.populate_params(*args, **kwargs)
     
     def populate_params(self, *args, **kwargs):
@@ -59,19 +60,33 @@ class ParamGenerator(object):
     def clear(self):
         self._all_params.clear()
         self._max_priority_level = 0
+        self._total_iterations = 0
 
     @property
     def parameter_items(self):
         return self._all_params
 
     def __iter__(self):
-        pass
-        # return iter(self._all_params)
+        return self.build_generator()
+
+    def build_generator(self):
+        return self.recursive_level_iteration(0)      
+        
+    def recursive_level_iteration(self, level, **kwargs):
+        if self._max_priority_level == 0:
+            return None
+        current_level_parameters = self._all_params[level]
+        for value in current_level_parameters.range_handler:
+            kwargs[current_level_parameters.name] = value
+            if level < self._max_priority_level-1:
+                yield from self.recursive_level_iteration(level+1, **kwargs)
+            else:
+                yield kwargs
 
     def __str__(self):
         sio = StringIO()
         sio.write("ParamGenerator:\n")
-        for item in self.parameter_items:
+        for item in iter(self._all_params):
             sio.write(str(item))
             sio.write("\n")
         return sio.getvalue()
@@ -82,13 +97,27 @@ class ParamGenerator(object):
         else:
             raise IndexError()
 
+    @property
+    def total_iterations(self):
+        return self._total_iterations
+
+
+def dummy_function(transistor, temperature, drain_source_voltage, gate_source_voltage, *args, **kwargs):
+    print("t:{0}-T:{1}-Vds:{2}-Vgs:{3}".format(transistor, temperature, drain_source_voltage, gate_source_voltage))
 
 
 if __name__ == "__main__":
     m = ParamGenerator()
-    m.append_parameter(ParameterItem("hgjhsdg"))
-    m.append_parameter(ParameterItem("dgdag'ag"))
-    print(m[0])
+    #m.append_parameter(ParameterItem("temperature", rang = [240]))
+    #m.append_parameter(ParameterItem("transistor", rang = [1,2,3]))
+    #m.append_parameter(ParameterItem("drain_source_voltage", rang = [1,2,3,4]))
+    #m.append_parameter(ParameterItem("gate_source_voltage", rang = [1,2,3,4]))
+    #m.recursive_level_iteration(0)
+    for i in m:
+        print(i)
 
-    # m = ParamGenerator({NAME_OPTION:"vlg", PRIORITY_OPTION:0, RANGE_OPTION: 1})
+        #dummy_function(**i)
+    
     print(m)
+    # m = ParamGenerator({NAME_OPTION:"vlg", PRIORITY_OPTION:0, RANGE_OPTION: 1})
+    

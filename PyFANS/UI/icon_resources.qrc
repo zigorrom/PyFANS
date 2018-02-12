@@ -1,6 +1,6 @@
-<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="icons">
+    <file>Icons/time_info_64x64.png</file>
     <file>Icons/console_64x64.png</file>
     <file>Icons/info_64x64.png</file>
     <file>Icons/mail_64x64.png</file>

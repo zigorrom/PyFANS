@@ -126,6 +126,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_save_settings_action(self, slot):
         self.connect(self.action_save_settings.triggered, slot)
 
+    def subscribe_to_time_info_action(self, slot):
+        self.connect(self.actionTimeInfoWindow.triggered, slot)
+
     @property
     def controller(self):
         return self._controller
@@ -567,6 +570,7 @@ class ProcessingThread(QtCore.QThread):
     voltageSettingStopped = QtCore.pyqtSignal(int)
     drainSourceVoltageChanged = QtCore.pyqtSignal(float)
     gateSourceVoltageChanged = QtCore.pyqtSignal(float)
+    experimentTimeUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, input_data_queue = None,visualization_queue = None, parent = None):
         super().__init__(parent)
@@ -650,6 +654,10 @@ class ProcessingThread(QtCore.QThread):
 
                 elif cmd is pcp.ExperimentCommands.GATE_SOURCE_VOLTAGE_CHANGED:
                     self.gateSourceVoltageChanged.emit(param)
+
+                elif cmd is pcp.ExperimentCommands.EXPERIMENT_TIME_UPDATE:
+                    self.experimentTimeUpdate.emit(param)
+                    
 
             except EOFError as e:
                 print(str(e))
@@ -778,6 +786,50 @@ class UI_Console(consoleViewBase, consoleViewForm):
     def clear(self):
         pass
 
+timeinfoViewBase, timeinfoViewForm = uic.loadUiType("UI/UI_TimeInfo.ui")
+class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
+    def __init__(self, parent = None):
+        super(timeinfoViewBase,self).__init__(parent)
+        self.setupUi(self)
+        self._timer = QtCore.QTimer()
+        self.reset()
+        self.time_format = "%Y-%m-%d %H:%M:%S"
+        self._timer.timeout.connect(self.update_time)
+        #self._experiment_start_time = None
+        #self._experiment_elapsed_time = None
+        #self._experiment_time_left = None
+
+    def start_timer(self):
+        self._timer.start(1000)
+
+    def stop_timer(self):
+        self._timer.stop()
+
+    def set_time(self, experiment_start_time, experiment_elapsed_time, experiment_time_left):
+        self._experiment_start_time = experiment_start_time
+        self._experiment_elapsed_time = experiment_elapsed_time
+        self._experiment_time_left = experiment_time_left
+
+    def update_time(self):
+        self._experiment_elapsed_time += 1
+        self._experiment_time_left -= 1
+        if self._experiment_time_left<0:
+            self._experiment_time_left = 0
+        self.ui_update_time()
+
+    def ui_update_time(self):
+        #time_tuple = time.localtime(timestamp)
+        #time_tuple = (2008, 11, 12, 13, 51, 18, 2, 317, 0)
+        #date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_tuple)
+        self.ui_experiment_started.setText(time.strftime(self.time_format, time.localtime(self._experiment_start_time)))
+        self.ui_elapsed_time.setText(time.strftime(self.time_format, time.localtime(self._experiment_elapsed_time)))
+        self.ui_time_left.setText(time.strftime(self.time_format, time.localtime(self._experiment_time_left)))
+
+    def reset(self):
+        self._experiment_start_time = 0
+        self._experiment_elapsed_time = 0
+        self._experiment_time_left = 0
+
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -791,6 +843,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.voltage_control = VoltageControl()
         self.waterfall_noise_window = plt.WaterfallNoiseWindow()
         self._console_window = UI_Console()
+        self._time_info_window = UI_TimeInfo()
 
         self._script_executed_with_console = True #self.check_if_script_executed_with_console()
         #print("Script is executed with console: {0}".format(self.script_executed_with_console))
@@ -845,6 +898,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_open_console_window_action(self.show_console_window)
         self.main_view.subscribe_to_open_settings_action(self.on_open_settings_action)
         self.main_view.subscribe_to_save_settings_action(self.on_save_settings_action)
+        self.main_view.subscribe_to_time_info_action(self.show_time_info_window)
         #pass
     #def login_test(self):
     #    print("test")
@@ -958,6 +1012,9 @@ class FANS_UI_Controller(QtCore.QObject):
         self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
 
+    def show_time_info_window(self):
+        self._time_info_window.show()
+
     def show_console_window(self):
         #
         if self.script_executed_with_console:
@@ -1013,7 +1070,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.voltageSettingStopped.connect(self.on_setting_voltage_stop)
         self.processing_thread.drainSourceVoltageChanged.connect(self.on_drain_source_voltage_changed)
         self.processing_thread.gateSourceVoltageChanged.connect(self.on_gate_source_voltage_changed)
-
+        self.processing_thread.experimentTimeUpdate.connect(self.on_experiment_time_update)
         self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
 
@@ -1024,6 +1081,8 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
         self.send_message_via_email(msg)
+        self._time_info_window.reset()
+        self._time_info_window.start_timer()
 
     def on_experiment_finished(self):
         msg = "Experiment finished"
@@ -1031,7 +1090,7 @@ class FANS_UI_Controller(QtCore.QObject):
         #self.wa.send_message(msg)
         self.send_message_via_email(msg)
         self.stop_experiment()
-        
+        self._time_info_window.stop_timer()
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
         msg.setText("Experiment completed!!!")
@@ -1111,6 +1170,9 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_progress_changed(self, progress):
         self.main_view.ui_update_progress(progress)
+
+    def on_experiment_time_update(self, time_dict):
+        self._time_info_window.set_time(**time_dict)
 
     def on_log_message_received(self, message):
         if message:

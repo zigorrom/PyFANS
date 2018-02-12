@@ -53,6 +53,9 @@ class RangeObject:
     def total_iterations(self):
         return self.rangeRepeats * self.floatRange.length
 
+    def __len__(self):
+        return self.total_iterations
+
     def copy_object(self):
         rng = None
         if self.floatRange:

@@ -56,9 +56,9 @@ class Experiment:
         self._measurement_counter = 0
         self._experiment_writer = None    
         self._calibration = None
-        self._total_measurement_iterations = 100
-        
-                                                                                                                                             
+        self._total_measurement_iterations = 0
+        self._average_measurement_time = 0
+        self._current_measurement_index = 0                                                                                                                                             
     
     @property
     def need_exit(self):
@@ -254,6 +254,7 @@ class Experiment:
     def non_gated_structure_meaurement_function(self):
         try:
             iteration_counter = 0 
+            ds_range = self.experiment_settings.vds_range
             if self.__exp_settings.use_set_vds_range:
                 self._total_measurement_iterations = ds_range.total_iterations
                 for vds in self.__exp_settings.vds_range:
@@ -336,6 +337,21 @@ class Experiment:
         if self.need_exit:
             raise StopExperiment()
         #raise NotImplementedError()
+
+    def estimate_measurement_time(self):
+        return 0
+
+    def update_average_measurement_time(self,current_measurement_index, current_measurement_time):
+        if current_measurement_index == 0:
+            self._average_measurement_time = current_measurement_time
+        else:
+            self._average_measurement_time = (current_measurement_index * self._average_measurement_time + current_measurement_time )/ (current_measurement_index + 1)
+            
+    def reset_experiment_time(self):
+        self._average_measurement_time = 0
+
+    def report_estimated_experiment_time(self, start_experiment, elapsed_time, time_left):
+        self._send_command_with_params(pcp.ExperimentCommands.EXPERIMENT_TIME_UPDATE, experiment_start_time = start_experiment, experiment_elapsed_time = elapsed_time, experiment_time_left = time_left)
 
     def report_progress(self, current_iteration, max_iterations):
         progress = 0
@@ -447,6 +463,8 @@ class Experiment:
         assert isinstance(exp_writer, ew.ExperimentWriter), "Experiment writer is not inherited from ExperimentWriterType"
         self._experiment_writer = exp_writer #ew.ExperimentWriter(self._working_directory)
         self._experiment_writer.open_experiment(experiment_name)
+        self.reset_experiment_time()
+        #self._current_measurement_index = 0
 
     def close_experiment(self):
         self._send_command(pcp.ExperimentCommands.EXPERIMENT_FINISHED)
@@ -655,6 +673,9 @@ class FANSExperiment(Experiment):
         self._frequencies = self._get_frequencies(self._spectrum_ranges)
         self._frequency_indexes = self._get_frequency_linking_indexes(self._spectrum_ranges, self._spectrum_linking_frequencies)
         self._max_timetrace_length = -1 # -1 - means all data, 0 - means no data, number means number seconds
+        self.wait_time_before_voltage_measurement = 10
+        self.wait_time_stabilization_before_spectrum = 30
+        self.wait_time_shortcut_amplifier = 5
     
     def initialize_hardware(self):
         resource = self.hardware_settings.fans_controller_resource
@@ -693,13 +714,19 @@ class FANSExperiment(Experiment):
 
     def create_experiment_writer(self):
         return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
-            
+           
+    def estimate_measurement_time(self):
+        return 2*self.wait_time_before_voltage_measurement + self.wait_time_shortcut_amplifier + self.wait_time_stabilization_before_spectrum
+    
+    def average_measurement_time(self):
+        return self._average_measurement_time
+     
     def prepare_to_set_voltages(self):
         self.fans_smu.init_smu_mode()
     
     def prepare_to_measure_voltages(self):
         self.fans_smu.init_smu_mode()
-        self.wait_for_stabilization_after_switch(10)
+        self.wait_for_stabilization_after_switch(self.wait_time_before_voltage_measurement)#10)
     
     
     def prepare_to_measure_spectrum(self):
@@ -710,9 +737,9 @@ class FANSExperiment(Experiment):
         #HARDCODE
         ch = self.fans_controller.get_fans_output_channel(mfans.FANS_AO_CHANNELS.AO_CH_7)
         ch.analog_write(8.4)
-        time.sleep(5)
+        time.sleep(self.wait_time_shortcut_amplifier)#5)
         ch.analog_write(0)
-        self.wait_for_stabilization_after_switch(30)
+        self.wait_for_stabilization_after_switch(self.wait_time_stabilization_before_spectrum) #30)
 
     def prepare_to_measure_timetrace(self):
         return super().prepare_to_measure_timetrace()
