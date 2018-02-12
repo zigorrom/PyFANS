@@ -1294,6 +1294,10 @@ def test_cmd():
 
 
 if __name__== "__main__":
+    #print(__version__)
+    from version import __pyfans_version__
+    #from PyFANS import __pyfans_version__
+    print("PyFANS version: {0}".format(__pyfans_version__))
     sys.exit(test_ui())
     #sys.exit(test_cmd())
     #sys.exit(test_xml_serializer())

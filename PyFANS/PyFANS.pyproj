@@ -46,7 +46,7 @@
     <Compile Include="modern_fans_pid_controller.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pyfans.py" />
+    <Compile Include="pyfans_old.py" />
     <Compile Include="measurement_data_structures.py" />
     <Compile Include="modern_agilent_u2542a.py" />
     <Compile Include="modern_fans_controller.py" />
@@ -68,6 +68,9 @@
     <Compile Include="StandAloneVoltageControl.py" />
     <Compile Include="temperature_controller.py" />
     <Compile Include="ui_helper.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="version.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="xml_serializer.py" />
