@@ -630,6 +630,10 @@ class Experiment:
         automatic_voltage_control = self.__exp_settings.use_automated_voltage_control
         automatic_temperature_control = False
 
+        #if (not self.__exp_settings.use_set_vds_range) and (not self.__exp_settings.use_set_vfg_range)
+        use_vds_range = self.__exp_settings.use_set_vds_range
+        use_vg_range = self.__exp_settings.use_set_vfg_range
+
         table_generator = ParamGenerator(automatic_voltage_set = automatic_voltage_control, automatic_temperature_set = automatic_temperature_control,automatic_transistor_switch = automatic_transistor_switch)
         table_generator.append_parameter("temperature")
         if automatic_transistor_switch:
@@ -642,15 +646,25 @@ class Experiment:
 
         elif not gated_structure:# non gated structure measurement
             ds_range = self.experiment_settings.vds_range
+            if not use_vds_range:
+                ds_range = self.experiment_settings.drain_source_voltage
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)
 
         elif characteristic_type == 0: #output curve
             ds_range, fg_range = self.get_meas_ranges()
+            if not use_vds_range:
+                ds_range = self.experiment_settings.drain_source_voltage
+            if not use_vg_range:
+                fg_range = self.experiment_settings.front_gate_voltage
             table_generator.append_parameter("gate_voltage",rang = fg_range)
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)
 
         elif characteristic_type == 1: #transfer curve
             ds_range, fg_range = self.get_meas_ranges()
+            if not use_vds_range:
+                ds_range = self.experiment_settings.drain_source_voltage
+            if not use_vg_range:
+                fg_range = self.experiment_settings.front_gate_voltage
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)
             table_generator.append_parameter("gate_voltage", rang = fg_range)
 
@@ -705,9 +719,10 @@ class Experiment:
         try:
             start_time = time.time()
             #estimate_experiment_timing
-            for item in param_generator:
+            for idx, item in enumerate(param_generator):
                 t = time.time()
-                result = self.estimate_experiment_timing(start_time, param_generator.current_index, param_generator.total_iterations)
+                #result = self.estimate_experiment_timing(start_time, param_generator.current_index, param_generator.total_iterations)
+                result = self.estimate_experiment_timing(start_time, idx, param_generator.total_iterations)
                 experiment_start_time, elapsed_time, time_left = result
                 self.report_estimated_experiment_time(experiment_start_time, elapsed_time, time_left)
                 
@@ -846,7 +861,7 @@ class FANSExperiment(Experiment):
         return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
            
     def initial_estimate_measurement_time(self):
-        return 2*self.wait_time_before_voltage_measurement + self.wait_time_shortcut_amplifier + self.wait_time_stabilization_before_spectrum
+        return 2*self.wait_time_before_voltage_measurement + self.wait_time_shortcut_amplifier + self.wait_time_stabilization_before_spectrum + self.experiment_settings.averages * 1 #sec
     
     def average_measurement_time(self):
         return self._average_measurement_time
