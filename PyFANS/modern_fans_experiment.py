@@ -601,10 +601,13 @@ class Experiment:
         if automatic_voltage_set:
             self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
-            self.set_drain_source_voltage(drain_source_voltage)
-            self.set_front_gate_voltage(gate_voltage)
+            if drain_source_voltage:
+                self.set_drain_source_voltage(drain_source_voltage)
+            if gate_voltage:
+                self.set_front_gate_voltage(gate_voltage)
             #specific of measurement setup!!!
-            self.set_drain_source_voltage(drain_source_voltage)
+            if drain_source_voltage:
+                self.set_drain_source_voltage(drain_source_voltage)
             self.report_stop_setting_voltages(0)
         
         self.prepare_to_measure_voltages()
@@ -711,15 +714,19 @@ class Experiment:
                 dt = time.time() - t
                 self.update_average_measurement_time(param_generator.current_index, dt) 
 
-        except Exception as e:
-            pass
+        except StopExperiment:
+            print("Stop experiment exception raised")
+        except Exception as exc:
+            print(str(exc))
+        finally:
+            self.set_voltages_to_zero()
 
         try:
             self.close_experiment()
         except Exception:
             pass
 
-        return None
+        
             
 
     def perform_experiment(self):
