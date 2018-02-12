@@ -608,6 +608,7 @@ class Experiment:
             #specific of measurement setup!!!
             if drain_source_voltage:
                 self.set_drain_source_voltage(drain_source_voltage)
+            
             self.report_stop_setting_voltages(0)
         
         self.prepare_to_measure_voltages()
@@ -689,7 +690,8 @@ class Experiment:
             self._execution_function = execution_function
         self._execution_function = func
         
-    def future_perform_experiment(self):
+    #def future_perform_experiment(self):
+    def perform_experiment(self):
         open_error = None
         param_generator = self.create_experiment_param_generator()
         try:
@@ -729,11 +731,11 @@ class Experiment:
         
             
 
-    def perform_experiment(self):
-        self.generate_experiment_function()
-        self.open_experiment()
-        self._execution_function()
-        self.close_experiment()
+    #def perform_experiment(self):
+    #    self.generate_experiment_function()
+    #    self.open_experiment()
+    #    self._execution_function()
+    #    self.close_experiment()
 
 class SimulateExperiment(Experiment):
     def __init__(self, input_data_queue = None, stop_event = None):
