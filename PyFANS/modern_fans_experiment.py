@@ -725,7 +725,7 @@ class Experiment:
                 result = self.estimate_experiment_timing(start_time, idx, param_generator.total_iterations)
                 experiment_start_time, elapsed_time, time_left = result
                 self.report_estimated_experiment_time(experiment_start_time, elapsed_time, time_left)
-                
+                self.report_progress(idx, param_generator.total_iterations)
                 self.future_single_value_measurement(**item)
                 
                 dt = time.time() - t

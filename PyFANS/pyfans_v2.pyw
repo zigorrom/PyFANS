@@ -822,8 +822,8 @@ class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
         #time_tuple = (2008, 11, 12, 13, 51, 18, 2, 317, 0)
         #date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_tuple)
         self.ui_experiment_started.setText(time.strftime(self.time_format, time.localtime(self._experiment_start_time)))
-        self.ui_elapsed_time.setText(time.strftime(self.time_format, time.gmtime(self._experiment_elapsed_time)))
-        self.ui_time_left.setText(time.strftime(self.time_format, time.gmtime(self._experiment_time_left)))
+        self.ui_elapsed_time.setText(time.strftime("%H:%M:%S", time.gmtime(self._experiment_elapsed_time)))
+        self.ui_time_left.setText(time.strftime("%H:%M:%S", time.gmtime(self._experiment_time_left)))
 
     def reset(self):
         self._experiment_start_time = 0
