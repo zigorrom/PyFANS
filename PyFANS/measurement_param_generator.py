@@ -108,10 +108,10 @@ def dummy_function(transistor, temperature, drain_source_voltage, gate_source_vo
 
 if __name__ == "__main__":
     m = ParamGenerator()
-    #m.append_parameter(ParameterItem("temperature", rang = [240]))
-    #m.append_parameter(ParameterItem("transistor", rang = [1,2,3]))
-    #m.append_parameter(ParameterItem("drain_source_voltage", rang = [1,2,3,4]))
-    #m.append_parameter(ParameterItem("gate_source_voltage", rang = [1,2,3,4]))
+    m.append_parameter(ParameterItem("temperature", rang = [240, 250]))
+    m.append_parameter(ParameterItem("transistor", rang = [1,2,3]))
+    m.append_parameter(ParameterItem("drain_source_voltage", rang = [1,2,3,4]))
+    m.append_parameter(ParameterItem("gate_source_voltage", rang = [1,2,3,4]))
     #m.recursive_level_iteration(0)
     for i in m:
         print(i)

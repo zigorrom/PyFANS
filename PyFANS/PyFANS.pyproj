@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>measurement_container.py</StartupFile>
+    <StartupFile>measurement_param_generator.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -36,7 +36,7 @@
     <Compile Include="fans_hardware_settings.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="measurement_container.py" />
+    <Compile Include="measurement_param_generator.py" />
     <Compile Include="modern_fans_voltage_control.py">
       <SubType>Code</SubType>
     </Compile>
