@@ -590,7 +590,33 @@ class Experiment:
         
 
     def future_single_value_measurement(self, *args, drain_source_voltage = None, gate_voltage = None, automatic_voltage_set = False, temperature = None, automatic_temperature_set = False, transistor = None, automatic_transistor_switch = False, **kwargs):
-        pass
+        #if self.need_exit:
+        #    return
+        self.assert_experiment_abort()
+
+        # utilize here with statement to be sure all files are properly opened and closed
+        self.open_measurement()
+        
+        #assert isinstance(self.experiment_settings, ExperimentSettings)
+        if automatic_voltage_set:
+            self.report_start_setting_voltages()
+            self.prepare_to_set_voltages()
+            self.set_drain_source_voltage(drain_source_voltage)
+            self.set_front_gate_voltage(gate_voltage)
+            #specific of measurement setup!!!
+            self.set_drain_source_voltage(drain_source_voltage)
+            self.report_stop_setting_voltages(0)
+        
+        self.prepare_to_measure_voltages()
+        self.perform_start_param_measurement()
+        self.prepare_to_measure_spectrum()
+        self.perform_single_value_measurement()
+        self.perform_end_param_measurement()
+        
+        self.save_measurement_info()
+        
+        self.close_measurement()
+
 
 
     def create_experiment_param_generator(self):
