@@ -1278,7 +1278,9 @@ def test_ui():
     app_icon.addFile(icon_file, QtCore.QSize(256,256))
     app.setWindowIcon(app_icon)
     #app.setWindowIcon(QtGui.QIcon('pyfans.ico'))
-    
+    #about_window = UI_About()
+    #about_window.show()
+
     wnd = FANS_UI_MainView()
     controller = FANS_UI_Controller(wnd)
     script_executed_with_console = check_if_script_executed_with_console()
@@ -1296,6 +1298,8 @@ def test_ui():
         console_thread.started.connect(receiver.run)
         console_thread.start()
     
+    #about_window.close()
+
     #controller.show_main_view()
     return app.exec_()
     
