@@ -512,7 +512,7 @@ class Experiment:
 
     def send_end_measurement_info(self):
         self._send_command_with_param(pcp.ExperimentCommands.MEASUREMENT_INFO_END, self._measurement_info)
-        self.update_thermal_noise(self._measurement_info.equivalent_resistance_end, self._measurement_info.end_temperature)
+        self.update_thermal_noise(self._measurement_info.equivalent_resistance_end, self._measurement_info.sample_resistance_end,self._measurement_info._load_resistance, self._measurement_info.end_temperature)
 
     def update_spectrum(self, data,rang = 0, averages = 1):
         #range numeration from 0:   0 - 0 to 1600HZ
@@ -549,13 +549,16 @@ class Experiment:
         return spectrum
 
 
-    def update_thermal_noise(self, equivalent_resistance, temperature):
-        equivalent_resistance = math.fabs(equivalent_resistance)
+    def update_thermal_noise(self, equivalent_resistance, sample_resistance, load_resistance, temperature):
+        #equivalent_resistance = math.fabs(equivalent_resistance)
         amplifier_input_resistance = 1000000
-        equivalent_resistance = (equivalent_resistance * amplifier_input_resistance) / (equivalent_resistance + amplifier_input_resistance)
-
+        #equivalent_resistance = (equivalent_resistance * amplifier_input_resistance) / (equivalent_resistance + amplifier_input_resistance)
+        room_temperature = 297
         kB = 1.38064852e-23
-        thermal_noise = 4 * kB * temperature * equivalent_resistance
+        equivalent_load_resistance = (load_resistance * amplifier_input_resistance) / (load_resistance + amplifier_input_resistance)
+        thermal_noise = 4*kB(temperature/sample_resistance + room_temperature*equivalent_load_resistance) * equivalent_resistance*equivalent_resistance 
+
+        #thermal_noise = 4 * kB * temperature * equivalent_resistance
         
         list_of_frequency_slices= []
         for rng, spectrum_data in self._spectrum_data.items():
