@@ -980,8 +980,9 @@ class FANS_UI_Controller(QtCore.QObject):
         self.experiment_stop_event.set()
         self.experiment_thread.stop()
         self.processing_thread.stop()
-        self.ui_refresh_timer.stop()
+        #self.ui_refresh_timer.stop()
         self.experiment_thread.join()
+        self.ui_refresh_timer.stop()
         self.main_view.set_ui_idle()
         #self.save_settings_to_file()
 
@@ -1081,7 +1082,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.processing_thread.drainSourceVoltageChanged.connect(self.on_drain_source_voltage_changed)
         self.processing_thread.gateSourceVoltageChanged.connect(self.on_gate_source_voltage_changed)
         self.processing_thread.experimentTimeUpdate.connect(self.on_experiment_time_update)
-        self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
+        self.experiment_thread = mfexp.FANSExperimentHandler(self.input_data_queue, self.experiment_settings, self.hardware_settings, self.script_executed_with_console) # FANSExperiment(self.input_data_queue, self.experiment_stop_event)
 
 
 
@@ -1193,6 +1194,7 @@ class FANS_UI_Controller(QtCore.QObject):
             print("received log message")
             print(message)
             self.main_view.ui_show_message_in_status_bar(message, 100)#._status_object.send_message(message)
+            self.console_window.append_text(message)
 
     def on_command_received(self, cmd):
         if isinstance(cmd, pcp.ExperimentCommands):

@@ -1053,10 +1053,11 @@ class LoggingQueuedStream:
         pass
 
 class ExperimentHandler(Process):
-    def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None):
+    def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None, windowed_mode = False):
         super().__init__()
         self._exit = Event()
         self._experiment  = None
+        self._windowed_mode = windowed_mode
         self._input_data_queue = input_data_queue
         
         assert isinstance(hardware_settings, HardwareSettings)
@@ -1069,6 +1070,8 @@ class ExperimentHandler(Process):
         self._exit.set()
 
     def run(self):
+        if self._windowed_mode:
+            sys.stdout = LoggingQueuedStream(self._input_data_queue) #open("log.txt", "w")
         #if self._input_data_queue:
         #sys.stdout = LoggingQueuedStream(self._input_data_queue) #open("log.txt", "w")
         #else:
@@ -1094,8 +1097,8 @@ class ExperimentHandler(Process):
         raise NotImplementedError()
 
 class FANSExperimentHandler(ExperimentHandler):
-    def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None ):
-        super().__init__(input_data_queue, experiment_settings, hardware_settings)
+    def __init__(self, input_data_queue = None, experiment_settings = None, hardware_settings = None, windowed_mode = False):
+        super().__init__(input_data_queue, experiment_settings, hardware_settings, windowed_mode)
         
     def get_experiment(self):
         return FANSExperiment(self._input_data_queue, self._exit)
