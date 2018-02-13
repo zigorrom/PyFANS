@@ -1,4 +1,5 @@
-﻿class measurement_parameter_property(property):
+﻿import math
+class measurement_parameter_property(property):
     def __init__(self,name,units,description, **kwargs):
         super().__init__(**kwargs)
         self._name = name
@@ -131,7 +132,7 @@ class MeasurementInfo:
         current, sample_resistance, equivalent_resistance = (0, float("inf"), load_resistance)
         try:
             current = (main_voltage-sample_voltage)/load_resistance
-            sample_resistance = sample_voltage/current
+            sample_resistance = math.fabs(sample_voltage/current)
             equivalent_resistance = sample_resistance*load_resistance/(sample_resistance+load_resistance)
         except ZeroDivisionError:
             print("zero division error while calculating resistance...")
