@@ -159,7 +159,7 @@ def test_sensor():
 def test_cooler():
     c = LeyboldStirlingCooler("COM11")
     c.read_info()
-    c.set_temperature_value(219)
+    c.set_temperature_value(211)
 
 def test_controller():
     ts = LakeShore211TemperatureSensor("COM9")
