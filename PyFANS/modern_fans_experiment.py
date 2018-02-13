@@ -552,7 +552,7 @@ class Experiment:
     def update_thermal_noise(self, equivalent_resistance, temperature):
         equivalent_resistance = math.fabs(equivalent_resistance)
         amplifier_input_resistance = 1000000
-        equivalent_resistance =  (equivalent_resistance * amplifier_input_resistance) / (equivalent_resistance + amplifier_input_resistance)
+        equivalent_resistance = (equivalent_resistance * amplifier_input_resistance) / (equivalent_resistance + amplifier_input_resistance)
 
         kB = 1.38064852e-23
         thermal_noise = 4 * kB * temperature * equivalent_resistance
