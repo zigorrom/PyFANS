@@ -5,6 +5,66 @@ import ui_helper as uih
 import range_handlers as rh
 
 
+class RangeItemModel(QtCore.QAbstractTableModel): 
+    sortRole = QtCore.Qt.UserRole
+    filterRole = QtCore.Qt.UserRole + 1
+    def __init__(self, parent=None, *args): 
+        super(RangeItemModel, self).__init__()
+        self.datatable = []
+        self.datatable.append(RangeItem("rng_1",None))
+        self.datatable.append(RangeItem("rng_4",None))
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        return len(self.datatable) 
+
+    def columnCount(self, parent=QtCore.QModelIndex()):
+        return RangeItem.COLUMN_COUNT
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        row = index.row()
+        node = self.datatable[row]
+        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
+            return node.data(index.column())
+        
+        #if role == QtCore.Qt.DecorationRole:
+        #    if index.column() == RangeItem.NAME_OPTION:
+        #        resource = node.resource()
+        #        return QtGui.QIcon(QtGui.QPixmap(resource))
+        
+        if role == self.sortRole:
+            return node.typeInfo()
+
+        if role == self.filterRole:
+            return node.typeInfo()
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        if index.isValid():
+            row = index.row()
+            column = index.column()
+            node = self.datatable[row] #index.internalPointer()
+            if role == QtCore.Qt.EditRole:
+                node.setData(column,value)
+                stop_index = self.createIndex(row,RangeItem.COLUMN_COUNT, index.parent())
+                
+
+                self.dataChanged.emit(index, stop_index)
+                return True
+        return False
+
+        #if role == QtCore.Qt.DisplayRole:
+        #    i = index.row()
+        #    j = index.column()
+        #    return '{0}'.format(self.datatable.iget_value(i, j))
+        #else:
+        #    return QtCore.QVariant()
+
+    def flags(self, index):
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+
+
+
 class RangeItem(QtGui.QStandardItem):
     TYPE_NAME = "RANGE ITEM"
     NAME_OPTION = 0
@@ -84,22 +144,26 @@ class RangeItem(QtGui.QStandardItem):
         
     def setData(self,column,value):
         #print("setting data")
-        if column is Node.NAME_OPTION: 
+        if column is RangeItem.NAME_OPTION: 
             self.range_name=value
             return True
-        elif column is Node.TYPE_OPTION: 
+        elif column is RangeItem.TYPE_OPTION: 
             return True
         elif column is RangeItem.RANGE_START_OPTION: 
+            value = float(value)
             self.range_start = value
             return True
         elif column is RangeItem.RANGE_END_OPTION: 
+            value = float(value)
             self.range_stop = value
             return True
         elif column is RangeItem.RANGE_COUNT_OPTION: 
+            value = int(value)
             self.count = value
             return True
         elif column is RangeItem.RANGE_STEP_OPTION: 
-            self.step = value
+            #value = float(value)
+            #self.step = value
             return True
         else:
             return False
@@ -112,16 +176,22 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
     def __init__(self, parent = None):
         super(compositeRangeSelectorBase, self).__init__(parent)
         self.setupUi()
-        self.model = QtGui.QStandardItemModel(self) #RangeItem.COLUMN_COUNT, self)
-        self.model.setItem(0, RangeItem("rng_0", None))
-        self.model.setItem(1, RangeItem("rng_1", None))
+        self.model = RangeItemModel() #QtGui.QStandardItemModel(self) #RangeItem.COLUMN_COUNT, self)
+        #self.model.addItem(RangeItem("rng_0", None))
+        #self.model.addItem(RangeItem("rng_1", None))
         self.data_mapper = QtGui.QDataWidgetMapper(self)
         self.setModel(self.model)
-        
+        #self.ui_start_val.textChanged.connect(self.submit_changes_to_model)
+        #self.ui_stop_val.textChanged.connect(self.submit_changes_to_model)
+        #self.ui_count.valueChanged.connect(self.submit_changes_to_model)
+
+    #def submit_changes_to_model(self):
+    #    self.data_mapper.submit()
 
     def setModel(self, model):
         self.ui_range_list.setModel(model)
         self.data_mapper.setModel(model)
+        #self.data_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
         self.data_mapper.addMapping(self.ui_start_val, RangeItem.RANGE_START_OPTION)
         self.data_mapper.addMapping(self.ui_stop_val, RangeItem.RANGE_END_OPTION)
         self.data_mapper.addMapping(self.ui_count, RangeItem.RANGE_COUNT_OPTION)
