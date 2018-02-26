@@ -132,6 +132,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_about_action(self, slot):
         self.connect(self.actionAbout.triggered, slot)
 
+    def subscribe_to_what_to_do_action(self,slot):
+        self.connect(self.action_what_to_do.triggered, slot)
+
     @property
     def controller(self):
         return self._controller
@@ -891,13 +894,17 @@ class FANS_UI_Controller(QtCore.QObject):
     def console_window(self):
         return self._console_window
 
-    def play_on_startup(self):
+    def play_sound(self, filename):
         from playsound import playsound
-        filename = "Media/startup.mp3"
+        #filename = #"Media/startup.mp3"
         if os.path.isfile(filename):
             playsound(filename)
 
+    def play_on_startup(self):
+        self.play_sound("Media/startup.mp3")
 
+    def play_what_to_do(self):
+        self.play_sound("Media/help.mp3")
    
 
     def subscribe_to_ui_signals(self):
@@ -909,6 +916,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_save_settings_action(self.on_save_settings_action)
         self.main_view.subscribe_to_time_info_action(self.show_time_info_window)
         self.main_view.subscribe_to_about_action(self.on_show_about_window)
+        self.main_view.subscribe_to_what_to_do_action(self.on_what_to_do_action)
         #pass
     #def login_test(self):
     #    print("test")
@@ -1188,6 +1196,9 @@ class FANS_UI_Controller(QtCore.QObject):
     def on_show_about_window(self):
         self.aboutWnd = UI_About()
         self.aboutWnd.show()
+
+    def on_what_to_do_action(self):
+        self.play_what_to_do()
 
     def on_log_message_received(self, message):
         if message:
