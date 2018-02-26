@@ -73,6 +73,7 @@ class RangeItem(QtGui.QStandardItem):
         self._rng.step = value
 
     def data(self,column):
+        #print("getting data col:{0}".format(column))
         if column is RangeItem.NAME_OPTION: return self.range_name
         elif column is RangeItem.TYPE_OPTION: return self.typeInfo()
         elif column is RangeItem.RANGE_START_OPTION: return self.range_start
@@ -82,6 +83,7 @@ class RangeItem(QtGui.QStandardItem):
         else: return None
         
     def setData(self,column,value):
+        #print("setting data")
         if column is Node.NAME_OPTION: 
             self.range_name=value
             return True
@@ -110,7 +112,7 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
     def __init__(self, parent = None):
         super(compositeRangeSelectorBase, self).__init__(parent)
         self.setupUi()
-        self.model = QtGui.QStandardItemModel(1, RangeItem.COLUMN_COUNT, self)
+        self.model = QtGui.QStandardItemModel(self) #RangeItem.COLUMN_COUNT, self)
         self.model.setItem(0, RangeItem("rng_0", None))
         self.model.setItem(1, RangeItem("rng_1", None))
         self.data_mapper = QtGui.QDataWidgetMapper(self)
