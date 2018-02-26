@@ -4,6 +4,141 @@ from PyQt4 import uic, QtGui, QtCore
 import ui_helper as uih
 import range_handlers as rh
 
+
+class RangeItem(QtGui.QStandardItem):
+    TYPE_NAME = "RANGE ITEM"
+    NAME_OPTION = 0
+    TYPE_OPTION = 1
+    RANGE_START_OPTION = 2
+    RANGE_END_OPTION = 3
+    RANGE_COUNT_OPTION = 4
+    RANGE_STEP_OPTION = 5
+    COLUMN_COUNT = 6
+
+    def __init__(self, range_name, rng, **kwargs):
+        super().__init__(**kwargs)
+        self._range_name = range_name
+        if not rng :
+            rng = rh.float_range(0,0)
+        self._rng = rng
+
+    def columnCount(self):
+        return RangeItem.COLUMN_COUNT #(NUMBER OF OPTIONS)
+
+    @property
+    def range_item(self):
+        return self._rng
+
+    def typeInfo(self):
+        return RangeItem.TYPE_NAME
+
+    @classmethod
+    def typeInfo(cls):
+        return RangeItem.TYPE_NAME
+
+    @property
+    def range_name(self):
+        return self._range_name
+
+    @property
+    def range_start(self):
+        return self._rng.start
+
+    @range_start.setter
+    def range_start(self, value):
+        self._rng.start = value 
+
+    @property
+    def range_stop(self):
+        return self._rng.stop
+
+    @range_stop.setter
+    def range_stop(self, value):
+        self._rng.stop = value
+
+    @property
+    def count(self):
+        return self._rng.length
+
+    @count.setter
+    def count(self, value):
+        self._rng.length = value
+
+    @property
+    def step(self):
+        return self._rng.step
+
+    @step.setter
+    def step(self, value):
+        self._rng.step = value
+
+    def data(self,column):
+        if column is RangeItem.NAME_OPTION: return self.range_name
+        elif column is RangeItem.TYPE_OPTION: return self.typeInfo()
+        elif column is RangeItem.RANGE_START_OPTION: return self.range_start
+        elif column is RangeItem.RANGE_END_OPTION: return self.range_stop
+        elif column is RangeItem.RANGE_COUNT_OPTION: return self.count
+        elif column is RangeItem.RANGE_STEP_OPTION: return self.step
+        else: return None
+        
+    def setData(self,column,value):
+        if column is Node.NAME_OPTION: 
+            self.range_name=value
+            return True
+        elif column is Node.TYPE_OPTION: 
+            return True
+        elif column is RangeItem.RANGE_START_OPTION: 
+            self.range_start = value
+            return True
+        elif column is RangeItem.RANGE_END_OPTION: 
+            self.range_stop = value
+            return True
+        elif column is RangeItem.RANGE_COUNT_OPTION: 
+            self.count = value
+            return True
+        elif column is RangeItem.RANGE_STEP_OPTION: 
+            self.step = value
+            return True
+        else:
+            return False
+
+
+
+
+compositeRangeSelectorBase, compositeRangeSelectorForm = uic.loadUiType("UI/UI_RangeSelector_v4.ui")
+class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelectorForm ):
+    def __init__(self, parent = None):
+        super(compositeRangeSelectorBase, self).__init__(parent)
+        self.setupUi()
+        self.model = QtGui.QStandardItemModel(1, RangeItem.COLUMN_COUNT, self)
+        self.model.setItem(0, RangeItem("rng_0", None))
+        self.model.setItem(1, RangeItem("rng_1", None))
+        self.data_mapper = QtGui.QDataWidgetMapper(self)
+        self.setModel(self.model)
+        
+
+    def setModel(self, model):
+        self.ui_range_list.setModel(model)
+        self.data_mapper.setModel(model)
+        self.data_mapper.addMapping(self.ui_start_val, RangeItem.RANGE_START_OPTION)
+        self.data_mapper.addMapping(self.ui_stop_val, RangeItem.RANGE_END_OPTION)
+        self.data_mapper.addMapping(self.ui_count, RangeItem.RANGE_COUNT_OPTION)
+        self.data_mapper.addMapping(self.ui_step, RangeItem.RANGE_STEP_OPTION)
+
+        self.ui_range_list.clicked.connect(self.setSelection)
+
+        self.data_mapper.toFirst()
+
+    def setSelection(self, current):
+        #parent = current.parent()
+        self.data_mapper.setCurrentModelIndex(current)
+
+    def setupUi(self):
+        super().setupUi(self)
+
+
+
+
 rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI/UI_RangeSelector_v3.ui")
 class RangeSelectorView(rangeSelectorBase,rangeSelectorForm):
     ureg = UnitRegistry()
@@ -87,7 +222,7 @@ class RangeSelectorView(rangeSelectorBase,rangeSelectorForm):
 
 
 
-if __name__ == "__main__":
+def test_RangeSelectorView():
     app = QtGui.QApplication([])
     
     vr = rh.float_range(0,10,0.1)
@@ -97,4 +232,18 @@ if __name__ == "__main__":
     wnd = RangeSelectorView()
     wnd.set_range(ro)
     wnd.exec_()
-    #return app.exec_()
+    return app.exec_()
+
+def test_CompositeRangeSelectorView():
+    app = QtGui.QApplication([])
+    
+    wnd = CompositeRangeSelectorView()
+    
+    wnd.exec_()
+    return app.exec_()
+
+
+if __name__ == "__main__":
+    import sys
+    #sys.exit(test_RangeSelectorView())
+    sys.exit(test_CompositeRangeSelectorView())
