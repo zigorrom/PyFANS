@@ -20,21 +20,21 @@
    <item>
     <layout class="QGridLayout" name="gridLayout_3">
      <item row="0" column="1">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="ui_remove_range">
        <property name="text">
         <string>Remove</string>
        </property>
       </widget>
      </item>
      <item row="0" column="0">
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="ui_add_range">
        <property name="text">
         <string>Add</string>
        </property>
       </widget>
      </item>
      <item row="0" column="2">
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="ui_reset_ranges">
        <property name="text">
         <string>Reset</string>
        </property>

@@ -11,8 +11,11 @@ class RangeItemModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None, *args): 
         super(RangeItemModel, self).__init__()
         self.datatable = []
-        self.datatable.append(RangeItem("rng_1",None))
-        self.datatable.append(RangeItem("rng_4",None))
+        #self.datatable.append(RangeItem("rng_1",None))
+        #self.datatable.append(RangeItem("rng_4",None))
+
+    def get_composite_range(self):
+        return self.datatable
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self.datatable) 
@@ -59,6 +62,28 @@ class RangeItemModel(QtCore.QAbstractTableModel):
         #    return '{0}'.format(self.datatable.iget_value(i, j))
         #else:
         #    return QtCore.QVariant()
+    def addItem(self):
+        item = RangeItem("Range {0}".format(self.rowCount()), None)
+        self.datatable.append(item)
+        index = QtCore.QModelIndex()
+        self.dataChanged.emit(index,index)
+
+    def removeItem(self, row):
+        if not self.datatable:
+            return
+        if row >=0:
+            if row < self.rowCount():
+                del self.datatable[row]
+        else:
+            del self.datatable[-1]
+
+        index = QtCore.QModelIndex()
+        self.dataChanged.emit(index,index)
+    
+    def removeAllItems(self):
+        self.datatable.clear()
+        index = QtCore.QModelIndex()
+        self.dataChanged.emit(index,index)
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
@@ -66,6 +91,8 @@ class RangeItemModel(QtCore.QAbstractTableModel):
 
 
 class RangeItem(QtGui.QStandardItem):
+    ureg = UnitRegistry()
+    #string_to_volt_converter = uih.string_to_volt_converter(ureg)
     TYPE_NAME = "RANGE ITEM"
     NAME_OPTION = 0
     TYPE_OPTION = 1
@@ -78,7 +105,7 @@ class RangeItem(QtGui.QStandardItem):
     def __init__(self, range_name, rng, **kwargs):
         super().__init__(**kwargs)
         self._range_name = range_name
-        if not rng :
+        if not isinstance(rng, rh.float_range):
             rng = rh.float_range(0,0)
         self._rng = rng
 
@@ -150,11 +177,11 @@ class RangeItem(QtGui.QStandardItem):
         elif column is RangeItem.TYPE_OPTION: 
             return True
         elif column is RangeItem.RANGE_START_OPTION: 
-            value = float(value)
+            value = uih.convert_value_to_volts(self.ureg, value) #self.string_to_volt_converter(value) #float(value)
             self.range_start = value
             return True
         elif column is RangeItem.RANGE_END_OPTION: 
-            value = float(value)
+            value = uih.convert_value_to_volts(self.ureg, value) #float(value)
             self.range_stop = value
             return True
         elif column is RangeItem.RANGE_COUNT_OPTION: 
@@ -176,11 +203,10 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
     def __init__(self, parent = None):
         super(compositeRangeSelectorBase, self).__init__(parent)
         self.setupUi()
-        self.model = RangeItemModel() #QtGui.QStandardItemModel(self) #RangeItem.COLUMN_COUNT, self)
-        #self.model.addItem(RangeItem("rng_0", None))
-        #self.model.addItem(RangeItem("rng_1", None))
+        self.model = RangeItemModel() 
         self.data_mapper = QtGui.QDataWidgetMapper(self)
         self.setModel(self.model)
+        self.selected_row = -1
         #self.ui_start_val.textChanged.connect(self.submit_changes_to_model)
         #self.ui_stop_val.textChanged.connect(self.submit_changes_to_model)
         #self.ui_count.valueChanged.connect(self.submit_changes_to_model)
@@ -204,11 +230,27 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
     def setSelection(self, current):
         #parent = current.parent()
         self.data_mapper.setCurrentModelIndex(current)
+        self.selected_row = current.row()
 
     def setupUi(self):
         super().setupUi(self)
 
+    @QtCore.pyqtSlot()
+    def on_ui_add_range_clicked(self):
+        print("adding")
+        self.model.addItem()
 
+    @QtCore.pyqtSlot()
+    def on_ui_remove_range_clicked(self):
+        print("removing")
+        print(self.selected_row)
+        self.model.removeItem(self.selected_row)
+        self.selected_row = -1
+
+    @QtCore.pyqtSlot()
+    def on_ui_reset_ranges_clicked(self):
+        print("resetting")
+        self.model.removeAllItems()
 
 
 rangeSelectorBase, rangeSelectorForm = uic.loadUiType("UI/UI_RangeSelector_v3.ui")

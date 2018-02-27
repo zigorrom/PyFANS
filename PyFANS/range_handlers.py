@@ -16,8 +16,8 @@ def index_to_range_handler_converter(index):
 
 class RangeObject:
     def __init__(self, rng = None):
-        self._float_range = None
-        self.floatRange = rng
+        self._float_range = rng #None
+        #self.floatRange = rng
         self._range_handler = RANGE_HANDLERS.NORMAL_RANGE_HANDLER
         self._repeats = 1
 
