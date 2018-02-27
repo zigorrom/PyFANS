@@ -14,6 +14,8 @@ class RANGE_HANDLERS(IntEnum):
 def index_to_range_handler_converter(index):
     return RANGE_HANDLERS(index)
 
+
+
 class RangeObject:
     def __init__(self, rng = None):
         self._float_range = rng #None
@@ -107,8 +109,8 @@ class float_range:
                 self.__step = value_difference / (self.__length - 1)
             else: 
                 self.__step = 0
-        else:
-            raise AttributeError("length or step is not set correctly")
+        #else:
+        #    raise AttributeError("length or step is not set correctly")
           
     @property
     def start(self):
@@ -170,7 +172,6 @@ class range_handler():
 
         self.define_direction(self.__range.start,self.__range.stop)
         
-    
     @property
     def comparison_function(self):
         return self.__comparison_function
@@ -189,8 +190,6 @@ class range_handler():
     
     def reset(self):
         self.__current_value = self.woking_range.start
-
-     
 
     def increment_value(self, value_to_increment):
         result = value_to_increment + self.__direction * self.__range.step
@@ -247,7 +246,6 @@ class back_forth_range_handler(range_handler):
         self.__left_value = self.woking_range.start
         self.__right_value = self.woking_range.stop
         self.__change_dir_point = 0
-
         
     def __next__(self):
         if not self.comparison_function(self.__current_value, self.__right_value):
@@ -271,7 +269,6 @@ class back_forth_range_handler(range_handler):
             self.__current_value = self.increment_value(value)
         else:
             self.__current_value = self.increment_value(value)
-            
         
         return value
 
@@ -292,6 +289,12 @@ class zero_start_back_forth(range_handler):
         if rng.start * rng.stop >= 0:
             raise ValueError("Zero start range handler interval should cross zero")
         return super().__init__(rng, repeats,6)#(float_range(start,stop,step,len), repeats, 6) 
+
+class CompositeRangeHandler(object):
+    def __init__(self):
+        pass
+
+
 
 
 if __name__ == "__main__":

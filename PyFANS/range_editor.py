@@ -210,7 +210,6 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
         #self.ui_start_val.textChanged.connect(self.submit_changes_to_model)
         #self.ui_stop_val.textChanged.connect(self.submit_changes_to_model)
         #self.ui_count.valueChanged.connect(self.submit_changes_to_model)
-
     #def submit_changes_to_model(self):
     #    self.data_mapper.submit()
 
@@ -222,9 +221,7 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
         self.data_mapper.addMapping(self.ui_stop_val, RangeItem.RANGE_END_OPTION)
         self.data_mapper.addMapping(self.ui_count, RangeItem.RANGE_COUNT_OPTION)
         self.data_mapper.addMapping(self.ui_step, RangeItem.RANGE_STEP_OPTION)
-
         self.ui_range_list.clicked.connect(self.setSelection)
-
         self.data_mapper.toFirst()
 
     def setSelection(self, current):
@@ -234,6 +231,9 @@ class CompositeRangeSelectorView(compositeRangeSelectorBase, compositeRangeSelec
 
     def setupUi(self):
         super().setupUi(self)
+
+    def get_range(self):
+        pass
 
     @QtCore.pyqtSlot()
     def on_ui_add_range_clicked(self):
