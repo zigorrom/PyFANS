@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3e223b79-f182-4fed-bc69-eab143ffc6bc</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>range_editor.py</StartupFile>
+    <StartupFile>range_handlers.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -37,6 +37,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="measurement_param_generator.py" />
+    <Compile Include="modern_fans_timetrace_extractor.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="modern_fans_voltage_control.py">
       <SubType>Code</SubType>
     </Compile>
