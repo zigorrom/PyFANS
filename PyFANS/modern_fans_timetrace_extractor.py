@@ -214,7 +214,7 @@ def perform_timetrace_extraction():
     meas_data_filename = "" 
     fn = "" 
     #e = FANS_TimetraceExtractor(filename = fn, amplification = 17200, length = -1)
-    e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = 0.5)
+    e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = -1)
     e.perform_convertion()
 
 if __name__ == "__main__":
