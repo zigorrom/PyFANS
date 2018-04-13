@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from scipy.signal import decimate
 
 def __search_for_new_style_measurement_data_file(folder):
     print("SEARCHING FOT MEASUREMENT DATA FILE IN:\n\r{0}".format(folder))
@@ -52,6 +53,26 @@ def CurrentPosition(f):
     currentPos = f.tell()
     return currentPos
 
+def CheckDecimationConditions(signal_sampling_rate, decimated_sample_rate):
+    condition_is_good = False
+    try:
+        if not isinstance(signal_sampling_rate, int) or not isinstance(decimated_sample_rate, int):
+            raise TypeError("signal_sampling_rate or decimated sampling rate is of wrong format")
+
+        sr_div,sr_mod = divmod(signal_sampling_rate, decimated_sample_rate)
+        if sr_mod == 0:
+            condition_is_good = True
+    
+    except Exception as e:
+        condition_is_good = False
+    finally:
+        return condition_is_good
+
+def DecimateSignal(signal_array, signal_sampling_rate, decimated_sample_rate):
+    decimation_factor = int(signal_sampling_rate / decimated_sample_rate)
+    decimated = decimate(signal_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
+    return decimated
+
 class FANS_TimetraceExtractor:
     def __init__(self, **kwargs):
         self._working_directory = kwargs.get("working_directory", "")
@@ -62,6 +83,7 @@ class FANS_TimetraceExtractor:
         self._measurement_filename = kwargs.get("measurement_data_file", None)
         self._output_extension = "dat"
         self._amplification_factor = kwargs.get("amplification", None)
+        self._decimated_sample_rate = kwargs.get("decimated_sample_rate", 0)
 
     def perform_convertion(self):
         if self._filename_to_convert and os.path.isfile(self._filename_to_convert):
@@ -136,7 +158,8 @@ class FANS_TimetraceExtractor:
             header_str = header.decode()
             sample_rate = float(header_str.split("=")[1])
             print("File header: {0}".format(header_str))
-            
+            if CheckDecimationConditions(self._sample_rate, self._decimated_sample_rate):
+                header = "Fs={0}\n".format(self._decimated_sample_rate).encode()
             output_file.write(header)
             prev_position = CurrentPosition(timetrace_file)
             file_len = LengthOfFile(timetrace_file) - prev_position
@@ -163,6 +186,10 @@ class FANS_TimetraceExtractor:
                     while stop_condition(current_time):
                         arr = np.load(timetrace_file)
                         arr = arr / amplification
+
+                        if CheckDecimationConditions(self._sample_rate, self._decimated_sample_rate):
+                            arr = DecimateSignal(arr, self._sample_rate, self._decimated_sample_rate)
+
                         np.savetxt(output_file, arr)
                         time_span = time_period * len(arr) 
                         current_time += time_span 
@@ -211,10 +238,10 @@ def test_numpy_load():
 
 
 def perform_timetrace_extraction():
-    meas_data_filename = "" 
+    meas_data_filename = "O:\\Temp-ICS8\\Zadorozhnyi, Ihor\\10.04.2018\\Noise\\BG = 3V\\SOI#5R_Chip14_ALD_Coupling_BG=3V.dat" 
     fn = "" 
     #e = FANS_TimetraceExtractor(filename = fn, amplification = 17200, length = -1)
-    e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = -1)
+    e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = -1, decimated_sample_rate = 10000)
     e.perform_convertion()
 
 if __name__ == "__main__":
