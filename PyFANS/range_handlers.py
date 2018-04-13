@@ -1,5 +1,8 @@
 ﻿import math
+import numpy as np
+
 from enum import IntEnum, unique
+from functools import reduce
 #from n_enum import enum
 
 #RANGE_HANDLERS = ["normal","back_forth","zero_start","zero_start_back_forth"]
@@ -14,10 +17,12 @@ class RANGE_HANDLERS(IntEnum):
 def index_to_range_handler_converter(index):
     return RANGE_HANDLERS(index)
 
+
+
 class RangeObject:
     def __init__(self, rng = None):
-        self._float_range = None
-        self.floatRange = rng
+        self._float_range = rng #None
+        #self.floatRange = rng
         self._range_handler = RANGE_HANDLERS.NORMAL_RANGE_HANDLER
         self._repeats = 1
 
@@ -107,8 +112,8 @@ class float_range:
                 self.__step = value_difference / (self.__length - 1)
             else: 
                 self.__step = 0
-        else:
-            raise AttributeError("length or step is not set correctly")
+        #else:
+        #    raise AttributeError("length or step is not set correctly")
           
     @property
     def start(self):
@@ -170,7 +175,6 @@ class range_handler():
 
         self.define_direction(self.__range.start,self.__range.stop)
         
-    
     @property
     def comparison_function(self):
         return self.__comparison_function
@@ -189,8 +193,6 @@ class range_handler():
     
     def reset(self):
         self.__current_value = self.woking_range.start
-
-     
 
     def increment_value(self, value_to_increment):
         result = value_to_increment + self.__direction * self.__range.step
@@ -216,6 +218,9 @@ class range_handler():
         if val2 <= val1:
             return True
         return False
+
+    def __next__(self):
+        raise NotImplementedError()
 
     def __iter__(self):
         return self
@@ -247,7 +252,6 @@ class back_forth_range_handler(range_handler):
         self.__left_value = self.woking_range.start
         self.__right_value = self.woking_range.stop
         self.__change_dir_point = 0
-
         
     def __next__(self):
         if not self.comparison_function(self.__current_value, self.__right_value):
@@ -271,7 +275,6 @@ class back_forth_range_handler(range_handler):
             self.__current_value = self.increment_value(value)
         else:
             self.__current_value = self.increment_value(value)
-            
         
         return value
 
@@ -293,14 +296,151 @@ class zero_start_back_forth(range_handler):
             raise ValueError("Zero start range handler interval should cross zero")
         return super().__init__(rng, repeats,6)#(float_range(start,stop,step,len), repeats, 6) 
 
+class ReachedDataBoundException(Exception):
+    """The error is raised when data bound is reached"""
+    def __init__(self, **kwargs):
+        return super().__init__(**kwargs)
+
+class RepetitionsExceededException(Exception):
+    """The error is raised when number of repetions had been performed"""
+    def __init__(self, **kwargs):
+        return super().__init__(**kwargs)
+
+class CompositeRangeHandler(object):
+    def __init__(self, *ranges, **kwargs):
+        self._ranges = ranges
+        self._value_array = None
+        self._current_position = -1
+        self._direction = 1
+        self._repeats = kwargs.get("repeats", 1)
+        self._current_repetition = 0
+
+    def init_values(self):
+        self._current_position = -1
+        self._direction = 1
+        self._current_repetition = 0
+
+    @property
+    def repeats(self):
+        return self._repeats
+
+    @repeats.setter
+    def repeats(self, value):
+        self._repeats = value
+
+    @property
+    def current_repetition(self):
+        return self._current_repetition
+
+    def increment_current_repetition(self):
+        self._current_repetition += 1
+
+    @property
+    def current_position(self):
+        return self._current_position
+    
+    @current_position.setter
+    def current_position(self, value):
+        self._current_position = value
+
+    def next_current_position(self):
+        self.current_position += self.direction
+
+    @property
+    def current_value(self):
+        #print("in current value: {0}".format(self.current_position))
+        #value = None
+        #if self.current_position < 0 or self.current_position >= len(self._value_array):
+        #    value = None
+        #else:
+        value = self._value_array[self._current_position] 
+        return value
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @direction.setter
+    def direction(self, value):
+        self._direction = math.copysign(1,value)
+
+    def switch_to_opposite_direction(self):
+        self.direction = -self.direction
+
+    def __initialize_value_array(self):
+        total_length = 0
+        for range in self._ranges:
+            total_length += range.length
+        
+        self._value_array = np.zeros(total_length)
+        current_position = 0
+        for range in self._ranges:
+            tmp = np.linspace(range.start, range.stop, range.length)
+            self._value_array[current_position:current_position + range.length] = tmp
+            current_position += range.length
+
+    def __iter__(self):
+        self.init_values()
+        self.__initialize_value_array()
+        return self
+
+    def assert_bounds(self):
+       if self.current_position >= len(self._value_array):
+            raise ReachedDataBoundException
+       elif self.current_position < 0:
+            raise ReachedDataBoundException
+
+    def assert_repetitions(self):
+        if self.current_repetition >= self.repeats:
+            raise RepetitionsExceededException()
+
+    def __next__(self):
+        raise NotImplementedError()
+       #self.next_current_position()
+    
+
+          
+
+class NormalCompositeRangeHandler(CompositeRangeHandler):
+    def __init__(self, *ranges, **kwargs):
+        super().__init__(*ranges, **kwargs)
+
+    def __next__(self):
+        try:
+            self.next_current_position()
+            self.assert_repetitions()
+            self.assert_bounds()
+            return self.current_value
+
+        except ReachedDataBoundException:
+            raise StopIteration
+                #self.switch_to_opposite_direction()
+                #self.increment_current_repetition()
+                #self.direction = 1
+                #self.current_position = -1
+                #return self.__next__()
+        except RepetitionsExceededException:
+            raise StopIteration
+
+
 
 if __name__ == "__main__":
-    ro = RangeObject(None)
-    ro.floatRange = float_range(0,1,length = 11)
-    ro.rangeRepeats = 2
-    ro.rangeHandler = RANGE_HANDLERS.BACK_FORTH_RANGE_HANDLER
-    for i in ro:
-        print(i)
+    #ro = RangeObject(None)
+    #ro.floatRange = float_range(0,1,length = 11)
+    #ro.rangeRepeats = 2
+    #ro.rangeHandler = RANGE_HANDLERS.BACK_FORTH_RANGE_HANDLER
+    #for i in ro:
+    #    print(i)
+
+
+    rng1 = float_range(0,1,length = 11)
+    rng2 = float_range(5,10,length = 11)
+    crng = NormalCompositeRangeHandler(rng1,rng2, repeats = 2)
+    for val in crng:
+        print(val)
+
+    #for val in crng:
+    #    print(val)
     #nr = normal_range_handler(-2,2,step = 0.1)
     #for i in nr:
     #    print(i)

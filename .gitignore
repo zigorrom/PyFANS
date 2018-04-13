@@ -161,3 +161,5 @@ PyFANS/__pycache__/calibration.cpython-34.pyc
 *.pyc
 PyFANS/settings.cfg
 PyFANS/Media/startup.mp3
+*.mp3
+*.zip
