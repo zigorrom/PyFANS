@@ -1,11 +1,15 @@
 import sys
 import os
+import argparse
 import numpy as np
 import pandas as pd
+import fnmatch
 from tqdm import tqdm
 from scipy.signal import decimate
 
-def __search_for_new_style_measurement_data_file(folder):
+
+
+def search_for_new_style_measurement_data_file(folder):
     print("SEARCHING FOT MEASUREMENT DATA FILE IN:\n\r{0}".format(folder))
     print("*"*10)
     pattern = "MeasurmentData_*.dat"
@@ -96,7 +100,7 @@ class FANS_TimetraceExtractor:
         working_directory = self._working_directory if os.path.isdir(self._working_directory) else os.getcwd()
         if not self._measurement_filename:
             print("Measurement filename is not specified - looking for measurement data file in folder: {0}".format(working_directory))
-            self._measurement_filename = __search_for_new_style_measurement_data_file(working_directory)
+            self._measurement_filename = search_for_new_style_measurement_data_file(working_directory)
             if not self._measurement_filename:
                 raise FileNotFoundError("Measurement data file is not found")
 
@@ -208,6 +212,8 @@ class FANS_TimetraceExtractor:
 
 
 
+
+
 def test_numpy_load():
     from tempfile import TemporaryFile
     out_file = TemporaryFile()
@@ -237,14 +243,71 @@ def test_numpy_load():
     print("end")
 
 
-def perform_timetrace_extraction():
-    meas_data_filename = "O:\\Temp-ICS8\\Zadorozhnyi, Ihor\\10.04.2018\\Noise\\BG = 3V\\SOI#5R_Chip14_ALD_Coupling_BG=3V.dat" 
-    fn = "" 
+def perform_timetrace_extraction(**kwargs):
+    #meas_data_filename = "O:\\Temp-ICS8\\Zadorozhnyi, Ihor\\10.04.2018\\Noise\\BG = 3V\\SOI#5R_Chip14_ALD_Coupling_BG=3V.dat" 
+    #fn = "" 
     #e = FANS_TimetraceExtractor(filename = fn, amplification = 17200, length = -1)
-    e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = -1, decimated_sample_rate = 10000)
-    e.perform_convertion()
+    #e = FANS_TimetraceExtractor(measurement_data_file = meas_data_filename, length = -1, decimated_sample_rate = 10000)
+    #e.perform_convertion()
+    
+    try: 
+        e = FANS_TimetraceExtractor(**kwargs)
+        e.perform_convertion()
+    except Exception as e:
+        print_error(e)
+
+    return 0
+
+#self._working_directory = kwargs.get("working_directory", "")
+#self._sample_rate = kwargs.get("sample_rate", 500000)
+#self._points_per_sample = kwargs.get("points_per_sample", 50000)
+#self._total_time_to_convert = kwargs.get("length", -1)
+#self._filename_to_convert = kwargs.get("filename", None)
+#self._measurement_filename = kwargs.get("measurement_data_file", None)
+#self._output_extension = "dat"
+#self._amplification_factor = kwargs.get("amplification", None)
+#self._decimated_sample_rate = kwargs.get("decimated_sample_rate", 0)
+
+
 
 if __name__ == "__main__":
-    #test_numpy_load()
-    perform_timetrace_extraction()
+    parser = argparse.ArgumentParser(description='Convert timetrace from binary format to readable .dat format')
+    
+    parser.add_argument('-mf', metavar='measurement_data_file', type=str, nargs='?', default = "",
+                    help='The name of main file where all measured data is stored')
 
+    parser.add_argument('-sr', metavar='sample_rate', type = int, nargs='?' , default = 500000,
+                        help = 'The sample rate of data in binary file')
+    
+    parser.add_argument('-pps', metavar='points_per_sample', type = int, nargs='?' , default = 50000,
+                        help = 'Number of points in single block of data')
+
+    parser.add_argument('-l', metavar='length', type = int, nargs='?' , default = -1,
+                        help = 'The time in seconds to convert from binary file')
+
+    parser.add_argument('-f', metavar='filename', type = str, nargs='?' , default = "",
+                        help = 'The name of file to convert. You would need to specify params for convertion')
+
+    parser.add_argument('-a', metavar='amplification', type = int, nargs='?' , default = None,
+                        help = 'The total amplification (Preamplified + main amplifier + PyFANS amplifier) used for the signal recording')
+
+    parser.add_argument('-dr', metavar='decimated_sample_rate', type = int, nargs='?' , default = 0,
+                        help = 'The sample rate to decimate to...')
+
+    parser.add_argument('--open', dest = 'open_folder', action= 'store_true')
+    parser.set_defaults(open_folder = False)
+
+    args = parser.parse_args()
+    args = vars(args)
+    type_of_program = args.get("t","console")
+    m = {'mf': 'measurement_data_file', 'sr' : 'sample_rate', 'pps' :  'points_per_sample', 'l': 'length', 'f': 'filename', 'a': 'amplification', 'dr' : 'decimated_sample_rate', 'open_folder': 'open_folder' }
+    args = dict((m.get(k, k), v) for (k, v) in args.items())
+    #if type_of_program == "console":
+    sys.exit(perform_timetrace_extraction(**args))
+    
+
+    #perform_timetrace_extraction(**args)
+
+    #test_numpy_load()
+    #perform_timetrace_extraction()
+    #sys.exit(gui())
