@@ -8,6 +8,10 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         super().__init__(parent)
         self.setupUi()
 
+        self._working_directory  = ""
+        self._measurement_data_filename=  ""
+        self._filename = ""
+
         self._script_directory = os.path.dirname(__file__)
         self._timetrace_converter_script_name = os.path.join(self._script_directory, "modern_fans_timetrace_extractor.py")
         print(self._script_directory)
@@ -39,15 +43,48 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
 
     def on_programm_execution_started(self):
         print("started")
-        
+        self.disable_user_input()
 
     def on_programm_execution_finished(self):
         print("finished")
+        self.enable_user_input()
+
+    def enable_user_input(self):
+        pass
+
+    def disable_user_input(self):
+        pass
 
     #************************************************************
+    def open_file_dialog(self):
+        print("Select file")
+        filename = os.path.abspath(QtGui.QFileDialog.getOpenFileName(self,caption="Select Folder", directory = self._working_directory))
+        
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Information)
+        msg.setText("This is a message box")
+        msg.setInformativeText("This is additional information")
+        msg.setWindowTitle("MessageBox demo")
+        msg.setDetailedText(folder_name)
+        msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        retval = msg.exec_()
+        return filename
+        
+    def set_filename(self, filename):
+        pass
+
+    def set_measurement_data_filename(self, measurement_data_filename):
+        pass
+
+    def set_working_folder(self, folder):
+        pass
+
     @QtCore.pyqtSlot()
-    def on_ui_measurement_data_file_clicked(self):
-        print("select folder")
+    def on_ui_select_measurement_data_file_clicked(self):
+        print("select measur data file")
+        filename = self.open_file_dialog()
+        if filename and os.path.isfile(filename):
+            self.set_filename(filename)
 
     @QtCore.pyqtSlot()
     def on_ui_open_folder_clicked(self):
