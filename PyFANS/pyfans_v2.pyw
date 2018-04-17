@@ -3,6 +3,7 @@ import sys
 import time
 import pint
 import pickle
+import subprocess
 
 from pint import UnitRegistry
 from PyQt4 import uic, QtGui, QtCore
@@ -134,6 +135,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     def subscribe_to_what_to_do_action(self,slot):
         self.connect(self.action_what_to_do.triggered, slot)
+
+    def subscribe_to_timetrace_converter_ation(self,slot):
+        self.connect(self.actionTimetraceConverter.triggered, slot)
 
     @property
     def controller(self):
@@ -849,7 +853,7 @@ class FANS_UI_Controller(QtCore.QObject):
         super().__init__()
         
         self._script_directory = os.path.dirname(__file__)
-        self._timetrace_converter_script_name = os.path.join(self._script_directory, "modern_fans_timetrace_extractor.py")
+        self._timetrace_converter_script_name = os.path.join(self._script_directory, "timetrace_extractor_gui.py")
 
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
@@ -921,6 +925,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_time_info_action(self.show_time_info_window)
         self.main_view.subscribe_to_about_action(self.on_show_about_window)
         self.main_view.subscribe_to_what_to_do_action(self.on_what_to_do_action)
+        self.main_view.subscribe_to_timetrace_converter_ation(self.on_timetrace_convertion_action)
         #pass
     #def login_test(self):
     #    print("test")
@@ -1132,6 +1137,8 @@ class FANS_UI_Controller(QtCore.QObject):
             if retval:
                 self.open_timetrace_convertion_window(self.experiment_settings.experiment_name)
 
+    def on_timetrace_convertion_action(self):
+        self.open_timetrace_convertion_window(None)
 
     def open_timetrace_convertion_window(self, measurement_data_filename):
         params = []
@@ -1141,8 +1148,10 @@ class FANS_UI_Controller(QtCore.QObject):
             params.append("-mf")
             params.append(measurement_data_filename)
 
-        results = " ".join(params) 
-        os.system(results)
+        command = " ".join(params) 
+        p = subprocess.Popen(command, shell=False)
+        #os.system(command)
+        #os.spawnl(os.P_DETACH, command)
 
         
     def on_voltage_control_view_clicked(self):
