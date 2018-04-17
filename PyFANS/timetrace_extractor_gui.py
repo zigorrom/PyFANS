@@ -1,9 +1,34 @@
 import sys
 import os
+import ui_helper as uih
 from PyQt4 import uic, QtGui, QtCore
+from modern_fans_timetrace_extractor import Parameters
+
+def open_folder_with_file_selected(filename):
+    print("opening folder")
+    request = 'explorer /select, "{0}"'.format(filename)#self._settings.working_directory)
+    print(request)
+    os.system(request)
+
+
+
 
 timetraceExtractorViewBase, timetraceExtractorViewForm = uic.loadUiType("UI/UI_TimetraceExtractor.ui")
 class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewForm):
+    measurement_data_filename_ui = uih.bind("ui_measurement_data_filename","text",str)
+    filename_ui = uih.bind("ui_filename","text",str)
+
+    sample_rate_ui = uih.bind("ui_sample_rate","text",int)
+    points_per_shot_ui = uih.bind("ui_points_per_shot","text",int)
+    total_amplification_ui = uih.bind("ui_total_amplification","text",int)
+    total_time_to_convert_ui = uih.bind("ui_total_time_to_convert","text",int)
+
+    use_timetrace_extractor_settings = uih.bind("ui_use_timetrace_settings", "checked", bool)
+    use_sample_rate = uih.bind("ui_use_sample_rate", "checked", bool)
+    use_points_per_shot = uih.bind("ui_use_points_per_shot", "checked", bool)
+    use_amplification = uih.bind("ui_use_amplification", "checked", bool)
+    use_total_time = uih.bind("ui_use_total_time", "checked", bool)
+
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi()
@@ -23,16 +48,48 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         self.process.finished.connect(self.on_programm_execution_finished)
         #ui_program_output
 
+    def __del__(self):
+        if self.process:
+            self.process.kill()
+
+
 
 
     def setupUi(self):
         super().setupUi(self)
+        self.ui_sample_rate.setValidator(QtGui.QIntValidator())
+        self.ui_points_per_shot.setValidator(QtGui.QIntValidator())
+        self.ui_total_amplification.setValidator(QtGui.QIntValidator())
+        self.ui_total_time_to_convert.setValidator(QtGui.QIntValidator())
+        self.ui_use_sample_rate.stateChanged.connect(lambda state: self.ui_sample_rate.setEnabled(bool(state)))
+        self.ui_use_points_per_shot.stateChanged.connect(lambda state: self.ui_points_per_shot.setEnabled(bool(state)))
+        self.ui_use_amplification.stateChanged.connect(lambda state: self.ui_total_amplification.setEnabled(bool(state)))
+        self.ui_use_total_time.stateChanged.connect(lambda state: self.ui_total_time_to_convert.setEnabled(bool(state)))
 
-    def collectParams(self):
-        return [self._timetrace_converter_script_name]
 
-    def callProgram(self):
-        self.process.start('python',self.collectParams())
+
+    def collectSettingsParams(self):
+        settings_params = []
+        if self.use_timetrace_extractor_settings:
+            
+            settings_params.append(Parameters.SampleRateOption)
+            settings_params.append(sample_rate_ui)
+
+            settings_params.append(Parameters.PointsPerShotOption)
+            settings_params.append(points_per_shot_ui)
+
+            settings_params.append(Parameters.AmplificationOption)
+            settings_params.append(total_amplification_ui)
+
+            settings_params.append(Parameters.LengthOption)
+            settings_params.append(total_time_to_convert_ui)
+
+
+    def callProgram(self, params):
+        all_parameters = [self._timetrace_converter_script_name]
+        all_parameters.extend(params)
+        print(all_parameters)
+        self.process.start('python',all_parameters)
 
     def dataReady(self):
         cursor = self.ui_program_output.textCursor()
@@ -49,67 +106,104 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         print("finished")
         self.enable_user_input()
 
+    def set_user_input_state(self, state):
+        self.ui_select_measurement_data_file.setEnabled(state)
+        self.ui_open_measurement_data_file.setEnabled(state)
+        self.ui_convert_all.setEnabled(state)
+        self.ui_select_file.setEnabled(state)
+        self.ui_open_file.setEnabled(state)
+        self.ui_convert_file.setEnabled(state)
+        self.ui_use_timetrace_settings.setEnabled(state)
+
     def enable_user_input(self):
-        pass
+        self.set_user_input_state(True)
 
     def disable_user_input(self):
-        pass
+        self.set_user_input_state(False)
 
     #************************************************************
     def open_file_dialog(self):
         print("Select file")
-        filename = os.path.abspath(QtGui.QFileDialog.getOpenFileName(self,caption="Select Folder", directory = self._working_directory))
+        filename = os.path.abspath(QtGui.QFileDialog.getOpenFileName(self,caption="Select Filename", directory = self._working_directory))
         
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
         msg.setText("This is a message box")
         msg.setInformativeText("This is additional information")
         msg.setWindowTitle("MessageBox demo")
-        msg.setDetailedText(folder_name)
+        msg.setDetailedText(filename)
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
-        return filename
+        return (retval, filename)
         
     def set_filename(self, filename):
-        pass
+        if not filename or not os.path.isfile:
+            print("Filename does not exist or empty parameter")
+
+        self._filename = filename
+        folder_name, filename_temp = os.path.split(filename)
+        self.filename_ui = ".../{0}".format(filename_temp)
+        self.set_working_folder(folder_name)
+
 
     def set_measurement_data_filename(self, measurement_data_filename):
-        pass
+        if not measurement_data_filename or not os.path.isfile:
+            print("Filename does not exist or empty parameter")
+
+        self._measurement_data_filename = measurement_data_filename
+        folder_name, filename_temp = os.path.split(measurement_data_filename)
+        self.measurement_data_filename_ui = ".../{0}".format(filename_temp)
+        self.set_working_folder(folder_name)
 
     def set_working_folder(self, folder):
-        pass
+        if folder and os.path.isdir(folder):
+            self._working_directory = folder
+        else:
+            print("Folder is not existing")
 
     @QtCore.pyqtSlot()
     def on_ui_select_measurement_data_file_clicked(self):
         print("select measur data file")
-        filename = self.open_file_dialog()
-        if filename and os.path.isfile(filename):
-            self.set_filename(filename)
+        result, filename = self.open_file_dialog()
+        if result:
+            self.set_measurement_data_filename(filename)
 
     @QtCore.pyqtSlot()
-    def on_ui_open_folder_clicked(self):
+    def on_ui_open_measurement_data_file_clicked(self):
         print("open_folder")
+        open_folder_with_file_selected(self._measurement_data_filename)
 
     @QtCore.pyqtSlot()
     def on_ui_convert_all_clicked(self):
         print("convert all")
-        self.callProgram()
+        param_list = []
+        #self.callProgram()
+        if self._measurement_data_filename and os.path.isfile(self._measurement_data_filename):
+            param_list.append(Parameters.MeasurementDataFileOption)
+            param_list.append(self._measurement_data_filename)
+
+            self.callProgram(param_list)
+
+
+
     
     @QtCore.pyqtSlot()
     def on_ui_select_file_clicked(self):
         print("select file")
+        result, filename = self.open_file_dialog()
+        if result:
+            self.set_filename(filename)
 
     @QtCore.pyqtSlot()
     def on_ui_open_file_clicked(self):
         print("select file")
+        open_folder_with_file_selected(self._filename)
 
     @QtCore.pyqtSlot()
     def on_ui_convert_file_clicked(self):
         print("select convert file")
 
-    @QtCore.pyqtSlot()
-    def on_ui_settings_clicked(self):
-        print("settings")
+   
 
 
 
