@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 import ui_helper as uih
 from PyQt4 import uic, QtGui, QtCore
 from modern_fans_timetrace_extractor import Parameters
@@ -53,8 +54,6 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
             self.process.kill()
 
 
-
-
     def setupUi(self):
         super().setupUi(self)
         self.ui_sample_rate.setValidator(QtGui.QIntValidator())
@@ -71,25 +70,29 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     def collectSettingsParams(self):
         settings_params = []
         if self.use_timetrace_extractor_settings:
+            if self.use_sample_rate:
+                settings_params.append(Parameters.SampleRateOption)
+                settings_params.append(self.sample_rate_ui)
             
-            settings_params.append(Parameters.SampleRateOption)
-            settings_params.append(sample_rate_ui)
+            if self.use_points_per_shot:
+                settings_params.append(Parameters.PointsPerShotOption)
+                settings_params.append(self.points_per_shot_ui)
 
-            settings_params.append(Parameters.PointsPerShotOption)
-            settings_params.append(points_per_shot_ui)
+            if self.use_amplification:
+                settings_params.append(Parameters.AmplificationOption)
+                settings_params.append(self.total_amplification_ui)
 
-            settings_params.append(Parameters.AmplificationOption)
-            settings_params.append(total_amplification_ui)
-
-            settings_params.append(Parameters.LengthOption)
-            settings_params.append(total_time_to_convert_ui)
-
+            if self.use_total_time:
+                settings_params.append(Parameters.LengthOption)
+                settings_params.append(self.total_time_to_convert_ui)
+        
+        return settings_params
 
     def callProgram(self, params):
         all_parameters = [self._timetrace_converter_script_name]
         all_parameters.extend(params)
         print(all_parameters)
-        self.process.start('python',all_parameters)
+        self.process.start('python', all_parameters)
 
     def dataReady(self):
         cursor = self.ui_program_output.textCursor()
@@ -155,11 +158,13 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         self.measurement_data_filename_ui = ".../{0}".format(filename_temp)
         self.set_working_folder(folder_name)
 
+
     def set_working_folder(self, folder):
         if folder and os.path.isdir(folder):
             self._working_directory = folder
         else:
             print("Folder is not existing")
+
 
     @QtCore.pyqtSlot()
     def on_ui_select_measurement_data_file_clicked(self):
@@ -181,12 +186,9 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         if self._measurement_data_filename and os.path.isfile(self._measurement_data_filename):
             param_list.append(Parameters.MeasurementDataFileOption)
             param_list.append(self._measurement_data_filename)
-
+            param_list.extend(self.collectSettingsParams())
             self.callProgram(param_list)
 
-
-
-    
     @QtCore.pyqtSlot()
     def on_ui_select_file_clicked(self):
         print("select file")
@@ -202,18 +204,27 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     @QtCore.pyqtSlot()
     def on_ui_convert_file_clicked(self):
         print("select convert file")
-
+        param_list = []
+        #self.callProgram()
+        if self._measurement_data_filename and os.path.isfile(self._measurement_data_filename):
+            param_list.append(Parameters.FilenameOption)
+            param_list.append(self._filename)
+            param_list.extend(self.collectSettingsParams())
+            self.callProgram(param_list)
    
 
 
 
-
-
-
-def gui():
+def gui(**kwargs):
     import ctypes
     myappid = "fzj.pyfans.pyfans.21" # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+    measurement_data_filename = kwargs.get("mf", None)
+    filename = kwargs.get("f", None)
+
+    
+
 
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS TimetraceExtractor")
@@ -232,9 +243,27 @@ def gui():
     #about_window.show()
 
     wnd = TimetraceExtractorGUI()
+
+    if measurement_data_filename:
+        wnd.set_measurement_data_filename(measurement_data_filename)
+
+    if filename:
+        wnd.set_filename(filename)
+
     wnd.show()
     return app.exec_()
 
 
 if __name__ == "__main__":
-    sys.exit(gui())
+    parser = argparse.ArgumentParser(description='Convert timetrace from binary format to readable .dat format')
+    
+    parser.add_argument(Parameters.MeasurementDataFileOption, metavar='measurement_data_file', type=str, nargs='?', default = "",
+                    help='The name of main file where all measured data is stored')
+    
+    parser.add_argument(Parameters.FilenameOption, metavar='filename', type = str, nargs='?' , default = "",
+                        help = 'The name of file to convert. You would need to specify params for convertion')
+
+    args = parser.parse_args()
+    args = vars(args)
+
+    sys.exit(gui(**args))

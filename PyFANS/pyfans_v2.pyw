@@ -847,6 +847,10 @@ class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
     def __init__(self, view):
         super().__init__()
+        
+        self._script_directory = os.path.dirname(__file__)
+        self._timetrace_converter_script_name = os.path.join(self._script_directory, "modern_fans_timetrace_extractor.py")
+
         assert isinstance(view, FANS_UI_MainView)
         self.main_view = view
         self.main_view.set_controller(self)
@@ -1118,6 +1122,28 @@ class FANS_UI_Controller(QtCore.QObject):
         msg.setDetailedText("Data saved in folder: {0}".format(self.experiment_settings.working_directory))
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
+
+        if self.experiment_settings.write_timetrace != 0:
+            msg = QtGui.QMessageBox()
+            msg.setText("Would you like to perform timetrace file convertion now?")
+            msg.setInformativeText("You can always do this with this software")
+            msg.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            retval = msg.exec_()
+            if retval:
+                self.open_timetrace_convertion_window(self.experiment_settings.experiment_name)
+
+
+    def open_timetrace_convertion_window(self, measurement_data_filename):
+        params = []
+        params.append("python")
+        params.append(self._timetrace_converter_script_name)
+        if measurement_data_filename:
+            params.append("-mf")
+            params.append(measurement_data_filename)
+
+        results = " ".join(params) 
+        os.system(results)
+
         
     def on_voltage_control_view_clicked(self):
         resource = self.hardware_settings.fans_controller_resource
