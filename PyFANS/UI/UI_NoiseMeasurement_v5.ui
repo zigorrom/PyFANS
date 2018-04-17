@@ -1153,7 +1153,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1207,6 +1207,7 @@
    <addaction name="actionOpenConsoleWindow"/>
    <addaction name="actionTimeInfoWindow"/>
    <addaction name="actionOpenRemote"/>
+   <addaction name="actionTimetraceConverter"/>
    <addaction name="actionHardwareSettings"/>
    <addaction name="actionAbout"/>
   </widget>
@@ -1317,6 +1318,15 @@
   <action name="action_what_to_do">
    <property name="text">
     <string>Что же делать?</string>
+   </property>
+  </action>
+  <action name="actionTimetraceConverter">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/timetrace_conversion_64x64.png</normaloff>:/icons/Icons/timetrace_conversion_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Timetrace Converter</string>
    </property>
   </action>
  </widget>
