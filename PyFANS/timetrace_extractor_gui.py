@@ -39,7 +39,7 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         self._filename = ""
 
         self._script_directory = os.path.dirname(__file__)
-        self._timetrace_converter_script_name = os.path.join(self._script_directory, "timetrace_extractor_gui.py")
+        self._timetrace_converter_script_name = os.path.join(self._script_directory, "modern_fans_timetrace_extractor.py")
         print(self._script_directory)
         print(self._timetrace_converter_script_name)
 
