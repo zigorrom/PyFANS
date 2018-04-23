@@ -23,12 +23,14 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     points_per_shot_ui = uih.bind("ui_points_per_shot","text",int)
     total_amplification_ui = uih.bind("ui_total_amplification","text",int)
     total_time_to_convert_ui = uih.bind("ui_total_time_to_convert","text",int)
+    decimated_sample_rate_ui = uih.bind("ui_decimate_sample_rate","text", int)
 
     use_timetrace_extractor_settings = uih.bind("ui_use_timetrace_settings", "checked", bool)
     use_sample_rate = uih.bind("ui_use_sample_rate", "checked", bool)
     use_points_per_shot = uih.bind("ui_use_points_per_shot", "checked", bool)
     use_amplification = uih.bind("ui_use_amplification", "checked", bool)
     use_total_time = uih.bind("ui_use_total_time", "checked", bool)
+    use_decimated_sample_rate = uih.bind("ui_use_decimated_sample_rate", "checked", bool)
 
     def __init__(self, parent = None):
         super().__init__(parent)
@@ -60,11 +62,12 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         self.ui_points_per_shot.setValidator(QtGui.QIntValidator())
         self.ui_total_amplification.setValidator(QtGui.QIntValidator())
         self.ui_total_time_to_convert.setValidator(QtGui.QIntValidator())
+        self.ui_decimate_sample_rate.setValidator(QtGui.QIntValidator())
         self.ui_use_sample_rate.stateChanged.connect(lambda state: self.ui_sample_rate.setEnabled(bool(state)))
         self.ui_use_points_per_shot.stateChanged.connect(lambda state: self.ui_points_per_shot.setEnabled(bool(state)))
         self.ui_use_amplification.stateChanged.connect(lambda state: self.ui_total_amplification.setEnabled(bool(state)))
         self.ui_use_total_time.stateChanged.connect(lambda state: self.ui_total_time_to_convert.setEnabled(bool(state)))
-
+        self.ui_use_decimated_sample_rate.stateChanged.connect(lambda state: self.ui_decimate_sample_rate.setEnabled(bool(state)))
 
 
     def collectSettingsParams(self):
@@ -86,6 +89,10 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
                 settings_params.append(Parameters.LengthOption)
                 settings_params.append(self.total_time_to_convert_ui)
         
+            if self.use_decimated_sample_rate:
+                settings_params.append(Parameters.DecimatedSampleRateOption)
+                settings_params.append(self.decimated_sample_rate_ui)
+
         return settings_params
 
     def callProgram(self, params):
