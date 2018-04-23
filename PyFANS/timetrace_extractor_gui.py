@@ -91,8 +91,11 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     def callProgram(self, params):
         all_parameters = [self._timetrace_converter_script_name]
         all_parameters.extend(params)
+        all_parameters = [str(item) for item in all_parameters]
         print(all_parameters)
-        self.process.start('python', all_parameters)
+        cmd_params = " ".join(all_parameters)
+        print(cmd_params)
+        self.process.start('python', cmd_params)
 
     def dataReady(self):
         cursor = self.ui_program_output.textCursor()
