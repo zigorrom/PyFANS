@@ -1134,8 +1134,9 @@ class FANS_UI_Controller(QtCore.QObject):
             msg.setInformativeText("You can always do this with this software")
             msg.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
             retval = msg.exec_()
-            if retval:
-                self.open_timetrace_convertion_window(self.experiment_settings.experiment_name)
+            if retval == QtGui.QMessageBox.Yes:
+                filename = os.path.join(self.experiment_settings.working_directory, self.experiment_settings.experiment_name)
+                self.open_timetrace_convertion_window(filename)
 
     def on_timetrace_convertion_action(self):
         self.open_timetrace_convertion_window(None)
