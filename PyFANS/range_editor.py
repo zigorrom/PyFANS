@@ -359,5 +359,5 @@ def test_CompositeRangeSelectorView():
 
 if __name__ == "__main__":
     import sys
-    #sys.exit(test_RangeSelectorView())
-    sys.exit(test_CompositeRangeSelectorView())
+    sys.exit(test_RangeSelectorView())
+    # sys.exit(test_CompositeRangeSelectorView())
