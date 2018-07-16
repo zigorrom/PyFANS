@@ -1,4 +1,5 @@
 import sys
+import math
 import numpy as np
 
 from enum import Enum
@@ -122,6 +123,42 @@ class RangeHandler(QtCore.QObject):
         self._rangeInfo = rangeInfo
         self._currentValue = None
         self._currentCount = 0
+        self._currentDirection = 1
+        self._currentRepeat = 0
+        self._totalIterationsMade = 0
+
+    @property
+    def totalIterationsMade(self):
+        return self._totalIterationsMade
+
+    def incrementTotalIterations(self):
+        self._totalIterationsMade+=1
+
+    @property
+    def currentDirection(self):
+        return self._currentDirection
+
+    @currentDirection.setter
+    def currentDirection(self, value):
+        self._currentDirection = value
+
+    def toggleDirection(self):
+        self.currentDirection = -self.currentDirection
+
+    @property
+    def currentRepeat(self):
+        return self._currentRepeat
+
+    @currentRepeat.setter
+    def currentRepeat(self, value):
+        self._currentRepeat = value
+
+    def incrementRepeat(self):
+        self._currentRepeat += 1 #math.copysign(1, self._currentDirection)
+
+    def decrementRepeat(self):
+        self._currentRepeat -= 1#math.copysign(1, self._currentDirection)
+
 
     @property
     def rangeInfo(self):
@@ -144,10 +181,18 @@ class RangeHandler(QtCore.QObject):
         self._currentCount = value
 
     def incrementCount(self):
-        self._currentCount += 1
+        self._currentCount += 1 #math.copysign(1, self._currentDirection)
 
     def decrementCount(self):
-        self._currentCount -= 1
+        self._currentCount -= 1#math.copysign(1, self._currentDirection)
+
+    def nextValue(self):
+        self._currentValue += math.copysign(self.rangeInfo.step, self._currentDirection)
+        return self.currentValue
+
+    def prevValue(self):
+        self._currentValue -= math.copysign(self.rangeInfo.step, self._currentDirection)
+        return self.currentValue
 
     def __iter__(self):
         self.reset()
@@ -160,12 +205,20 @@ class RangeHandler(QtCore.QObject):
         # except TypeError as te:
         #     print ("some_object is not iterable")
         #     raise
+    def checkCondition(self):   
+        raise NotImplementedError()
 
     def reset(self):
-        pass
+        raise NotImplementedError()
 
     def next(self):
-        raise StopIteration()
+        if self.checkCondition():
+            current = self.currentValue
+            self.nextValue()
+            self.incrementTotalIterations()
+            return current
+        else:
+            raise StopIteration()
 
     # def iterator(self):
     #     raise NotImplementedError()
@@ -176,49 +229,132 @@ class NormalRangeHandler(RangeHandler):
     def __init__(self, rangeInfo):
         super().__init__(rangeInfo)
 
-    def continueCondition(self):
-        return self.currentCount < self.rangeInfo.end
+    def checkCondition(self):       
+        if self.currentRepeat < self.rangeInfo.repeats:
+            if self.currentDirection >= 0:
+                if self.currentValue <= self.rangeInfo.end:
+                    return True
+                elif self.__next_repetition():
+                    return True
+                else:
+                    return False
 
-    def next(self):
-        if self.continueCondition():
-            current, self.currentValue = self.currentValue, self.currentValue + self.rangeInfo.step
-        
-        else:
-            raise StopIteration()
+            else:
+                if self.currentValue >= self.rangeInfo.end:
+                    return True
+                elif self.__next_repetition():
+                    return True
+                else:
+                    return False
+             
+        return False
+
+    def __initialize_repetition(self):
+        self.currentCount = 0
+        self.currentDirection = math.copysign(1, self.rangeInfo.end - self.rangeInfo.start)
+        self.currentValue = self.rangeInfo.start
+
+    def reset(self):
+        self.__initialize_repetition()
+        self.currentRepeat = 0
+        self._totalIterationsMade = 0
+
+    def __next_repetition(self):
+        self.incrementRepeat()
+        self.__initialize_repetition()
+        if self.currentRepeat < self.rangeInfo.repeats:
+            return True
+
+        return False
+
+
+
+    
             
-        # if self.currentCount < self.rangeInfo.count:
-        #     current, self.currentValue = self.currentValue, self.currentValue + self.rangeInfo.step
-        #     return current
-        # else:
-        #     raise StopIteration()
-
-    # def iterator(self):
-    #     rngInfo = self.rangeInfo
-    #     currentValue = rngInfo.start
-
-        
-
-    #     # for repeat in range(rngInfo.repeats):
-    #     #     for i in range(rngInfo.count):
-    #     #         currentValue.handler 
-    #     print("From range info")
-    #     print(rngInfo)
-    #     if rngInfo.log_scale:
-    #         start = np.log10(rngInfo.start)
-    #         end = rngInfo.end
-                 
-
-
-    #     else:
-    #         return np.linspace(rngInfo.start, rngInfo.end, rngInfo.count, endpoint = True)
-            
-        
+      
 class BackAndForthHandler(RangeHandler):
     def __init__(self, rangeInfo):
         super().__init__(rangeInfo)
+        self._directionChanged = False
 
-    def iterator(self):
-        pass
+    @property
+    def directionChanged(self):
+        return self._directionChanged
+
+    @directionChanged.setter
+    def directionChanged(self, value):
+        self._directionChanged = value
+
+    def changeDirection(self):
+        prev_value = self.directionChanged
+        self.directionChanged = True
+        self.toggleDirection()
+        self.nextValue()
+        self.nextValue()
+        if not prev_value:
+            return True
+        
+        return False
+
+    def checkCondition(self):       
+        if self.currentRepeat < self.rangeInfo.repeats:
+            start_value = self.rangeInfo.start
+            end_value = self.rangeInfo.end
+            
+            if self.directionChanged:
+                start_value, end_value = end_value, start_value
+
+            if self.currentDirection >= 0:
+                if self.currentValue <= end_value:
+                    return True
+
+                elif self.changeDirection():
+                    return True
+
+                elif self.__next_repetition():
+                    return True
+
+                else:
+                    return False
+
+            else:
+                if self.currentValue >= end_value:
+                    return True
+                
+                elif self.changeDirection():
+                    return True
+   
+                elif self.__next_repetition():
+                    return True
+                else:
+                    return False
+             
+        return False
+
+    def __initialize_repetition(self):
+        self.currentCount = 0
+        self.directionChanged = False
+        self.currentDirection = math.copysign(1, self.rangeInfo.end - self.rangeInfo.start)
+        self.currentValue = self.rangeInfo.start
+
+    def reset(self):
+        self.__initialize_repetition()
+        self.currentRepeat = 0
+        self._totalIterationsMade = 0
+
+    def __next_repetition(self):
+        self.incrementRepeat()
+        self.__initialize_repetition()
+        if self.currentRepeat < self.rangeInfo.repeats:
+            return True
+
+        return False
+
+    
+
+
+
+    
 
 class ZeroStartRangeHandler(RangeHandler):
     def __init__(self, rangeInfo):
@@ -294,12 +430,22 @@ def test_smth():
 
 
 def test_range():
-    ri = RangeInfo(start = -10, end = 10, count = 100, handler = HandlersEnum.normal)
+    ri = RangeInfo(start = -10, end = 10, step = 1, handler = HandlersEnum.normal, repeats = 3)
     print(ri)
+    print("NORMAL HANDLER")
     rh = RangeHandlerFactory.createHandler(ri)
-    print(rh)
     lst = list(rh)
     print(lst)
+    print(rh.totalIterationsMade)
+
+    print("Back Forth HANDLER")
+    ri.handler = HandlersEnum.back_forth
+    ri.repeats = 2
+    rh = RangeHandlerFactory.createHandler(ri)
+    lst = list(rh)
+    print(lst)
+    print(rh.totalIterationsMade)
+    
 
 if __name__ == "__main__":
     sys.exit(test_range())
