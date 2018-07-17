@@ -22,33 +22,12 @@ class RangeInfo(QtCore.QObject):
         self._end = kwargs.get("end", None)
         self._step = kwargs.get("step", None)
         self._log_scale = kwargs.get("log_scale", False)
-        self._count = kwargs.get("count", 0)
+        #self._count = kwargs.get("count", 0)
         self._handler = kwargs.get("handler", HandlersEnum.normal)
         self._repeats = kwargs.get("repeats", 1)
         
     # when handler = zero start -> we start from zero -> move to start ->move to zero -> move to end
     # when handler zero start back and forth -> repeat previous statement in reverse direction
-
-
-    # def __calculate_step(self, start, end, count, end_point = True):
-    #     try:
-    #         step = 0
-
-    #         if count < 1:
-    #             count = 0
-    #         elif count < 2:
-    #             count = 1
-    #         else:
-    #             if end_point:
-    #                 rnd = end
-    #             else:
-    #                 pass
-            
-    #     except:
-    #         raise
-    
-    # def __calculate_count(self, start, end, step, end_point = True):
-    #     pass
 
     @property
     def start(self):
@@ -82,13 +61,13 @@ class RangeInfo(QtCore.QObject):
     def log_scale(self,value):
         self._log_scale = value
 
-    @property
-    def count(self):
-        return self._count
+    # @property
+    # def count(self):
+    #     return self._count
 
-    @count.setter
-    def count(self, value):
-        self._count = value
+    # @count.setter
+    # def count(self, value):
+    #     self._count = value
 
     @property
     def handler(self):
@@ -112,9 +91,10 @@ class RangeInfo(QtCore.QObject):
            start:\t{0}
            end:\t{1}
            step:\t{2}
-           count:\t{3}
-        """.format(self.start, self.end, self.step, self.count)
+        """.format(self.start, self.end, self.step)
         return strRepresentation
+    
+
     
 
 class RangeHandler(QtCore.QObject):
@@ -220,9 +200,7 @@ class RangeHandler(QtCore.QObject):
         else:
             raise StopIteration()
 
-    # def iterator(self):
-    #     raise NotImplementedError()
-
+    
 
 
 class NormalRangeHandler(RangeHandler):
@@ -430,7 +408,7 @@ def test_smth():
 
 
 def test_range():
-    ri = RangeInfo(start = -10, end = 10, step = 1, handler = HandlersEnum.normal, repeats = 3)
+    ri = RangeInfo(start = 10, end = -10, step = 1, handler = HandlersEnum.normal, repeats = 3)
     print(ri)
     print("NORMAL HANDLER")
     rh = RangeHandlerFactory.createHandler(ri)
