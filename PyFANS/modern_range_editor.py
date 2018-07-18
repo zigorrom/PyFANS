@@ -3,13 +3,14 @@ import math
 import numpy as np
 
 from enum import Enum
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui, uic
 
 class HandlersEnum(Enum):
     normal = 0
     back_forth = 1
     center_start = 2
     center_start_back_forth = 3
+    custom = 4
 
 class RangeInfo(QtCore.QObject):
     def __init__(self, **kwargs):
@@ -107,7 +108,6 @@ class CenteredRangeInfo(RangeInfo):
             kwargs["start"] = center - span/2
             kwargs["end"] = center + span/2
          
-
         super().__init__(**kwargs)
     
     @property
@@ -700,6 +700,182 @@ class RangeHandlerFactory(QtCore.QObject):
             raise TypeError("rangeInfo has wrong data type")
 
 
+RangeEditorBase, RangeEditorForm = uic.loadUiType("UI/UI_RangeSelector_v5.ui")
+class RangeEditorView(RangeEditorBase, RangeEditorForm):
+    def __init__(self, parent = None):
+        super(RangeEditorBase, self).__init__(parent)
+        self._composed_range_view = False
+        
+
+        self.setupUi()
+        
+
+    def setupUi(self):
+        super().setupUi(self)
+        # self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowContextHelpButtonHint)
+
+        self.ui_normal_handler.setChecked(True)
+        self.ui_composed_handler.setChecked(False)
+        self.ui_normal_handler.toggled.connect(self.on_composite_view_changed)
+        self.ui_composed_handler.toggled.connect(self.on_composite_view_changed)
+        self.ui_composite_ranges.hide()
+        
+        self.ui_handler_selector.currentIndexChanged.connect(self.on_range_handler_changed)
+        self.ui_span_mode.stateChanged.connect(self.on_span_mode_changed)
+
+        self.ui_normal_range_info.show()
+        self.ui_center_range_handler.hide()
+        self.ui_center_span_handler.hide()
+        self.ui_custom_list_view.hide()
+
+        self.ui_span_mode.setChecked(False)
+        self.ui_span_mode.hide()
+
+        # self.ui_start_val.
+
+    @property
+    def compositeRange(self):
+        return self.ui_composed_handler.isChecked()
+
+    @property
+    def rangeMode(self):
+        if self.ui_handler_selector.currentIndex() is 0:
+            return HandlersEnum.normal
+        
+        elif self.ui_handler_selector.currentIndex() is 1:
+            return HandlersEnum.back_forth
+
+        elif self.ui_handler_selector.currentIndex() is 2:
+            return HandlersEnum.center_start
+
+        elif self.ui_handler_selector.currentIndex() is 3:
+            return HandlersEnum.center_start_back_forth
+
+        elif self.ui_handler_selector.currentIndex() is 4:
+            return HandlersEnum.custom
+        
+        else:
+            return None
+
+    @property
+    def spanMode(self):
+        return self.ui_span_mode.isChecked()
+            
+    @property
+    def rangeRepeats(self):
+        return self.ui_range_repeats.value()
+
+    
+    
+
+    def setRange(self, rangeInfo):
+        if isinstance(rangeInfo, RangeInfo):
+            if rangeInfo.handler is HandlersEnum.normal or rangeInfo.handler is HandlersEnum.back_forth:
+                self.ui_normal_range_info.show()
+                self.ui_center_range_handler.hide()
+                self.ui_center_span_handler.hide()
+                self.ui_custom_list_view.hide()
+
+            else:
+                raise ValueError("range handler")
+
+        elif isinstance(rangeInfo, CenteredRangeInfo):
+            pass
+
+        elif isinstance(rangeInfo, CustomRangeInfo):
+            pass
+
+        else:
+            return
+
+    @QtCore.pyqtSlot(bool)
+    def on_composite_view_changed(self, bool):
+        if self.ui_normal_handler.isChecked():
+            self.ui_composite_ranges.hide()
+        elif self.ui_composed_handler.isChecked():
+            self.ui_composite_ranges.show()
+
+    @QtCore.pyqtSlot(int)
+    def on_span_mode_changed(self, state):
+        if state>0:
+            self.ui_center_range_handler.hide()
+            self.ui_center_span_handler.show()
+        else:
+            self.ui_center_range_handler.show()
+            self.ui_center_span_handler.hide()
+
+    @QtCore.pyqtSlot(int)
+    def on_range_handler_changed(self, idx):
+        if idx > 1 and idx <4:
+            self.ui_span_mode.show()
+        else:
+            self.ui_span_mode.hide()
+        
+        if idx is 0:
+            self.ui_normal_range_info.show()
+            self.ui_center_range_handler.hide()
+            self.ui_center_span_handler.hide()
+            self.ui_custom_list_view.hide()
+
+        elif idx is 1:
+            self.ui_normal_range_info.show()
+            self.ui_center_range_handler.hide()
+            self.ui_center_span_handler.hide()
+            self.ui_custom_list_view.hide()
+
+        elif idx is 2:
+            self.ui_normal_range_info.hide()
+            self.ui_center_range_handler.show()
+            self.ui_center_span_handler.hide()
+            self.ui_custom_list_view.hide()
+
+        elif idx is 3:
+            self.ui_normal_range_info.hide()
+            self.ui_center_range_handler.show()
+            self.ui_center_span_handler.hide()
+            self.ui_custom_list_view.hide()
+
+        elif idx is 4:
+            self.ui_normal_range_info.hide()
+            self.ui_center_range_handler.hide()
+            self.ui_center_span_handler.hide()
+            self.ui_custom_list_view.show()
+        else:
+            pass
+        
+    def generateRangeInfo(self):
+        mode = self.rangeMode
+        if mode is HandlersEnum.normal or mode is HandlersEnum.back_forth:
+            start = float(self.ui_start_val.text())
+            end = float(self.ui_stop_val.text())
+            step = float(self.ui_step.text())
+            repeats = self.rangeRepeats
+            
+            return RangeInfo(start=start, end=end, step=step, handler=mode, repeats=repeats)
+            # rngInfo = 
+
+        elif mode is HandlersEnum.center_start or mode is HandlersEnum.center_start_back_forth:
+            if self.spanMode:
+                span = float(self.ui_span_val.text())
+                step = float(self.ui_step_3.text())
+                center = float(self.ui_center_val_2.text())
+                repeats = self.rangeRepeats
+                return CenteredRangeInfo(span=span , center=center, step=step, handler=mode, repeats=repeats)
+
+            else:
+                start = float(self.ui_start_val_norm.text())
+                end = float(self.ui_stop_val_norm.text())
+                step = float(self.ui_step_norm.text())
+                center = float(self.ui_center_val.text())
+                repeats = self.rangeRepeats
+                return CenteredRangeInfo(start=start, end=end , center=center, step=step, handler=mode, repeats=repeats)
+
+        elif mode is HandlersEnum.custom:
+            values = list()
+
+
+        else:
+            return None
 
 
 def test_smth():
@@ -775,8 +951,26 @@ def test_range():
     print(rh.totalIterationsMade)
 
 
+def test_ui():
+    app = QtGui.QApplication([])
+    wnd = RangeEditorView()
+    res = wnd.exec_()
+    # wnd.close()
+    if res:
+        print("after closing")
+        print(res)
+        ri = wnd.generateRangeInfo()
+        rh = RangeHandlerFactory.createHandler(ri)
+        lst = list(rh)
+        print(lst)
+        print(rh.totalIterationsMade)
+    else:
+        print("cancelled")
+    # return app.exec_()
+
 if __name__ == "__main__":
-    sys.exit(test_range())
+    # sys.exit(test_range())
+    sys.exit(test_ui())
     # test_smth()
 
     
