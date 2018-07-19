@@ -297,6 +297,18 @@ class NormalRangeHandler(RangeHandler):
 
         super().__init__(rangeInfo)
 
+    def __len__(self):
+        try:
+            start = self.rangeInfo.start
+            end  = self.rangeInfo.end
+            step = self.rangeInfo.step
+            repeats = self.rangeInfo.repeats
+            length = repeats * math.floor(math.fabs(end-start)/step)
+            return length
+
+        except Exception:
+            return 0
+
     def checkCondition(self):       
         if self.currentRepeat < self.rangeInfo.repeats:
             if self.rangeInfo.step == 0:
@@ -360,6 +372,18 @@ class BackAndForthHandler(RangeHandler):
 
         super().__init__(rangeInfo)
         self._directionChanged = False
+    
+    def __len__(self):
+        try:
+            start = self.rangeInfo.start
+            end  = self.rangeInfo.end
+            step = self.rangeInfo.step
+            repeats = self.rangeInfo.repeats
+            length = repeats*(2*math.floor(math.fabs(end-start)/step)-1)
+            return length
+            
+        except Exception:
+            return 0
 
     @property
     def directionChanged(self):
@@ -446,6 +470,20 @@ class CenterStartEndRangeHandler(RangeHandler):
         self._current_section = self.LEFT_SECTION
         
     
+    def __len__(self):
+        try:
+            center = self.rangeInfo.center
+            start = self.rangeInfo.start
+            end  = self.rangeInfo.end
+            step = self.rangeInfo.step
+            repeats = self.rangeInfo.repeats
+            length = repeats*(math.floor(math.fabs(end-center)/step) + math.floor(math.fabs(start-center)/step))
+            return length
+            
+        except Exception:
+            return 0
+
+
     @property
     def currentSection(self):
         return self._current_section
@@ -534,7 +572,21 @@ class CenterStartEndBackForthRangeHandler(RangeHandler):
         super().__init__(rangeInfo)
         self._current_section = self.LEFT_SECTION
         self._directionChanged = False
- 
+
+
+    def __len__(self):
+        try:
+            center = self.rangeInfo.center
+            start = self.rangeInfo.start
+            end  = self.rangeInfo.end
+            step = self.rangeInfo.step
+            repeats = self.rangeInfo.repeats
+            length = repeats*(2*math.floor(math.fabs(end-center)/step) + 2*math.floor(math.fabs(start-center)/step)-3 )
+            return length
+            
+        except Exception:
+            return 0
+
     @property
     def directionChanged(self):
         return self._directionChanged
