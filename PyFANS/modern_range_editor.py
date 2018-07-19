@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import math
 import numpy as np
 
@@ -13,13 +13,13 @@ class HandlersEnum(Enum):
     center_start_back_forth = 3
     custom = 4
 
-class RangeInfo(QtCore.QObject):
+class RangeInfo: #(QtCore.QObject):
     def __init__(self, **kwargs):
         """
         Initializes range info:
 
         """
-        super().__init__()
+        #super().__init__()
         self._start = kwargs.get("start", 0)
         self._end = kwargs.get("end", 0)
         self._step = kwargs.get("step", 0)
@@ -137,8 +137,9 @@ class CenteredRangeInfo(RangeInfo):
         """.format(self.start, self.end, self.step)
         return strRepresentation
 
-class CustomRangeInfo(QtCore.QObject):
+class CustomRangeInfo:#(QtCore.QObject):
     def __init__(self, *args, **kwargs):
+        #super().__init__()
         if isinstance(args[0],(tuple, list)):
             self._list_of_values = list_of_values
         elif isinstance(args,(tuple, list)):
