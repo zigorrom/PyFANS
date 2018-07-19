@@ -1153,32 +1153,60 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="action_open_settings"/>
-    <addaction name="action_save_settings"/>
     <addaction name="actionOpen_folder"/>
     <addaction name="separator"/>
     <addaction name="actionWorking_folder"/>
-   </widget>
-   <widget class="QMenu" name="menuAbout">
-    <property name="title">
-     <string>About</string>
-    </property>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionAbout"/>
     <addaction name="action_what_to_do"/>
    </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionOpenTimetraceWindow"/>
+    <addaction name="actionOpenRealtimeNoiseWindow"/>
+    <addaction name="actionOpenConsoleWindow"/>
+    <addaction name="actionTimeInfoWindow"/>
+    <addaction name="actionOpenRemote"/>
+    <addaction name="actionLockScreen"/>
+    <addaction name="actionThemeSwitch"/>
+   </widget>
+   <widget class="QMenu" name="menuNotification">
+    <property name="title">
+     <string>Notification</string>
+    </property>
+    <addaction name="actionLoginEmail"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <widget class="QMenu" name="menuExperiment_Settings">
+     <property name="title">
+      <string>Experiment Settings</string>
+     </property>
+     <addaction name="action_open_settings"/>
+     <addaction name="action_save_settings"/>
+    </widget>
+    <addaction name="menuExperiment_Settings"/>
+    <addaction name="actionHardwareSettings"/>
+   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuAbout"/>
+   <addaction name="menuNotification"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -1208,6 +1236,7 @@
    <addaction name="actionTimeInfoWindow"/>
    <addaction name="actionOpenRemote"/>
    <addaction name="actionHardwareSettings"/>
+   <addaction name="actionLockScreen"/>
    <addaction name="actionAbout"/>
   </widget>
   <action name="actionOpen_folder">
@@ -1317,6 +1346,27 @@
   <action name="action_what_to_do">
    <property name="text">
     <string>Что же делать?</string>
+   </property>
+  </action>
+  <action name="actionLockScreen">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/lock_64x64.png</normaloff>:/icons/Icons/lock_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Lock Screen</string>
+   </property>
+   <property name="toolTip">
+    <string>Lock window</string>
+   </property>
+  </action>
+  <action name="actionThemeSwitch">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/theme_switch_64x64.png</normaloff>:/icons/Icons/theme_switch_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Theme Switch</string>
    </property>
   </action>
  </widget>

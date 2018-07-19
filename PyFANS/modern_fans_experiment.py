@@ -10,6 +10,7 @@ import modern_fans_controller as mfans
 import modern_fans_smu as msmu
 import temperature_controller as tc
 
+import modern_range_editor as mredit
 
 from multiprocessing import Process, Event
 from scipy.signal import periodogram
@@ -138,10 +139,18 @@ class Experiment:
     #def assert_need_exit(self):
     #    if self.need_exit:
     #        raise StopExperiment("Experiment stop was raised")
+    def get_meas_range_handler(self, rangeInfo):
+        if not isinstance(rangeInfo, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
+            return None
+        return mredit.RangeHandlerFactory.createHandler(rangeInfo)
 
     def get_meas_ranges(self):
-        fg_range = self.experiment_settings.vfg_range
-        ds_range = self.experiment_settings.vds_range
+        # fg_range = self.experiment_settings.vfg_range
+        # ds_range = self.experiment_settings.vds_range
+
+        fg_range = self.get_meas_range_handler(self.experiment_settings.vfg_range) #self.experiment_settings.vfg_range
+        ds_range = self.get_meas_range_handler(self.experiment_settings.vds_range)#self.experiment_settings.vds_range
+
         #fg_range = self.__config.get_node_from_path("front_gate_range")
         #if self.__exp_settings.use_set_vfg_range:
         #    assert isinstance(fg_range, ns.ValueRange)
@@ -656,7 +665,7 @@ class Experiment:
             table_generator.append_parameter("gate_voltage")
 
         elif not gated_structure:# non gated structure measurement
-            ds_range = self.experiment_settings.vds_range
+            ds_range = self.get_meas_range_handler(self.experiment_settings.vds_range) #self.experiment_settings.vds_range
             if not use_vds_range:
                 ds_range = self.experiment_settings.drain_source_voltage
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)

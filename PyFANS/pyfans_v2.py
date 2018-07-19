@@ -15,8 +15,11 @@ from multiprocessing import Event
 
 from communication_layer import get_available_gpib_resources, get_available_com_resources
 import ui_helper as uih
-import range_handlers as rh
-import range_editor as redit
+
+# import range_handlers as rh
+# import range_editor as redit
+
+import modern_range_editor as mredit
 
 from fans_experiment_settings import ExperimentSettings
 from fans_hardware_settings import HardwareSettingsView, HardwareSettings
@@ -29,6 +32,8 @@ from StandAloneVoltageControl import VoltageControlView
 import modern_fans_controller as mfans
 #import modern_agilent_u2542a as mdaq
 import modern_fans_smu as msmu
+
+import qdarkstyle
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -134,6 +139,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
 
     def subscribe_to_what_to_do_action(self,slot):
         self.connect(self.action_what_to_do.triggered, slot)
+
+    def subscribe_to_lock_screen_action(self, slot):
+        self.connect(self.actionLockScreen.triggered, slot)
+
+    def subscribe_to_switch_theme_action(self,slot):
+        self.connect(self.actionThemeSwitch.triggered, slot)
 
     @property
     def controller(self):
@@ -415,16 +426,20 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def on_VdsRange_clicked(self):
         print("settings vds range")
         rng = self.experiment_settings.vds_range
-        if rng:
-            rng = rng.copy_object() #
-        else:
-            rng =  rh.RangeObject.empty_object()
+        # if rng:
+        #     rng = rng.copy_object() #
+        # else:
+        #     rng =  rh.RangeObject.empty_object()
 
-        dialog = redit.RangeSelectorView()
-        dialog.set_range(rng)
+        if not isinstance(rng, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
+            rng = mredit.RangeInfo(start=0, end=1, step=1, handler=mredit.HandlersEnum.normal, repeats=1)
+        
+        # dialog = redit.RangeSelectorView()
+        dialog = mredit.RangeEditorView()
+        dialog.setRange(rng)
         res = dialog.exec_()
         if res:
-            self.experiment_settings.vds_range = dialog.get_range()
+            self.experiment_settings.vds_range = dialog.generateRangeInfo()
 
 
     @QtCore.pyqtSlot(str)
@@ -442,16 +457,20 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def on_VfgRange_clicked(self):
         print("settings vfg range")
         rng = self.experiment_settings.vfg_range
-        if rng:
-            rng = rng.copy_object() #
-        else:
-            rng = rh.RangeObject.empty_object()
-
-        dialog = redit.RangeSelectorView()
-        dialog.set_range(rng)
+        # if rng:
+        #     rng = rng.copy_object() #
+        # else:
+        #     rng = rh.RangeObject.empty_object()
+        if not isinstance(rng, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
+            rng = mredit.RangeInfo(start=0, end=1, step=1, handler=mredit.HandlersEnum.normal, repeats=1)
+        
+        # dialog = redit.RangeSelectorView()
+        dialog = mredit.RangeEditorView()
+        # dialog.set_range(rng)
+        dialog.setRange(rng)
         res = dialog.exec_()
         if res:
-            self.experiment_settings.vfg_range = dialog.get_range()
+            self.experiment_settings.vfg_range = dialog.generateRangeInfo()
 
     @QtCore.pyqtSlot(int)
     def on_ui_set_zero_after_measurement_stateChanged(self, value):
@@ -842,12 +861,58 @@ class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
         self._experiment_elapsed_time = 0
         self._experiment_time_left = 0
 
+class SoundPlayer(QtCore.QRunnable):
+    def __init__(self, filename):
+        self._filename = filename
+        super().__init__()
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        from playsound import playsound
+        if os.path.isfile(self._filename):
+            playsound(self._filename)
+
+LockViewBase, LockViewForm = uic.loadUiType("UI/UI_LockScreen.ui")
+class UI_LockWindow(LockViewBase, LockViewForm):
+    def __init__(self, parent = None):
+        super(LockViewBase,self).__init__(parent)
+        self.setupUi()
+
+    def setupUi(self):
+        super().setupUi(self)
+        self.ui_unlock_button.clicked.connect(self.accept)
+
+ThemeSwitchViewBase, ThemeSwitchViewForm = uic.loadUiType("UI/UI_ThemeSwitch.ui")
+class UI_ThemeSwitchWindow(ThemeSwitchViewBase, ThemeSwitchViewForm):
+    def __init__(self, parent = None):
+        super(ThemeSwitchViewBase,self).__init__(parent)
+        self.setupUi()
+
+    def setupUi(self):
+        super().setupUi(self)
+        self.ui_light_button.toggled.connect(self.switch_to_light)
+        self.ui_dark_button.toggled.connect(self.switch_to_dark)
+
+    @QtCore.pyqtSlot(bool)
+    def switch_to_light(self, checked):
+        if checked:
+            app = QtGui.QApplication.instance()
+            app.setStyleSheet("")
+
+    @QtCore.pyqtSlot(bool)
+    def switch_to_dark(self, checked):
+        if checked:
+            app = QtGui.QApplication.instance()
+            app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
     def __init__(self, view):
         super().__init__()
         assert isinstance(view, FANS_UI_MainView)
+        
+        self.threadPool = QtCore.QThreadPool()
+
         self.main_view = view
         self.main_view.set_controller(self)
         self.show_main_view()
@@ -856,6 +921,8 @@ class FANS_UI_Controller(QtCore.QObject):
         self.waterfall_noise_window = plt.WaterfallNoiseWindow()
         self._console_window = UI_Console()
         self._time_info_window = UI_TimeInfo()
+        self._lock_screen_window = UI_LockWindow()
+        
 
         self._script_executed_with_console = True #self.check_if_script_executed_with_console()
         #print("Script is executed with console: {0}".format(self.script_executed_with_console))
@@ -878,6 +945,10 @@ class FANS_UI_Controller(QtCore.QObject):
         self.ui_refresh_timer.timeout.connect(self.update_ui)
         self.email_sender = None
         self.play_on_startup()
+        
+        # app = QtGui.QApplication.instance()
+        # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
+
         #self.login_to_email_sender()
 
         #self.wa = WhatsAppSender()
@@ -895,10 +966,13 @@ class FANS_UI_Controller(QtCore.QObject):
         return self._console_window
 
     def play_sound(self, filename):
-        from playsound import playsound
-        #filename = #"Media/startup.mp3"
-        if os.path.isfile(filename):
-            playsound(filename)
+        r = SoundPlayer(filename)
+        self.threadPool.start(r)
+
+        # from playsound import playsound
+        # #filename = #"Media/startup.mp3"
+        # if os.path.isfile(filename):
+        #     playsound(filename)
 
     def play_on_startup(self):
         self.play_sound("Media/startup.mp3")
@@ -917,6 +991,8 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_time_info_action(self.show_time_info_window)
         self.main_view.subscribe_to_about_action(self.on_show_about_window)
         self.main_view.subscribe_to_what_to_do_action(self.on_what_to_do_action)
+        self.main_view.subscribe_to_lock_screen_action(self.on_lock_screen_action)
+        self.main_view.subscribe_to_switch_theme_action(self.on_theme_switch_action)
         #pass
     #def login_test(self):
     #    print("test")
@@ -1200,6 +1276,15 @@ class FANS_UI_Controller(QtCore.QObject):
     def on_what_to_do_action(self):
         self.play_what_to_do()
 
+    def on_lock_screen_action(self):
+        print("screen is locked")
+        self._lock_screen_window.exec_()
+
+    def on_theme_switch_action(self):
+        print("on theme switch")
+        dialog = UI_ThemeSwitchWindow()
+        dialog.exec_()
+
     def on_log_message_received(self, message):
         if message:
             print("received log message")
@@ -1280,6 +1365,13 @@ def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
+    
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
+    # with open("stylesheet.qss") as f:
+    #     styleSheet = f.read()
+    #     app.setStyleSheet(styleSheet)
+
+    # app.setStyleSheet()
     #icon_file = "pyfans.ico"
     icon_file = "UI/Icons/pyfans.png"
     app_icon = QtGui.QIcon()
@@ -1313,6 +1405,7 @@ def test_ui():
     #about_window.close()
 
     #controller.show_main_view()
+    # app.setStyleSheet("")
     return app.exec_()
     
 def test_cmd():

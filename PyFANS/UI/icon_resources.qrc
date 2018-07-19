@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>Icons/theme_switch_64x64.png</file>
+    <file>Icons/lock_64x64.png</file>
     <file>Icons/pyfans_icon.png</file>
     <file>Icons/time_info_64x64.png</file>
     <file>Icons/console_64x64.png</file>
