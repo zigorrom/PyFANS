@@ -1,5 +1,6 @@
 import ui_helper as uih
-import range_handlers as rh
+# import range_handlers as rh
+import modern_range_editor as mredit 
 
 class ExperimentSettings():
     def __init__(self):
@@ -42,7 +43,8 @@ class ExperimentSettings():
 
     @vds_range.setter
     def vds_range(self,value):
-        assert isinstance(value, rh.RangeObject)
+        assert isinstance(value, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo))
+        # assert isinstance(value, rh.RangeObject)
         #assert isinstance(value, rh.float_range)
         self.__vds_range = value
 
@@ -52,7 +54,8 @@ class ExperimentSettings():
 
     @vfg_range.setter
     def vfg_range(self,value):
-        assert isinstance(value, rh.RangeObject)
+        assert isinstance(value, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo))
+        # assert isinstance(value, rh.RangeObject)
         #assert isinstance(value, rh.float_range)
         self.__vfg_range = value
     
