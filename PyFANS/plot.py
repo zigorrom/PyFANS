@@ -74,10 +74,23 @@ class SpectrumPlotWidget:
         right_axis.setStyle(showValues = False)
         top_axis = self.plot.getAxis("top")
         top_axis.setStyle(showValues = False)
+
+        left_axis = self.plot.getAxis("left")
+        bottom_axis = self.plot.getAxis("bottom")
+        font = QtGui.QFont()
+        font.setPixelSize(20)
+        left_axis.tickFont = font
+        left_axis.setStyle(tickTextOffset = 10)
+        left_axis.setWidth(120)
+        bottom_axis.tickFont = font
+        bottom_axis.setStyle(tickTextOffset = 10)
+
         self.plot.showAxis("right", show=True)
         self.plot.showAxis("top", show=True)
-        self.plot.setLabel("left", "Power", units="V^2Hz-1")
-        self.plot.setLabel("bottom", "Frequency", units="Hz")
+        # self.plot.setLabel("left", "Power", units="V^2Hz-1")
+        self.plot.setLabel("left", "<font size=\"15\">Power Spectral Density, S<sub>V</sub> (V<sup>2</sup>Hz<sup>-1</sup>)</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
+        # self.plot.setLabel("bottom", "Frequency", units="Hz")
+        self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
         self.plot.setLimits(xMin=0.1,xMax = 7, yMin = -30, yMax = 2)
         self.plot.setXRange(0.1,5)
         self.plot.setYRange(-20,-1)
