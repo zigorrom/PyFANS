@@ -9,6 +9,47 @@ pg.setConfigOptions(antialias=True)
 pg.setConfigOption('background', None) #'w')
 pg.setConfigOption('foreground','k')
 
+class MovableHandle(QtGui.QGraphicsRectItem):
+    def __init__(self, *args, pixmap=None):
+        QtGui.QGraphicsRectItem.__init__(self, *args)
+        self.setAcceptHoverEvents(True)
+        self._pixmap = QtGui.QPixmap()
+        self._pixmap.load("UI/flicker.png")
+        # self._pixmap = None#pixmap.scaledToWidth(radius)
+        radius = 5
+        self._pixmap_offset = 2
+        self._pixmap_width = 2*(radius - self._pixmap_offset)
+        if pixmap:
+            self._pixmap = pixmap.scaledToWidth(self._pixmap_width) #2*radius)
+
+    def hoverEnterEvent(self, ev):
+        self.savedPen = self.pen()
+        self.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255)))
+        ev.ignore()
+
+    def hoverLeaveEvent(self, ev):
+        self.setPen(self.savedPen)
+        ev.ignore()
+
+    def mousePressEvent(self, ev):
+        if ev.button() == QtCore.Qt.LeftButton:
+            ev.accept()
+            self.pressDelta = self.mapToParent(ev.pos()) - self.pos()
+        else:
+            ev.ignore()     
+
+    def mouseMoveEvent(self, ev):
+        self.setPos(self.mapToParent(ev.pos()) - self.pressDelta)
+       
+    # def paint(self, p, opt, widget):
+    #     super().paint(p,opt,widget)
+    #     if not isinstance(self._pixmap, QtGui.QPixmap):
+    #         return
+    #     p.setRenderHints(p.Antialiasing, True)
+    #     half_pixmap_width = self._pixmap_width / 2  # self.radius/2 
+    #     p.drawPixmap(-half_pixmap_width,-half_pixmap_width, self._pixmap )#position.toPoint(), self._pixmap) #position.x(), position.y(), self._pixmap)
+        
+
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
@@ -63,6 +104,9 @@ class SpectrumPlotWidget:
     def create_roi(self):
         self.roi = pg.LineROI([0.2, -17], [4, -17],width = 0, pen=pg.mkPen('b'))
         self.plot.addItem(self.roi)
+        # self.movable_handle = MovableHandle(QtCore.QRectF(0, 0, 0.01, 0.01))
+        # # self.movable_handle.setPen(QtGui.QPen(QtGui.QColor(100, 200, 100)))
+        # self.plot.addItem(self.movable_handle)
 
     def create_plot(self):
         """Create main spectrum plot"""
@@ -91,7 +135,7 @@ class SpectrumPlotWidget:
         self.plot.setLabel("left", "<font size=\"15\">Power Spectral Density, S<sub>V</sub> (V<sup>2</sup>Hz<sup>-1</sup>)</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
         # self.plot.setLabel("bottom", "Frequency", units="Hz")
         self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
-        self.plot.setLimits(xMin=0.1,xMax = 7, yMin = -30, yMax = 2)
+        self.plot.setLimits(xMin=0.01,xMax = 7, yMin = -50, yMax = 10)
         self.plot.setXRange(0.1,5)
         self.plot.setYRange(-20,-1)
 
