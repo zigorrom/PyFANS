@@ -271,6 +271,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.experimentName = settings.experiment_name
         self.measurementName = settings.measurement_name
         self.measurementCount = settings.measurement_count
+        self.set_selected_folder_context_menu_item_text(settings.working_directory)
         uih.setAllChildObjectSignaling(self,False)
 
     UI_STATE_IDLE, UI_STATE_STARTED, UI_STATE_STOPPING = ui_states = range(3)
