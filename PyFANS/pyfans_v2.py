@@ -102,9 +102,21 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         checkBox = QtGui.QCheckBox("Helper Curves")
         checkBox.toggled.connect(self.on_showHelperCurvesAction_toggled)
         checkBox.setChecked(False)
+        self.on_showHelperCurvesAction_toggled(False)
         showHelperCurvesAction.setDefaultWidget(checkBox)
         self.menuSettings.addAction(showHelperCurvesAction)
+
+        showHistoryCurvesAction = QtGui.QWidgetAction(self.menuSettings)
+        checkBox = QtGui.QCheckBox("History Curves")
+        checkBox.toggled.connect(self.on_showHistoryCurvesAction_toggled)
+        checkBox.setChecked(False)
+        self.on_showHistoryCurvesAction_toggled(False)
+        showHistoryCurvesAction.setDefaultWidget(checkBox)
+        self.menuSettings.addAction(showHistoryCurvesAction)
         # self.menuSettings
+    
+    def on_showHistoryCurvesAction_toggled(self, state):
+        self._spectrumPlotWidget.setHistoryCurvesVisible(state)
 
     def on_showHelperCurvesAction_toggled(self, state):
         self._spectrumPlotWidget.setHelperCurvesVisible(state)

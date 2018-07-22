@@ -365,20 +365,33 @@ class SpectrumPlotWidget:
         self.thermal_curve_color = pg.mkColor("m")
         self.curves = {}
 
+        self._historySize = 10
+        self.history_curves = list()
+
         self.create_plot()
         self.create_curves()
 
         self.roi = None
         self.create_roi()
         
-    def measurement_history_size(self):
-        pass
+    @property
+    def historySize(self):
+        return self._historySize
+
+    @historySize.setter
+    def historySize(self, value):
+        self._historySize = value
+
 
     def setHelperCurvesVisible(self, visibility):
         self.curves["flicker"].setVisible(visibility)
         self.curves["gr"].setVisible(visibility)
         self.flickerHandle.setVisible(visibility)
         self.grHandle.setVisible(visibility)
+
+    def setHistoryCurvesVisible(self, visibility):
+        for curve in self.history_curves:
+            curve.setVisible(visibility)
 
     def create_curves(self):
         colors = [pg.mkColor("b"), pg.mkColor("g")]
@@ -393,10 +406,19 @@ class SpectrumPlotWidget:
             self.curves[rang] = curve
             counter += 1
 
+        for idx in range(self.historySize):
+            color = pg.intColor(idx) #, width = 5)
+            c = self.plot.plot(pen=color)
+            c.setZValue(1000-idx-1)
+            c.setVisible(True)
+            self.history_curves.append(c)
+
+
         curve = self.plot.plot(pen = self.resulting_curve_color)
         curve.setZValue(1000)
         curve.setVisible(True)
         self.curves[-1] = curve
+
         thermal_noise_curve = self.plot.plot(pen = self.thermal_curve_color)
         thermal_noise_curve.setZValue(800)
         thermal_noise_curve.setVisible(True)
@@ -492,24 +514,13 @@ class SpectrumPlotWidget:
     def on_handlePositionChanged(self, handle, position):
         print(10*"=")
         print(position)
-        # if handle.name == "flicker":
-        #     freq = np.logspace(0,5, 51)
-        #     # Amplitude = np.power(10,position.y())
-        #     # CurrentFreq = np.power(10,position.x())
-        #     # data = Amplitude * (CurrentFreq/freq)
-        #     data = handle.calculateCurve(freq)
         
-        # elif handle.name == "gr":
-        #     freq = np.logspace(0,5, 51)
-        #     # Amplitude = np.power(10,position.y())
-        #     # CurrentFreq = np.power(10,position.x())
-        #     # df = freq/CurrentFreq
-        #     # sqr_f = df*df
-        #     # # return Amplitude/(1+sqr_f)
-        #     # data = Amplitude/(1+sqr_f) 
-        #     data = handlecalculateCurve
-        # data = np.full_like(freq, np.power(10,position.y()))
-        freq = np.logspace(0,5, 51)
+        rng = self.plot.viewRange()
+        xmin, xmax = rng[0]
+        npoints = (xmax-xmin)/0.1 +1
+        
+        # freq = np.logspace(0,5, 51)
+        freq = np.logspace(xmin,xmax, npoints)
         data = handle.calculateCurve(freq)
 
         print(freq)
@@ -518,11 +529,17 @@ class SpectrumPlotWidget:
             self.curves[handle.name].setData(freq,data)
         print(10*"=")
 
-    
+    def appendToHistory(self, freq, data):
+        for idx in range(1,historySize+1):
+            idx = -idx
+            self.history_curves[idx].setData(self.history_curves[idx-1].getData())
+        self.history_curves[0].setData(freq,data)
+
 
     def updata_resulting_spectrum(self, freq,data, force = False):
         curve = self.curves[-1]
         curve.setData(freq,data)
+        self.appendToHistory(freq, data)
 
     def update_thermal_noise(self, freq, data, force = False):
         curve = self.curves[-2]
