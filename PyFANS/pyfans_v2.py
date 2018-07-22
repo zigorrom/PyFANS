@@ -904,6 +904,11 @@ class UI_ThemeSwitchWindow(ThemeSwitchViewBase, ThemeSwitchViewForm):
         if checked:
             app = QtGui.QApplication.instance()
             app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
+            # with open("stylesheet.qss") as f:
+            #     styleSheet = f.read()
+            #     app.setStyleSheet(styleSheet)
+
+
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -1365,6 +1370,9 @@ def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS")
     app.setStyle("cleanlooks")
+    # app.setStyle("gtk")
+    # app.setStyle("fusion")
+    # app.setStyle("macintosh")
     
     # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
     # with open("stylesheet.qss") as f:
@@ -1373,7 +1381,9 @@ def test_ui():
 
     # app.setStyleSheet()
     #icon_file = "pyfans.ico"
-    icon_file = "UI/Icons/pyfans.png"
+    # icon_file = "UI/Icons/pyfans.png"
+    icon_file = "UI/Icons/pyfans_icon2.png"
+    
     app_icon = QtGui.QIcon()
     app_icon.addFile(icon_file, QtCore.QSize(16,16))
     app_icon.addFile(icon_file, QtCore.QSize(24,24))

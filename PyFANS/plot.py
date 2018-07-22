@@ -1,55 +1,252 @@
 ﻿import collections, math
+from math import cos, sin
 import numpy as np
 from PyQt4 import QtCore
 import pyqtgraph as pg
+from pyqtgraph import functions as fn
 from PyQt4 import uic, QtGui, QtCore
-
+from pyqtgraph import UIGraphicsItem, GraphicsObject
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
 pg.setConfigOption('background', None) #'w')
 pg.setConfigOption('foreground','k')
 
-class MovableHandle(QtGui.QGraphicsRectItem):
-    def __init__(self, *args, pixmap=None):
-        QtGui.QGraphicsRectItem.__init__(self, *args)
-        self.setAcceptHoverEvents(True)
-        self._pixmap = QtGui.QPixmap()
-        self._pixmap.load("UI/flicker.png")
-        # self._pixmap = None#pixmap.scaledToWidth(radius)
-        radius = 5
-        self._pixmap_offset = 2
-        self._pixmap_width = 2*(radius - self._pixmap_offset)
-        if pixmap:
-            self._pixmap = pixmap.scaledToWidth(self._pixmap_width) #2*radius)
+class Handle(UIGraphicsItem):
+    """
+    Handle represents a single user-interactable point attached to an ROI. They
+    are usually created by a call to one of the ROI.add___Handle() methods.
+    
+    Handles are represented as a square, diamond, or circle, and are drawn with 
+    fixed pixel size regardless of the scaling of the view they are displayed in.
+    
+    Handles may be dragged to change the position, size, orientation, or other
+    properties of the ROI they are attached to.
+    
+    
+    """
+    types = {   ## defines number of sides, start angle for each handle type
+        't': (4, np.pi/4),
+        'f': (4, np.pi/4), 
+        's': (4, 0),
+        'r': (12, 0),
+        'sr': (12, 0),
+        'rf': (12, 0),
+    }
 
-    def hoverEnterEvent(self, ev):
-        self.savedPen = self.pen()
-        self.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255)))
-        ev.ignore()
+    sigClicked = QtCore.Signal(object, object)   # self, event
+    sigRemoveRequested = QtCore.Signal(object)   # self
+    sigPositionChanged = QtCore.Signal(object, object)
+    
+    def __init__(self, name, radius, typ=None, pen=(200, 200, 220), parent=None, deletable=False, handle_offset = None):
+        #print "   create item with parent", parent
+        #self.bounds = QtCore.QRectF(-1e-10, -1e-10, 2e-10, 2e-10)
+        #self.setFlags(self.ItemIgnoresTransformations | self.ItemSendsScenePositionChanges)
+        self._name = name
+        self.radius = radius
+        self.typ = typ
+        self.pen = pg.mkPen(pen)
+        self.currentPen = self.pen
+        self.pen.setWidth(0)
+        self.pen.setCosmetic(True)
+        self.isMoving = False
+        self.sides, self.startAng = self.types[typ]
+        self.buildPath()
+        self._shape = None
+        self.menu = self.buildMenu()
+        self.handle_offset = QtCore.QPointF(0, 20)
+        if handle_offset:
+            self.handle_offset = handle_offset
 
-    def hoverLeaveEvent(self, ev):
-        self.setPen(self.savedPen)
-        ev.ignore()
+        UIGraphicsItem.__init__(self, parent=parent)
+        self.setAcceptedMouseButtons(QtCore.Qt.NoButton)
+        self.deletable = deletable
+        if deletable:
+            self.setAcceptedMouseButtons(QtCore.Qt.RightButton)        
+        
+        self.setZValue(11)
 
-    def mousePressEvent(self, ev):
-        if ev.button() == QtCore.Qt.LeftButton:
-            ev.accept()
-            self.pressDelta = self.mapToParent(ev.pos()) - self.pos()
+        # pixmap = QtGui.QPixmap()
+        # pixmap.load("UI/flicker.png")
+        # self.pixmap = pixmap.scaled(64, 64, QtCore.Qt.KeepAspectRatio)
+
+    # def setPos(self, *args):
+    #     super().setPos(*args)
+    #     pos = QtCore.QPointF(*args)
+    #     # parent = self.parentItem()
+    #     # pos = parent.mapToView(pos)
+    #     self.sigPositionChanged.emit(pos)
+    @property
+    def name(self):
+        return self._name
+            
+    def setDeletable(self, b):
+        self.deletable = b
+        if b:
+            self.setAcceptedMouseButtons(self.acceptedMouseButtons() | QtCore.Qt.RightButton)
         else:
-            ev.ignore()     
+            self.setAcceptedMouseButtons(self.acceptedMouseButtons() & ~QtCore.Qt.RightButton)
+            
+    def removeClicked(self):
+        self.sigRemoveRequested.emit(self)
 
-    def mouseMoveEvent(self, ev):
-        self.setPos(self.mapToParent(ev.pos()) - self.pressDelta)
-       
-    # def paint(self, p, opt, widget):
-    #     super().paint(p,opt,widget)
-    #     if not isinstance(self._pixmap, QtGui.QPixmap):
-    #         return
-    #     p.setRenderHints(p.Antialiasing, True)
-    #     half_pixmap_width = self._pixmap_width / 2  # self.radius/2 
-    #     p.drawPixmap(-half_pixmap_width,-half_pixmap_width, self._pixmap )#position.toPoint(), self._pixmap) #position.x(), position.y(), self._pixmap)
+    def hoverEvent(self, ev):
+        hover = False
+        if not ev.isExit():
+            if ev.acceptDrags(QtCore.Qt.LeftButton):
+                hover=True
+            for btn in [QtCore.Qt.LeftButton, QtCore.Qt.RightButton, QtCore.Qt.MidButton]:
+                if int(self.acceptedMouseButtons() & btn) > 0 and ev.acceptClicks(btn):
+                    hover=True
+                    
+        if hover:
+            self.currentPen = fn.mkPen(255, 255,0)
+        else:
+            self.currentPen = self.pen
+        self.update()
         
 
+    def mouseClickEvent(self, ev):
+        ## right-click cancels drag
+        if ev.button() == QtCore.Qt.RightButton and self.isMoving:
+            self.isMoving = False  ## prevents any further motion
+            ev.accept()
+        elif int(ev.button() & self.acceptedMouseButtons()) > 0:
+            ev.accept()
+            if ev.button() == QtCore.Qt.RightButton and self.deletable:
+                self.raiseContextMenu(ev)
+            self.sigClicked.emit(self, ev)
+        else:
+            ev.ignore()        
+            
+                           
+    def buildMenu(self):
+        menu = QtGui.QMenu()
+        menu.setTitle("Handle")
+        self.removeAction = menu.addAction("Remove handle", self.removeClicked) 
+        return menu
+        
+    def getMenu(self):
+        return self.menu
+
+    def raiseContextMenu(self, ev):
+        menu = self.scene().addParentContextMenus(self, self.getMenu(), ev)
+        
+        ## Make sure it is still ok to remove this handle
+        # self.removeAction.setEnabled(removeAllowed)
+        pos = ev.screenPos()
+        menu.popup(QtCore.QPoint(pos.x(), pos.y()))    
+
+    def mouseDragEvent(self, ev):
+        if ev.button() != QtCore.Qt.LeftButton:
+            return
+        ev.accept()
+        
+        if ev.isFinish():
+            self.isMoving = False
+        elif ev.isStart():
+            self.isMoving = True
+            self.startPos = self.scenePos()
+            self.cursorOffset = self.scenePos() - ev.buttonDownScenePos()
+            
+        if self.isMoving:  ## note: isMoving may become False in mid-drag due to right-click.
+            pos = ev.scenePos() + self.cursorOffset 
+            pos_to_report = pos - self.handle_offset
+            parent = self.parentItem()
+            
+            pos = parent.mapFromScene(pos)
+            pos_to_report = parent.mapFromScene(pos_to_report)
+            pos_to_report = parent.mapToView(pos_to_report)
+
+            self.setPos(pos)
+            #correct by the offset 
+            # pos = pos - self.handle_offsetpos_pos_to_report
+            # pos = parent.mapToView(pos)
+            
+            self.sigPositionChanged.emit(self, pos_to_report)
+            print(pos)
+
+   
+
+    def buildPath(self):
+        size = self.radius
+        self.path = QtGui.QPainterPath()
+        ang = self.startAng
+        dt = 2*np.pi / self.sides
+        for i in range(0, self.sides+1):
+            x = size * cos(ang)
+            y = size * sin(ang)
+            ang += dt
+            if i == 0:
+                self.path.moveTo(x, y)
+            else:
+                self.path.lineTo(x, y)            
+            
+        # self.path.addText(-40,40,QtGui.QFont("Helvetica", 24), "TEST")
+
+    
+
+    def paint(self, p, opt, widget):
+        p.setRenderHints(p.Antialiasing, True)
+        p.setPen(self.currentPen)
+        p.drawPath(self.shape())
+        pos = self.pos()
+        # print(pos)
+        # p.drawLine(1,-2,2,-4)
+        # p.setFont(QtGui.QFont("Helvetica", 24))
+        # p.setPen(QtGui.QPen(QtCore.Qt.black, 1))
+        # p.drawText(0,0,"flicker")
+    
+        # if not isinstance(self.pixmap, QtGui.QPixmap):
+        #     return
+        # half_pixmap_width = self.radius/2 
+        # p.drawPixmap(-half_pixmap_width,-half_pixmap_width, self.pixmap )#position.toPoint(), self._pixmap) #position.x(), position.y(), self._pixmap)
+        
+            
+    def shape(self):
+        if self._shape is None:
+            s = self.generateShape()
+            if s is None:
+                return self.path
+            self._shape = s
+            self.prepareGeometryChange()  ## beware--this can cause the view to adjust, which would immediately invalidate the shape.
+        return self._shape
+    
+    def boundingRect(self):
+        #print 'roi:', self.roi
+        s1 = self.shape()
+        #print "   s1:", s1
+        #s2 = self.shape()
+        #print "   s2:", s2
+        
+        return self.shape().boundingRect()
+            
+    def generateShape(self):
+        ## determine rotation of transform
+        #m = self.sceneTransform()  ## Qt bug: do not access sceneTransform() until we know this object has a scene.
+        #mi = m.inverted()[0]
+        dt = self.deviceTransform()
+        
+        if dt is None:
+            self._shape = self.path
+            return None
+        
+        v = dt.map(QtCore.QPointF(1, 0)) - dt.map(QtCore.QPointF(0, 0))
+        va = np.arctan2(v.y(), v.x())
+        
+        dti = fn.invertQTransform(dt)
+        devPos = dt.map(QtCore.QPointF(0,0))
+        tr = QtGui.QTransform()
+        tr.translate(devPos.x(), devPos.y())
+        tr.rotate(va * 180. / 3.1415926)
+        
+        return dti.map(tr.map(self.path))
+        
+        
+    def viewTransformChanged(self):
+        GraphicsObject.viewTransformChanged(self)
+        self._shape = None  ## invalidate shape, recompute later if requested.
+        self.update()
+  
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
@@ -96,17 +293,43 @@ class SpectrumPlotWidget:
         thermal_noise_curve.setVisible(True)
         self.curves[-2] = thermal_noise_curve
 
+        flickerCurve = self.plot.plot(pen = pg.mkColor("r"))
+        flickerCurve.setZValue(700)
+        flickerCurve.setVisible(True)
+        self.curves["flicker"] =  flickerCurve
+
+        grCurve = self.plot.plot(pen = pg.mkColor("b"))
+        grCurve.setZValue(700)
+        grCurve.setVisible(True)
+        self.curves["gr"] =  grCurve
+
 
     def clear_curves(self):
         for rang, curve in self.curves.items():
             curve.clear()
 
     def create_roi(self):
-        self.roi = pg.LineROI([0.2, -17], [4, -17],width = 0, pen=pg.mkPen('b'))
-        self.plot.addItem(self.roi)
-        # self.movable_handle = MovableHandle(QtCore.QRectF(0, 0, 0.01, 0.01))
-        # # self.movable_handle.setPen(QtGui.QPen(QtGui.QColor(100, 200, 100)))
+        # self.roi = pg.LineROI([1, -17], [4, -17],width = 0, pen=pg.mkPen('b'))
+        # self.plot.addItem(self.roi)
+        # item = QtGui.QGraphicsRectItem( 10, 100.0, 1, 11 )
+        # pixmap = QtGui.QPixmap()
+        # pixmap.load("UI/flicker.png")
+        
+        # self.movable_handle = MovableHandle()#QtCore.QRectF(0, 0, 0.01, 0.01))
         # self.plot.addItem(self.movable_handle)
+        # self.plot.addItem(item)
+
+        # handle = Handle(radius=10, typ="f", pen=QtGui.QPen(QtGui.QColor(0, 0, 0)), parent=self.plot)
+        handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
+        handle.setPos(1,-2)
+        handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+        self.plot.addItem(handle)
+
+        handle = Handle(name = "gr", radius=10, typ="r", pen=pg.mkPen(width=4.5, color='b'), deletable=True, handle_offset=QtCore.QPointF(-40, 40))#, parent=self.plot)
+        handle.setPos(2,-2)
+        handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+        self.plot.addItem(handle)
+
 
     def create_plot(self):
         """Create main spectrum plot"""
@@ -153,6 +376,32 @@ class SpectrumPlotWidget:
                                          rateLimit=60, slot=self.mouse_moved)
 
    
+    def on_handlePositionChanged(self, handle, position):
+        print(10*"=")
+        print(position)
+        if handle.name == "flicker":
+            freq = np.logspace(0,5, 51)
+            Amplitude = np.power(10,position.y())
+            CurrentFreq = np.power(10,position.x())
+            data = Amplitude * (CurrentFreq/freq)
+        
+        elif handle.name == "gr":
+            freq = np.logspace(0,5, 51)
+            Amplitude = np.power(10,position.y())
+            CurrentFreq = np.power(10,position.x())
+            df = freq/CurrentFreq
+            sqr_f = df*df
+            # return Amplitude/(1+sqr_f)
+            data = Amplitude/(1+sqr_f) 
+        # data = np.full_like(freq, np.power(10,position.y()))
+        print(freq)
+        print(data)
+        if handle.name in self.curves:
+            self.curves[handle.name].setData(freq,data)
+        print(10*"=")
+
+    
+
     def updata_resulting_spectrum(self, freq,data, force = False):
         curve = self.curves[-1]
         curve.setData(freq,data)

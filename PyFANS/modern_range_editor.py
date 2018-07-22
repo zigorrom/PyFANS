@@ -153,9 +153,19 @@ class CustomRangeInfo:#(QtCore.QObject):
         else:
             self._list_of_values = list()
 
+        self._repeats = kwargs.get("repeats", 1)
+
     @property
     def values(self):
         return self._list_of_values
+
+    @property
+    def repeats(self):
+        return self._repeats
+
+    @repeats.setter
+    def repeats(self, value):
+        self._repeats = value
 
     def __getitem__(self, idx):
         return self._list_of_values[idx]
@@ -564,7 +574,6 @@ class CenterStartEndRangeHandler(RangeHandler):
         
         return False  
 
-
 class CenterStartEndBackForthRangeHandler(RangeHandler):
     LEFT_SECTION, RIGHT_SECTION = SECTIONS = ("left", "right")
 
@@ -710,22 +719,92 @@ class CustomRangeHandler(QtCore.QObject):
     def __init__(self, rangeInfo):
         super().__init__()
         self._rangeInfo = rangeInfo
-        self._totalIterationsMade = 0
+        self.reset()
+        # self._totalIterationsMade = 0
+        # self._currentRepeat = 0
+        # self._currentIndex = 0
      
+    @property
+    def currentRepeat(self):
+        return self._currentRepeat
+
+    @currentRepeat.setter
+    def currentRepeat(self, value):
+        self._currentRepeat = value
+ 
+    def incrementRepeat(self):
+        self._currentRepeat += 1 #math.copysign(1, self._currentDirection)
+        return self._currentRepeat
+
+    def decrementRepeat(self):
+        self._currentRepeat -= 1#math.copysign(1, self._currentDirection)
+        return self._currentRepeat
+
+    @property
+    def currentIndex(self):
+        return self._currentIndex
+
+    @currentIndex.setter
+    def currentIndex(self, value):
+        self._currentIndex = value
+
+    def incrementIndex(self):
+        self._currentIndex += 1
+        return self._currentIndex
+
+    def decrementIndex(self):
+        self._currentIndex -= 1
+        return self._currentIndex
+
     @property
     def totalIterationsMade(self):
         return len(self._rangeInfo)
+
+    def incrementTotalIterations(self):
+        self._totalIterationsMade+=1
 
     @property
     def rangeInfo(self):
         return self._rangeInfo
 
     def __len__(self):
-        return self.totalIterationsMade
+        return self.rangeInfo.repeats * len(self.rangeInfo.values)
+
+    def reset(self):
+        self._totalIterationsMade = 0
+        self._currentRepeat = 0
+        self._currentIndex = 0
+
+    def __next__(self):
+            if self.currentRepeat >= self.rangeInfo.repeats:
+                raise StopIteration()
+            
+            length_of_list = len(self.rangeInfo.values)
+            
+            if self.currentIndex < length_of_list:
+                value = self.rangeInfo.values[self.currentIndex]
+                self.incrementIndex()
+                self.incrementTotalIterations()
+                return value
+
+            elif self.incrementRepeat() < self.rangeInfo.repeats:
+                self.currentIndex = 0
+                value = self.rangeInfo.values[self.currentIndex]
+                self.incrementIndex()
+                self.incrementTotalIterations()
+                return value
+
+            else:
+                raise StopIteration()
+
+
 
     def __iter__(self):
-        return iter(self.rangeInfo.values)
-        
+        self.reset()
+        return self #iter(self.rangeInfo.values)
+
+
+
 class RangeHandlerFactory(QtCore.QObject):
     def __init__(self):
         super().__init__()
@@ -803,7 +882,14 @@ class RangeEditorView(RangeEditorBase, RangeEditorForm):
         self.ui_span_val.setValidator(QDoubleValidator())
         
         self.plot = self.ui_range_plot.addPlot()
-        self.range_curve = self.plot.plot(pen=pg.mkColor("r"), symbol='o') #pg.ScatterPlotItem()#size=10, pen=pg.mkPen('r'))
+        self.range_curve = self.plot.plot(pen=pg.mkColor("r"), symbol='o' ) #pg.ScatterPlotItem()#size=10, pen=pg.mkPen('r'))
+        # self.plot.setLabel("left", "<font size=\"5\">Value</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
+        # self.plot.setLabel("bottom", "<font size=\"5\">Index</font>")#, units="Hz")
+        self.plot.getAxis("left").setWidth(20)
+        self.plot.showAxis("right", show=True)
+        self.plot.showAxis("top", show=True)
+        self.plot.getAxis("right").setStyle(showValues = False)
+        self.plot.getAxis("top").setStyle(showValues = False)
         # self.plot.addItem(self.scatterPlot)
         
         
@@ -1011,7 +1097,10 @@ class RangeEditorView(RangeEditorBase, RangeEditorForm):
     def setRange(self, rangeInfo):
         try:
             if isinstance(rangeInfo, CustomRangeInfo):
-                self.rangeMode = rangeInfo.handler
+                # add_values_to_custom_view
+                self.rangeMode = HandlersEnum.custom
+                self.add_values_to_custom_view(rangeInfo.values)
+                self.rangeRepeats = rangeInfo.repeats
 
             elif isinstance(rangeInfo, CenteredRangeInfo):
                 if rangeInfo.span is None:
@@ -1064,7 +1153,7 @@ class RangeEditorView(RangeEditorBase, RangeEditorForm):
 
             elif mode is HandlersEnum.custom:
                 
-                return CustomRangeInfo(self.customListOfValues)
+                return CustomRangeInfo(self.customListOfValues, repeats=self.rangeRepeats)
 
             else:
                 return None
@@ -1101,50 +1190,59 @@ def test_smth():
 
 
 def test_range():
-    ri = RangeInfo(start=-3, end=3, step=1, handler=HandlersEnum.normal, repeats=2)
-    print(ri)
-    print("NORMAL HANDLER")
-    rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    # ri = RangeInfo(start=-3, end=3, step=1, handler=HandlersEnum.normal, repeats=2)
+    # print(ri)
+    # print("NORMAL HANDLER")
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
-    print("Back Forth HANDLER")
-    ri.handler = HandlersEnum.back_forth
-    ri.repeats = 2
-    rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    # print("Back Forth HANDLER")
+    # ri.handler = HandlersEnum.back_forth
+    # ri.repeats = 2
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
     
-    print("Center start Handler")
-    ri = CenteredRangeInfo(start=-3, end=3, center=1, step=1, handler=HandlersEnum.center_start, repeats=2)
-    rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    # print("Center start Handler")
+    # ri = CenteredRangeInfo(start=-3, end=3, center=1, step=1, handler=HandlersEnum.center_start, repeats=2)
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
-    print("Center start back forth Handler SPAN")
-    ri = CenteredRangeInfo(span = 6, center=1, step=1, handler=HandlersEnum.center_start_back_forth, repeats=2)#start=-2, end=2
-    rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    # print("Center start back forth Handler SPAN")
+    # ri = CenteredRangeInfo(span = 6, center=1, step=1, handler=HandlersEnum.center_start_back_forth, repeats=2)#start=-2, end=2
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
-    print("Center start back forth Handler START-STOP")
-    ri = CenteredRangeInfo(start=-3, end=3, center=1, step=1, handler=HandlersEnum.center_start_back_forth, repeats=2)#start=-2, end=2
-    rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    # print("Center start back forth Handler START-STOP")
+    # ri = CenteredRangeInfo(start=-3, end=3, center=1, step=1, handler=HandlersEnum.center_start_back_forth, repeats=2)#start=-2, end=2
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
+
+    # print("Custom range handler")
+    # ri = CustomRangeInfo(1,2,3,4,5, repeats=4)
+    # rh = RangeHandlerFactory.createHandler(ri)
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
     print("Custom range handler")
-    ri = CustomRangeInfo(1,2,3,4,5)
+    ri = CustomRangeInfo(1,2,3,4,5, repeats=4)
     rh = RangeHandlerFactory.createHandler(ri)
-    lst = list(rh)
-    print(lst)
-    print(rh.totalIterationsMade)
+    for idx, i  in enumerate(rh):
+        print("i={0}; val={1}".format(idx, i))
+    # lst = list(rh)
+    # print(lst)
+    # print(rh.totalIterationsMade)
 
 
 def test_ui():
