@@ -41,6 +41,7 @@ class Handle(UIGraphicsItem):
         #print "   create item with parent", parent
         #self.bounds = QtCore.QRectF(-1e-10, -1e-10, 2e-10, 2e-10)
         #self.setFlags(self.ItemIgnoresTransformations | self.ItemSendsScenePositionChanges)
+        UIGraphicsItem.__init__(self, parent=parent)
         self._name = name
         self.radius = radius
         self.typ = typ
@@ -57,7 +58,7 @@ class Handle(UIGraphicsItem):
         if handle_offset:
             self.handle_offset = handle_offset
 
-        UIGraphicsItem.__init__(self, parent=parent)
+        # UIGraphicsItem.__init__(self, parent=parent)
         self.setAcceptedMouseButtons(QtCore.Qt.NoButton)
         self.deletable = deletable
         if deletable:
@@ -75,6 +76,21 @@ class Handle(UIGraphicsItem):
     #     # parent = self.parentItem()
     #     # pos = parent.mapToView(pos)
     #     self.sigPositionChanged.emit(pos)
+    def calculateCurve(self, frequency):
+        raise NotImplementedError()
+
+    @property
+    def currentPosition(self):
+        parent = self.parentItem()
+        p = self.pos() 
+
+        p = parent.mapToScene(p)
+        p = p - self.handle_offset
+        p = parent.mapFromScene(p)
+
+        p = parent.mapToView(p)
+        return p
+
     @property
     def name(self):
         return self._name
@@ -123,6 +139,16 @@ class Handle(UIGraphicsItem):
         menu = QtGui.QMenu()
         menu.setTitle("Handle")
         self.removeAction = menu.addAction("Remove handle", self.removeClicked) 
+
+        # alpha = QtGui.QWidgetAction(menu)
+        # alphaSlider = QtGui.QSlider()
+        # alphaSlider.setOrientation(QtCore.Qt.Horizontal)
+        # alphaSlider.setMaximum(255)
+        # alphaSlider.setValue(255)
+        # # alphaSlider.valueChanged.connect(self.setAlpha)
+        # alpha.setDefaultWidget(alphaSlider)
+        # menu.addAction(alpha)
+
         return menu
         
     def getMenu(self):
@@ -247,6 +273,81 @@ class Handle(UIGraphicsItem):
         self._shape = None  ## invalidate shape, recompute later if requested.
         self.update()
   
+class FlickerHandle(Handle):
+    sigAlphaChanged = QtCore.Signal(float) 
+    def __init__(self, name, **kwargs):
+        kwargs.setdefault("handle_offset", QtCore.QPointF(-20, 20))
+        kwargs.setdefault("typ", "t")
+        kwargs.setdefault("deletable", True)
+        kwargs.setdefault("radius", 10)
+        super().__init__(name, **kwargs)
+        self._alpha = 1
+
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @alpha.setter
+    def alpha(self, value):
+        self._alpha = value
+
+    def buildMenu(self):
+        menu = super().buildMenu()
+        alpha = QtGui.QWidgetAction(menu)
+        dummy = QtGui.QWidget()
+        label = QtGui.QLabel("Alpha")
+
+        spinBox = QtGui.QDoubleSpinBox()
+        spinBox.setRange(0.01, 100)
+        spinBox.setSingleStep(0.1)
+        spinBox.setValue(1.0)
+        spinBox.valueChanged.connect(self.on_alpha_changed)
+
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(spinBox)
+
+        dummy.setLayout(layout)
+        alpha.setDefaultWidget(dummy)
+        menu.addAction(alpha)
+        return menu
+
+    @QtCore.pyqtSlot(float)
+    def on_alpha_changed(self, value):
+        print(value)
+        self.alpha = value
+        self.sigAlphaChanged.emit(value)
+
+   
+
+    def calculateCurve(self, frequency):
+        p = self.currentPosition
+        Amplitude = np.power(10,p.y())
+        CurrentFreq = np.power(10,p.x())
+        
+        data = Amplitude * np.power(CurrentFreq/frequency, self.alpha)
+        return data
+        # pos_to_report = parent.mapToView(pos_to_report)
+    
+class GRHandle(Handle):
+    sigAlphaChanged = QtCore.Signal(float) 
+    def __init__(self, name, **kwargs):
+        kwargs.setdefault("handle_offset", QtCore.QPointF(-40, 40))
+        kwargs.setdefault("typ", "r")
+        kwargs.setdefault("deletable", True)
+        kwargs.setdefault("radius", 10)
+        super().__init__(name, **kwargs)
+        self._alpha = 1
+
+    def calculateCurve(self, frequency):
+        p = self.currentPosition
+        Amplitude = np.power(10,p.y())
+        CurrentFreq = np.power(10,p.x())
+        df = frequency/CurrentFreq
+        sqr_f = df*df
+        # return Amplitude/(1+sqr_f)
+        data = Amplitude/(1+sqr_f) 
+        return data
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
@@ -270,6 +371,14 @@ class SpectrumPlotWidget:
         self.roi = None
         self.create_roi()
         
+    def measurement_history_size(self):
+        pass
+
+    def setHelperCurvesVisible(self, visibility):
+        self.curves["flicker"].setVisible(visibility)
+        self.curves["gr"].setVisible(visibility)
+        self.flickerHandle.setVisible(visibility)
+        self.grHandle.setVisible(visibility)
 
     def create_curves(self):
         colors = [pg.mkColor("b"), pg.mkColor("g")]
@@ -320,15 +429,19 @@ class SpectrumPlotWidget:
         # self.plot.addItem(item)
 
         # handle = Handle(radius=10, typ="f", pen=QtGui.QPen(QtGui.QColor(0, 0, 0)), parent=self.plot)
-        handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
+        handle = FlickerHandle(name = "flicker", pen=pg.mkPen(width=4.5, color='r'))
+        # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
         handle.setPos(1,-2)
         handle.sigPositionChanged.connect(self.on_handlePositionChanged)
         self.plot.addItem(handle)
+        self.flickerHandle = handle
 
-        handle = Handle(name = "gr", radius=10, typ="r", pen=pg.mkPen(width=4.5, color='b'), deletable=True, handle_offset=QtCore.QPointF(-40, 40))#, parent=self.plot)
+        # handle = Handle(name = "gr", radius=10, typ="r", pen=pg.mkPen(width=4.5, color='b'), deletable=True, handle_offset=QtCore.QPointF(-40, 40))#, parent=self.plot)
+        handle = GRHandle(name="gr", pen=pg.mkPen(width=4.5, color='b'))
         handle.setPos(2,-2)
         handle.sigPositionChanged.connect(self.on_handlePositionChanged)
         self.plot.addItem(handle)
+        self.grHandle = handle
 
 
     def create_plot(self):
@@ -379,21 +492,26 @@ class SpectrumPlotWidget:
     def on_handlePositionChanged(self, handle, position):
         print(10*"=")
         print(position)
-        if handle.name == "flicker":
-            freq = np.logspace(0,5, 51)
-            Amplitude = np.power(10,position.y())
-            CurrentFreq = np.power(10,position.x())
-            data = Amplitude * (CurrentFreq/freq)
+        # if handle.name == "flicker":
+        #     freq = np.logspace(0,5, 51)
+        #     # Amplitude = np.power(10,position.y())
+        #     # CurrentFreq = np.power(10,position.x())
+        #     # data = Amplitude * (CurrentFreq/freq)
+        #     data = handle.calculateCurve(freq)
         
-        elif handle.name == "gr":
-            freq = np.logspace(0,5, 51)
-            Amplitude = np.power(10,position.y())
-            CurrentFreq = np.power(10,position.x())
-            df = freq/CurrentFreq
-            sqr_f = df*df
-            # return Amplitude/(1+sqr_f)
-            data = Amplitude/(1+sqr_f) 
+        # elif handle.name == "gr":
+        #     freq = np.logspace(0,5, 51)
+        #     # Amplitude = np.power(10,position.y())
+        #     # CurrentFreq = np.power(10,position.x())
+        #     # df = freq/CurrentFreq
+        #     # sqr_f = df*df
+        #     # # return Amplitude/(1+sqr_f)
+        #     # data = Amplitude/(1+sqr_f) 
+        #     data = handlecalculateCurve
         # data = np.full_like(freq, np.power(10,position.y()))
+        freq = np.logspace(0,5, 51)
+        data = handle.calculateCurve(freq)
+
         print(freq)
         print(data)
         if handle.name in self.curves:

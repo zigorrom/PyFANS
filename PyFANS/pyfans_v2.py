@@ -98,6 +98,16 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.statusbar.addPermanentWidget(self.progressBar)
         self.set_ui_idle()
 
+        showHelperCurvesAction = QtGui.QWidgetAction(self.menuSettings)
+        checkBox = QtGui.QCheckBox("Helper Curves")
+        checkBox.toggled.connect(self.on_showHelperCurvesAction_toggled)
+        checkBox.setChecked(False)
+        showHelperCurvesAction.setDefaultWidget(checkBox)
+        self.menuSettings.addAction(showHelperCurvesAction)
+        # self.menuSettings
+
+    def on_showHelperCurvesAction_toggled(self, state):
+        self._spectrumPlotWidget.setHelperCurvesVisible(state)
 
     def connect(self, signal, slot):
         #assert isinstance(signal, QtCore.pyqtSignal), "signal should be of pyqtSignal type"
