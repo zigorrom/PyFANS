@@ -1135,7 +1135,8 @@ class FANS_UI_Controller(QtCore.QObject):
         print("closing main view")
         self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
-        self.close_child_windows
+
+        self.close_child_windows()
 
     def close_child_windows(self):
         self.voltage_control.close()

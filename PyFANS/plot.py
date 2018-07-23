@@ -548,26 +548,6 @@ class SpectrumPlotWidget:
             self.history_curves[idx].setData(freq,a)
 
 
-        # length_of_curves_artray = len(self.history_curves)
-        # for idx in range(1,length_of_curves_artray):
-        #     idx = -idx
-        #     xData, yData = self.history_curves[idx-1].getData()
-        #     print("Shifting curve data to idx={0}".format(idx))
-        #     print(xData)
-        #     print(yData)
-        #     if xData is None or yData is None:
-        #         continue
-            
-        #     self.history_curves[idx].setData(xData,yData)
-        #     print("Shifting successfull!")
-
-        # for idx, curve in enumerate(self.history_curves):
-        #     curve.setData(freq,np.subtract(data, idx*10))
-        #     print("Plotting curve {0}".format(idx))
-        # self.history_curves[0].setData(freq,data)
-        # self.history_curves[1].setData(freq,np.subtract(data,100) )
-        # self.history_curves[2].setData(freq,np.subtract(data,200) )
-
 
     def updata_resulting_spectrum(self, freq,data, force = False):
         curve = self.curves[-1]

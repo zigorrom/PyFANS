@@ -299,6 +299,7 @@ class MeasurementInfo:
         
     @property
     def header_list(self):
+        #return self.HEADER_LIST_OPTIONS
         return [
             self.SAMPLE_VOLTAGE_END_OPTION,
             self.SAMPLE_CURRENT_END_OPTION,
