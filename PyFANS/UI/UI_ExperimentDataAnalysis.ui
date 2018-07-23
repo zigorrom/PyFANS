@@ -1,18 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>992</width>
-    <height>686</height>
+    <width>891</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Experiment Data Analysis</string>
+   <string>MainWindow</string>
   </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>891</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="actionAddPlot"/>
+   </widget>
+   <widget class="QMenu" name="menuCurve">
+    <property name="title">
+     <string>Curve</string>
+    </property>
+    <addaction name="actionAddCurve"/>
+   </widget>
+   <addaction name="menuPlot"/>
+   <addaction name="menuCurve"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionAddPlot">
+   <property name="text">
+    <string>Add plot</string>
+   </property>
+  </action>
+  <action name="actionAddCurve">
+   <property name="text">
+    <string>Add curve</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
