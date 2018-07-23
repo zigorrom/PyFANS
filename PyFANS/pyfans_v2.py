@@ -116,6 +116,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         # self.menuSettings
     
     def on_showHistoryCurvesAction_toggled(self, state):
+        print("show history curves {0}".format(state))
         self._spectrumPlotWidget.setHistoryCurvesVisible(state)
 
     def on_showHelperCurvesAction_toggled(self, state):
@@ -1134,6 +1135,14 @@ class FANS_UI_Controller(QtCore.QObject):
         print("closing main view")
         self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
+        self.close_child_windows
+
+    def close_child_windows(self):
+        self.voltage_control.close()
+        self.waterfall_noise_window.close()
+        self._console_window.close()
+        self._time_info_window.close()
+        self._lock_screen_window.close()
 
     def show_time_info_window(self):
         self._time_info_window.show()

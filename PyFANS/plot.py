@@ -365,7 +365,12 @@ class SpectrumPlotWidget:
         self.thermal_curve_color = pg.mkColor("m")
         self.curves = {}
 
-        self._historySize = 10
+        # self._historySize = 10
+        
+
+        #self.data_size = 10000
+        self.historySize = 10
+        self.history_buffer = None#
         self.history_curves = list()
 
         self.create_plot()
@@ -407,11 +412,16 @@ class SpectrumPlotWidget:
             counter += 1
 
         for idx in range(self.historySize):
-            color = pg.intColor(idx) #, width = 5)
+            color = pg.intColor(idx, width = 1)#pg.mkColor("g")#pg.intColor(idx, width = 2)
             c = self.plot.plot(pen=color)
             c.setZValue(1000-idx-1)
             c.setVisible(True)
             self.history_curves.append(c)
+            # freq = np.logspace(0,5, 51)
+            # print(freq)
+            # data = np.repeat(1e-5/(idx+1), 51)
+            # print(data)
+            # c.setData(freq,data)
 
 
         curve = self.plot.plot(pen = self.resulting_curve_color)
@@ -530,10 +540,33 @@ class SpectrumPlotWidget:
         print(10*"=")
 
     def appendToHistory(self, freq, data):
-        for idx in range(1,historySize+1):
-            idx = -idx
-            self.history_curves[idx].setData(self.history_curves[idx-1].getData())
-        self.history_curves[0].setData(freq,data)
+        if not self.history_buffer:
+            self.history_buffer=HistoryBuffer(len(freq), self.historySize)
+        self.history_buffer.append(data)
+        buffer = self.history_buffer.get_buffer()
+        for idx, a in enumerate(buffer):
+            self.history_curves[idx].setData(freq,a)
+
+
+        # length_of_curves_artray = len(self.history_curves)
+        # for idx in range(1,length_of_curves_artray):
+        #     idx = -idx
+        #     xData, yData = self.history_curves[idx-1].getData()
+        #     print("Shifting curve data to idx={0}".format(idx))
+        #     print(xData)
+        #     print(yData)
+        #     if xData is None or yData is None:
+        #         continue
+            
+        #     self.history_curves[idx].setData(xData,yData)
+        #     print("Shifting successfull!")
+
+        # for idx, curve in enumerate(self.history_curves):
+        #     curve.setData(freq,np.subtract(data, idx*10))
+        #     print("Plotting curve {0}".format(idx))
+        # self.history_curves[0].setData(freq,data)
+        # self.history_curves[1].setData(freq,np.subtract(data,100) )
+        # self.history_curves[2].setData(freq,np.subtract(data,200) )
 
 
     def updata_resulting_spectrum(self, freq,data, force = False):
@@ -597,6 +630,10 @@ class HistoryBuffer:
         self.history_size = 0
         self.counter = 0
         self.buffer = np.empty(shape=(max_history_size, data_size), dtype=dtype)
+
+    @property
+    def dataSize(self):
+        return self.data_size
 
     def append(self, data):
         """Append new data to ring buffer"""
