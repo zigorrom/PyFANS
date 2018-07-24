@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>891</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPlot">
@@ -31,9 +31,10 @@
      <property name="title">
       <string>Link</string>
      </property>
-     <addaction name="actionAxes"/>
-     <addaction name="actionX_axis"/>
-     <addaction name="actionY_axis"/>
+     <addaction name="actionLinkXAxis"/>
+     <addaction name="actionLinkYAxis"/>
+     <addaction name="actionLinkAxes"/>
+     <addaction name="actionUnlink"/>
     </widget>
     <addaction name="actionAddPlot"/>
     <addaction name="menuLink"/>
@@ -58,19 +59,24 @@
     <string>Add curve</string>
    </property>
   </action>
-  <action name="actionAxes">
+  <action name="actionLinkAxes">
    <property name="text">
     <string>Axes</string>
    </property>
   </action>
-  <action name="actionX_axis">
+  <action name="actionLinkXAxis">
    <property name="text">
     <string>X axis</string>
    </property>
   </action>
-  <action name="actionY_axis">
+  <action name="actionLinkYAxis">
    <property name="text">
     <string>Y axis</string>
+   </property>
+  </action>
+  <action name="actionUnlink">
+   <property name="text">
+    <string>Unlink</string>
    </property>
   </action>
  </widget>

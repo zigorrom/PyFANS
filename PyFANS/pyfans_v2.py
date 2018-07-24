@@ -34,6 +34,7 @@ import modern_fans_controller as mfans
 import modern_fans_smu as msmu
 
 import qdarkstyle
+import experiment_data_analysis as eds
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -1330,7 +1331,10 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_analysis_window_open_action(self):
         print("analysis window")
-        
+        if not hasattr(self, "analysis_window"):
+            self.analysis_window = eds.ExperimentDataAnalysis(layout="horizontal")
+        self.analysis_window.show()
+        # self.main_view.ui_dock_widget.setWidget(widget)
 
     def on_log_message_received(self, message):
         if message:
