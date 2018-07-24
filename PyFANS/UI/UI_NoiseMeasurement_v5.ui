@@ -1175,6 +1175,7 @@
     <property name="title">
      <string>Window</string>
     </property>
+    <addaction name="actionOpenAnalysisWindow"/>
     <addaction name="actionOpenTimetraceWindow"/>
     <addaction name="actionOpenRealtimeNoiseWindow"/>
     <addaction name="actionOpenConsoleWindow"/>
@@ -1229,6 +1230,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpenAnalysisWindow"/>
    <addaction name="actionLoginEmail"/>
    <addaction name="actionOpenTimetraceWindow"/>
    <addaction name="actionOpenRealtimeNoiseWindow"/>
@@ -1367,6 +1369,18 @@
    </property>
    <property name="text">
     <string>Theme Switch</string>
+   </property>
+  </action>
+  <action name="actionOpenAnalysisWindow">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/analysis_icon_64x64.png</normaloff>:/icons/Icons/analysis_icon_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open Analysis Window</string>
+   </property>
+   <property name="toolTip">
+    <string>Opens window for data analysis</string>
    </property>
   </action>
  </widget>

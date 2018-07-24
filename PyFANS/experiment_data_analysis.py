@@ -11,24 +11,35 @@ from py_expression_eval import Parser
 
 from measurement_data_structures import MeasurementInfo
 
-def escape_variable(string_var):
-    # return re.escape(string)
-    if isinstance(string_var, str):
-        ret = string_var.replace("(","_<_")
-        ret = ret.replace(")","_>_")
-        ret = ret.replace(" ","_")
-        return ret
 
-    return string_var
+class VariableMapper:
+    def __init__(self, variable_list=None,prefix="var_"):
+        self._prefix = prefix
+        self._baseVarNames = variable_list
+        
+    @property
+    def baseVarNames(self):
+        return self._baseVarNames
 
-def unescape_variable(string_var):
-    if isinstance(string_var, str):
-        ret = string_var.replace("_<_","(")
-        ret = ret.replace("_>_", ")")
-        ret = ret.replace("_", " ")
-        return ret
+    @baseVarNames.setter
+    def baseVarNames(self, value):
+        self._baseVarNames = value
+    
+    @property
+    def encodedVarNames(self):
+        return map(self.encode, self._baseVarNames)
 
-    return string_var
+    def encode(self, var_name):
+        idx = self.baseVarNames.index(var_name)
+        return "{0}{1}".format(self._prefix, idx)
+
+    def decode(self, encoded_name):
+        if encoded_name.startswith(self._prefix):
+            index = int(encoded_name[len(self._prefix):])
+            return self.baseVarNames[index]
+
+        return None
+
 
 class ExperimentData(QtCore.QObject):
     newDataArrived = QtCore.pyqtSignal(object)
@@ -37,14 +48,19 @@ class ExperimentData(QtCore.QObject):
         super().__init__()
         cols = MeasurementInfo.header_options()
         self._data = pd.DataFrame(columns = cols)
+        # self._valueMapper = VariableMapper()
         # c = list(self._data)
         # print(c)
 
     @property
     def variables(self):
-        var_list = ["index"]
+        var_list = []#  ["index"]
         var_list.extend(list(self._data))
         return var_list
+
+    @property
+    def variableMapper(self):
+        return VariableMapper(self.variables)
 
     def getDataFrame(self):
         return self._data
@@ -59,6 +75,10 @@ class ExperimentData(QtCore.QObject):
         keys = new_data.keys()
         self.newDataArrived.emit(keys)
 
+    def __getitem__(self, *args):
+        print("getting index {0}".format(args))
+        return self._data.__getitem__(*args)
+
     def __str__(self, *args, **kwargs):
         return "ExpeimentData\n"+str(self._data)
 
@@ -66,19 +86,26 @@ class ExperimentData(QtCore.QObject):
         return self.__str__()
 
 
-    
+
 class PlotDock(Dock):
     def __init__(self, name, closable=True, **kwargs):
         super().__init__(name, closable=closable, **kwargs)
         self._plot = pg.PlotWidget(title=name)
         self.addWidget(self._plot)
+        self.curves = {}
 
     def plot(self, *args, **kwargs):
-        self._plot.plot(*args, **kwargs)
+        curve = self.addCurve(*args,**kwargs)
+        return curve
 
     def addCurve(self, *args, **kwargs):
         """Arguments are same as for PlotWidget.plot()"""
-        self._plot.plot(*args, **kwargs)
+        curve = self._plot.plot(*args, **kwargs)
+        self.curves[""] = curve
+        return curve
+
+    def updateCurve(self, xData, yData):
+        pass
 
     @property
     def plotter(self):
@@ -90,23 +117,20 @@ class PlotDock(Dock):
     def setYLink(self, *args, **kwargs):
         self._plot.setYLink(*args, **kwargs)
 
-
-
 editExpressionViewBase, editExpressionViewForm = uic.loadUiType("UI/UI_EditExpression.ui")
 class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
-    def __init__(self, param_list, stringExpression = "",  parent = None):
+    def __init__(self, variableMapper, stringExpression = "",  parent = None):
         super().__init__(parent)
         self.setupUi(stringExpression)
-        self._stringExpression = stringExpression
+        self._variableMapper = variableMapper
         self._parsedExpression = None
-        self._param_list = param_list
-        if self._param_list is None:
-            self._param_list = "None"
+        self._availableFunctions = ['+','-','*','/','%','^','PI','E','abs()','sin()','cos()','tan()','log()']
 
     @property
     def stringExpression(self):
         return self._stringExpression
 
+    @property
     def parsedExpression(self):
         return self._parsedExpression
 
@@ -122,80 +146,113 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
         addVariableAction = QtGui.QAction('Add', self)
         addVariableAction.triggered.connect(self.on_add_variable_to_expression)
         variableMenu.addAction(addVariableAction)
+
+        functionMenu = self.menuBar.addMenu("Functions")
+        addFunctionAction = QtGui.QAction('Add', self)
+        addFunctionAction.triggered.connect(self.on_add_function_to_expression)
+        functionMenu.addAction(addFunctionAction)
+
         self.ui_main_layout.insertWidget(0,self.menuBar)
         self.ui_expression.setText(expression)
     
     @QtCore.pyqtSlot()
+    def on_add_function_to_expression(self):
+        items = self._availableFunctions
+        item, ok = QtGui.QInputDialog.getItem(self, "Select function", "list of functions", items, 0, False)
+        if ok:
+            # idx = 
+            self.ui_expression.insert(item)
+
+    @QtCore.pyqtSlot()
     def on_add_variable_to_expression(self):
-        items = self._param_list
+        items = self._variableMapper.baseVarNames
         item, ok = QtGui.QInputDialog.getItem(self, "Select variable", "list of variables", items, 0, False)
         if ok:
-            item = escape_variable(item)
+            # idx = 
+            item = self._variableMapper.encode(item)
             self.ui_expression.insert(item)
 
     def accept(self):
         try:
             self._parsedExpression = self.parseExpression()
-            variables = self._parsedExpression.variables()
+            variables = self.parsedExpression.variables()
             print(variables)
-            if not all(variable in self._param_list for variable in variables):
+            if not all(variable in self._variableMapper.encodedVarNames for variable in variables):
                 raise ValueError("variables are not in variable list")
-            print(self._parsedExpression.toString())
+            print(self.parsedExpression.toString())
             super().accept()
 
         except Exception as e:
-            # self.ui_expression.setStyleSheet("QLineEdit{border-color: red;}")
             print("cannot accept")
             print("Exception")
             traceback.print_exc(file=sys.stdout)
             print(e)
 
 
-    
-
-    
-
-# class MeasurementCurve(QtCore.QObject):
-#     def __init__(self, )
 addCurveViewBase, addCurveViewForm = uic.loadUiType("UI/UI_AddCurveDialog.ui")
 class AddCurveDialog(addCurveViewBase, addCurveViewForm):
-    def __init__(self, param_list = None,  parent = None ):
-        super(addCurveViewForm,self).__init__(parent)
+    def __init__(self, variableMapper,  parent = None ):
+        super(addCurveViewBase,self).__init__(parent)
         self.setupUi()
-        self.param_list = ["None"] 
-        if param_list:
-            self.param_list.extend(param_list)
-        # model = QtGui.QStringListModel(self.strLst)
+        self.variableMapper = variableMapper
+        self.x_axis_function = None
+        self.y_axis_function = None
+
         self.ui_x_axis_value.clear()
-        self.ui_x_axis_value.addItems(self.param_list)
+        self.ui_x_axis_value.addItems(self.variableMapper.baseVarNames)
         self.ui_y_axis_value.clear()
-        self.ui_y_axis_value.addItems(self.param_list)
+        self.ui_y_axis_value.addItems(self.variableMapper.baseVarNames)
         
-
-
+    
     def setupUi(self):
         super().setupUi(self)
+
+    @property
+    def xAxisFunction(self):
+        return self.x_axis_function
+
+    @property
+    def yAxisFunction(self):
+        return self.y_axis_function
+
+    @property
+    def selectedXVariable(self):
+        return self.ui_x_axis_value.currentText()
+
+    @property
+    def selectedYVariable(self):
+        return self.ui_y_axis_value.currentText()
+
+    @property
+    def autoUpdate(self):
+        return self.ui_auto_update.isChecked()
 
     @QtCore.pyqtSlot()
     def on_ui_x_axis_function_clicked(self):
         print("add x function")
-        dialog = EditExpressionDialog(self.param_list)
+        dialog = EditExpressionDialog(self.variableMapper)
         res = dialog.exec_()
-        
+        if res:
+            self.x_axis_function = dialog.parsedExpression
 
     @QtCore.pyqtSlot()
     def on_ui_y_axis_function_clicked(self):
         print("add y function")
-        dialog = EditExpressionDialog(self.param_list)
+        dialog = EditExpressionDialog(self.variableMapper)
         res = dialog.exec_()
+        if res:
+            self.y_axis_function = dialog.parsedExpression
 
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
 class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     def __init__(self, parent = None ):
-        super().__init__(parent)
+        super(mainViewBase,self).__init__(parent)
         self.setupUi()
         self._data = ExperimentData()
+        for i in range(10):
+            self._data.append(generate_meas_data(i))
+
         self._plot_dict = dict()
         self._curve_dict = dict()
         print(self.data.variables)
@@ -219,10 +276,38 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_actionAddPlot_triggered(self):
         variables = self.data.variables
-        dialog = AddCurveDialog(param_list=variables,parent=self)
+        mapper = self.data.variableMapper
+        dialog = AddCurveDialog(variableMapper=mapper,parent=self)
         res = dialog.exec_()
         if res:
             print("adding plot")
+            x_var = dialog.selectedXVariable
+            y_var = dialog.selectedYVariable
+            print("xvar={0}; yvar={1}".format(x_var, y_var))
+            data = self.data[[x_var,y_var]]
+            x,y = data.values.T
+            print(x)
+            print(y)
+            plot1 = PlotDock("new")
+            plot1.plot(x,y, pen=(0,0,200))#, symbolBrush=(0,0,200), symbolPen='w', symbol='o', symbolSize=14, name="symbol='o'")
+            self._dockArea.addDock(plot1, "right")
+            
+            funcy = dialog.yAxisFunction
+            if funcy is not None:
+                v = funcy.variables()
+                vdecod = [mapper.decode(i) for i in v]
+                # result = map(funcy.evaluate(params) for )
+                # params = {v[idx]: self.data[[c]].values for idx,c in enumerate(vdecod)}
+                # result = funcy.evaluate(params)
+                # plot2 = PlotDock("new2")
+                # plot2.plot(x, result)
+
+
+
+
+            # print(x_data)
+            # print(y_data)
+
         else:
             print("cancelled")
         # self._dockArea.setVisible(True)
@@ -246,13 +331,15 @@ def test_ui():
     app.setApplicationName("ExperimentDataAnalysis")
     app.setStyle("cleanlooks")
     wnd = ExperimentDataAnalysis()
+
     wnd.show()
     return app.exec_()
     
 def generate_meas_data(count=0):
     md = MeasurementInfo("a", count)
     val = np.random.random_sample()
-    main_volt = 1+val
+    add_val = np.random.random_sample()
+    main_volt = add_val+val
     sample_volt = val
     gate_volt = np.random.random_sample()
     md.update_start_values(main_volt, sample_volt, gate_volt, 279)
@@ -263,9 +350,18 @@ def test_exp_data():
     exp_data = ExperimentData()
     for i in range(10):
         exp_data.append(generate_meas_data(i))
+    
+    m = exp_data.variables
+    var1 = m[2]
+    var2 = m[15]
 
 
-    print(exp_data)
+    data = exp_data[[var1,var2]]
+    print(data)
+
+
+    
+    # print(exp_data)
 
 
 if __name__== "__main__":

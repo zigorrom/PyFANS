@@ -169,6 +169,10 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
     def subscribe_to_switch_theme_action(self,slot):
         self.connect(self.actionThemeSwitch.triggered, slot)
 
+    def subscribe_to_analysis_window_open_action(self,slot):
+        self.connect(self.actionOpenAnalysisWindow.triggered, slot)
+
+
     @property
     def controller(self):
         return self._controller
@@ -1022,6 +1026,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_what_to_do_action(self.on_what_to_do_action)
         self.main_view.subscribe_to_lock_screen_action(self.on_lock_screen_action)
         self.main_view.subscribe_to_switch_theme_action(self.on_theme_switch_action)
+        self.main_view.subscribe_to_analysis_window_open_action(self.on_analysis_window_open_action)
         #pass
     #def login_test(self):
     #    print("test")
@@ -1322,6 +1327,10 @@ class FANS_UI_Controller(QtCore.QObject):
         print("on theme switch")
         dialog = UI_ThemeSwitchWindow()
         dialog.exec_()
+
+    def on_analysis_window_open_action(self):
+        print("analysis window")
+        
 
     def on_log_message_received(self, message):
         if message:
