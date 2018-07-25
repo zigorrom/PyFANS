@@ -4,6 +4,7 @@ import traceback
 import functools
 import numpy as np
 import pandas as pd
+
 from PyQt4 import QtCore, QtGui, uic
 
 import pyqtgraph as pg
@@ -93,18 +94,79 @@ class ExperimentData(QtCore.QObject):
     def __repr__(self):
         return self.__str__()
 
-class CurveDataProvider:
-    def __init__(self, dataSource, xVariable=None, yVariable=None, xFunction=None, yFunction=None):
+class CurveDataProvider(QtCore.QObject):
+    dataUpdated = QtCore.pyqtSignal()
+    def __init__(self, dataSource, xVariable=None, yVariable=None, xFunction=None, yFunction=None, autoUpdate=False):
+        super().__init__()
         self._dataSource = dataSource
+        self._autoUpdate = None
+        self.AutoUpdated = autoUpdate
+        # if autoUpdate:
+        #     self._dataSource.newDataArrived.connect(self.on_data_source_updated)
+
         self._xVariable = xVariable
         self._yVariable = yVariable
+
         self._xFunction = xFunction
         self._yFunction = yFunction
+
         self._currentXdata = None
         self._currentYdata = None
 
+        self._xDataProducer = None
+        self._yDataProducer = None
+
+        self._xCaption = ""
+        self._yCaption = ""
+        
+        
+       
+        self.__initializeDataFunctions__()
+        self.__refreshData__()
+    
+    def __initializeDataFunctions__(self):
+        if self._xFunction:
+            self._xDataProducer = functools.partial(self.__execute_function__, self._xFunction)
+            self._xCaption = self.__get_caption_for_function__(self._xFunction)
+        elif self._xVariable:
+            self._xDataProducer = functools.partial(self.__get_data_for_variables__, self._xVariable)
+            self._xCaption = self.__decode_variables__(self._xVariable)
+        else:
+            raise ValueError("Not enough data to intialize data provider")
+
+        if self._yFunction:
+            self._yDataProducer = functools.partial(self.__execute_function__, self._yFunction)
+            self._yCaption = self.__get_caption_for_function__(self._yFunction)
+        elif self._yVariable:
+            self._yDataProducer = functools.partial(self.__get_data_for_variables__, self._yVariable)
+            self._yCaption = self.__decode_variables__(self._yVariable)
+        else:
+            raise ValueError("Not enough data to intialize data provider")
+
+
+    def __refreshData__(self):
+        self._currentXdata = self._xDataProducer()
+        self._currentYdata = self._yDataProducer()
+
     @property
-    def data(self):
+    def AutoUpdated(self):
+        return self._autoUpdate
+
+    @AutoUpdated.setter
+    def AutoUpdated(self, value):
+        try:
+            if value:
+                self._dataSource.newDataArrived.connect(self.on_data_source_updated)
+            else:
+                self._dataSource.newDataArrived.disconnect(self.on_data_source_updated)
+        except Exception:
+            print("method is not connected")
+        finally:
+            self._autoUpdate = value
+        
+
+    @property
+    def dataSource(self):
         return self._dataSource
 
     @property
@@ -125,7 +187,7 @@ class CurveDataProvider:
 
     def __decode_variables__(self, variables):
         if isinstance(variables, str):
-            return [self._dataSource.variableMapper.decode(variables)]
+            return self._dataSource.variableMapper.decode(variables)
         elif isinstance(variables, (list,tuple)):
             return [self._dataSource.variableMapper.decode(v) for v in variables]
         else:
@@ -142,26 +204,66 @@ class CurveDataProvider:
         return self.__get_data_for_columns__(columns)
 
     def __get_data_for_columns__(self, cols):
-        return self.data[cols].values.T
+        if isinstance(cols,(list, tuple)):
+            return self.dataSource[cols].values.T
+        else:
+            return self.dataSource[[cols]].values.T[0]
 
     def __execute_function__(self, function):
-        pass
+        funcVars = self.__get_function_variables__(function, decoded=False)
+        data =  self.__get_data_for_variables__(funcVars)
+        params = {key: value for key,value in zip(funcVars,data)}
+        result = function.evaluate(params)
+        return result 
+
+    def __get_caption_for_function__(self, function):
+        funcVars = self.__get_function_variables__(function, decoded=False)
+        columns = self.__decode_variables__(funcVars)
+        caption = function.simplify({}).toString()
+        for ve, vd in zip(funcVars,columns):
+            caption = caption.replace(ve,vd)
+
+        return caption
+
+    def on_data_source_updated(self, keys):
+        print(keys)
+        self.__refreshData__()
+        self.dataUpdated.emit()
 
     def getData(self):
-        pass
+        return self._currentXdata, self._currentYdata
+
+    def getDependanceName(self):
+        label = "{y} =f( {x} )".format(y=self._yCaption, x=self._xCaption)
+        return label
+
 
 
 class UpdatablePlotDataItem(PlotDataItem):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self._name = kwargs.get("curveName","curve")
+        super().__init__(*args, **kwargs)
+        
+    def setData(self, *args, **kwargs):
+        dataSource = kwargs.get("dataSource", None)
+        if dataSource is None:
+            super().setData(*args, **kwargs)
+        else:
+            x,y = dataSource.getData()
+            super().setData(x,y, **kwargs)
+            self._dataSource = dataSource
+            self._dataSource.dataUpdated.connect(self.on_data_source_updated)
+
+    def on_data_source_updated(self):
+        x,y = self._dataSource.getData()
+        super().setData(x,y)
 
     @property
     def curveName(self):
         return self._name
 
-    def getBareData(self):
-        return self.xData, self.yData
+    # def getBareData(self):
+    #     return self.xData, self.yData
 
 class PlotDock(Dock):
     def __init__(self, name, label, closable=True, **kwargs):
@@ -184,9 +286,6 @@ class PlotDock(Dock):
         self.curves[curve.curveName] = curve
         return curve
 
-    def updateCurve(self, xData, yData):
-        pass
-
     @property
     def plotter(self):
         return self._plot
@@ -198,9 +297,6 @@ class PlotDock(Dock):
         else: # otherPlot is None:
             self._plot.setXLink(None)
         
-            
-        # pass
-        # self._plot.setXLink(*args, **kwargs)
 
     def setYLink(self, otherPlot):
         if isinstance(otherPlot, PlotDock):
@@ -208,11 +304,7 @@ class PlotDock(Dock):
         
         else:# otherPlot is None:
             self._plot.setYLink(None)
-            
-        # self._plot.setYLink(otherPlot.plotter)
-        # pass
-        # self._plot.setYLink(*args, **kwargs)
-
+        
     def setAxesLink(self, otherPlot):
         self.setXLink(otherPlot)
         self.setYLink(otherPlot)
@@ -305,6 +397,7 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
     
     def setupUi(self):
         super().setupUi(self)
+        self.ui_desired_position.setVisible(False)
 
     @property
     def xAxisFunction(self):
@@ -321,6 +414,14 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
     @property
     def selectedYVariable(self):
         return self.ui_y_axis_value.currentText()
+
+    @property
+    def useSelectedPosition(self):
+        return self.ui_select_position.isChecked()
+
+    @property
+    def selectedPosition(self):
+        return self.ui_desired_position.currentText()
 
     @property
     def autoUpdate(self):
@@ -393,6 +494,13 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         self._plot_dict = dict()
         self._curve_dict = dict()
         print(self.data.variables)
+
+        self.counter = 0
+        self.max_count = 10
+        self.timer = QtCore.QTimer(self)
+        self.timer.setInterval(500)
+        self.timer.timeout.connect(self.updatingPlot)
+
     
     def setupUi(self):
         super().setupUi(self)
@@ -408,7 +516,16 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             raise TypeError("data should of ExperimentData type ")
         
         self._data = data
-
+ 
+    def whereToAppendDockPlot(self):
+        whereToAppend = "right" 
+        if self._layout == "horizontal":
+            whereToAppend = "right"
+        elif self._layout == "vertical":
+            whereToAppend = "bottom"
+        else:
+            whereToAppend = "right"
+        return whereToAppend
 
     @QtCore.pyqtSlot()
     def on_actionAddPlot_triggered(self):
@@ -418,80 +535,130 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         res = dialog.exec_()
         if res:
             print("adding plot")
-            xVal = None
-            yVal = None
-            
-            xName = ""
-            yName = ""
-            # plot1.plot(x,y, pen=(0,0,200))#, symbolBrush=(0,0,200), symbolPen='w', symbol='o', symbolSize=14, name="symbol='o'")
             
             x_var = dialog.selectedXVariable
             funcx = dialog.xAxisFunction
 
-            if funcx is not None:
-                v = funcx.variables()
-                vdecod = [mapper.decode(i) for i in v]
-                data = self.data[vdecod].values.T
-                params = {key: value for key,value in zip(v,data)}
-                xVal = funcy.evaluate(params)
-                xName = funcx.simplify({}).toString()
-                for ve, vd in zip(v,vdecod):
-                    xName = xName.replace(ve,vd)
-
-            else:
-                xVal = self.data[[x_var]].values.T[0]
-                xName = x_var
-
             y_var = dialog.selectedYVariable
             funcy = dialog.yAxisFunction
+            autoUpdate = dialog.autoUpdate
 
-            if funcy is not None:
-                v = funcy.variables()
-                vdecod = [mapper.decode(i) for i in v]
-                data = self.data[vdecod].values.T
-                params = {key: value for key,value in zip(v,data)}
-                yVal = funcy.evaluate(params)
-                yName = funcy.simplify({}).toString()
-                for ve, vd in zip(v,vdecod):
-                    yName = yName.replace(ve,vd)
-            else:
-                yVal = self.data[[y_var]].values.T[0]
-                yName = y_var
-            
-            print(xVal)
-            print(yVal)
+            dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy, autoUpdate)
+
             plotName = "plot_{0}".format(len(self._plot_dict))
-            label = "{y} =f( {x} )".format(y=yName, x=xName)
-            plot = PlotDock(plotName, label)
-            # curve = plot.plot("curve", xVal, yVal)
-            curve = plot.plot(xVal, yVal, curveName="curve1")
-            print("reading back x and y values")
-            xv,yv = curve.getBareData()
-            print(xv)
-            print(yv)
+            curveName = "curve {0}".format(len(self._curve_dict))
+            plot = PlotDock(plotName, dataProvider.getDependanceName()) #dataSource=dataProvider)
+            curve = plot.plot(dataSource=dataProvider, curveName=curveName)
 
-            whereToAppend = "right" 
-            if self._layout == "horizontal":
-                whereToAppend = "right"
-            elif self._layout == "vertical":
-                whereToAppend = "bottom"
-            else:
-                whereToAppend = "right"
+            whereToAppend = self.whereToAppendDockPlot()
+            if dialog.useSelectedPosition:
+                whereToAppend = dialog.selectedPosition
 
             self._dockArea.addDock(plot, whereToAppend)
-            self._plot_dict[plotName] = plot
             
+            self.timer.start()
         else:
             print("cancelled")
-        # self._dockArea.setVisible(True)
-        # plot1 = PlotDock("new")
-        # plot1.plot(np.random.normal(size=100))
-        # plot2 = PlotDock("new2")
-        # plot2.plot(np.random.normal(size=100))
+       
         
-        # plot1.setYLink(plot2.plotter)
-        # self._dockArea.addDock(plot1, "right")
-        # self._dockArea.addDock(plot2, "right")
+
+    # @QtCore.pyqtSlot()
+    # def on_actionAddPlot_triggered(self):
+    #     variables = self.data.variables
+    #     mapper = self.data.variableMapper
+    #     dialog = AddCurveDialog(variableMapper=mapper,parent=self)
+    #     res = dialog.exec_()
+    #     if res:
+    #         print("adding plot")
+    #         xVal = None
+    #         yVal = None
+            
+    #         xName = ""
+    #         yName = ""
+    #         # plot1.plot(x,y, pen=(0,0,200))#, symbolBrush=(0,0,200), symbolPen='w', symbol='o', symbolSize=14, name="symbol='o'")
+            
+    #         x_var = dialog.selectedXVariable
+    #         funcx = dialog.xAxisFunction
+
+    #         if funcx is not None:
+    #             v = funcx.variables()
+    #             vdecod = [mapper.decode(i) for i in v]
+    #             data = self.data[vdecod].values.T
+    #             params = {key: value for key,value in zip(v,data)}
+    #             xVal = funcy.evaluate(params)
+    #             xName = funcx.simplify({}).toString()
+    #             for ve, vd in zip(v,vdecod):
+    #                 xName = xName.replace(ve,vd)
+
+    #         else:
+    #             xVal = self.data[[x_var]].values.T[0]
+    #             xName = x_var
+
+    #         y_var = dialog.selectedYVariable
+    #         funcy = dialog.yAxisFunction
+
+    #         if funcy is not None:
+    #             v = funcy.variables()
+    #             vdecod = [mapper.decode(i) for i in v]
+    #             data = self.data[vdecod].values.T
+    #             params = {key: value for key,value in zip(v,data)}
+    #             yVal = funcy.evaluate(params)
+    #             yName = funcy.simplify({}).toString()
+    #             for ve, vd in zip(v,vdecod):
+    #                 yName = yName.replace(ve,vd)
+    #         else:
+    #             yVal = self.data[[y_var]].values.T[0]
+    #             yName = y_var
+            
+    #         print(xVal)
+    #         print(yVal)
+    #         dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy)
+
+    #         plotName = "plot_{0}".format(len(self._plot_dict))
+    #         label = "{y} =f( {x} )".format(y=yName, x=xName)
+    #         plot = PlotDock(plotName, label)
+    #         # curve = plot.plot("curve", xVal, yVal)
+    #         curve = plot.plot(xVal, yVal, curveName="curve1")
+    #         self._plot_dict[plotName] = plot
+    #         # print("reading back x and y values")
+    #         # xv,yv = curve.getBareData()
+    #         # print(xv)
+    #         # print(yv)
+    #         plotName = "plot_{0}".format(len(self._plot_dict))
+    #         plot2 = PlotDock(plotName, dataProvider.getDependanceName()) #dataSource=dataProvider)
+    #         plot2.plot(dataSource=dataProvider)
+
+    #         whereToAppend = "right" 
+    #         if self._layout == "horizontal":
+    #             whereToAppend = "right"
+    #         elif self._layout == "vertical":
+    #             whereToAppend = "bottom"
+    #         else:
+    #             whereToAppend = "right"
+
+    #         self._dockArea.addDock(plot, whereToAppend)
+    #         self._dockArea.addDock(plot2, whereToAppend)
+            
+    #     else:
+    #         print("cancelled")
+    #     # self._dockArea.setVisible(True)
+    #     # plot1 = PlotDock("new")
+    #     # plot1.plot(np.random.normal(size=100))
+    #     # plot2 = PlotDock("new2")
+    #     # plot2.plot(np.random.normal(size=100))
+        
+    #     # plot1.setYLink(plot2.plotter)
+    #     # self._dockArea.addDock(plot1, "right")
+    #     # self._dockArea.addDock(plot2, "right")
+    #     self.timer.start()
+
+    def updatingPlot(self):
+        data = generate_meas_data(self.counter)
+        self.data.append(data)
+        self.counter+=1
+        if self.counter > self.max_count:
+            self.timer.stop()
+            self.counter=0
 
     @QtCore.pyqtSlot()
     def on_actionAddCurve_triggered(self):
