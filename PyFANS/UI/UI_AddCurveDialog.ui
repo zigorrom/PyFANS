@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>250</width>
-    <height>136</height>
+    <height>164</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -95,6 +95,41 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QCheckBox" name="ui_select_position">
+       <property name="text">
+        <string>Select position</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="ui_desired_position">
+       <item>
+        <property name="text">
+         <string>top</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>bottom</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>left</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>right</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -115,8 +150,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>164</x>
+     <y>126</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -131,12 +166,28 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>164</x>
+     <y>126</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ui_select_position</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ui_desired_position</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>49</x>
+     <y>85</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>141</x>
+     <y>88</y>
     </hint>
    </hints>
   </connection>
