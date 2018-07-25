@@ -14,6 +14,7 @@ from py_expression_eval import Parser
 from measurement_data_structures import MeasurementInfo
 
 # def getValueAndName(func, var):
+# def get_function_variables(function):
 
 
 class VariableMapper:
@@ -34,16 +35,21 @@ class VariableMapper:
         return map(self.encode, self._baseVarNames)
 
     def encode(self, var_name):
+        if not var_name:
+            return None
+
         idx = self.baseVarNames.index(var_name)
         return "{0}{1}".format(self._prefix, idx)
 
     def decode(self, encoded_name):
+        if not encoded_name:
+            return None
+
         if encoded_name.startswith(self._prefix):
             index = int(encoded_name[len(self._prefix):])
             return self.baseVarNames[index]
 
         return None
-
 
 class ExperimentData(QtCore.QObject):
     newDataArrived = QtCore.pyqtSignal(object)
@@ -86,6 +92,63 @@ class ExperimentData(QtCore.QObject):
 
     def __repr__(self):
         return self.__str__()
+
+class CurveDataProvider:
+    def __init__(self, dataSource, xVariable=None, yVariable=None, xFunction=None, yFunction=None):
+        self._dataSource = dataSource
+        self._xVariable = xVariable
+        self._yVariable = yVariable
+        self._xFunction = xFunction
+        self._yFunction = yFunction
+        self._currentXdata = None
+        self._currentYdata = None
+
+    @property
+    def data(self):
+        return self._dataSource
+
+    @property
+    def xVariable(self):
+        return self._dataSource.variableMapper.decode(self._xVariable)
+
+    @property
+    def yVariable(self):
+        return self._dataSource.variableMapper.decode(self._yVariable)
+
+    @property
+    def xFunction(self):
+        return self._xFunction
+    
+    @property
+    def yFunction(self):
+        return self._yFunction
+
+    def __decode_variables__(self, variables):
+        if isinstance(variables, str):
+            return [self._dataSource.variableMapper.decode(variables)]
+        elif isinstance(variables, (list,tuple)):
+            return [self._dataSource.variableMapper.decode(v) for v in variables]
+        else:
+            return None
+
+    def __get_function_variables__(self, function, decoded=False):
+        if decoded:
+            return self.__decode_variables__(function.variables())
+        else:
+            return function.variables()
+
+    def __get_data_for_variables__(self, variables):
+        columns = self.__decode_variables__(variables)
+        return self.__get_data_for_columns__(columns)
+
+    def __get_data_for_columns__(self, cols):
+        return self.data[cols].values.T
+
+    def __execute_function__(self, function):
+        pass
+
+    def getData(self):
+        pass
 
 
 class UpdatablePlotDataItem(PlotDataItem):
