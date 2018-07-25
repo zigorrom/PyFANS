@@ -37,6 +37,7 @@
      <addaction name="actionUnlink"/>
     </widget>
     <addaction name="actionAddPlot"/>
+    <addaction name="actionRemovePlot"/>
     <addaction name="menuLink"/>
    </widget>
    <widget class="QMenu" name="menuCurve">
@@ -44,19 +45,29 @@
      <string>Curve</string>
     </property>
     <addaction name="actionAddCurve"/>
+    <addaction name="actionRemoveCurve"/>
+    <addaction name="actionCurveProperties"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImport"/>
+    <addaction name="actionExport"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuPlot"/>
    <addaction name="menuCurve"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAddPlot">
    <property name="text">
-    <string>Add plot</string>
+    <string>Add</string>
    </property>
   </action>
   <action name="actionAddCurve">
    <property name="text">
-    <string>Add curve</string>
+    <string>Add</string>
    </property>
   </action>
   <action name="actionLinkAxes">
@@ -77,6 +88,31 @@
   <action name="actionUnlink">
    <property name="text">
     <string>Unlink</string>
+   </property>
+  </action>
+  <action name="actionRemovePlot">
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </action>
+  <action name="actionRemoveCurve">
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </action>
+  <action name="actionCurveProperties">
+   <property name="text">
+    <string>Properties</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export</string>
    </property>
   </action>
  </widget>

@@ -9,6 +9,7 @@ from PyQt4 import QtCore, QtGui, uic
 
 import pyqtgraph as pg
 from pyqtgraph.dockarea import *
+from pyqtgraph.dockarea.Dock import DockLabel
 from pyqtgraph import PlotDataItem
 from py_expression_eval import Parser
 
@@ -16,7 +17,50 @@ from measurement_data_structures import MeasurementInfo
 
 # def getValueAndName(func, var):
 # def get_function_variables(function):
+def updateDockLabelStylePatched(self):
+    pass
+    # r = '3px'
+    # if self.dim:
+    #     fg = '#b0b0b0'
+    #     bg = '#94f5bb'
+    #     border = '#94f5bb'
+    #     # border = '#7cf3ac'
+    # else:
+    #     fg = '#fff'
+    #     bg = '#10b151'
+    #     border = '#10b151'
 
+    # if self.orientation == 'vertical':
+    #     self.vStyle = """DockLabel {
+    #         background-color : %s;
+    #         color : %s;
+    #         border-top-right-radius: 0px;
+    #         border-top-left-radius: %s;
+    #         border-bottom-right-radius: 0px;
+    #         border-bottom-left-radius: %s;
+    #         border-width: 0px;
+    #         border-right: 2px solid %s;
+    #         padding-top: 3px;
+    #         padding-bottom: 3px;
+    #         font-size: 18px;
+    #     }""" % (bg, fg, r, r, border)
+    #     self.setStyleSheet(self.vStyle)
+    # else:
+    #     self.hStyle = """DockLabel {
+    #         background-color : %s;
+    #         color : %s;
+    #         border-top-right-radius: %s;
+    #         border-top-left-radius: %s;
+    #         border-bottom-right-radius: 0px;
+    #         border-bottom-left-radius: 0px;
+    #         border-width: 0px;
+    #         border-bottom: 2px solid %s;
+    #         padding-left: 13px;
+    #         padding-right: 13px;
+    #         font-size: 18px
+    #     }""" % (bg, fg, r, r, border)
+    #     self.setStyleSheet(self.hStyle)
+DockLabel.updateStyle = updateDockLabelStylePatched
 
 class VariableMapper:
     def __init__(self, variable_list=None,prefix="var_"):
@@ -60,6 +104,8 @@ class ExperimentData(QtCore.QObject):
         cols = MeasurementInfo.header_options()
         self._data = pd.DataFrame(columns = cols)
         
+    # def importFromFile(self, filename):
+    #     self.data = pd.DataFrame.
 
     @property
     def variables(self):
@@ -85,7 +131,7 @@ class ExperimentData(QtCore.QObject):
         self.newDataArrived.emit(keys)
 
     def __getitem__(self, *args):
-        print("getting index {0}".format(args))
+        # print("getting index {0}".format(args))
         return self._data.__getitem__(*args)
 
     def __str__(self, *args, **kwargs):
@@ -226,7 +272,7 @@ class CurveDataProvider(QtCore.QObject):
         return caption
 
     def on_data_source_updated(self, keys):
-        print(keys)
+        # print(keys)
         self.__refreshData__()
         self.dataUpdated.emit()
 
@@ -237,11 +283,9 @@ class CurveDataProvider(QtCore.QObject):
         label = "{y} =f( {x} )".format(y=self._yCaption, x=self._xCaption)
         return label
 
-
-
 class UpdatablePlotDataItem(PlotDataItem):
     def __init__(self, *args, **kwargs):
-        self._name = kwargs.get("curveName","curve")
+        # self._name = kwargs.get("curveName","curve")
         super().__init__(*args, **kwargs)
         
     def setData(self, *args, **kwargs):
@@ -260,17 +304,33 @@ class UpdatablePlotDataItem(PlotDataItem):
 
     @property
     def curveName(self):
-        return self._name
+        return self.name()
 
     # def getBareData(self):
     #     return self.xData, self.yData
 
+
 class PlotDock(Dock):
-    def __init__(self, name, label, closable=True, **kwargs):
-        super().__init__(name, closable=closable, **kwargs)
+    def __init__(self, plotName, label, closable=True, logX=False, logY=False, **kwargs):
+        super().__init__(plotName, closable=closable, **kwargs)        
         self._plot = pg.PlotWidget(title=label)
         self.addWidget(self._plot)
-        self.curves = {}
+        self.setupPlot(logX=logX, logY=logY)
+
+        self.curves = []
+
+    def setupPlot(self, **kwargs):
+        self._plot.showAxis("right", show=True)
+        self._plot.showAxis("top", show=True)
+        right_axis = self._plot.getAxis("right")
+        right_axis.setStyle(showValues = False)
+        right_axis.setWidth(20)
+        top_axis = self._plot.getAxis("top")
+        top_axis.setStyle(showValues = False)
+        logX = kwargs.get("logX", False)
+        logY = kwargs.get("logY", False)
+        self._plot.setLogMode(x=logX, y=logY)
+        self._plot.addLegend()
 
     # def plot(self, curveName, *args, **kwargs):
     def plot(self, *args, **kwargs):
@@ -280,10 +340,14 @@ class PlotDock(Dock):
     # def addCurve(self, curveName, *args, **kwargs):
     def addCurve(self, *args, **kwargs):
         """Arguments are same as for PlotWidget.plot()"""
+        # if len(self.curves) > 0:
+        #     self._plot.addLegend()
+
         curve = UpdatablePlotDataItem(*args, **kwargs)
         self._plot.addItem(curve)
         # curve = self._plot.plot(*args, **kwargs)
-        self.curves[curve.curveName] = curve
+        self.curves.append(curve)
+        
         return curve
 
     @property
@@ -308,6 +372,8 @@ class PlotDock(Dock):
     def setAxesLink(self, otherPlot):
         self.setXLink(otherPlot)
         self.setYLink(otherPlot)
+
+    
         
 editExpressionViewBase, editExpressionViewForm = uic.loadUiType("UI/UI_EditExpression.ui")
 class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
@@ -379,10 +445,9 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
             traceback.print_exc(file=sys.stdout)
             print(e)
 
-
 addCurveViewBase, addCurveViewForm = uic.loadUiType("UI/UI_AddCurveDialog.ui")
 class AddCurveDialog(addCurveViewBase, addCurveViewForm):
-    def __init__(self, variableMapper,  parent = None ):
+    def __init__(self, variableMapper,  parent = None , **kwargs):
         super(addCurveViewBase,self).__init__(parent)
         self.setupUi()
         self.variableMapper = variableMapper
@@ -393,6 +458,9 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
         self.ui_x_axis_value.addItems(self.variableMapper.baseVarNames)
         self.ui_y_axis_value.clear()
         self.ui_y_axis_value.addItems(self.variableMapper.baseVarNames)
+        self._curve_name = None
+        self.curveName = kwargs.get("curveName", "")
+
         
     
     def setupUi(self):
@@ -426,6 +494,40 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
     @property
     def autoUpdate(self):
         return self.ui_auto_update.isChecked()
+
+    @property
+    def logX(self):
+        return self.ui_log_mode_x.isChecked()
+
+    @property
+    def logY(self):
+        return self.ui_log_mode_y.isChecked()
+
+    def getLogMode(self):
+        return self.logX, self.logY
+
+    @property
+    def curveColor(self):
+        return self.ui_curve_color.color()
+        
+    @property
+    def lineWidth(self):
+        return self.ui_line_width.value()
+
+    @property
+    def curveName(self):
+        cn = self.ui_curve_name.text()
+        if cn:
+            return cn
+        else:
+            return self._curve_name
+
+    @curveName.setter
+    def curveName(self, value):
+        self._curve_name = value
+        self.ui_curve_name.setText(value)
+
+
 
     @QtCore.pyqtSlot()
     def on_ui_x_axis_function_clicked(self):
@@ -483,23 +585,24 @@ class SelectPlotsDialog(selectPlotViewBase, selectPlotViewForm):
     
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
 class ExperimentDataAnalysis(mainViewBase,mainViewForm):
-    def __init__(self, layout="horizontal", parent = None ):
+    def __init__(self, experimentData = None, layout="horizontal", parent = None ):
         super(mainViewBase,self).__init__(parent)
         self.setupUi()
         self._layout = layout
-        self._data = ExperimentData()
-        for i in range(10):
-            self._data.append(generate_meas_data(i))
+        self._data = experimentData #ExperimentData()
+        # for i in range(10):
+        #     self._data.append(generate_meas_data(i))
 
         self._plot_dict = dict()
         self._curve_dict = dict()
-        print(self.data.variables)
+        # print(self.data.variables)
 
         self.counter = 0
-        self.max_count = 10
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(500)
-        self.timer.timeout.connect(self.updatingPlot)
+        self.max_count = 1000
+        
+        # self.timer = QtCore.QTimer(self)
+        # self.timer.setInterval(500)
+        # self.timer.timeout.connect(self.updatingPlot)
 
     
     def setupUi(self):
@@ -531,7 +634,9 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     def on_actionAddPlot_triggered(self):
         variables = self.data.variables
         mapper = self.data.variableMapper
-        dialog = AddCurveDialog(variableMapper=mapper,parent=self)
+        plotName = "plot_{0}".format(len(self._plot_dict))
+        curveName = "curve {0}".format(len(self._curve_dict))
+        dialog = AddCurveDialog(variableMapper=mapper,parent=self, curveName=curveName)
         res = dialog.exec_()
         if res:
             print("adding plot")
@@ -541,22 +646,29 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
             y_var = dialog.selectedYVariable
             funcy = dialog.yAxisFunction
+
             autoUpdate = dialog.autoUpdate
+            log_x,log_y = dialog.getLogMode()
+            curveColor = dialog.curveColor
+            lineWidth = dialog.lineWidth
+            p = pg.mkPen(color=curveColor, width=lineWidth)
 
             dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy, autoUpdate)
-
-            plotName = "plot_{0}".format(len(self._plot_dict))
-            curveName = "curve {0}".format(len(self._curve_dict))
-            plot = PlotDock(plotName, dataProvider.getDependanceName()) #dataSource=dataProvider)
-            curve = plot.plot(dataSource=dataProvider, curveName=curveName)
-
+            
+            dependencyName = dataProvider.getDependanceName()
+            
+            # plot = PlotDock(plotName,dependencyName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
+            plot = PlotDock(plotName,plotName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p )
+            self._plot_dict[plotName] = plot
+            self._curve_dict[curve.curveName] = curve
             whereToAppend = self.whereToAppendDockPlot()
             if dialog.useSelectedPosition:
                 whereToAppend = dialog.selectedPosition
 
             self._dockArea.addDock(plot, whereToAppend)
             
-            self.timer.start()
+            # self.timer.start()
         else:
             print("cancelled")
        
@@ -652,17 +764,53 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     #     # self._dockArea.addDock(plot2, "right")
     #     self.timer.start()
 
-    def updatingPlot(self):
-        data = generate_meas_data(self.counter)
-        self.data.append(data)
-        self.counter+=1
-        if self.counter > self.max_count:
-            self.timer.stop()
-            self.counter=0
+    # def updatingPlot(self):
+    #     data = generate_meas_data(self.counter)
+    #     self.data.append(data)
+    #     self.counter+=1
+    #     if self.counter > self.max_count:
+    #         self.timer.stop()
+    #         self.counter=0
 
     @QtCore.pyqtSlot()
     def on_actionAddCurve_triggered(self):
         print("adding curve")
+        items = list(self._plot_dict.keys())
+        plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
+        
+        variables = self.data.variables
+        mapper = self.data.variableMapper
+        # plotName = "plot_{0}".format(len(self._plot_dict))
+        curveName = "curve {0}".format(len(self._curve_dict))
+        dialog = AddCurveDialog(variableMapper=mapper,parent=self, curveName=curveName)
+        res = dialog.exec_()
+        if res:
+            print("adding plot")
+            
+            x_var = dialog.selectedXVariable
+            funcx = dialog.xAxisFunction
+
+            y_var = dialog.selectedYVariable
+            funcy = dialog.yAxisFunction
+
+            autoUpdate = dialog.autoUpdate
+            log_x,log_y = dialog.getLogMode()
+            curveColor = dialog.curveColor
+            lineWidth = dialog.lineWidth
+            curveName = dialog.curveName
+            p = pg.mkPen(color=curveColor, width=lineWidth)
+
+            dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy, autoUpdate)
+            dependencyName = dataProvider.getDependanceName()
+
+            plot = self._plot_dict[plotName] #PlotDock(plotName, dataProvider.getDependanceName(), logX=log_x, logY=log_y ) #dataSource=dataProvider)
+            # curve = plot.plot(dataSource=dataProvider, name=curveName, pen=p )
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p )
+            self._curve_dict[curve.curveName] = curve
+            
+        else:
+            print("cancelled")
+
         
     @QtCore.pyqtSlot()
     def on_actionLinkXAxis_triggered(self):
@@ -706,7 +854,41 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
         print("Unlinking successful")
 
-   
+    @QtCore.pyqtSlot()
+    def on_actionRemovePlot_triggered(self):
+        print("removing plot")
+        items = list(self._plot_dict.keys())
+        plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
+        if ok:
+            plot = self._plot_dict[plotName]
+            for curve in plot.curves:
+                del self._curve_dict[curve.curveName]
+            plot.close()
+
+
+
+    @QtCore.pyqtSlot()
+    def on_actionRemoveCurve_triggered(self):
+        print("removing curve")
+        items = list(self._curve_dict.keys())
+        curveName, ok = QtGui.QInputDialog.getItem(self, "Select curve", "list of curves", items, 0, False)
+        curve = self._curve_dict[curveName]
+        parent = curve.parent()
+        parent.removeItem(curve)
+        del self._curve_dict[curveName]
+
+    @QtCore.pyqtSlot()
+    def on_actionCurveProperties_triggered(self):
+        print("curve properties")
+
+    @QtCore.pyqtSlot()
+    def on_actionImport_triggered(self):
+        print("importing")
+
+    @QtCore.pyqtSlot()
+    def on_actionExport_triggered(self):
+        print("exporting")
+
 
     def linkViews(self, plotName1, plotName2, linkX=False, linkY=False):
         plot1 = self._plot_dict.get(plotName1)
@@ -741,13 +923,26 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
         
 
-        
+
 
 def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("ExperimentDataAnalysis")
     app.setStyle("cleanlooks")
+    
+    expData = ExperimentData()
+    for i in range(10):
+        expData.append(generate_meas_data(i))
+    
     wnd = ExperimentDataAnalysis()
+    wnd.setData(expData)
+    timer = QtCore.QTimer(wnd)
+    timer.setInterval(500)
+    timer.timeout.connect( lambda: expData.append(generate_meas_data(0)))
+    timer.start()
+
+        
+        
 
     wnd.show()
     return app.exec_()
