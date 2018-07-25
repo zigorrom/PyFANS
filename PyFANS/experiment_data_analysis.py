@@ -8,6 +8,7 @@ from PyQt4 import QtCore, QtGui, uic
 
 import pyqtgraph as pg
 from pyqtgraph.dockarea import *
+from pyqtgraph import PlotDataItem
 from py_expression_eval import Parser
 
 from measurement_data_structures import MeasurementInfo
@@ -87,6 +88,17 @@ class ExperimentData(QtCore.QObject):
         return self.__str__()
 
 
+class UpdatablePlotDataItem(PlotDataItem):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._name = kwargs.get("curveName","curve")
+
+    @property
+    def curveName(self):
+        return self._name
+
+    def getBareData(self):
+        return self.xData, self.yData
 
 class PlotDock(Dock):
     def __init__(self, name, label, closable=True, **kwargs):
@@ -95,14 +107,18 @@ class PlotDock(Dock):
         self.addWidget(self._plot)
         self.curves = {}
 
+    # def plot(self, curveName, *args, **kwargs):
     def plot(self, *args, **kwargs):
         curve = self.addCurve(*args,**kwargs)
         return curve
 
+    # def addCurve(self, curveName, *args, **kwargs):
     def addCurve(self, *args, **kwargs):
         """Arguments are same as for PlotWidget.plot()"""
-        curve = self._plot.plot(*args, **kwargs)
-        self.curves[""] = curve
+        curve = UpdatablePlotDataItem(*args, **kwargs)
+        self._plot.addItem(curve)
+        # curve = self._plot.plot(*args, **kwargs)
+        self.curves[curve.curveName] = curve
         return curve
 
     def updateCurve(self, xData, yData):
@@ -384,7 +400,13 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             plotName = "plot_{0}".format(len(self._plot_dict))
             label = "{y} =f( {x} )".format(y=yName, x=xName)
             plot = PlotDock(plotName, label)
-            plot.plot(xVal, yVal)
+            # curve = plot.plot("curve", xVal, yVal)
+            curve = plot.plot(xVal, yVal, curveName="curve1")
+            print("reading back x and y values")
+            xv,yv = curve.getBareData()
+            print(xv)
+            print(yv)
+
             whereToAppend = "right" 
             if self._layout == "horizontal":
                 whereToAppend = "right"
