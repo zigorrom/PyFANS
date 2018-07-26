@@ -1,5 +1,6 @@
 import sys
 import re
+import math
 import traceback
 import functools
 import numpy as np
@@ -122,13 +123,26 @@ class ExperimentData(QtCore.QObject):
     
     @property
     def count(self):
-        return len(self._data.index)
+        c = 0 if math.isnan(self._data.index.max()) else self._data.index.max() + 1
+        return c
+        # return len(self._data.index)
+
+    def clear(self):
+        self._data.iloc[0:0]
 
     def append(self, measurement_data):
         new_data = measurement_data.to_dict()
+        # newdf = pd.DataFrame.from_dict(new_data)
+        # self._data.append(newdf)
         self._data.loc[self.count] = new_data
         keys = new_data.keys()
+        # new_data = measurement_data.to_DataFrame()
+        # self._data = self._data.append(new_data)
+        # keys = list(new_data)
         self.newDataArrived.emit(keys)
+        print("appending data")
+        print(new_data)
+        # print(self._data)
 
     def __getitem__(self, *args):
         # print("getting index {0}".format(args))
@@ -372,6 +386,13 @@ class PlotDock(Dock):
     def setAxesLink(self, otherPlot):
         self.setXLink(otherPlot)
         self.setYLink(otherPlot)
+
+    @property
+    def items(self):
+        return self._plot.getPlotItem().items
+
+    def removeItem(self, item):
+        self._plot.removeItem(item)
 
     
         
@@ -873,9 +894,15 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         items = list(self._curve_dict.keys())
         curveName, ok = QtGui.QInputDialog.getItem(self, "Select curve", "list of curves", items, 0, False)
         curve = self._curve_dict[curveName]
-        parent = curve.parent()
-        parent.removeItem(curve)
-        del self._curve_dict[curveName]
+        for name,plot in self._plot_dict.items():
+            if curve in plot.items:
+                plot.removeItem(curve)
+
+            del self._curve_dict[curveName]
+                
+        # parent = curve.parent()
+        # parent.removeItem(curve)
+        # del self._curve_dict[curveName]
 
     @QtCore.pyqtSlot()
     def on_actionCurveProperties_triggered(self):
@@ -929,7 +956,63 @@ def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("ExperimentDataAnalysis")
     app.setStyle("cleanlooks")
-    
+    # r = '3px'
+    #  if self.dim:
+    #         fg = '#aaa'
+    #         bg = '#44a'
+    #         border = '#339'
+    #     else:
+    #         fg = '#fff'
+    #         bg = '#66c'
+    #         border = '#55B'
+    # fg = '#aaa'
+    # bg = '#44a'
+    # border = '#339'
+
+    # fg = '#fff'
+    # bg = '#66c'
+    # border = '#55B'
+    # style = """DockLabel[orientation='vertical'] {{
+    #             background-color : {bg};
+    #             color : {fg};
+    #             border-top-right-radius: 0px;
+    #             border-top-left-radius: {r};
+    #             border-bottom-right-radius: 0px;
+    #             border-bottom-left-radius: {r};
+    #             border-width: 0px;
+    #             border-right: 2px solid {b};
+    #             padding-top: 3px;
+    #             padding-bottom: 3px;
+    #         }}
+    #         DockLabel[orientation='horizontal']{{
+    #             background-color : {bg};
+    #             color : {fg};
+    #             border-top-right-radius: {r};
+    #             border-top-left-radius: {r};
+    #             border-bottom-right-radius: 0px;
+    #             border-bottom-left-radius: 0px;
+    #             border-width: 0px;
+    #             border-bottom: 2px solid {b};
+    #             padding-left: 3px;
+    #             padding-right: 3px;
+    #         }}
+    #         """.format(bg=bg,fg=fg,r=r,b=border)
+
+    # hstyle = """DockLabel {
+    #             background-color : %s;
+    #             color : %s;
+    #             border-top-right-radius: %s;
+    #             border-top-left-radius: %s;
+    #             border-bottom-right-radius: 0px;
+    #             border-bottom-left-radius: 0px;
+    #             border-width: 0px;
+    #             border-bottom: 2px solid %s;
+    #             padding-left: 3px;
+    #             padding-right: 3px;
+    #         }""" % (bg, fg, r, r, border)
+
+    # app.setStyleSheet(style)
+
     expData = ExperimentData()
     for i in range(10):
         expData.append(generate_meas_data(i))

@@ -946,11 +946,15 @@ class FANS_UI_Controller(QtCore.QObject):
         assert isinstance(view, FANS_UI_MainView)
         
         self.threadPool = QtCore.QThreadPool()
-
+        
+  
         self.main_view = view
         self.main_view.set_controller(self)
         self.show_main_view()
-       
+
+        self.experimentData = eds.ExperimentData()
+        self.analysis_window = None
+
         self._voltage_control = None
         self.voltage_control = VoltageControl()
         self.waterfall_noise_window = plt.WaterfallNoiseWindow()
@@ -1220,6 +1224,7 @@ class FANS_UI_Controller(QtCore.QObject):
         msg = "Experiment \"{0}\" started".format(experiment_name)
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
+        self.experimentData.clear()
         self.send_message_via_email(msg)
         self._time_info_window.reset()
         self._time_info_window.start_timer()
@@ -1280,6 +1285,7 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_end_measurement_info_received(self,measurement_info):
         self.main_view.ui_set_measurement_info_end(measurement_info)
+        self.experimentData.append(measurement_info)
 
     def on_resulting_spectrum_received(self,data):
         self.main_view.ui_update_resulting_spectrum_data(data)
@@ -1334,8 +1340,10 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_analysis_window_open_action(self):
         print("analysis window")
-        if not hasattr(self, "analysis_window"):
+        # if not hasattr(self, "analysis_window"):
+        if not self.analysis_window:
             self.analysis_window = eds.ExperimentDataAnalysis(layout="horizontal")
+            self.analysis_window.setData(self.experimentData)
         self.analysis_window.show()
         # self.main_view.ui_dock_widget.setWidget(widget)
 

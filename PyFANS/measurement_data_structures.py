@@ -1,4 +1,5 @@
 ﻿import math
+import pandas as pd
 class measurement_parameter_property(property):
     def __init__(self,name,units,description, **kwargs):
         super().__init__(**kwargs)
@@ -338,6 +339,13 @@ class MeasurementInfo:
             self.GATE_VOLTAGE_END_OPTION: self.end_gate_voltage,
             self.GATE_VOLTAGE_START_OPTION: self.start_gate_voltage
             }
+
+    def to_DataFrame(self):
+        newDict = self.to_dict()
+        for key,val in newDict.items():
+            newDict[key] = [val]
+
+        return pd.DataFrame.from_dict(newDict)
 
     def __str__(self):
         list = [self.start_sample_voltage, 
