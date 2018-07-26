@@ -128,7 +128,7 @@ class ExperimentData(QtCore.QObject):
         # return len(self._data.index)
 
     def clear(self):
-        self._data.iloc[0:0]
+        self._data = self._data.iloc[0:0]
 
     def append(self, measurement_data):
         new_data = measurement_data.to_dict()
