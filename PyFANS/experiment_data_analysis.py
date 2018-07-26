@@ -822,10 +822,18 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         fname = QtGui.QFileDialog.getOpenFileName()
         if os.path.isfile(fname):
             self.data.importFromFile(fname)
+            directory = os.path.dirname(fname)
+            os.chdir(directory)
 
     @QtCore.pyqtSlot()
     def on_actionExport_triggered(self):
         print("exporting")
+
+    # @QtCore.pyqtSlot()
+    # def on_actionSetWorkingDirectory_triggered(self):
+    #     print("setting working directory")
+    #     folder_name = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select Folder"))
+    #     if os.path.isdir(folder_name):
 
 
     def linkViews(self, plotName1, plotName2, linkX=False, linkY=False):
@@ -930,10 +938,10 @@ def test_ui():
     
     wnd = ExperimentDataAnalysis()
     wnd.setData(expData)
-    timer = QtCore.QTimer(wnd)
-    timer.setInterval(500)
-    timer.timeout.connect( lambda: expData.append(generate_meas_data(0)))
-    timer.start()
+    # timer = QtCore.QTimer(wnd)
+    # timer.setInterval(500)
+    # timer.timeout.connect( lambda: expData.append(generate_meas_data(0)))
+    # timer.start()
 
         
         
