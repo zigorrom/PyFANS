@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 import math
@@ -12,7 +13,8 @@ import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from pyqtgraph.dockarea.Dock import DockLabel
 from pyqtgraph import PlotDataItem
-from py_expression_eval import Parser
+# from py_expression_eval import Parser
+from expression_parser_patch import PatchedParser
 
 from measurement_data_structures import MeasurementInfo
 
@@ -105,8 +107,12 @@ class ExperimentData(QtCore.QObject):
         cols = MeasurementInfo.header_options()
         self._data = pd.DataFrame(columns = cols)
         
-    # def importFromFile(self, filename):
-    #     self.data = pd.DataFrame.
+    
+    def importFromFile(self, filename):
+        self._data = pd.read_csv(filename, delimiter="\t")
+        keys = list(self._data)
+        self.newDataArrived.emit(keys)
+
 
     @property
     def variables(self):
@@ -403,7 +409,7 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
         self.setupUi(stringExpression)
         self._variableMapper = variableMapper
         self._parsedExpression = None
-        self._availableFunctions = ['+','-','*','/','PI','E','abs()','sin()','cos()','tan()','log()']
+        self._availableFunctions = ['+','-','*','/','PI','E','abs()','sin()','cos()','tan()','log()','Sv(filename,frequency)', "Si(filename,frequency,resistance)", "Sinorm(filename,frequency,resistance,current)"]
 
     @property
     def stringExpression(self):
@@ -414,7 +420,8 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
         return self._parsedExpression
 
     def parseExpression(self):
-        parser = Parser()
+        # parser = Parser()PatchedParser
+        parser = PatchedParser()
         expr = parser.parse(self.ui_expression.text())
         return expr
 
@@ -693,105 +700,6 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         else:
             print("cancelled")
        
-        
-
-    # @QtCore.pyqtSlot()
-    # def on_actionAddPlot_triggered(self):
-    #     variables = self.data.variables
-    #     mapper = self.data.variableMapper
-    #     dialog = AddCurveDialog(variableMapper=mapper,parent=self)
-    #     res = dialog.exec_()
-    #     if res:
-    #         print("adding plot")
-    #         xVal = None
-    #         yVal = None
-            
-    #         xName = ""
-    #         yName = ""
-    #         # plot1.plot(x,y, pen=(0,0,200))#, symbolBrush=(0,0,200), symbolPen='w', symbol='o', symbolSize=14, name="symbol='o'")
-            
-    #         x_var = dialog.selectedXVariable
-    #         funcx = dialog.xAxisFunction
-
-    #         if funcx is not None:
-    #             v = funcx.variables()
-    #             vdecod = [mapper.decode(i) for i in v]
-    #             data = self.data[vdecod].values.T
-    #             params = {key: value for key,value in zip(v,data)}
-    #             xVal = funcy.evaluate(params)
-    #             xName = funcx.simplify({}).toString()
-    #             for ve, vd in zip(v,vdecod):
-    #                 xName = xName.replace(ve,vd)
-
-    #         else:
-    #             xVal = self.data[[x_var]].values.T[0]
-    #             xName = x_var
-
-    #         y_var = dialog.selectedYVariable
-    #         funcy = dialog.yAxisFunction
-
-    #         if funcy is not None:
-    #             v = funcy.variables()
-    #             vdecod = [mapper.decode(i) for i in v]
-    #             data = self.data[vdecod].values.T
-    #             params = {key: value for key,value in zip(v,data)}
-    #             yVal = funcy.evaluate(params)
-    #             yName = funcy.simplify({}).toString()
-    #             for ve, vd in zip(v,vdecod):
-    #                 yName = yName.replace(ve,vd)
-    #         else:
-    #             yVal = self.data[[y_var]].values.T[0]
-    #             yName = y_var
-            
-    #         print(xVal)
-    #         print(yVal)
-    #         dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy)
-
-    #         plotName = "plot_{0}".format(len(self._plot_dict))
-    #         label = "{y} =f( {x} )".format(y=yName, x=xName)
-    #         plot = PlotDock(plotName, label)
-    #         # curve = plot.plot("curve", xVal, yVal)
-    #         curve = plot.plot(xVal, yVal, curveName="curve1")
-    #         self._plot_dict[plotName] = plot
-    #         # print("reading back x and y values")
-    #         # xv,yv = curve.getBareData()
-    #         # print(xv)
-    #         # print(yv)
-    #         plotName = "plot_{0}".format(len(self._plot_dict))
-    #         plot2 = PlotDock(plotName, dataProvider.getDependanceName()) #dataSource=dataProvider)
-    #         plot2.plot(dataSource=dataProvider)
-
-    #         whereToAppend = "right" 
-    #         if self._layout == "horizontal":
-    #             whereToAppend = "right"
-    #         elif self._layout == "vertical":
-    #             whereToAppend = "bottom"
-    #         else:
-    #             whereToAppend = "right"
-
-    #         self._dockArea.addDock(plot, whereToAppend)
-    #         self._dockArea.addDock(plot2, whereToAppend)
-            
-    #     else:
-    #         print("cancelled")
-    #     # self._dockArea.setVisible(True)
-    #     # plot1 = PlotDock("new")
-    #     # plot1.plot(np.random.normal(size=100))
-    #     # plot2 = PlotDock("new2")
-    #     # plot2.plot(np.random.normal(size=100))
-        
-    #     # plot1.setYLink(plot2.plotter)
-    #     # self._dockArea.addDock(plot1, "right")
-    #     # self._dockArea.addDock(plot2, "right")
-    #     self.timer.start()
-
-    # def updatingPlot(self):
-    #     data = generate_meas_data(self.counter)
-    #     self.data.append(data)
-    #     self.counter+=1
-    #     if self.counter > self.max_count:
-    #         self.timer.stop()
-    #         self.counter=0
 
     @QtCore.pyqtSlot()
     def on_actionAddCurve_triggered(self):
@@ -911,6 +819,9 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     @QtCore.pyqtSlot()
     def on_actionImport_triggered(self):
         print("importing")
+        fname = QtGui.QFileDialog.getOpenFileName()
+        if os.path.isfile(fname):
+            self.data.importFromFile(fname)
 
     @QtCore.pyqtSlot()
     def on_actionExport_triggered(self):
