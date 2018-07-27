@@ -13,6 +13,7 @@ import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from pyqtgraph.dockarea.Dock import DockLabel
 from pyqtgraph import PlotDataItem
+from pyqtgraph import exporters as pg_exp
 # from py_expression_eval import Parser
 from expression_parser_patch import PatchedParser
 
@@ -64,6 +65,12 @@ def updateDockLabelStylePatched(self):
     #     }""" % (bg, fg, r, r, border)
     #     self.setStyleSheet(self.hStyle)
 DockLabel.updateStyle = updateDockLabelStylePatched
+
+def open_folder_in_explorer(folder):
+    print("opening folder")
+    request = 'explorer "{0}"'.format(folder)#self._settings.working_directory)
+    print(request)
+    os.system(request)
 
 class VariableMapper:
     def __init__(self, variable_list=None,prefix="var_"):
@@ -146,8 +153,8 @@ class ExperimentData(QtCore.QObject):
         # self._data = self._data.append(new_data)
         # keys = list(new_data)
         self.newDataArrived.emit(keys)
-        print("appending data")
-        print(new_data)
+        # print("appending data")
+        # print(new_data)
         # print(self._data)
 
     def __getitem__(self, *args):
@@ -400,6 +407,10 @@ class PlotDock(Dock):
     def removeItem(self, item):
         self._plot.removeItem(item)
 
+    def exportAsImage(self, filename, folder):
+        vb = self._plot.plotItem#.getViewBox()
+        exporter = pg_exp.ImageExporter(vb)
+        exporter.export(os.path.join(folder,"{0}.png".format(filename)))
     
         
 editExpressionViewBase, editExpressionViewForm = uic.loadUiType("UI/UI_EditExpression.ui")
@@ -625,9 +636,10 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         self._curve_dict = dict()
         # print(self.data.variables)
 
-        self.counter = 0
-        self.max_count = 1000
+        # self.counter = 0
+        # self.max_count = 1000
         
+        self.working_directory = None
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(500)
         # self.timer.timeout.connect(self.updatingPlot)
@@ -823,18 +835,34 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         if os.path.isfile(fname):
             self.data.importFromFile(fname)
             directory = os.path.dirname(fname)
+            self.working_directory = directory
             os.chdir(directory)
 
     @QtCore.pyqtSlot()
     def on_actionExport_triggered(self):
         print("exporting")
+        saveFolder = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", directory=self.working_directory)
+        plotNames = self.selectPlotsNames()
+        print(plotNames)
+        if not plotNames:
+            print("no selected plots")
+            return
 
-    # @QtCore.pyqtSlot()
-    # def on_actionSetWorkingDirectory_triggered(self):
-    #     print("setting working directory")
-    #     folder_name = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select Folder"))
-    #     if os.path.isdir(folder_name):
+        for pltName in plotNames:
+            p = self._plot_dict[pltName]
+            p.exportAsImage(pltName, saveFolder)
+            # exporter = pg_exp.ImageExporter(p.view)
+            # exporter.export(os.path.join(saveFolder,"{0}.png".format(pltName)))
 
+        # items = list(self._plot_dict.keys())
+        # plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
+
+
+    @QtCore.pyqtSlot()
+    def on_actionOpenWorkingFolder_triggered(self):
+        if self.working_directory:
+            open_folder_in_explorer(self.working_directory)
+    
 
     def linkViews(self, plotName1, plotName2, linkX=False, linkY=False):
         plot1 = self._plot_dict.get(plotName1)
@@ -850,15 +878,17 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             plot2.setAxesLink(None)
 
         return plotName2
-
-    def getPlotsToLink(self):
+    
+    def selectPlotsNames(self):
         plotNames = list(self._plot_dict.keys())
-        print("Plot Names")
-        print(plotNames)
         dialog = SelectPlotsDialog()
         dialog.setList(plotNames)
         res = dialog.exec_()
         plotList = dialog.getSelectedList()
+        return plotList
+
+    def getPlotsToLink(self):
+        plotList = self.selectPlotsNames()
         if len(plotList)>1:
             return plotList
         return None

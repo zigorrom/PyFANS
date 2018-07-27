@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>891</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPlot">
@@ -54,6 +54,7 @@
     </property>
     <addaction name="actionImport"/>
     <addaction name="actionExport"/>
+    <addaction name="actionOpenWorkingFolder"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlot"/>
@@ -113,6 +114,11 @@
   <action name="actionExport">
    <property name="text">
     <string>Export</string>
+   </property>
+  </action>
+  <action name="actionOpenWorkingFolder">
+   <property name="text">
+    <string>Open working folder</string>
    </property>
   </action>
  </widget>
