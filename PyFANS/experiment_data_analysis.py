@@ -699,7 +699,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             
             # plot = PlotDock(plotName,dependencyName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
             plot = PlotDock(plotName,plotName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
-            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p )
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=p, symbolBrush="r" , symbolSize=10, pxMode=True )
             self._plot_dict[plotName] = plot
             self._curve_dict[curve.curveName] = curve
             whereToAppend = self.whereToAppendDockPlot()
@@ -833,10 +833,10 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         print("importing")
         fname = QtGui.QFileDialog.getOpenFileName()
         if os.path.isfile(fname):
-            self.data.importFromFile(fname)
             directory = os.path.dirname(fname)
             self.working_directory = directory
             os.chdir(directory)
+            self.data.importFromFile(fname)
 
     @QtCore.pyqtSlot()
     def on_actionExport_triggered(self):

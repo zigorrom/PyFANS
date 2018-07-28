@@ -17,8 +17,24 @@ class PatchedParser(py_eval.Parser):
         # print("importing data")
 
         return data
-        
+
+    # def sv_func_optimized(self, filename, frequency):    
     def sv_func(self, filename, frequency):
+        delimiter = "\t"
+        freq_type = type(frequency)
+
+        with open(filename) as f:
+            f.readline()
+
+            for i, line in enumerate(f):
+                
+                freq, sv = line.split(delimiter, 1)
+                if freq_type(freq) == frequency:
+                    return float(sv)
+        return None
+
+
+    def sv_func_old(self, filename, frequency):
         # print(filename)
         # print(frequency)
         freqCol = 0
