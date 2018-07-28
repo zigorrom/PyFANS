@@ -699,7 +699,13 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             
             # plot = PlotDock(plotName,dependencyName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
             plot = PlotDock(plotName,plotName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
-            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=p, symbolBrush="r" , symbolSize=10, pxMode=True )
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=curveColor, symbolBrush="r", size=10, pxMode=True )
+
+#FIX in pyqtgraph line 765:
+# fragments = [QtGui.QPainter.PixmapFragment.create(targetRect.center(), sourceRect, targetRect.width()/sourceRect.width(),targetRect.height()/sourceRect.height() ) for targetRect, sourceRect in zip(data['targetRect'].tolist(), data['sourceRect'].tolist()) ] 
+# p.drawPixmapFragments(fragments, atlas) 
+
+
             self._plot_dict[plotName] = plot
             self._curve_dict[curve.curveName] = curve
             whereToAppend = self.whereToAppendDockPlot()
@@ -746,7 +752,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
             plot = self._plot_dict[plotName] #PlotDock(plotName, dataProvider.getDependanceName(), logX=log_x, logY=log_y ) #dataSource=dataProvider)
             # curve = plot.plot(dataSource=dataProvider, name=curveName, pen=p )
-            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p )
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=p, symbolBrush="r", size=10, pxMode=True  )
             self._curve_dict[curve.curveName] = curve
             
         else:
@@ -905,62 +911,17 @@ def test_ui():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("ExperimentDataAnalysis")
     app.setStyle("cleanlooks")
-    # r = '3px'
-    #  if self.dim:
-    #         fg = '#aaa'
-    #         bg = '#44a'
-    #         border = '#339'
-    #     else:
-    #         fg = '#fff'
-    #         bg = '#66c'
-    #         border = '#55B'
-    # fg = '#aaa'
-    # bg = '#44a'
-    # border = '#339'
+    
+    # plt = pg.PlotWidget()
+    # c3 = plt.plot([4,3,2,1], pen=None, symbol='o', symbolPen='y', symbolBrush='r', name="point plot")
+    # plt.show()
+    # plt = pg.plot()
+    # plt.setWindowTitle('pyqtgraph example: Legend')
+    # plt.addLegend()
 
-    # fg = '#fff'
-    # bg = '#66c'
-    # border = '#55B'
-    # style = """DockLabel[orientation='vertical'] {{
-    #             background-color : {bg};
-    #             color : {fg};
-    #             border-top-right-radius: 0px;
-    #             border-top-left-radius: {r};
-    #             border-bottom-right-radius: 0px;
-    #             border-bottom-left-radius: {r};
-    #             border-width: 0px;
-    #             border-right: 2px solid {b};
-    #             padding-top: 3px;
-    #             padding-bottom: 3px;
-    #         }}
-    #         DockLabel[orientation='horizontal']{{
-    #             background-color : {bg};
-    #             color : {fg};
-    #             border-top-right-radius: {r};
-    #             border-top-left-radius: {r};
-    #             border-bottom-right-radius: 0px;
-    #             border-bottom-left-radius: 0px;
-    #             border-width: 0px;
-    #             border-bottom: 2px solid {b};
-    #             padding-left: 3px;
-    #             padding-right: 3px;
-    #         }}
-    #         """.format(bg=bg,fg=fg,r=r,b=border)
-
-    # hstyle = """DockLabel {
-    #             background-color : %s;
-    #             color : %s;
-    #             border-top-right-radius: %s;
-    #             border-top-left-radius: %s;
-    #             border-bottom-right-radius: 0px;
-    #             border-bottom-left-radius: 0px;
-    #             border-width: 0px;
-    #             border-bottom: 2px solid %s;
-    #             padding-left: 3px;
-    #             padding-right: 3px;
-    #         }""" % (bg, fg, r, r, border)
-
-    # app.setStyleSheet(style)
+    # c1 = plt.plot([1,3,2,4], pen='r', name='red plot')
+    # c2 = plt.plot([2,1,4,3], pen='g', fillLevel=0, fillBrush=(255,255,255,30), name='green plot')
+    # c3 = plt.plot([4,3,2,1], pen=None, symbol='o', symbolPen='y', symbolBrush='r', name="point plot", pxMode=False)
 
     expData = ExperimentData()
     for i in range(10):
