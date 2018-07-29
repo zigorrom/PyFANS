@@ -13,6 +13,7 @@ import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from pyqtgraph.dockarea.Dock import DockLabel
 from pyqtgraph import PlotDataItem
+from pyqtgraph.graphicsItems.LegendItem import LegendItem
 from pyqtgraph import exporters as pg_exp
 # from py_expression_eval import Parser
 from expression_parser_patch import PatchedParser
@@ -71,6 +72,13 @@ def open_folder_in_explorer(folder):
     request = 'explorer "{0}"'.format(folder)#self._settings.working_directory)
     print(request)
     os.system(request)
+
+
+class CustomLegendItem(LegendItem):
+    def __init__(self, size = None, offset = None):
+        super().__init__(size, offset)
+
+    
 
 class VariableMapper:
     def __init__(self, variable_list=None,prefix="var_"):
@@ -359,6 +367,9 @@ class PlotDock(Dock):
         self._plot.setLogMode(x=logX, y=logY)
         self._plot.addLegend()
 
+    def setLogScale(self, logX=False, logY=False):
+        self._plot.setLogMode(x=logX, y=logY)
+
     # def plot(self, curveName, *args, **kwargs):
     def plot(self, *args, **kwargs):
         curve = self.addCurve(*args,**kwargs)
@@ -399,6 +410,12 @@ class PlotDock(Dock):
     def setAxesLink(self, otherPlot):
         self.setXLink(otherPlot)
         self.setYLink(otherPlot)
+
+    def addLegend(self, size=None, offset=(30, 30)):
+        if self._plot.legend is None:
+            self._plot.legend = LegendItem(size, offset)
+            self._plot.legend.setParentItem(self.vb)
+        return self.legend 
 
     @property
     def items(self):
@@ -670,65 +687,11 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             whereToAppend = "right"
         return whereToAppend
 
-    @QtCore.pyqtSlot()
-    def on_actionAddPlot_triggered(self):
-        variables = self.data.variables
-        mapper = self.data.variableMapper
-        plotName = "plot_{0}".format(len(self._plot_dict))
-        curveName = "curve {0}".format(len(self._curve_dict))
-        dialog = AddCurveDialog(variableMapper=mapper,parent=self, curveName=curveName)
-        res = dialog.exec_()
-        if res:
-            print("adding plot")
-            
-            x_var = dialog.selectedXVariable
-            funcx = dialog.xAxisFunction
-
-            y_var = dialog.selectedYVariable
-            funcy = dialog.yAxisFunction
-
-            autoUpdate = dialog.autoUpdate
-            log_x,log_y = dialog.getLogMode()
-            curveColor = dialog.curveColor
-            lineWidth = dialog.lineWidth
-            p = pg.mkPen(color=curveColor, width=lineWidth)
-
-            dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy, autoUpdate)
-            
-            dependencyName = dataProvider.getDependanceName()
-            
-            # plot = PlotDock(plotName,dependencyName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
-            plot = PlotDock(plotName,plotName , logX=log_x, logY=log_y ) #dataSource=dataProvider)
-            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=curveColor, symbolBrush="r", size=10, pxMode=True )
-
-#FIX in pyqtgraph line 765:
-# fragments = [QtGui.QPainter.PixmapFragment.create(targetRect.center(), sourceRect, targetRect.width()/sourceRect.width(),targetRect.height()/sourceRect.height() ) for targetRect, sourceRect in zip(data['targetRect'].tolist(), data['sourceRect'].tolist()) ] 
-# p.drawPixmapFragments(fragments, atlas) 
-
-
-            self._plot_dict[plotName] = plot
-            self._curve_dict[curve.curveName] = curve
-            whereToAppend = self.whereToAppendDockPlot()
-            if dialog.useSelectedPosition:
-                whereToAppend = dialog.selectedPosition
-
-            self._dockArea.addDock(plot, whereToAppend)
-            
-            # self.timer.start()
-        else:
-            print("cancelled")
-       
-
-    @QtCore.pyqtSlot()
-    def on_actionAddCurve_triggered(self):
-        print("adding curve")
-        items = list(self._plot_dict.keys())
-        plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
-        
+    def addCurve(self, plot, curveName ):
         variables = self.data.variables
         mapper = self.data.variableMapper
         # plotName = "plot_{0}".format(len(self._plot_dict))
-        curveName = "curve {0}".format(len(self._curve_dict))
+        #curveName = "curve {0}".format(len(self._curve_dict))
         dialog = AddCurveDialog(variableMapper=mapper,parent=self, curveName=curveName)
         res = dialog.exec_()
         if res:
@@ -749,14 +712,54 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
             dataProvider = CurveDataProvider(self.data, mapper.encode(x_var), mapper.encode(y_var), funcx, funcy, autoUpdate)
             dependencyName = dataProvider.getDependanceName()
-
-            plot = self._plot_dict[plotName] #PlotDock(plotName, dataProvider.getDependanceName(), logX=log_x, logY=log_y ) #dataSource=dataProvider)
-            # curve = plot.plot(dataSource=dataProvider, name=curveName, pen=p )
-            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=p, symbolBrush="r", size=10, pxMode=True  )
-            self._curve_dict[curve.curveName] = curve
+            plot.setLogScale(log_x,log_y)
+            curve = plot.plot(dataSource=dataProvider, name=dependencyName, pen=p, symbol="o", symbolPen=p, symbolBrush=pg.mkBrush(color=curveColor), size=10, pxMode=True  )
+            whereToAddPlot = dialog.selectedPosition if dialog.useSelectedPosition else None
+            return curve, whereToAddPlot
             
         else:
             print("cancelled")
+            return None
+
+    @QtCore.pyqtSlot()
+    def on_actionAddPlot_triggered(self):
+        plotName = "plot_{0}".format(len(self._plot_dict))
+        curveName = "curve {0}".format(len(self._curve_dict))
+        plot = PlotDock(plotName,plotName)
+        whereToAppend = self.whereToAppendDockPlot()
+        curve, position = self.addCurve(plot, curveName)
+        if not curve:
+            print("cancelled")
+            return
+
+        self._plot_dict[plotName] = plot
+        self._curve_dict[curve.curveName] = curve
+       
+        if position:
+            whereToAppend = position
+        self._dockArea.addDock(plot, whereToAppend)
+
+
+#FIX in pyqtgraph line 765:
+# fragments = [QtGui.QPainter.PixmapFragment.create(targetRect.center(), sourceRect, targetRect.width()/sourceRect.width(),targetRect.height()/sourceRect.height() ) for targetRect, sourceRect in zip(data['targetRect'].tolist(), data['sourceRect'].tolist()) ] 
+# p.drawPixmapFragments(fragments, atlas) 
+       
+
+    @QtCore.pyqtSlot()
+    def on_actionAddCurve_triggered(self):
+        print("adding curve")
+        items = list(self._plot_dict.keys())
+        plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
+        
+        curveName = "curve {0}".format(len(self._curve_dict))
+        
+        plot = self._plot_dict[plotName]
+        curve = self.addCurve(plot, curveName)
+        if not curve:
+            print("cancelled")
+            return 
+        
+        self._curve_dict[curve.curveName] = curve
 
         
     @QtCore.pyqtSlot()
