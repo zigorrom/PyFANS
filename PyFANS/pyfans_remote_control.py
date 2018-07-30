@@ -102,6 +102,7 @@ class FANS_RemoteController:
 
     def initialize_flask_app(self):
         self.flask_app = Flask("FANS controller") 
+        self.flask_app.config['SECRET_KEY'] = 'any secret string'
         self.flask_app.add_url_rule("/", "index", self.index)
 
 
@@ -160,7 +161,7 @@ def test_ui():
 def test_flask():
     #ip = ""
     app = QtGui.QApplication(sys.argv)
-
+    
     c = FANS_RemoteController()
     ip_addr = c.ip_addresses
     print("available ip addresses")
