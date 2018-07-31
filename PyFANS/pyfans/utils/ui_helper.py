@@ -58,6 +58,23 @@ def bind(objectName, propertyName, value_type, string_format = None):#, set_valu
     def getter(self):
         prop_val = self.findChild(QtCore.QObject, objectName).property(propertyName)
         value = None
+
+        if isinstance(prop_val, bool):
+            value = value_type(prop_val)
+
+        # elif not prop_val:
+        #     # prop_val = "nan"
+        #     if value_type == int or value_type == float:
+        #         value = value_type(0)
+            
+        #     elif value_type == bool:
+        #         value = False
+
+        #     elif value_type == str:
+        #         value = ""
+
+        # else:
+        #     value = value_type(prop_val)
         if prop_val:
             value =value_type(prop_val) 
         else:
