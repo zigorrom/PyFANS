@@ -1,4 +1,6 @@
-from ..measurement_data_structures import MeasurementInfo
+# from ..measurement_data_structures import MeasurementInfo
 
-def test_func():
-    print("test func")
+# def test_func():
+#     print("test func")
+
+from .experiment_data_analysis import ExperimentData

@@ -1,4 +1,9 @@
-from pyfans_v2 import main
+
+
 
 if __name__ == "__main__":
-    main()
+    import sys
+    from pyfans import PyFANSapp
+
+    app = PyFANSapp(sys.argv)
+    app.run()

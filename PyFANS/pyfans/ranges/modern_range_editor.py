@@ -7,7 +7,7 @@ from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtGui import QDoubleValidator
 import pyqtgraph as pg
 
-import ui_helper as uih
+import pyfans.utils.ui_helper as uih
 
 class HandlersEnum(Enum):
     normal = 0

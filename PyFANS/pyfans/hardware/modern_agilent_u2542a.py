@@ -6,7 +6,7 @@ import numpy as np
 from scipy import signal
 from enum import Enum, unique
 
-from communication_layer import VisaInstrument, instrument_await_function
+from pyfans.hardware.communication_layer import VisaInstrument, instrument_await_function
 
 
 def Convertion(a):

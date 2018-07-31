@@ -1,22 +1,38 @@
-import modern_fans_controller as mfc
-import ui_helper as uih
-
 from PyQt4 import uic, QtCore
-from communication_layer import get_available_gpib_resources, get_available_com_resources
+
+import pyfans.hardware.modern_fans_controller as mfc
+import pyfans.utils.ui_helper as uih
+from pyfans.hardware.communication_layer import get_available_gpib_resources, get_available_com_resources
+
+def fans_channel_to_string(channel):
+    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
+    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
+        val = str(channel.value)
+        return val
+    else:
+        return ""
+
+def string_index_to_ai_channel_converter(index):
+    int_index = int(index)
+    return mfc.get_fans_ai_channels_from_number(int_index)
+
+def string_index_to_ao_channel_converter(index):
+    int_index = int(index)
+    return mfc.get_fans_ao_channels_from_number(int_index)
 
 
 HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI/UI_HardwareSettings_v3.ui")
 class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     
     fans_controller_resource = uih.bind("ui_fans_controller", "currentText", str)
-    fans_sample_motor_channel = uih.bind("ui_sample_channel", "currentText",  uih.string_index_to_ao_channel_converter)
-    fans_sample_relay_channel = uih.bind("ui_sample_relay", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_gate_motor_channel = uih.bind("ui_gate_channel", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_gate_relay_channel = uih.bind("ui_gate_relay", "currentText", uih.string_index_to_ao_channel_converter)
-    fans_acquisition_channel = uih.bind("ui_acquisition_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_sample_feedback_channel = uih.bind("ui_sample_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_gate_feedback_channel = uih.bind("ui_gate_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
-    fans_main_feedback_channel = uih.bind("ui_main_feedback_channel", "currentText", uih.string_index_to_ai_channel_converter)
+    fans_sample_motor_channel = uih.bind("ui_sample_channel", "currentText",  string_index_to_ao_channel_converter)
+    fans_sample_relay_channel = uih.bind("ui_sample_relay", "currentText", string_index_to_ao_channel_converter)
+    fans_gate_motor_channel = uih.bind("ui_gate_channel", "currentText", string_index_to_ao_channel_converter)
+    fans_gate_relay_channel = uih.bind("ui_gate_relay", "currentText", string_index_to_ao_channel_converter)
+    fans_acquisition_channel = uih.bind("ui_acquisition_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_sample_feedback_channel = uih.bind("ui_sample_feedback_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_gate_feedback_channel = uih.bind("ui_gate_feedback_channel", "currentText", string_index_to_ai_channel_converter)
+    fans_main_feedback_channel = uih.bind("ui_main_feedback_channel", "currentText", string_index_to_ai_channel_converter)
 
     def __init__(self,parent = None):
         super(HardwareSettingsBase,self).__init__(parent)
@@ -99,14 +115,14 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
         if self.hardware_settings:
             uih.setAllChildObjectSignaling(self,True)
             self.fans_controller_resource = self.hardware_settings.fans_controller_resource
-            self.fans_sample_motor_channel = uih.fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
-            self.fans_sample_relay_channel = uih.fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
-            self.fans_gate_motor_channel = uih.fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
-            self.fans_gate_relay_channel = uih.fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
-            self.fans_acquisition_channel = uih.fans_channel_to_string(self.hardware_settings.acquisition_channel)
-            self.fans_sample_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
-            self.fans_gate_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
-            self.fans_main_feedback_channel = uih.fans_channel_to_string(self.hardware_settings.main_feedback_channel)
+            self.fans_sample_motor_channel = fans_channel_to_string(self.hardware_settings.sample_motor_channel) #.value
+            self.fans_sample_relay_channel = fans_channel_to_string(self.hardware_settings.sample_relay_channel)#.value
+            self.fans_gate_motor_channel = fans_channel_to_string(self.hardware_settings.gate_motor_channel)#.value
+            self.fans_gate_relay_channel = fans_channel_to_string(self.hardware_settings.gate_relay_channel)#.value
+            self.fans_acquisition_channel = fans_channel_to_string(self.hardware_settings.acquisition_channel)
+            self.fans_sample_feedback_channel = fans_channel_to_string(self.hardware_settings.sample_feedback_channel)
+            self.fans_gate_feedback_channel = fans_channel_to_string(self.hardware_settings.gate_feedback_channel)
+            self.fans_main_feedback_channel = fans_channel_to_string(self.hardware_settings.main_feedback_channel)
             uih.setAllChildObjectSignaling(self,False)
 
 

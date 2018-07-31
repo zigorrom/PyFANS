@@ -69,15 +69,15 @@ def test_led():
     return app.exec_()
 
 
-voltageControlBase, voltageControlForm = uic.loadUiType("UI/UI_VoltageView.ui")
-class VoltageControl(voltageControlBase, voltageControlForm):
+voltageWidgetBase, voltageWidgetForm = uic.loadUiType("UI/UI_VoltageView.ui")
+class UI_VoltageWidget(voltageWidgetBase, voltageWidgetForm):
     OK, WARNING, ERROR, IN_PROGRESS = states = range(4)
     OK_COLOR = QtCore.Qt.green
     WARNING_COLOR = QtCore.Qt.yellow
     ERROR_COLOR = QtCore.Qt.red
 
     def __init__(self,parent = None):
-        super(voltageControlBase, self).__init__(parent)
+        super(voltageWidgetBase, self).__init__(parent)
         self.setupUi(self)
         
         self._state = self.IN_PROGRESS
@@ -130,7 +130,7 @@ class VoltageControl(voltageControlBase, voltageControlForm):
 def test_voltage_control():
     import time
     app = QtGui.QApplication(sys.argv)
-    widget = VoltageControl()
+    widget = UI_VoltageWidget()
     widget.show()
     widget.set_drain_source_voltage(12.4211351313)
     widget.set_okay_state()

@@ -1,7 +1,7 @@
 ﻿from os.path import join, isfile
 
 import numpy as np
-from measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
+from pyfans.experiment.measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
 
 
 class ExperimentWriter():

@@ -1,7 +1,7 @@
 ﻿import time
 from enum import Enum, IntEnum, unique
 
-import modern_agilent_u2542a as daq
+import pyfans.hardware.modern_agilent_u2542a as daq
 
 @unique
 class ACQUISITION_TYPE(IntEnum):

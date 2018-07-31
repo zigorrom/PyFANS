@@ -4,11 +4,11 @@ import time
 import math
 
 import numpy as np
-import calibration as calib
-import modern_fans_controller as mfans
+import pyfans.hardware.calibration as calib
+import pyfans.hardware.modern_fans_controller as mfans
 #import modern_agilent_u2542a as mdaq
-import modern_fans_smu as msmu
-import temperature_controller as tc
+import pyfans.hardware.modern_fans_smu as msmu
+import  temperature_controller as tc
 
 import modern_range_editor as mredit
 
@@ -21,7 +21,7 @@ from fans_experiment_settings import ExperimentSettings
 
 import modern_fans_experiment_writer as mfew
 import pickle
-import process_communication_protocol as pcp
+import pyfans.experiment.process_communication_protocol as pcp
 import experiment_writer as ew
 import measurement_data_structures as mds
 from measurement_param_generator import ParameterItem, ParamGenerator

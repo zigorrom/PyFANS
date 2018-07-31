@@ -4,3 +4,5 @@ When scatter plot is not displaying points:
 # p.drawPixmapFragments(fragments, atlas) 
 
 ********************************************************************************************
+File structure
+https://stackoverflow.com/questions/22177976/generally-speaking-how-are-python-projects-structured

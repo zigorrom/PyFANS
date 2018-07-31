@@ -1,6 +1,6 @@
-import ui_helper as uih
+import pyfans.utils.ui_helper as uih
 # import range_handlers as rh
-import modern_range_editor as mredit 
+import pyfans.ranges.modern_range_editor as mredit 
 
 class ExperimentSettings():
     def __init__(self):

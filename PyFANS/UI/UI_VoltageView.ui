@@ -93,7 +93,7 @@
   <customwidget>
    <class>LedWidget</class>
    <extends>QWidget</extends>
-   <header>modern_fans_voltage_control</header>
+   <header>pyfans.ui.voltage_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,6 +1,5 @@
 ﻿import serial
 import visa
-import PyCmdMessenger
 
 def instrument_await_function(func):
         def wrapper(self,*args,**kwargs):

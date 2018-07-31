@@ -16,9 +16,9 @@ from pyqtgraph import PlotDataItem
 from pyqtgraph.graphicsItems.LegendItem import LegendItem
 from pyqtgraph import exporters as pg_exp
 # from py_expression_eval import Parser
-from expression_parser_patch import PatchedParser
 
-from measurement_data_structures import MeasurementInfo
+from pyfans_analyzer.expression_parser_patch import PatchedParser
+from pyfans.experiment.measurement_data_structures import MeasurementInfo
 
 # def getValueAndName(func, var):
 # def get_function_variables(function):

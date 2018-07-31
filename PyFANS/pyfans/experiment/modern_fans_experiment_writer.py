@@ -1,7 +1,8 @@
 ﻿from os.path import join, isfile
 import numpy as np
-from measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
-import experiment_writer as expw
+
+from pyfans.experiment.measurement_data_structures import MeasurementInfo,generate_measurement_info_filename
+import pyfans.experiment.experiment_writer as expw
 
 def generate_timetrace_measurement_filename(measurement_name, measurement_count, file_extension = "dat"):
     return "{0}_{1}_timetrace.{2}".format(measurement_name,measurement_count, file_extension)

@@ -1,7 +1,8 @@
-﻿import pint
+﻿import sys
+import pint
 from pint import UnitRegistry
 from PyQt4 import QtGui, QtCore
-import modern_fans_controller as mfc
+# import modern_fans_controller as mfc
 
 
 def __assert_isinstance_wrapper(function, t):
@@ -34,8 +35,6 @@ def assert_tuple_argument(function):
 def assert_list_or_tuple_argument(function):
     return __assert_isinstance_wrapper(function, (list, tuple))
 
-
-
 def get_module_name_and_type(t):
     module = t.__module__
     cls_name = type(t).__name__
@@ -46,22 +45,6 @@ def get_value_of_module_type(value, module_type):
     mod = sys.modules[module]
     cls = getattr(mod, t)
     return cls(value)
-
-def string_index_to_ai_channel_converter(index):
-    int_index = int(index)
-    return mfc.get_fans_ai_channels_from_number(int_index)
-
-def string_index_to_ao_channel_converter(index):
-    int_index = int(index)
-    return mfc.get_fans_ao_channels_from_number(int_index)
-
-def fans_channel_to_string(channel):
-    #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
-    if isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)):
-        val = str(channel.value)
-        return val
-    else:
-        return ""
 
 def setAllChildObjectSignaling(parentObj, Signaling):
     assert isinstance(parentObj, QtCore.QObject)
