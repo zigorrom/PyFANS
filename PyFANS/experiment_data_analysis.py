@@ -980,9 +980,12 @@ def test_exp_data():
 
     
     # print(exp_data)
-
+def test():
+    from pyfans_analyzer import test_func
+    test_func()
+    return 0
 
 if __name__== "__main__":
-    
-    sys.exit(test_ui())
+    sys.exit(test())
+    # sys.exit(test_ui())
     # sys.exit(test_exp_data())
