@@ -5,13 +5,15 @@ import pyqtgraph as pg
 from PyQt4 import QtGui, QtCore
 from PIL import Image
 from PIL.ImageQt import ImageQt
-import pyfans_v2 as pyf
 from flask import Flask
 from flask import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired
 import socket
+
+
+# import  pyfans_v2 as pyf
 
 qr = qrcode.QRCode(
     version=1,

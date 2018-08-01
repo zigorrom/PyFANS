@@ -2,29 +2,33 @@
 import sys
 import time
 import math
+import pickle
 
 import numpy as np
-import pyfans.hardware.calibration as calib
-import pyfans.hardware.modern_fans_controller as mfans
-#import modern_agilent_u2542a as mdaq
-import pyfans.hardware.modern_fans_smu as msmu
-import  temperature_controller as tc
-
-import modern_range_editor as mredit
 
 from multiprocessing import Process, Event
 from scipy.signal import periodogram
 from scipy.signal import decimate
 
-from fans_hardware_settings import HardwareSettings
-from fans_experiment_settings import ExperimentSettings
+import pyfans.hardware.calibration as calib
+import pyfans.hardware.modern_fans_controller as mfans
+#import modern_agilent_u2542a as mdaq
+import pyfans.hardware.modern_fans_smu as msmu
+import pyfans.hardware.temperature_controller as tc
+from pyfans.hardware.fans_hardware_settings import HardwareSettings
 
-import modern_fans_experiment_writer as mfew
-import pickle
+from pyfans.experiment.fans_experiment_settings import ExperimentSettings
+import pyfans.experiment.modern_fans_experiment_writer as mfew
 import pyfans.experiment.process_communication_protocol as pcp
-import experiment_writer as ew
-import measurement_data_structures as mds
-from measurement_param_generator import ParameterItem, ParamGenerator
+import pyfans.experiment.experiment_writer as ew
+import pyfans.experiment.measurement_data_structures as mds
+
+import pyfans.ranges.modern_range_editor as mredit
+from pyfans.ranges.measurement_param_generator import ParameterItem, ParamGenerator
+
+
+
+
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"
 #    assert (number>0 and number<9),"Wrong channel number!"

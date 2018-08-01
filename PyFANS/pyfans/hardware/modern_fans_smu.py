@@ -1,10 +1,11 @@
 ﻿import time
 import math
-
-import modern_fans_controller as mfc
-import modern_agilent_u2542a as mdaq
-import modern_fans_pid_controller as mfpid
 import numpy as np
+
+import pyfans.hardware.modern_fans_controller as mfc
+import pyfans.hardware.modern_agilent_u2542a as mdaq
+import pyfans.hardware.modern_fans_pid_controller as mfpid
+
 
 DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
 

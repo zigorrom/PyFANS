@@ -1,11 +1,10 @@
 ﻿import sys
 
-import modern_fans_controller as mfc
-import modern_fans_smu as mfs
-
-
 from PyQt4 import uic, QtGui, QtCore
-from communication_layer import get_available_gpib_resources, get_available_com_resources
+
+import pyfans.hardware.modern_fans_controller as mfc
+import pyfans.hardware.modern_fans_smu as mfs
+from pyfans.hardware.communication_layer import get_available_gpib_resources, get_available_com_resources
 
 
 #from fans_smu import ManualSMU, voltage_setting_function

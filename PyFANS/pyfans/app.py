@@ -9,8 +9,6 @@ from PyQt4 import QtCore, QtGui
 from pyfans import __app_id__, __app_name__, __version__ #, FANS_UI_Controller, FANS_UI_MainView
 from pyfans.main_window import FANS_UI_MainView
 from pyfans.main_controller import FANS_UI_Controller
-# import pyfans.main_window as mw
-# import pyfans.main_controller as mc
 
 import pyfans.utils.utils as util
 

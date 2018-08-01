@@ -1,15 +1,12 @@
 import os
 import sys
 import time
-
 import pickle
-
-
-from PyQt4 import uic, QtGui, QtCore
-
 from collections import deque
 from multiprocessing import JoinableQueue
 from multiprocessing import Event
+
+from PyQt4 import uic, QtGui, QtCore
 
 import pyfans
 import pyfans.plot as plt
@@ -19,15 +16,16 @@ from pyfans.ui.console import UI_Console
 from pyfans.ui.time_info import UI_TimeInfo
 from pyfans.ui.lock_window import UI_LockWindow
 from pyfans.utils.sound_player import SoundPlayer
+from pyfans.ui.email_notification import EmailAuthForm, EmailSender
 
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
-from pyfans.hardware.fans_hardware_settings import HardwareSettings, HardwareSettingsView
 from pyfans.experiment.measurement_data_structures import MeasurementInfo
-
 import pyfans.experiment.process_communication_protocol as pcp
-import pyfans_analyzer.experiment_data_analysis as eds
 
-# from pyfans.main_window import FANS_UI_MainView
+from pyfans.hardware.fans_hardware_settings import HardwareSettings, HardwareSettingsView
+import pyfans.hardware.modern_fans_controller as mfans
+
+import pyfans_analyzer.experiment_data_analysis as eds
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"

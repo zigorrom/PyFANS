@@ -1,6 +1,7 @@
-﻿import modern_fans_pid_controller as mfpid
+﻿import serial
 
-import serial
+import pyfans.hardware.modern_fans_pid_controller as mfpid
+
 class LakeShore211TemperatureSensor:
     def __init__(self, resource):
         
