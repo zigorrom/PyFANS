@@ -9,9 +9,9 @@ import pyfans.utils.ui_helper as uih
 class Settings(uih.NotifyPropertyChanged):
     def __init__(self):
         super().__init__()
-        self._automated = False
- 
-    
+        self._automated = True
+        self._averages = 15   
+        self._dsv = "0.0001 as"
 
     @property
     def automated(self):
@@ -21,9 +21,31 @@ class Settings(uih.NotifyPropertyChanged):
     def automated(self, value):
         if self._automated != value:
             self._automated = value
-            self.propertyChanged.emit("automated", self, value)
+            self.onPropertyChanged("automated", self, value)
             print("value changed!")
         
+    @property
+    def averages(self):
+        return self._averages
+
+    @averages.setter
+    def averages(self, value):
+        if self._averages != value:
+            self._averages = value
+            self.onPropertyChanged("averages", self, value)
+
+    @property
+    def dsv(self):
+        return self._dsv
+
+    @dsv.setter
+    def dsv(self, value):
+        if self._dsv != value:
+            self._dsv = value
+            self.onPropertyChanged("dsv", self, value)
+
+
+
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm):
@@ -77,8 +99,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         print("setting the ui up")
         super().setupUi(self)
         self.use_automated_voltage_control = uih.Binding(self.ui_use_automated_voltage_control, "checked", self.settings, "automated")
+        self.averages = uih.Binding(self.ui_averages,"value", self.settings, "averages", converter=uih.AssureIntConverter())
+        self.dsv = uih.Binding(self.ui_drain_source_voltage,"text", self.settings, "dsv", converter=uih.StringToVoltageConverter())
         
-
+        self.dsv.targetData = 123.456
+#drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
     
         
         

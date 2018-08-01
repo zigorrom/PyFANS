@@ -1,9 +1,21 @@
 ﻿import sys
 import pint
+import traceback
+
 from pint import UnitRegistry
 from PyQt4 import QtGui, QtCore
 from enum import Enum
 # import modern_fans_controller as mfc
+
+def print_exception(exception):
+    print("Exception occured:")
+    print(20*'-')
+    traceback.print_exc()
+    print("The latest exception:")
+    print(exception)
+    print(20*'=')
+
+
 
 class BindingDirection(Enum):
     SourceToTarget = 0
@@ -17,20 +29,102 @@ class NotifyPropertyChanged(QtCore.QObject):
     propertyChanged = QtCore.pyqtSignal(str, object, object)
 
     def __init__(self):
-        pass
+        super().__init__()
     
     def onPropertyChanged(self, name, sender, value):
         self.propertyChanged.emit(name, sender, value)
 
+class ConversionException(Exception):
+    pass
+
 class ValueConverter:
+    def __init__(self, defaultTargetValue=None, defaultSourceValue=None):
+        self.defaultTargetValue = defaultTargetValue
+        self.defaultSourceValue = defaultSourceValue
+
+    def convert(self, value, source_type, default_value = None):
+        try:
+            return source_type(value) 
+
+        except Exception as e:
+            print_exception(e)
+            raise ConversionException()
+            #return default_value
+
+    def convert_back(self, value, target_type, default_value = None):
+        try:
+            return target_type(value) 
+
+        except Exception as e:
+            print_exception(e)
+            raise ConversionException()
+            # return default_value
+
+class StringToIntConverter(ValueConverter):
     def __init__(self):
-        pass
+        super().__init__()
 
-    def convert(self, value, target_type):
-        pass
+    def convert(self, value):
+        super().convert(value, int, 0)
 
-    def convert_back(self, value, target_type):
-        pass
+    def convert_back(self, value):
+        super().convert_back(value, str, "")
+
+class StringToFloatConverter(ValueConverter):
+    def __init__(self):
+        super().__init__()
+
+    def convert(self, value):
+        super().convert(value, float, 0.0)
+
+    def convert_back(self, value):
+        super().convert_back(value, str, "")
+
+class StringToVoltageConverter(ValueConverter):
+    def __init__(self):
+        super().__init__()
+        self.ureg = UnitRegistry()
+
+    def convert(self, value):
+        try:
+            v = self.ureg(value)
+            if not isinstance(v,pint.quantity._Quantity):
+                v = float(v) * self.ureg.volt
+            print("{0} {1}".format(v.magnitude, v.units))
+            v.ito(self.ureg.volt)
+            return v.magnitude
+        except Exception as e:
+            raise ConversionException()
+
+    def convert_back(self, value):
+        try:
+            return str(value)
+        except Exception as e:
+            raise ConversionException()
+
+class AssureConverter(ValueConverter):
+    def __init__(self, type_to_assure):
+        if not isinstance(type_to_assure, type):
+            raise TypeError("Incorrect type")
+        self._assureType = type_to_assure
+
+    def convert(self, value):
+        super().convert(value, self._assureType, None)
+
+    def convert_back(self, value):
+        super().convert_back(value, self._assureType, None)
+
+
+class AssureBoolConverter(AssureConverter):
+    def __init__(self):
+        super().__init__(bool)
+
+class AssureIntConverter(AssureConverter):
+    def __init__(self):
+        super().__init__(int)
+
+        
+
 
 
 
@@ -67,20 +161,23 @@ class Binding:
         
         self._validator = kwargs.get("validator", None)
 
-        self._converter = kwargs.get("converter", ValueConverter())
+        self._converter = kwargs.get("converter", None)
 
+        self._updatingSourceData = False
+        self._updatingTargetData = False
+        self._hasError = False
+
+        # if not isinstance(self._converter, ValueConverter):
+        #     return TypeError("converter has a wrong type")
+
+        self.originalStylesheet = self._targetObject.styleSheet()
+        self.errorStylesheet = "border: 2px solid red;"
 
         self._sigTargetDataChanged = self.__get_target_data_changed_signal(self._targetObject, self._targetPropertyName)
         self._sigSourceDataChanged = self._sourceObject.propertyChanged
         self.__create_bindings()
-    
-
-    
-    def __del__(self):
-        pass
-
-    
- 
+        self.__updateUi()
+     
     def __create_bindings(self):
         if self._binding_direction == BindingDirection.SourceToTarget:
             self._sigSourceDataChanged.connect(self.__updateTargetData__)
@@ -108,45 +205,94 @@ class Binding:
         elif widgetPropertyName == "checked":
             return widget.toggled
 
+        elif widgetPropertyName == "currentText":
+            return widget.currentTextChanged
+
         else:
             return None
         
+    def __updateUi(self):
+        self.__updateTargetData__(self._sourcePropertyName, self, self.sourceData)
+        self.__updateSourceData__(self.targetData)
 
-    def __updateTargetData__(self, newValue):
-        pass
+    def __updateTargetData__(self, name, sender, value):
+        if self._updatingSourceData:
+            return 
 
+        if name != self._sourcePropertyName:
+            return 
 
-    @QtCore.pyqtSlot(int)
+        print("updating target")
+        self._updatingTargetData = True
+        self._targetObject.blockSignals(True)
+
+        if self._converter is None:
+            self.targetData = value
+        
+        else:    
+            try:
+                self.targetData = self._converter.convert_back(value)
+            except ConversionException as e:
+                print_exception(e)
+            
+        self._targetObject.blockSignals(False)
+        self._updatingTargetData = False
+        # self.targetData = self.sourceData
+
+    # @QtCore.pyqtSlot(int)
     def __updateSourceData__(self, value):
-        pass
+        if self._updatingTargetData:
+            return
+        
+        print("updating source")
+        self._updatingSourceData = True
+        if self._converter is None:
+            self.sourceData = value #self.targetData
+        
+        else: 
+            try:
+                self.sourceData = self._converter.convert(self.targetData)
+                self.setNormalStyle()
+            except ConversionException as e:
+                print_exception(e)
+                self.setErrorStyle()
 
-    @QtCore.pyqtSlot(float)
-    def __updateSourceData__(self, value):
-        pass
+        self._updatingSourceData = False
+    
+    def setErrorStyle(self):
+        self._hasError = True
+        self._targetObject.setStyleSheet(self.errorStylesheet)
 
-    @QtCore.pyqtSlot(str)
-    def __updateSourceData__(self, value):
-        pass
+    def setNormalStyle(self):
+        self._hasError = False
+        self._targetObject.setStyleSheet(self.originalStylesheet)
+
+    def hasError(self):
+        return self._hasError
 
     @property
     def targetData(self):
-        pass    
+        return self._targetObject.property(self._targetPropertyName)
+        # if self._converter is None:
+        #     return bareValue
+
+        # return self._converter.convert(bareValue)
+        
 
     @targetData.setter
     def targetData(self, value):
-        pass    
+        self._targetObject.setProperty(self._targetPropertyName, value)
+        
 
     @property
     def sourceData(self):
-        pass
+        return getattr(self._sourceObject, self._sourcePropertyName)
 
     @sourceData.setter
     def sourceData(self, value):
-        pass
+        setattr(self._sourceObject, self._sourcePropertyName, value)
 
     
-    def getSourceData(self):
-        pass
 
 
 
