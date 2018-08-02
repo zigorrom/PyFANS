@@ -69,6 +69,7 @@ DockLabel.updateStyle = updateDockLabelStylePatched
 
 def open_folder_in_explorer(folder):
     print("opening folder")
+    folder = os.path.abspath(folder)
     request = 'explorer "{0}"'.format(folder)#self._settings.working_directory)
     print(request)
     os.system(request)
@@ -413,7 +414,7 @@ class PlotDock(Dock):
 
     def addLegend(self, size=None, offset=(30, 30)):
         if self._plot.legend is None:
-            self._plot.legend = LegendItem(size, offset)
+            self._plot.legend = CustomLegendItem(size, offset) #LegendItem(size, offset)
             self._plot.legend.setParentItem(self.vb)
         return self.legend 
 
@@ -660,7 +661,9 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(500)
         # self.timer.timeout.connect(self.updatingPlot)
-
+    
+    # def setupConnectBackToParentMenu(self):
+    #     pass
     
     def setupUi(self):
         super().setupUi(self)
@@ -837,6 +840,13 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     def on_actionCurveProperties_triggered(self):
         print("curve properties")
 
+    def setWorkingDirectory(self, working_directory):
+        if not os.path.isdir(working_directory):
+            return
+
+        self.working_directory = working_directory
+
+
     @QtCore.pyqtSlot()
     def on_actionImport_triggered(self):
         print("importing")
@@ -970,9 +980,12 @@ def test_exp_data():
 
     
     # print(exp_data)
-
+def test():
+    from pyfans_analyzer import test_func
+    test_func()
+    return 0
 
 if __name__== "__main__":
-    
-    sys.exit(test_ui())
+    sys.exit(test())
+    # sys.exit(test_ui())
     # sys.exit(test_exp_data())

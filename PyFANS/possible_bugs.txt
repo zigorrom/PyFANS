@@ -1,0 +1,6 @@
+When scatter plot is not displaying points:
+#FIX in pyqtgraph line 765:
+# fragments = [QtGui.QPainter.PixmapFragment.create(targetRect.center(), sourceRect, targetRect.width()/sourceRect.width(),targetRect.height()/sourceRect.height() ) for targetRect, sourceRect in zip(data['targetRect'].tolist(), data['sourceRect'].tolist()) ] 
+# p.drawPixmapFragments(fragments, atlas) 
+
+********************************************************************************************

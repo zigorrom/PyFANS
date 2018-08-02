@@ -882,7 +882,7 @@ class RangeEditorView(RangeEditorBase, RangeEditorForm):
         self.ui_span_val.setValidator(QDoubleValidator())
         
         self.plot = self.ui_range_plot.addPlot()
-        self.range_curve = self.plot.plot(pen=pg.mkColor("r"), symbol='o' ) #pg.ScatterPlotItem()#size=10, pen=pg.mkPen('r'))
+        self.range_curve = self.plot.plot(pen=pg.mkPen(color="r",width=2),symbolPen = pg.mkPen(color="r",width=1), symbolBrush="r", symbol='o', size= 0, pxMode=True ) #pg.ScatterPlotItem()#size=10, pen=pg.mkPen('r'))
         # self.plot.setLabel("left", "<font size=\"5\">Value</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
         # self.plot.setLabel("bottom", "<font size=\"5\">Index</font>")#, units="Hz")
         self.plot.getAxis("left").setWidth(20)
