@@ -6,6 +6,7 @@ from pint import UnitRegistry
 from PyQt4 import QtGui, QtCore
 from enum import Enum
 # import modern_fans_controller as mfc
+#from  pyfans.experiment.modern_fans_experiment import CharacteristicType
 
 def print_exception(exception):
     print("Exception occured:")
@@ -42,7 +43,7 @@ class ValueConverter:
         self.defaultTargetValue = defaultTargetValue
         self.defaultSourceValue = defaultSourceValue
 
-    def convert(self, value, source_type, default_value = None):
+    def convert(self, value, source_type, **kwargs):
         try:
             return source_type(value) 
 
@@ -51,7 +52,7 @@ class ValueConverter:
             raise ConversionException()
             #return default_value
 
-    def convert_back(self, value, target_type, default_value = None):
+    def convert_back(self, value, target_type, **kwargs):
         try:
             return target_type(value) 
 
@@ -60,32 +61,44 @@ class ValueConverter:
             raise ConversionException()
             # return default_value
 
-class StringToIntConverter(ValueConverter):
-    def __init__(self):
+class StringToTypeConverter(ValueConverter):
+    def __init__(self, type_to_convert):
+        if not isinstance(type_to_convert, type):
+            raise TypeError("Incorrect type")
+        
         super().__init__()
+        self._type = type_to_convert
 
-    def convert(self, value):
-        super().convert(value, int, 0)
+    def convert(self, value, **kwargs):
+        super().convert(value, self._type, **kwargs)
 
-    def convert_back(self, value):
-        super().convert_back(value, str, "")
+    def convert_back(self, value, **kwargs):
+        try:
+            stringFormat = kwargs.get("stringFormat", None)
+            if stringFormat:
+                return super().convert_back(value, str, **kwargs)
+            else:
+                return stringFormat.format(value)
 
-class StringToFloatConverter(ValueConverter):
+        except Exception as e:
+            raise ConversionException()
+
+
+    
+class StringToIntConverter(StringToTypeConverter):
     def __init__(self):
-        super().__init__()
+        super().__init__(int)
 
-    def convert(self, value):
-        super().convert(value, float, 0.0)
-
-    def convert_back(self, value):
-        super().convert_back(value, str, "")
-
-class StringToVoltageConverter(ValueConverter):
+class StringToFloatConverter(StringToTypeConverter):
     def __init__(self):
-        super().__init__()
+        super().__init__(float)
+
+class StringToVoltageConverter(StringToTypeConverter):
+    def __init__(self):
         self.ureg = UnitRegistry()
+        super().__init__(type(self.ureg))
 
-    def convert(self, value):
+    def convert(self, value, **kwargs):
         try:
             v = self.ureg(value)
             if not isinstance(v,pint.quantity._Quantity):
@@ -96,11 +109,51 @@ class StringToVoltageConverter(ValueConverter):
         except Exception as e:
             raise ConversionException()
 
-    def convert_back(self, value):
-        try:
-            return str(value)
-        except Exception as e:
-            raise ConversionException()
+    
+
+# class StringToIntConverter(ValueConverter):
+#     def __init__(self):
+#         super().__init__()
+
+#     def convert(self, value):
+#         super().convert(value, int, 0)
+
+#     def convert_back(self, value):
+#         super().convert_back(value, str, "")
+
+# class StringToFloatConverter(ValueConverter):
+#     def __init__(self):
+#         super().__init__()
+
+#     def convert(self, value):
+#         super().convert(value, float, 0.0)
+
+#     def convert_back(self, value):
+#         super().convert_back(value, str, "")
+
+# class StringToVoltageConverter(ValueConverter):
+#     def __init__(self):
+#         super().__init__()
+#         self.ureg = UnitRegistry()
+
+#     def convert(self, value):
+#         try:
+#             v = self.ureg(value)
+#             if not isinstance(v,pint.quantity._Quantity):
+#                 v = float(v) * self.ureg.volt
+#             print("{0} {1}".format(v.magnitude, v.units))
+#             v.ito(self.ureg.volt)
+#             return v.magnitude
+#         except Exception as e:
+#             raise ConversionException()
+
+#     def convert_back(self, value):
+#         try:
+#             return str(value)
+#         except Exception as e:
+#             raise ConversionException()
+
+
 
 class AssureConverter(ValueConverter):
     def __init__(self, type_to_assure):
@@ -109,10 +162,10 @@ class AssureConverter(ValueConverter):
         self._assureType = type_to_assure
 
     def convert(self, value):
-        super().convert(value, self._assureType, None)
+        super().convert(value, self._assureType)
 
     def convert_back(self, value):
-        super().convert_back(value, self._assureType, None)
+        super().convert_back(value, self._assureType)
 
 
 class AssureBoolConverter(AssureConverter):
@@ -156,10 +209,19 @@ class Binding:
         #when to update: OnLoseFocus, OnTextChanged/OnValueChanged/OnCurrentIndexChanged/OnToggled
         #self._when_to_update = None
 
+        self._stringFormat = kwargs.get("stringFormat", None)
+
         #only source to target/ only target to source/ both
         self._binding_direction = kwargs.get("binding_direction", BindingDirection.Both)
         
         self._validator = kwargs.get("validator", None)
+        # try:
+        #     self._targetObject
+        # except:
+        #     pass
+        setValidator = getattr(self._targetObject, "setValidator", None)
+        if callable(setValidator):
+            setValidator(self._validator)
 
         self._converter = kwargs.get("converter", None)
 
@@ -230,7 +292,7 @@ class Binding:
         
     def __updateUi(self):
         self.__updateTargetData__(self._sourcePropertyName, self, self.sourceData)
-        self.__updateSourceData__(self.targetData)
+        # self.__updateSourceData__(self.targetData)
 
     def setSourceObject(self, sourceObject):
         if not isinstance(sourceObject, NotifyPropertyChanged):
@@ -255,7 +317,11 @@ class Binding:
         
         else:    
             try:
-                self.targetData = self._converter.convert_back(value)
+                if self._stringFormat:
+                    self.targetData = self._converter.convert_back(value, stringFormat=self._stringFormat)
+                else:
+                    self.targetData = self._converter.convert_back(value)
+
             except ConversionException as e:
                 print_exception(e)
             
@@ -351,6 +417,9 @@ def assert_tuple_argument(function):
 def assert_list_or_tuple_argument(function):
     return __assert_isinstance_wrapper(function, (list, tuple))
 
+def assert_characteristic_type(function):
+    return __assert_isinstance_wrapper(function, CharacteristicType)
+
 def get_module_name_and_type(t):
     module = t.__module__
     cls_name = type(t).__name__
@@ -417,7 +486,7 @@ def bind(objectName, propertyName, value_type, string_format = None):#, set_valu
 
     return property(getter, setter)
 
-class QVoltageValidator(QtGui.QRegExpValidator):
+class VoltageValidator(QtGui.QRegExpValidator):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")

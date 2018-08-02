@@ -14,6 +14,28 @@ import pyfans.utils.ui_helper as uih
 import pyfans.plot as plt
 import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
+from pyfans.experiment.modern_fans_experiment import CharacteristicType
+
+class CharacteristicTypeToStrConverter(uih.ValueConverter):
+    def __init__(self):
+        super().__init__()
+
+    def convert(self, value):
+        try:
+            return CharacteristicType[value]
+            
+        except Exception as e:
+            raise ConversionException()
+
+    def convert_back(self, value):
+        try:
+            if not isinstance(value, CharacteristicType):
+                raise Exception()
+
+            return  value.name
+
+        except Exception as e:
+            raise ConversionException()
 
 
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")

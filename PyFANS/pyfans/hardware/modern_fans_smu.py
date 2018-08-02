@@ -5,7 +5,7 @@ import numpy as np
 import pyfans.hardware.modern_fans_controller as mfc
 import pyfans.hardware.modern_agilent_u2542a as mdaq
 import pyfans.hardware.modern_fans_pid_controller as mfpid
-
+from pyfans.utils.binding import Observable
 
 DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
 
@@ -445,6 +445,8 @@ class MaxIterationReachedError(Exception):
 class DesiredErrorReachedError(Exception):
     pass
 
+class PolaritySwitchError(Exception):
+    pass
 
 class IterationCounter(object):
     def __init__(self, max_iteration, exception_to_call = None):
@@ -481,7 +483,7 @@ class IterationCounter(object):
 
 
 
-from binding import Observable
+
 
 class FANS_VoltageSetter(Observable):
     COARSE_MODE, FINE_MODE, STABILIZATION_MODE = range(3)
@@ -669,7 +671,8 @@ class FANS_VoltageSetter(Observable):
         value = self.read_feedback_voltage()
         (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(voltage_to_set,value)
         if need_to_switch_polarity:
-            raise Exception("Cannot switch polarity")
+            raise PolaritySwitchError()
+            #raise Exception("Cannot switch polarity")
 
         self.current_polarity = polarity_to_switch
         

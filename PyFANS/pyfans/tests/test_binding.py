@@ -5,6 +5,8 @@ from pint import UnitRegistry
 from PyQt4 import uic, QtCore, QtGui
 
 import pyfans.utils.ui_helper as uih
+from pyfans.experiment.modern_fans_experiment import CharacteristicType
+from pyfans.main_window import CharacteristicTypeToStrConverter
 
 class Settings(uih.NotifyPropertyChanged):
     def __init__(self):
@@ -12,6 +14,7 @@ class Settings(uih.NotifyPropertyChanged):
         self._automated = True
         self._averages = 15   
         self._dsv = "0.0001 as"
+        self._characType = CharacteristicType.Output
 
     @property
     def automated(self):
@@ -22,7 +25,7 @@ class Settings(uih.NotifyPropertyChanged):
         if self._automated != value:
             self._automated = value
             self.onPropertyChanged("automated", self, value)
-            print("value changed!")
+            print("automated value changed to {0}!".format(value))
         
     @property
     def averages(self):
@@ -33,6 +36,7 @@ class Settings(uih.NotifyPropertyChanged):
         if self._averages != value:
             self._averages = value
             self.onPropertyChanged("averages", self, value)
+            print("averages value changed to {0}!".format(value))
 
     @property
     def dsv(self):
@@ -43,6 +47,18 @@ class Settings(uih.NotifyPropertyChanged):
         if self._dsv != value:
             self._dsv = value
             self.onPropertyChanged("dsv", self, value)
+            print("dsv value changed to {0}!".format(value))
+
+    @property
+    def characType(self):
+        return self._characType
+
+    @characType.setter
+    def characType(self, value):
+        if self._characType != value:
+            self._characType = value
+            self.onPropertyChanged("characType", self, value)
+            print("characType value changed to {0}!".format(value))
 
 
 
@@ -113,6 +129,17 @@ def main():
     print("testing binding")
 
     app = QtGui.QApplication(sys.argv)
-    wnd = FANS_UI_MainView()
-    wnd.show()
+    # wnd = FANS_UI_MainView()
+    combobox = QtGui.QComboBox()
+    combobox.addItem(CharacteristicType.Transfer.name)
+    combobox.addItem(CharacteristicType.Output.name)
+    s = Settings()
+    comboboxProp = uih.Binding(combobox, "currentText", s,  "characType", converter=CharacteristicTypeToStrConverter())
+   
+    combobox.show()
+    
+    lineedit = QtGui.QLineEdit()
+    lineeditProp = uih.Binding(lineedit, "text", s,  "dsv", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
+    lineedit.show()
+    # wnd.show()
     return app.exec_()

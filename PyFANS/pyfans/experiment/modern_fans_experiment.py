@@ -30,8 +30,8 @@ from pyfans.ranges.measurement_param_generator import ParameterItem, ParamGenera
 
 
 class CharacteristicType(Enum):
-    Output=0
-    Transfet=1
+    Output = 0
+    Transfer = 1
 
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"
@@ -46,6 +46,22 @@ class CharacteristicType(Enum):
 class StopExperiment(Exception):
     pass
 
+class SkipCurrentExperimentException(Exception):
+    pass
+
+# def t():
+#     currentAttempt = 0
+#     maxAttempts = 3
+#     while currentAttempt < maxAttempt:
+#         try:
+#             print("Starting {0} attempt".format(currentAttempt))
+#             self.fans_smu.smu_set_drain_source_voltage(voltage)
+#             return
+#         except Exception as e:
+#             print("Exception occured on {0} attempt".format(currentAttempt))
+#             currentAttempt += 1
+        
+#     raise SkipCurrentExperimentException()
 
 class Experiment:
     def __init__(self, simulate = False, input_data_queue = None, stop_event = None):
@@ -678,7 +694,7 @@ class Experiment:
                 ds_range = self.experiment_settings.drain_source_voltage
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)
 
-        elif characteristic_type == 0: #output curve
+        elif characteristic_type == CharacteristicType.Output: # 0: #output curve
             ds_range, fg_range = self.get_meas_ranges()
             if not use_vds_range:
                 ds_range = self.experiment_settings.drain_source_voltage
@@ -687,7 +703,7 @@ class Experiment:
             table_generator.append_parameter("gate_voltage",rang = fg_range)
             table_generator.append_parameter("drain_source_voltage", rang = ds_range)
 
-        elif characteristic_type == 1: #transfer curve
+        elif characteristic_type == CharacteristicType.Transfer: #1: #transfer curve
             ds_range, fg_range = self.get_meas_ranges()
             if not use_vds_range:
                 ds_range = self.experiment_settings.drain_source_voltage
@@ -748,16 +764,20 @@ class Experiment:
             start_time = time.time()
             #estimate_experiment_timing
             for idx, item in enumerate(param_generator):
-                t = time.time()
-                #result = self.estimate_experiment_timing(start_time, param_generator.current_index, param_generator.total_iterations)
-                result = self.estimate_experiment_timing(start_time, idx, param_generator.total_iterations)
-                experiment_start_time, elapsed_time, time_left = result
-                self.report_estimated_experiment_time(experiment_start_time, elapsed_time, time_left)
-                self.report_progress(idx, param_generator.total_iterations)
-                self.future_single_value_measurement(**item)
-                
-                dt = time.time() - t
-                self.update_average_measurement_time(param_generator.current_index, dt) 
+                # try -> catch block and capture skiptonext exception
+                try:
+                    t = time.time()
+                    #result = self.estimate_experiment_timing(start_time, param_generator.current_index, param_generator.total_iterations)
+                    result = self.estimate_experiment_timing(start_time, idx, param_generator.total_iterations)
+                    experiment_start_time, elapsed_time, time_left = result
+                    self.report_estimated_experiment_time(experiment_start_time, elapsed_time, time_left)
+                    self.report_progress(idx, param_generator.total_iterations)
+                    self.future_single_value_measurement(**item)
+                    
+                    dt = time.time() - t
+                    self.update_average_measurement_time(param_generator.current_index, dt) 
+                except SkipCurrentExperimentException:
+                    continue
 
         except StopExperiment:
             print("Stop experiment exception raised")
@@ -1052,11 +1072,35 @@ class FANSExperiment(Experiment):
 
     def set_front_gate_voltage(self, voltage, error = None):
         print("setting gate voltage")
-        self.fans_smu.smu_set_gate_voltage(voltage)
+        currentAttempt = 0
+        maxAttempts = 3
+        while currentAttempt < maxAttempt:
+            try:
+                print("Starting {0} attempt".format(currentAttempt))
+                self.fans_smu.smu_set_gate_voltage(voltage)
+                return
+            except Exception as e:
+                print("Exception occured on {0} attempt".format(currentAttempt))
+                currentAttempt += 1
+        
+        raise SkipCurrentExperimentException()
+        
 
     def set_drain_source_voltage(self, voltage, error = None):
         print("setting drain voltage")
-        self.fans_smu.smu_set_drain_source_voltage(voltage)
+        currentAttempt = 0
+        maxAttempts = 3
+        while currentAttempt < maxAttempt:
+            try:
+                print("Starting {0} attempt".format(currentAttempt))
+                self.fans_smu.smu_set_drain_source_voltage(voltage)
+                return
+            except Exception as e:
+                print("Exception occured on {0} attempt".format(currentAttempt))
+                currentAttempt += 1
+        
+        raise SkipCurrentExperimentException()
+        
 
 class LoggingQueuedStream:
     def __init__(self, data_queue = None):
