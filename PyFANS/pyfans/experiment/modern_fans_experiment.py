@@ -6,6 +6,8 @@ import pickle
 
 import numpy as np
 
+from enum import Enum
+
 from multiprocessing import Process, Event
 from scipy.signal import periodogram
 from scipy.signal import decimate
@@ -27,7 +29,9 @@ import pyfans.ranges.modern_range_editor as mredit
 from pyfans.ranges.measurement_param_generator import ParameterItem, ParamGenerator
 
 
-
+class CharacteristicType(Enum):
+    Output=0
+    Transfet=1
 
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"

@@ -102,7 +102,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         self.averages = uih.Binding(self.ui_averages,"value", self.settings, "averages", converter=uih.AssureIntConverter())
         self.dsv = uih.Binding(self.ui_drain_source_voltage,"text", self.settings, "dsv", converter=uih.StringToVoltageConverter())
         
-        self.dsv.targetData = 123.456
+        # self.dsv.targetData = 123.456
 #drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
     
         

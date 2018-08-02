@@ -173,11 +173,28 @@ class Binding:
         self.originalStylesheet = self._targetObject.styleSheet()
         self.errorStylesheet = "border: 2px solid red;"
 
+        self._sigTargetDataChanged = None
+        self._sigSourceDataChanged = None
+        # self.__create_bindings()
+        # self.__updateUi()
+        self.reset()
+     
+    def reset(self):
+        try:
+            self._sigSourceDataChanged.disconnect(self.__updateTargetData__)
+        except:
+            print("source data changed is not connected")
+            
+        try:
+            self._sigTargetDataChanged.disconnect(self.__updateSourceData__)
+        except:
+            print("target data changed is not connected")
+
         self._sigTargetDataChanged = self.__get_target_data_changed_signal(self._targetObject, self._targetPropertyName)
         self._sigSourceDataChanged = self._sourceObject.propertyChanged
         self.__create_bindings()
         self.__updateUi()
-     
+
     def __create_bindings(self):
         if self._binding_direction == BindingDirection.SourceToTarget:
             self._sigSourceDataChanged.connect(self.__updateTargetData__)
@@ -214,6 +231,13 @@ class Binding:
     def __updateUi(self):
         self.__updateTargetData__(self._sourcePropertyName, self, self.sourceData)
         self.__updateSourceData__(self.targetData)
+
+    def setSourceObject(self, sourceObject):
+        if not isinstance(sourceObject, NotifyPropertyChanged):
+            raise TypeError("sourceObject must be inherited from NotifyPropertyChanged class!!")
+
+        self._sourceObject = sourceObject
+        self.reset()
 
     def __updateTargetData__(self, name, sender, value):
         if self._updatingSourceData:

@@ -549,6 +549,20 @@ class FANS_VoltageSetter(Observable):
         finally:
             self.set_moving_voltage(0)
 
+    def move_step_abs_voltage_increase(self, timeout=0.2):
+        try:
+            self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
+            time.sleep(timeout)
+            self.set_moving_voltage(0)
+
+            value = math.fabs(self.read_feedback_voltage())
+            self.on_voltage_changed(value)
+
+        except:
+            print("Error when step increasing abs voltage")
+        finally:
+            self.set_moving_voltage(0)
+
     def voltage_under_zero_trust_interval(self, current_voltage):
         if math.fabs(current_voltage) < self.ZERO_VOLTAGE_INTERVAL:
             return True
@@ -649,6 +663,8 @@ class FANS_VoltageSetter(Observable):
         if need_to_switch_polarity:
             self.move_to_zero()
             self.switch_to_polarity(polarity_to_switch)
+            #move a bit towards increasing abs voltage
+            self.move_step_abs_voltage_increase()
         
         value = self.read_feedback_voltage()
         (need_to_switch_polarity, polarity_to_switch) = self.check_polarity(voltage_to_set,value)
