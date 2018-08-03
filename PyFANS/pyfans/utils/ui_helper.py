@@ -70,7 +70,7 @@ class StringToTypeConverter(ValueConverter):
         self._type = type_to_convert
 
     def convert(self, value, **kwargs):
-        super().convert(value, self._type, **kwargs)
+        return super().convert(value, self._type, **kwargs)
 
     def convert_back(self, value, **kwargs):
         try:
@@ -162,10 +162,10 @@ class AssureConverter(ValueConverter):
         self._assureType = type_to_assure
 
     def convert(self, value):
-        super().convert(value, self._assureType)
+        return super().convert(value, self._assureType)
 
     def convert_back(self, value):
-        super().convert_back(value, self._assureType)
+        return super().convert_back(value, self._assureType)
 
 
 class AssureBoolConverter(AssureConverter):
@@ -184,8 +184,8 @@ class AssureIntConverter(AssureConverter):
 class Binding:
     def __init__(self, widget, widgetPropertyName, sourceObject, sourcePropertyName, **kwargs):
           
-        if not isinstance(sourceObject, NotifyPropertyChanged):
-            raise TypeError("sourceObject must be inherited from NotifyPropertyChanged class!!")
+        # if not isinstance(sourceObject, NotifyPropertyChanged):
+        #     raise TypeError("sourceObject must be inherited from NotifyPropertyChanged class!!")
 
         if not isinstance(widget, QtCore.QObject):
             raise TypeError("widget should be inherited from QObject")
@@ -264,6 +264,10 @@ class Binding:
         except:
             print("target data changed is not connected")
 
+        if not isinstance(self._sourceObject, NotifyPropertyChanged):
+            print("Source object is not suitable to create a binding")
+            return
+
         self._sigTargetDataChanged = self.__get_target_data_changed_signal(self._targetObject, self._targetPropertyName)
         self._sigSourceDataChanged = self._sourceObject.propertyChanged
         self.__create_bindings()
@@ -304,6 +308,7 @@ class Binding:
         
     def __updateUi(self):
         self.__updateTargetData__(self._sourcePropertyName, self, self.sourceData)
+        self.__check_target_data_valid__()
         # self.__updateSourceData__(self.targetData)
 
     def setSourceObject(self, sourceObject):
@@ -314,12 +319,13 @@ class Binding:
         self.reset()
 
     def __updateTargetData__(self, name, sender, value):
-        if self._updatingSourceData:
-            return 
-
         if name != self._sourcePropertyName:
             return 
 
+        if self._updatingSourceData:
+            return 
+
+        
         print("updating target")
         self._updatingTargetData = True
         self._targetObject.blockSignals(True)
@@ -340,6 +346,20 @@ class Binding:
         self._targetObject.blockSignals(False)
         self._updatingTargetData = False
         # self.targetData = self.sourceData
+    
+    def __check_target_data_valid__(self):
+        if self._converter is None:
+            print("No converter registered. Data considered valid")
+            return
+        try:
+            self._converter.convert(self.targetData)
+            self.setNormalStyle()
+
+        except ConversionException as e:
+            self.setErrorStyle()
+            
+        
+
 
     # @QtCore.pyqtSlot(int)
     def __updateSourceData__(self, value):
@@ -353,7 +373,8 @@ class Binding:
         
         else: 
             try:
-                self.sourceData = self._converter.convert(self.targetData)
+                convertedValue = self._converter.convert(self.targetData)
+                self.sourceData = convertedValue
                 self.setNormalStyle()
             except ConversionException as e:
                 print_exception(e)
@@ -396,7 +417,35 @@ class Binding:
 
     
 class DataContextWidget:
-    def __init__(self):
+    def __init__(self, **kwargs):
+        self._dataContext = None 
+        self.dataContext = kwargs.get("dataContext")
+        
+
+    def __setContextForBindings__(self, dataContext):
+        # print(dir(self))
+        for attribute in dir(self):
+            try:
+                child = getattr(self, attribute)
+                if not isinstance(child, Binding):
+                    raise TypeError
+                    
+                child.setSourceObject(dataContext)
+            except TypeError:
+                continue
+
+    @property
+    def dataContext(self):
+        return self._dataContext
+
+    @dataContext.setter
+    def dataContext(self, context):
+        self._dataContext = context
+        self.__setContextForBindings__(context)
+
+    # def setDataContext(self, dataContext):
+    #     self.dataContext
+
         
 
 
@@ -432,8 +481,7 @@ def assert_tuple_argument(function):
 def assert_list_or_tuple_argument(function):
     return __assert_isinstance_wrapper(function, (list, tuple))
 
-def assert_characteristic_type(function):
-    return __assert_isinstance_wrapper(function, CharacteristicType)
+
 
 def get_module_name_and_type(t):
     module = t.__module__

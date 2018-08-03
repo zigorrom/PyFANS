@@ -19,7 +19,7 @@ import pyfans.hardware.modern_fans_smu as msmu
 import pyfans.hardware.temperature_controller as tc
 from pyfans.hardware.fans_hardware_settings import HardwareSettings
 
-from pyfans.experiment.fans_experiment_settings import ExperimentSettings
+from pyfans.experiment.fans_experiment_settings import ExperimentSettings, CharacteristicType, TimetraceMode
 import pyfans.experiment.modern_fans_experiment_writer as mfew
 import pyfans.experiment.process_communication_protocol as pcp
 import pyfans.experiment.experiment_writer as ew
@@ -29,10 +29,14 @@ import pyfans.ranges.modern_range_editor as mredit
 from pyfans.ranges.measurement_param_generator import ParameterItem, ParamGenerator
 
 
-class CharacteristicType(Enum):
-    Output = 0
-    Transfer = 1
+# class CharacteristicType(Enum):
+#     Output = 0
+#     Transfer = 1
 
+# class TimetraceMode(Enum):
+#     NONE = 0
+#     PARTIAL = 1
+#     FULL = 2
 #def get_fans_ai_channels_from_number(number):
 #    assert isinstance(number, int), "Number should be integer"
 #    assert (number>0 and number<9),"Wrong channel number!"

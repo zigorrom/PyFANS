@@ -5,8 +5,10 @@ from pint import UnitRegistry
 from PyQt4 import uic, QtCore, QtGui
 
 import pyfans.utils.ui_helper as uih
-from pyfans.experiment.modern_fans_experiment import CharacteristicType
+from pyfans.experiment.fans_experiment_settings import CharacteristicType
 from pyfans.main_window import CharacteristicTypeToStrConverter
+from pyfans import FANS_UI_MainView as MainWindow
+from pyfans.experiment.fans_experiment_settings import ExperimentSettings
 
 class Settings(uih.NotifyPropertyChanged):
     def __init__(self):
@@ -125,6 +127,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         
     
 
+
 def main():
     print("testing binding")
 
@@ -142,4 +145,14 @@ def main():
     lineeditProp = uih.Binding(lineedit, "text", s,  "dsv", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
     lineedit.show()
     # wnd.show()
+    return app.exec_()
+
+
+def test_main_window():
+    app = QtGui.QApplication(sys.argv)
+    wnd = MainWindow()
+    exp_setting = ExperimentSettings()
+
+    wnd.dataContext = exp_setting
+    wnd.show()
     return app.exec_()
