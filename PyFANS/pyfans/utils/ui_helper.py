@@ -240,7 +240,19 @@ class Binding:
         # self.__create_bindings()
         # self.__updateUi()
         self.reset()
-     
+
+    def __del__(self):
+        try:
+            self._sigSourceDataChanged.disconnect(self.__updateTargetData__)
+        except:
+            print("source data changed is not connected")
+            
+        try:
+            self._sigTargetDataChanged.disconnect(self.__updateSourceData__)
+        except:
+            print("target data changed is not connected")
+
+
     def reset(self):
         try:
             self._sigSourceDataChanged.disconnect(self.__updateTargetData__)
@@ -447,18 +459,19 @@ def bind(objectName, propertyName, value_type, string_format = None):#, set_valu
             if isinstance(prop_val, bool):
                 return value_type(prop_val)
 
-            elif not prop_val:
-                if value_type == int or value_type == float:
-                    return value_type(0)
+            elif prop_val:
+                return value_type(prop_val)
+                # if value_type == int or value_type == float:
+                #     return value_type(0)
                     
-                elif value_type == bool:
-                    return False
+                # elif value_type == bool:
+                #     return False
 
-                elif value_type == str:
-                    return ""
+                # elif value_type == str:
+                #     return ""
             
             else:
-                value = value_type(prop_val)
+                return value_type()
 
         except Exception as e:
             prop_type = type(prop_val)

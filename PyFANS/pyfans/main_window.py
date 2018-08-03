@@ -15,6 +15,7 @@ import pyfans.plot as plt
 import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
 from pyfans.experiment.modern_fans_experiment import CharacteristicType
+import pyfans.ranges.modern_range_editor as mredit
 
 class CharacteristicTypeToStrConverter(uih.ValueConverter):
     def __init__(self):
@@ -91,8 +92,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         super().setupUi(self)
         self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
         self.ui_load_resistance.setValidator(QtGui.QIntValidator())
-        self.ui_drain_source_voltage.setValidator(uih.QVoltageValidator())
-        self.ui_front_gate_voltage.setValidator(uih.QVoltageValidator())
+        self.ui_drain_source_voltage.setValidator(uih.VoltageValidator())
+        self.ui_front_gate_voltage.setValidator(uih.VoltageValidator())
         self.__setup_folder_browse_button()
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
         self.progressBar = QtGui.QProgressBar(self)
