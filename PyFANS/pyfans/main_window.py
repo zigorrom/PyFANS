@@ -11,6 +11,7 @@ from PyQt4 import uic, QtGui, QtCore
 import pyfans
 # from pyfans.main_controller import FANS_UI_Controller
 import pyfans.utils.ui_helper as uih
+#from pyfans.utils.ui_helper import Binding, BindingDirection, StringToIntConverter, StringToFloatConverter, StringToVoltageConverter, AssureBoolConverter, AssureIntConverter
 import pyfans.plot as plt
 import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
@@ -118,7 +119,64 @@ class FANS_UI_MainView(mainViewBase,mainViewForm):
         showHistoryCurvesAction.setDefaultWidget(checkBox)
         self.menuSettings.addAction(showHistoryCurvesAction)
         # self.menuSettings
-    
+    def setupBinding(self):
+        sourceObject = None
+        self.calibrate_before_measurement = uih.Binding(self.ui_calibrate, "checked", sourceObject, "calibrate_before_measurement", converter=uih.AssureBoolConverter()) # uih.bind("ui_calibrate", "checked", bool)
+
+        self.overload_reject = uih.Binding(self.ui_overload_reject, "checked", sourceObject, "overload_rejecion", converter=uih.AssureBoolConverter()) 
+
+        # self.display_refresh = uih.Binding(self.ui_display_refresh, "value", sourceObject, "display_refresh", converter=uih.StringToIntConverter())
+
+        self.simulate_measurement = uih.Binding(self.ui_simulate, "checked", sourceObject, "simulate_experiment", converter=uih.AssureBoolConverter())
+
+        self.number_of_averages =  uih.Binding(self.ui_averages, "value", sourceObject, "averages", converter=uih.StringToIntConverter()) 
+
+        self.use_homemade_amplifier = uih.Binding(self.ui_use_homemade_amplifier, "checked", sourceObject, "use_homemade_amplifier", converter=uih.AssureBoolConverter())
+
+        self.second_amplifier_gain = uih.Binding(self.ui_second_amp_coeff, "currentText", sourceObject, "second_amp_coeff", converter=uih.StringToIntConverter())
+
+        self.perform_temperature_measurement = uih.Binding(self.ui_need_meas_temp, "checked", sourceObject, "need_measure_temperature", converter=uih.AssureBoolConverter())
+
+        self.current_temperature =  uih.Binding(self.ui_current_temp, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=temperature_format) 
+
+        self.load_resistance =  uih.Binding(self.ui_load_resistance, "text", sourceObject, "load_resistance", converter=uih.StringToFloatConverter())
+
+        self.perform_measurement_of_gated_structure = uih.Binding(self.ui_meas_gated_structure, "checked", sourceObject, "meas_gated_structure", converter=uih.AssureBoolConverter())
+
+        # self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_dut_selector", converter=uih.AssureBoolConverter())
+
+        self.use_automated_voltage_control = uih.Binding(self.ui_use_automated_voltage_control, "checked", sourceObject, "use_automated_voltage_control", converter=uih.AssureBoolConverter())
+
+        self.measurement_characteristic_type = uih.Binding(self.ui_meas_characteristic_type, "currentIndex", sourceObject, "meas_characteristic_type", converter=CharacteristicTypeToStrConverter())
+        # self.drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
+        self.drain_source_voltage = uih.Binding(self.ui_drain_source_voltage, "text", sourceObject, "drain_source_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
+        # self.front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
+        self.front_gate_voltage = uih.Binding(self.ui_front_gate_voltage, "text", sourceObject, "front_gate_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
+        # self.use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
+        self.use_drain_source_range = uih.Binding(self.ui_use_set_vds_range, "checked", sourceObject, "use_set_vds_range", converter=uih.AssureBoolConverter())
+        # self.use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
+        self.use_gate_source_range = uih.Binding(self.ui_use_set_vfg_range, "checked", sourceObject, "use_set_vfg_range", converter=uih.AssureBoolConverter())
+        # self.experimentName = uih.bind("ui_experimentName", "text", str)
+        self.experimentName = uih.Binding(self.ui_experimentName, "text", sourceObject, "experiment_name")
+        # self.measurementName = uih.bind("ui_measurementName", "text", str)
+        self.measurementName = uih.Binding(self.ui_measurementName, "text", sourceObject, "measurement_name")
+        # self.measurementCount = uih.bind("ui_measurementCount", "value", int)
+        self.measurementCount = uih.Binding(self.ui_measurementCount, "value", sourceObject, "measurement_count")
+        self.timetrace_mode = uih.bind("ui_timetrace_mode", "currentIndex", int)
+        self.timetrace_length = uih.bind("ui_timetrace_length", "value", int)
+        self.set_zero_after_measurement = uih.bind("ui_set_zero_after_measurement", "checked", bool)
+
+        ### binding to the other object
+        # self.sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
+        self.sample_voltage_start = uih.Binding(self.ui_sample_voltage_start, "text", sourceObject, "front_gate_voltage", converter=uih.StringToVoltageConverter())
+        self.sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float, voltage_format)
+        self.front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float, voltage_format)
+        self.front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float, voltage_format)
+        self.sample_current_start = uih.bind("ui_sample_current_start", "text", float, current_format)
+        self.sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
+        self.sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
+        self.sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
+
     def on_showHistoryCurvesAction_toggled(self, state):
         print("show history curves {0}".format(state))
         self._spectrumPlotWidget.setHistoryCurvesVisible(state)

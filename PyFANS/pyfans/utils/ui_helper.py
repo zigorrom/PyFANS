@@ -395,6 +395,9 @@ class Binding:
         setattr(self._sourceObject, self._sourcePropertyName, value)
 
     
+class DataContextWidget:
+    def __init__(self):
+        
 
 
 
