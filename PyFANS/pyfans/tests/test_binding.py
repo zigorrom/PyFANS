@@ -149,10 +149,15 @@ def main():
 
 
 def test_main_window():
+    import pickle
     app = QtGui.QApplication(sys.argv)
     wnd = MainWindow()
     exp_setting = ExperimentSettings()
-
+    
+    str_pickle = pickle.dumps(exp_setting)
+    exp_setting = pickle.loads(str_pickle)
+    
     wnd.dataContext = exp_setting
-    wnd.show()
+    wnd.experiment_settings = exp_setting
+    wnd.showMaximized()
     return app.exec_()

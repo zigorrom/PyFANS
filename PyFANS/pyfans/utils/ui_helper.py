@@ -38,6 +38,20 @@ class NotifyPropertyChanged(QtCore.QObject):
 class ConversionException(Exception):
     pass
 
+class NameValidator(QtGui.QRegExpValidator):
+    def __init__(self, parent=None):
+        regex = QtCore.QRegExp("^[a-zA-Z][^.,;:?/\\`~|!@#$%^&* ]*$")
+        super().__init__(regex, parent)
+        
+    def fixup(self, string):
+        if not isinstance(string, str):
+            return 
+
+        string = string.replace(' ', '_').replace('.','_')
+        return string
+
+
+
 class ValueConverter:
     def __init__(self, defaultTargetValue=None, defaultSourceValue=None):
         self.defaultTargetValue = defaultTargetValue
@@ -45,7 +59,13 @@ class ValueConverter:
 
     def convert(self, value, source_type, **kwargs):
         try:
+            if value is None:
+                raise ConversionException()
+
             return source_type(value) 
+        
+        except ConversionException:
+            raise
 
         except Exception as e:
             print_exception(e)
@@ -54,7 +74,13 @@ class ValueConverter:
 
     def convert_back(self, value, target_type, **kwargs):
         try:
+            if value is None:
+                raise ConversionException()
+
             return target_type(value) 
+            
+        except ConversionException:
+            raise
 
         except Exception as e:
             print_exception(e)
@@ -75,16 +101,18 @@ class StringToTypeConverter(ValueConverter):
     def convert_back(self, value, **kwargs):
         try:
             stringFormat = kwargs.get("stringFormat", None)
-            if stringFormat:
+            if not stringFormat:
                 return super().convert_back(value, str, **kwargs)
+            
+            elif value is None:
+                return ""
+            
             else:
                 return stringFormat.format(value)
 
         except Exception as e:
             raise ConversionException()
-
-
-    
+   
 class StringToIntConverter(StringToTypeConverter):
     def __init__(self):
         super().__init__(int)
@@ -109,52 +137,6 @@ class StringToVoltageConverter(StringToTypeConverter):
         except Exception as e:
             raise ConversionException()
 
-    
-
-# class StringToIntConverter(ValueConverter):
-#     def __init__(self):
-#         super().__init__()
-
-#     def convert(self, value):
-#         super().convert(value, int, 0)
-
-#     def convert_back(self, value):
-#         super().convert_back(value, str, "")
-
-# class StringToFloatConverter(ValueConverter):
-#     def __init__(self):
-#         super().__init__()
-
-#     def convert(self, value):
-#         super().convert(value, float, 0.0)
-
-#     def convert_back(self, value):
-#         super().convert_back(value, str, "")
-
-# class StringToVoltageConverter(ValueConverter):
-#     def __init__(self):
-#         super().__init__()
-#         self.ureg = UnitRegistry()
-
-#     def convert(self, value):
-#         try:
-#             v = self.ureg(value)
-#             if not isinstance(v,pint.quantity._Quantity):
-#                 v = float(v) * self.ureg.volt
-#             print("{0} {1}".format(v.magnitude, v.units))
-#             v.ito(self.ureg.volt)
-#             return v.magnitude
-#         except Exception as e:
-#             raise ConversionException()
-
-#     def convert_back(self, value):
-#         try:
-#             return str(value)
-#         except Exception as e:
-#             raise ConversionException()
-
-
-
 class AssureConverter(ValueConverter):
     def __init__(self, type_to_assure):
         if not isinstance(type_to_assure, type):
@@ -175,10 +157,6 @@ class AssureBoolConverter(AssureConverter):
 class AssureIntConverter(AssureConverter):
     def __init__(self):
         super().__init__(int)
-
-        
-
-
 
 
 class Binding:
@@ -353,6 +331,8 @@ class Binding:
             return
         try:
             self._converter.convert(self.targetData)
+            # if self._validator:
+            #     validation = self._validator.validate()
             self.setNormalStyle()
 
         except ConversionException as e:
@@ -366,7 +346,7 @@ class Binding:
         if self._updatingTargetData:
             return
         
-        print("updating source")
+        print("updating source property {0}".format(self._sourcePropertyName))
         self._updatingSourceData = True
         if self._converter is None:
             self.sourceData = value #self.targetData
@@ -574,3 +554,287 @@ def string_to_volt_converter(ureg):
     def wrapper(value):
        return convert_value_to_volts(ureg, value)
     return wrapper
+
+
+class OrientationalToolButton(QtGui.QToolButton):
+    """
+    https://stackoverflow.com/questions/7339685/how-to-rotate-a-qpushbutton
+    """
+    def __init__(self, parent = None, **kwargs):
+        super().__init__(parent)
+        self._orientation = kwargs.get("position", QtCore.Qt.AnchorTop)
+        
+    
+    def paintEvent(self, event):
+        
+        painter = QtGui.QStylePainter(self)
+        if self._orientation == QtCore.Qt.AnchorLeft:
+            painter.rotate(270)
+            painter.translate(-1 * self.height(), 0)
+
+        elif self._orientation == QtCore.Qt.AnchorRight:
+            painter.rotate(90)
+            painter.translate(0, -1 * self.width())
+        
+        
+        # painter.drawItemText()
+        painter.drawControl(QtGui.QStyle.CE_PushButton, self.getSyleOptions())
+        
+    def minimumSizeHint(self):
+        size = super(OrientationalToolButton, self).minimumSizeHint()
+        size.transpose()
+        return size
+
+    def sizeHint(self):
+        size = super(OrientationalToolButton, self).sizeHint()
+        size.transpose()
+        return size
+
+    def getSyleOptions(self):
+        options = QtGui.QStyleOptionButton()
+        options.initFrom(self)
+        size = options.rect.size()
+        size.transpose()
+        options.rect.setSize(size)
+        # options.features = QtGui.QStyleOptionButton()#.None
+        # if self.isFlat():
+        #     options.features |= QtGui.QStyleOptionButton.Flat
+        if self.menu():
+            options.features |= QtGui.QStyleOptionButton.HasMenu
+        # if self.autoDefault() or self.isDefault():
+        #     options.features |= QtGui.QStyleOptionButton.AutoDefaultButton
+        # if self.isDefault():
+        #     options.features |= QtGui.QStyleOptionButton.DefaultButton
+        if self.isDown() or (self.menu() and self.menu().isVisible()):
+            options.state |= QtGui.QStyle.State_Sunken
+        if self.isChecked():
+            options.state |= QtGui.QStyle.State_On
+        # if not self.isFlat() and not self.isDown():
+        #     options.state |= QtGui.QStyle.State_Raised
+
+        options.text = self.text()
+        options.icon = self.icon()
+        options.iconSize = self.iconSize()
+        return options
+
+
+
+class ExpandableWidget(QtGui.QWidget):
+    """
+    port and modification of the initial code from
+    https://stackoverflow.com/questions/32476006/how-to-make-an-expandable-collapsable-section-widget-in-qt
+    """
+    def __init__(self, parent = None, **kwargs):
+        super().__init__(parent)
+        self._mainLayout = QtGui.QGridLayout()
+        # self._toggleButton = OrientationalToolButton() # QtGui.QToolButton() ##
+        self._headerLine = QtGui.QFrame()
+        self._toggleAnimation = QtCore.QParallelAnimationGroup()
+        self._contentArea = QtGui.QScrollArea()
+        self._animationDuration = 300
+
+        self._title = kwargs.get("title", "Expandable")
+        self._animationDuration = kwargs.get("animation_duration", 300)
+        
+        self._initiallyExpanded = kwargs.get("expanded", True)
+
+        self._position = kwargs.get("anchor", QtCore.Qt.AnchorTop)
+        
+        self._toggleButton = OrientationalToolButton(position=self._position) 
+        
+        self._orientation = QtCore.Qt.Horizontal
+        if self._position ==  QtCore.Qt.AnchorTop or self._position ==  QtCore.Qt.AnchorBottom:
+            self._orientation = QtCore.Qt.Horizontal
+        elif self._position ==  QtCore.Qt.AnchorLeft or self._position ==  QtCore.Qt.AnchorRight:
+            self._orientation = QtCore.Qt.Vertical
+        else:
+            self._position = QtCore.Qt.AnchorTop
+            self._orientation = QtCore.Qt.Horizontal
+
+        self._expanded_arrow = None
+        self._collapsed_arrow = None
+
+        if self._position == QtCore.Qt.AnchorTop:
+            self._expanded_arrow = QtCore.Qt.DownArrow
+            self._collapsed_arrow = QtCore.Qt.RightArrow
+            
+
+        elif self._position == QtCore.Qt.AnchorBottom:
+            self._expanded_arrow = QtCore.Qt.UpArrow
+            self._collapsed_arrow = QtCore.Qt.RightArrow
+
+        elif self._position ==  QtCore.Qt.AnchorLeft:
+            self._expanded_arrow = QtCore.Qt.RightArrow
+            self._collapsed_arrow = QtCore.Qt.DownArrow
+        
+        elif self._position ==  QtCore.Qt.AnchorRight:
+            self._expanded_arrow = QtCore.Qt.LeftArrow
+            self._collapsed_arrow = QtCore.Qt.DownArrow
+
+
+        
+        # self._expanded_arrow = QtCore.Qt.DownArrow if self._orientation == QtCore.Qt.Horizontal else QtCore.Qt.RightArrow
+        # self._collapsed_arrow = QtCore.Qt.RightArrow if self._orientation == QtCore.Qt.Horizontal else QtCore.Qt.DownArrow
+
+        self.setupUi()
+
+
+    def setupUi(self):
+        # transform: rotate(-90deg) translate(100%, 0);
+        # transform-origin: right bottom;
+        self._toggleButton.setStyleSheet("QToolButton { border: none; }")
+        self._toggleButton.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        if self._initiallyExpanded:
+            self._toggleButton.setArrowType(self._expanded_arrow)
+        else:
+            self._toggleButton.setArrowType(self._collapsed_arrow)
+        
+
+        self._toggleButton.setText(self._title)
+        self._toggleButton.setCheckable(True)
+        self._toggleButton.setChecked(self._initiallyExpanded)
+
+        
+        self._headerLine.setFrameShadow(QtGui.QFrame.Sunken)
+
+        self._contentArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
+
+        
+
+        if self._orientation == QtCore.Qt.Horizontal:
+            self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Maximum)
+            self._headerLine.setFrameShape(QtGui.QFrame.HLine)
+            self._headerLine.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Maximum)
+            self._contentArea.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+            self._contentArea.setMaximumHeight(0)
+            self._contentArea.setMinimumHeight(0)
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self, "minimumHeight"))
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self, "maximumHeight"))
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self._contentArea, "maximumHeight"))
+            self._mainLayout.setVerticalSpacing(0)
+           
+
+        else:
+            self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Expanding)
+            self._headerLine.setFrameShape(QtGui.QFrame.VLine)
+            self._headerLine.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Expanding)
+            self._contentArea.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
+            self._contentArea.setMaximumWidth(0)
+            self._contentArea.setMinimumWidth(0)
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self, "minimumWidth"))
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self, "maximumWidth"))
+            self._toggleAnimation.addAnimation(QtCore.QPropertyAnimation(self._contentArea, "maximumWidth"))
+            self._mainLayout.setHorizontalSpacing(0)
+
+           
+
+        if self._position == QtCore.Qt.AnchorTop:
+            self._mainLayout.addWidget(self._toggleButton, 0, 0,1,1,QtCore.Qt.AlignLeft)
+            self._mainLayout.addWidget(self._headerLine, 0, 2,1,1)
+            self._mainLayout.addWidget(self._contentArea, 1, 0,1,3)
+            self._mainLayout.setAlignment(QtCore.Qt.AlignTop)
+            self.setLayout(self._mainLayout)
+
+        elif self._position == QtCore.Qt.AnchorBottom:
+            self._mainLayout.addWidget(self._toggleButton, 1, 0,1,1,QtCore.Qt.AlignLeft)
+            self._mainLayout.addWidget(self._headerLine, 1, 2,1,1)
+            self._mainLayout.addWidget(self._contentArea, 0, 0,1,3)
+            self._mainLayout.setAlignment(QtCore.Qt.AlignBottom)
+            self.setLayout(self._mainLayout)
+
+        elif self._position == QtCore.Qt.AnchorLeft:
+            self._mainLayout.addWidget(self._toggleButton, 0, 0,1,1,QtCore.Qt.AlignLeft)
+            self._mainLayout.addWidget(self._headerLine, 2, 0,1,1)
+            self._mainLayout.addWidget(self._contentArea, 0, 1,3,1)
+            self._mainLayout.setAlignment(QtCore.Qt.AlignLeft)
+            self.setLayout(self._mainLayout)
+
+        elif self._position == QtCore.Qt.AnchorRight:
+            self._mainLayout.addWidget(self._toggleButton, 0, 1,1,1,QtCore.Qt.AlignLeft)
+            self._mainLayout.addWidget(self._headerLine, 2, 1,1,1)
+            self._mainLayout.addWidget(self._contentArea, 0, 0,3,1)
+            self._mainLayout.setAlignment(QtCore.Qt.AlignRight)
+            self.setLayout(self._mainLayout)
+
+        
+        self._mainLayout.setContentsMargins(0,0,0,0)
+        self._toggleButton.clicked.connect(self.toggleState)
+
+
+    @QtCore.pyqtSlot(bool)
+    def toggleState(self, state):
+        self._toggleButton.setArrowType(self._expanded_arrow if state else self._collapsed_arrow)
+        self._toggleAnimation.setDirection(QtCore.QAbstractAnimation.Forward if state else QtCore.QAbstractAnimation.Backward)
+        self._toggleAnimation.start()
+
+
+    
+
+    def setContentLayout(self, contentLayout):
+        #trick to remove parent from layout manager
+        l = self._contentArea.layout()
+        if l:
+            QtGui.QWidget().setLayout()
+
+        self._contentArea.setLayout(contentLayout)
+        
+        if self._orientation == QtCore.Qt.Horizontal:
+            collapsedParam = self.sizeHint().height() - self._contentArea.maximumHeight()
+            contentParam = contentLayout.sizeHint().height()
+            if self._initiallyExpanded:
+                self._contentArea.setMaximumHeight(contentParam)
+                self._contentArea.setMinimumHeight(0)
+         
+        else:
+            collapsedParam = self.sizeHint().width() - self._contentArea.maximumWidth()
+            contentParam = contentLayout.sizeHint().width()
+            if self._initiallyExpanded:
+                self._contentArea.setMaximumWidth(contentParam)
+                self._contentArea.setMinimumWidth(0)
+
+        # collapsedHeight = self.sizeHint().height() - self._contentArea.maximumHeight()
+        # contentHeight = contentLayout.sizeHint().height()
+
+        for i in range(self._toggleAnimation.animationCount() - 1):
+            spoilerAnimation = self._toggleAnimation.animationAt(i)
+            spoilerAnimation.setDuration(self._animationDuration)
+            spoilerAnimation.setStartValue(collapsedParam)
+            spoilerAnimation.setEndValue(collapsedParam+contentParam)
+
+        contentAnimation = self._toggleAnimation.animationAt(self._toggleAnimation.animationCount() - 1)
+        contentAnimation.setDuration(self._animationDuration)
+        contentAnimation.setStartValue(0)
+        contentAnimation.setEndValue(contentParam)
+        
+        
+        # self.toggleState(self._toggleButton.isChecked())
+
+
+
+def main():
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    mainWidget = QtGui.QWidget()
+    globalLayout = QtGui.QHBoxLayout()
+
+    wnd = ExpandableWidget(anchor=QtCore.Qt.AnchorTop)
+    layout = QtGui.QVBoxLayout()
+    widget = QtGui.QLabel()
+    widget.setText("asfhakjhahsalkghaskgh")
+    layout.addWidget(widget)
+    wnd.setContentLayout(layout)
+
+    testEdit = QtGui.QLineEdit()
+    testEdit.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+    globalLayout.addWidget(wnd)
+    globalLayout.addWidget(testEdit)
+    mainWidget.setLayout(globalLayout)
+    mainWidget.show()
+    # wnd.show()
+
+    sys.exit(app.exec_())
+
+if __name__=="__main__":
+    main()
+    

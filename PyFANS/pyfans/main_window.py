@@ -62,46 +62,23 @@ class TimetraceModeToIndexConverter(uih.ValueConverter):
             raise uih.ConversionException()
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5.ui")
+mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5_3.ui")
 class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     ureg = UnitRegistry()
     voltage_format = "{:8.6f}"
     resistance_format = "{:.3f}"
     current_format = "{:.5e}"
     temperature_format = "{:.2f}"
-    # calibrate_before_measurement = uih.bind("ui_calibrate", "checked", bool)
-    # overload_reject = uih.bind("ui_overload_reject", "checked", bool)
-    # display_refresh = uih.bind("ui_display_refresh", "value", int)
-    # simulate_measurement = uih.bind("ui_simulate", "checked", bool)
-    # number_of_averages = uih.bind("ui_averages", "value", int)
-    # use_homemade_amplifier = uih.bind("ui_use_homemade_amplifier", "checked", bool)
-    # second_amplifier_gain = uih.bind("ui_second_amp_coeff", "currentText", int)
-    # perform_temperature_measurement = uih.bind("ui_need_meas_temp","checked", bool)
-    # current_temperature = uih.bind("ui_current_temp", "text", float, temperature_format)
-    # load_resistance = uih.bind("ui_load_resistance", "text", float)
-    # perform_measurement_of_gated_structure = uih.bind("ui_meas_gated_structure", "checked", bool)
-    # use_dut_selector = uih.bind("ui_use_dut_selector", "checked", bool)
-    # use_automated_voltage_control = uih.bind("ui_use_automated_voltage_control", "checked", bool)
-    # measurement_characteristic_type = uih.bind("ui_meas_characteristic_type", "currentIndex", int)
-    # drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
-    # front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
-    # use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
-    # use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
-    # sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
-    # sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float, voltage_format)
-    # front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float, voltage_format)
-    # front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float, voltage_format)
-    # sample_current_start = uih.bind("ui_sample_current_start", "text", float, current_format)
-    # sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
-    # sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
-    # sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
-    # experimentName = uih.bind("ui_experimentName", "text", str)
-    # measurementName = uih.bind("ui_measurementName", "text", str)
-    # measurementCount = uih.bind("ui_measurementCount", "value", int)
-    # timetrace_mode = uih.bind("ui_timetrace_mode", "currentIndex", int)
-    # timetrace_length = uih.bind("ui_timetrace_length", "value", int)
-    # set_zero_after_measurement = uih.bind("ui_set_zero_after_measurement", "checked", bool)
-    # valueChanged = QtCore.pyqtSignal(str, object) #str - name of the object, object - new value
+   
+    sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
+    sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float, voltage_format)
+    front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float, voltage_format)
+    front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float, voltage_format)
+    sample_current_start = uih.bind("ui_sample_current_start", "text", float, current_format)
+    sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
+    sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
+    sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
+    
 
     def __init__(self, parent = None):
        super(mainViewBase,self).__init__(parent)
@@ -111,13 +88,32 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
        self._controller = None
        self._experiment_settings = None
        
+    def showMaximized(self):
+        # super().showMaximized()
+        # self.resize(1200,980)
+        # self.show()
+        super().showMaximized()
+
     def setupUi(self):
         print("setting the ui up")
         super().setupUi(self)
-        # self.ui_current_temp.setValidator(QtGui.QDoubleValidator(notation = QtGui.QDoubleValidator.StandardNotation))
-        # self.ui_load_resistance.setValidator(QtGui.QIntValidator())
-        # self.ui_drain_source_voltage.setValidator(uih.VoltageValidator())
-        # self.ui_front_gate_voltage.setValidator(uih.VoltageValidator())
+        # flags = QtCore.Qt.FramelessWindowHint
+        # self.setWindowFlags(flags)
+
+
+        self._temperature_checkbox_group = QtGui.QButtonGroup()
+        self._temperature_checkbox_group.addButton(self.ui_set_temperature_single)
+        self._temperature_checkbox_group.addButton(self.ui_use_set_temperature_range)
+
+        self._drain_source_checkbox_group = QtGui.QButtonGroup()
+        self._drain_source_checkbox_group.addButton(self.ui_set_drain_source_voltage)
+        self._drain_source_checkbox_group.addButton(self.ui_use_set_vds_range)
+
+        self._gate_source_checkbox_group = QtGui.QButtonGroup()
+        self._gate_source_checkbox_group.addButton(self.ui_set_gate_source_voltage)
+        self._gate_source_checkbox_group.addButton(self.ui_use_set_vfg_range)
+
+        
         self.__setup_folder_browse_button()
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
         self.progressBar = QtGui.QProgressBar(self)
@@ -141,55 +137,31 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.on_showHistoryCurvesAction_toggled(False)
         showHistoryCurvesAction.setDefaultWidget(checkBox)
         self.menuSettings.addAction(showHistoryCurvesAction)
-        # self.menuSettings
+        
     def setupBinding(self):
         sourceObject = None
         self.calibrate_before_measurement = uih.Binding(self.ui_calibrate, "checked", sourceObject, "calibrate_before_measurement", converter=uih.AssureBoolConverter()) # uih.bind("ui_calibrate", "checked", bool)
-
         self.overload_reject = uih.Binding(self.ui_overload_reject, "checked", sourceObject, "overload_rejecion", converter=uih.AssureBoolConverter()) 
-
-        # self.display_refresh = uih.Binding(self.ui_display_refresh, "value", sourceObject, "display_refresh", converter=uih.StringToIntConverter())
-
         self.simulate_measurement = uih.Binding(self.ui_simulate, "checked", sourceObject, "simulate_experiment", converter=uih.AssureBoolConverter())
-
         self.number_of_averages =  uih.Binding(self.ui_averages, "value", sourceObject, "averages", converter=uih.StringToIntConverter()) 
-
         self.use_homemade_amplifier = uih.Binding(self.ui_use_homemade_amplifier, "checked", sourceObject, "use_homemade_amplifier", converter=uih.AssureBoolConverter())
-
         self.second_amplifier_gain = uih.Binding(self.ui_second_amp_coeff, "currentText", sourceObject, "second_amp_coeff", converter=uih.StringToIntConverter())
-
         self.perform_temperature_measurement = uih.Binding(self.ui_need_meas_temp, "checked", sourceObject, "need_measure_temperature", converter=uih.AssureBoolConverter())
-
-        self.current_temperature =  uih.Binding(self.ui_current_temp, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=self.temperature_format) 
-
+        self.current_temperature =  uih.Binding(self.ui_current_temp, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=self.temperature_format, validator=QtGui.QDoubleValidator()) 
         self.load_resistance =  uih.Binding(self.ui_load_resistance, "text", sourceObject, "load_resistance", converter=uih.StringToFloatConverter(), validator=QtGui.QIntValidator())
-
         self.perform_measurement_of_gated_structure = uih.Binding(self.ui_meas_gated_structure, "checked", sourceObject, "meas_gated_structure", converter=uih.AssureBoolConverter())
-
         # self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_dut_selector", converter=uih.AssureBoolConverter())
-
         self.use_automated_voltage_control = uih.Binding(self.ui_use_automated_voltage_control, "checked", sourceObject, "use_automated_voltage_control", converter=uih.AssureBoolConverter())
-
         self.measurement_characteristic_type = uih.Binding(self.ui_meas_characteristic_type, "currentText", sourceObject, "meas_characteristic_type", converter=CharacteristicTypeToStrConverter())
-        # self.drain_source_voltage = uih.bind("ui_drain_source_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
         self.drain_source_voltage = uih.Binding(self.ui_drain_source_voltage, "text", sourceObject, "drain_source_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
-        # self.front_gate_voltage = uih.bind("ui_front_gate_voltage", "text", uih.string_to_volt_converter(ureg))#, voltage_format) # ureg) #
         self.front_gate_voltage = uih.Binding(self.ui_front_gate_voltage, "text", sourceObject, "front_gate_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
-        # self.use_drain_source_range = uih.bind("ui_use_set_vds_range","checked", bool)
         self.use_drain_source_range = uih.Binding(self.ui_use_set_vds_range, "checked", sourceObject, "use_set_vds_range", converter=uih.AssureBoolConverter())
-        # self.use_gate_source_range = uih.bind("ui_use_set_vfg_range","checked", bool)
         self.use_gate_source_range = uih.Binding(self.ui_use_set_vfg_range, "checked", sourceObject, "use_set_vfg_range", converter=uih.AssureBoolConverter())
-        # self.experimentName = uih.bind("ui_experimentName", "text", str)
-        self.experimentName = uih.Binding(self.ui_experimentName, "text", sourceObject, "experiment_name")
-        # self.measurementName = uih.bind("ui_measurementName", "text", str)
-        self.measurementName = uih.Binding(self.ui_measurementName, "text", sourceObject, "measurement_name")
-        # self.measurementCount = uih.bind("ui_measurementCount", "value", int)
+        self.experimentName = uih.Binding(self.ui_experimentName, "text", sourceObject, "experiment_name", validator=uih.NameValidator())
+        self.measurementName = uih.Binding(self.ui_measurementName, "text", sourceObject, "measurement_name", validator=uih.NameValidator())
         self.measurementCount = uih.Binding(self.ui_measurementCount, "value", sourceObject, "measurement_count")
-        # self.timetrace_mode = uih.bind("ui_timetrace_mode", "currentIndex", int)
         self.timetrace_mode = uih.Binding(self.ui_timetrace_mode, "currentIndex", sourceObject, "timetrace_mode", converter=TimetraceModeToIndexConverter())
-        # self.timetrace_length = uih.bind("ui_timetrace_length", "value", int)
         self.timetrace_length =uih.Binding(self.ui_timetrace_length, "value", sourceObject, "timetrace_length")
-        # self.set_zero_after_measurement = uih.bind("ui_set_zero_after_measurement", "checked", bool)
         self.set_zero_after_measurement = uih.Binding(self.ui_set_zero_after_measurement, "checked", sourceObject, "set_zero_after_measurement", converter=uih.AssureBoolConverter())
 
         ### binding to the other object
@@ -335,7 +307,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     def set_experiment_settings_object(self, settings):
         assert isinstance(settings, ExperimentSettings), "Unsupported experiment settings type"
         self._experiment_settings = settings
-        self.refresh_view()
+        self.dataContext = settings
+        # self.refresh_view()
 
     # def refresh_view(self):
     #     assert isinstance(self._experiment_settings, ExperimentSettings), "Not initialized experiment settings"

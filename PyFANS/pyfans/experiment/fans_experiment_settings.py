@@ -23,11 +23,12 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
     def __init__(self):
         super().__init__()
         #this settings - separate class. shoy\uld be saved to file
-        self.__simulate_experiment = None
-        self.__working_directory = None
-        self.__experiment_name = None
-        self.__measurement_name = None
-        self.__measurement_count  = None
+        self.__simulate_experiment = False #None
+        self.__working_directory = "F:\\" #None
+        self.__experiment_name = "test_exp" #None
+        self.__measurement_name = "test_meas"#None
+        self.__measurement_count  = 123 #None
+        
         self.__calibrate_before_measurement = None
         self.__overload_rejecion = None
         self.__display_refresh = None
@@ -38,8 +39,13 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         self.__second_amp_coeff = None
         self.__load_resistance = None
         #self.__use_dut_selector = None
-        self.__need_measure_temperature = None
+
         self.__current_temperature = None
+        self.__need_measure_temperature = None
+        self.__use_temperature_range = None
+        self.__temp_range = None
+
+        
         self.__meas_gated_structure = None
         self.__meas_characteristic_type = None
         self.__use_automated_voltage_control = None
@@ -55,8 +61,14 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         self.__set_zero_after_measurement = None
         self.__timetrace_mode = None
         self.__timetrace_length = None
+    
+    def __getstate__(self):
+        return self.__dict__
 
-
+    def __setstate__(self, state):
+        self.__dict__ = state
+        super().__init__()
+   
     @property
     def vds_range(self):
         return self.__vds_range
@@ -140,7 +152,7 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         return self.__front_gate_voltage
 
     @front_gate_voltage.setter
-    @uih.assert_float_argument
+    @uih.assert_int_or_float_argument
     def front_gate_voltage(self,value):
         if self.__front_gate_voltage == value:
             return 
@@ -153,7 +165,7 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         return self.__drain_source_voltage
 
     @drain_source_voltage.setter
-    @uih.assert_float_argument
+    @uih.assert_int_or_float_argument
     def drain_source_voltage(self,value):
         if self.__drain_source_voltage == value:
             return 
