@@ -644,7 +644,7 @@ class Experiment:
     def future_single_value_measurement(self, *args, drain_source_voltage = None, gate_voltage = None, automatic_voltage_set = False, temperature = None, automatic_temperature_set = False, transistor = None, automatic_transistor_switch = False, **kwargs):
         #if self.need_exit:
         #    return
-        non_gated = kwargs.get("measure_gated_structure", False)
+        measure_gated_structure = kwargs.get("measure_gated_structure", False)
 
         self.assert_experiment_abort()
 
@@ -656,7 +656,7 @@ class Experiment:
             self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
 
-            if non_gated:
+            if measure_gated_structure:
                 if isinstance(drain_source_voltage, (int,float)):
                     self.set_drain_source_voltage(drain_source_voltage)
             
@@ -923,7 +923,8 @@ class FANSExperiment(Experiment):
         return calibration
 
     def create_experiment_writer(self):
-        return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate)
+        need_to_write_timetrace = False if self.experiment_settings.write_timetrace == 0 else True
+        return mfew.FANSExperimentWriter(self._working_directory, sample_rate = self.sample_rate, need_write_timetrace=need_to_write_timetrace)
            
     def initial_estimate_measurement_time(self):
         return 2*self.wait_time_before_voltage_measurement + self.wait_time_shortcut_amplifier + self.wait_time_stabilization_before_spectrum + self.experiment_settings.averages * 1 #sec
