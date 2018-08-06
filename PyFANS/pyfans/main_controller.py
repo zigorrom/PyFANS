@@ -95,17 +95,11 @@ class FANS_UI_Controller(QtCore.QObject):
         r = SoundPlayer(filename)
         self.threadPool.start(r)
 
-        # from playsound import playsound
-        # #filename = #"Media/startup.mp3"
-        # if os.path.isfile(filename):
-        #     playsound(filename)
-
     def play_on_startup(self):
         self.play_sound("Media/startup.mp3")
 
     def play_what_to_do(self):
         self.play_sound("Media/help.mp3")
-   
 
     def subscribe_to_ui_signals(self):
         self.main_view.subscribe_to_email_login_action(self.login_to_email_sender)
@@ -120,9 +114,12 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_lock_screen_action(self.on_lock_screen_action)
         self.main_view.subscribe_to_switch_theme_action(self.on_theme_switch_action)
         self.main_view.subscribe_to_analysis_window_open_action(self.on_analysis_window_open_action)
-        #pass
-    #def login_test(self):
-    #    print("test")
+        self.main_view.subscribe_to_voltage_control_clicked(self.on_voltage_control_view_clicked)
+
+        self.main_view.subscribe_to_experiment_start_action(self.start_experiment)
+        self.main_view.subscribe_to_experiment_stop_acion(self.stop_experiment)
+        self.main_view.subscribe_to_window_closing_action(self.on_main_view_closing)  
+      
 
     def on_open_settings_action(self):
         name = QtGui.QFileDialog.getOpenFileName(self.main_view, "Open Settings File", filter = "*.pfs")
@@ -133,15 +130,12 @@ class FANS_UI_Controller(QtCore.QObject):
                 self.main_view.experiment_settings = exp_settings
 
     def on_save_settings_action(self):
-        #fd= 
-        #extention = ".pfs"
-        #fd.setDefaultSuffix(suffix)
         name = QtGui.QFileDialog().getSaveFileName(self.main_view, "Save Settings File")
         basename = os.path.basename(name)
         filename, ext = os.path.splitext(basename)
         if not ext:
             name += ".pfs"
-        #elif ext 
+
         self.copy_main_view_settings_to_settings_object()
         with open(name,"wb") as f:
             pickle.dump(self.experiment_settings, f)
@@ -197,31 +191,31 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.set_ui_idle()
         #self.save_settings_to_file()
 
-    def copy_main_view_settings_to_settings_object(self):
-        assert isinstance(self.main_view, pyfans.FANS_UI_MainView)
-        mv = self.main_view
-        self.experiment_settings.calibrate_before_measurement = mv.calibrate_before_measurement
-        self.experiment_settings.overload_rejecion = mv.overload_reject
-        self.experiment_settings.simulate_experiment = mv.simulate_measurement
-        self.experiment_settings.averages = mv.number_of_averages
-        self.experiment_settings.use_homemade_amplifier = mv.use_homemade_amplifier
-        self.experiment_settings.second_amp_coeff = mv.second_amplifier_gain
-        self.experiment_settings.need_measure_temperature = mv.perform_temperature_measurement
-        self.experiment_settings.current_temperature = mv.current_temperature
-        self.experiment_settings.load_resistance = mv.load_resistance
-        self.experiment_settings.meas_gated_structure = mv.perform_measurement_of_gated_structure
-        self.experiment_settings.use_transistor_selector = mv.use_dut_selector
-        self.experiment_settings.use_automated_voltage_control = mv.use_automated_voltage_control
-        self.experiment_settings.meas_characteristic_type = mv.measurement_characteristic_type
-        self.experiment_settings.drain_source_voltage = mv.drain_source_voltage
-        self.experiment_settings.front_gate_voltage = mv.front_gate_voltage
-        self.experiment_settings.use_set_vds_range = mv.use_drain_source_range
-        self.experiment_settings.use_set_vfg_range = mv.use_gate_source_range
-        self.experiment_settings.experiment_name = mv.experimentName
-        self.experiment_settings.measurement_name = mv.measurementName
-        self.experiment_settings.measurement_count = mv.measurementCount
-        mv.save_timetrace_settings(self.experiment_settings)
-        self.experiment_settings.set_zero_after_measurement = mv.set_zero_after_measurement
+    # def copy_main_view_settings_to_settings_object(self):
+    #     assert isinstance(self.main_view, pyfans.FANS_UI_MainView)
+    #     mv = self.main_view
+    #     self.experiment_settings.calibrate_before_measurement = mv.calibrate_before_measurement
+    #     self.experiment_settings.overload_rejecion = mv.overload_reject
+    #     self.experiment_settings.simulate_experiment = mv.simulate_measurement
+    #     self.experiment_settings.averages = mv.number_of_averages
+    #     self.experiment_settings.use_homemade_amplifier = mv.use_homemade_amplifier
+    #     self.experiment_settings.second_amp_coeff = mv.second_amplifier_gain
+    #     self.experiment_settings.need_measure_temperature = mv.perform_temperature_measurement
+    #     self.experiment_settings.current_temperature = mv.current_temperature
+    #     self.experiment_settings.load_resistance = mv.load_resistance
+    #     self.experiment_settings.meas_gated_structure = mv.perform_measurement_of_gated_structure
+    #     self.experiment_settings.use_transistor_selector = mv.use_dut_selector
+    #     self.experiment_settings.use_automated_voltage_control = mv.use_automated_voltage_control
+    #     self.experiment_settings.meas_characteristic_type = mv.measurement_characteristic_type
+    #     self.experiment_settings.drain_source_voltage = mv.drain_source_voltage
+    #     self.experiment_settings.front_gate_voltage = mv.front_gate_voltage
+    #     self.experiment_settings.use_set_vds_range = mv.use_drain_source_range
+    #     self.experiment_settings.use_set_vfg_range = mv.use_gate_source_range
+    #     self.experiment_settings.experiment_name = mv.experimentName
+    #     self.experiment_settings.measurement_name = mv.measurementName
+    #     self.experiment_settings.measurement_count = mv.measurementCount
+    #     mv.save_timetrace_settings(self.experiment_settings)
+    #     self.experiment_settings.set_zero_after_measurement = mv.set_zero_after_measurement
     
 
     def show_main_view(self):
@@ -231,7 +225,7 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_main_view_closing(self):
         print("closing main view")
-        self.copy_main_view_settings_to_settings_object()
+        # self.copy_main_view_settings_to_settings_object()
         self.save_settings_to_file()
 
         self.close_child_windows()
@@ -260,6 +254,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.waterfall_noise_window.show()
 
     def show_hardware_settings_view(self):
+        print("from voltage control dialog")
         dialog = HardwareSettingsView()
         dialog.set_hardware_settings(self.hardware_settings)
         result = dialog.exec_()

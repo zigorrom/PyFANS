@@ -1,7 +1,8 @@
 from pyfans.tests import test_binding
-
+from pyfans.ui.voltage_widget import test_voltage_control
 # test_binding.main()
-test_binding.test_main_window()
+# test_binding.test_main_window()
+test_voltage_control()
 
 # class test_class:
 #     def __init__(self):

@@ -389,11 +389,18 @@ class Binding:
 
     @property
     def sourceData(self):
-        return getattr(self._sourceObject, self._sourcePropertyName)
+        try:
+            return getattr(self._sourceObject, self._sourcePropertyName)
+        except Exception:
+            return None
 
     @sourceData.setter
     def sourceData(self, value):
-        setattr(self._sourceObject, self._sourcePropertyName, value)
+        try:
+            setattr(self._sourceObject, self._sourcePropertyName, value)
+        except Exception:
+            pass
+ 
 
     
 class DataContextWidget:
@@ -556,74 +563,154 @@ def string_to_volt_converter(ureg):
     return wrapper
 
 
-class OrientationalToolButton(QtGui.QToolButton):
-    """
-    https://stackoverflow.com/questions/7339685/how-to-rotate-a-qpushbutton
-    """
-    def __init__(self, parent = None, **kwargs):
-        super().__init__(parent)
-        self._orientation = kwargs.get("position", QtCore.Qt.AnchorTop)
-        
-    
-    def paintEvent(self, event):
-        
-        painter = QtGui.QStylePainter(self)
-        if self._orientation == QtCore.Qt.AnchorLeft:
-            painter.rotate(270)
-            painter.translate(-1 * self.height(), 0)
-
-        elif self._orientation == QtCore.Qt.AnchorRight:
-            painter.rotate(90)
-            painter.translate(0, -1 * self.width())
-        
-        
-        # painter.drawItemText()
-        painter.drawControl(QtGui.QStyle.CE_PushButton, self.getSyleOptions())
-        
-    def minimumSizeHint(self):
-        size = super(OrientationalToolButton, self).minimumSizeHint()
-        size.transpose()
-        return size
-
-    def sizeHint(self):
-        size = super(OrientationalToolButton, self).sizeHint()
-        size.transpose()
-        return size
-
-    def getSyleOptions(self):
-        options = QtGui.QStyleOptionButton()
-        options.initFrom(self)
-        size = options.rect.size()
-        size.transpose()
-        options.rect.setSize(size)
-        # options.features = QtGui.QStyleOptionButton()#.None
-        # if self.isFlat():
-        #     options.features |= QtGui.QStyleOptionButton.Flat
-        if self.menu():
-            options.features |= QtGui.QStyleOptionButton.HasMenu
-        # if self.autoDefault() or self.isDefault():
-        #     options.features |= QtGui.QStyleOptionButton.AutoDefaultButton
-        # if self.isDefault():
-        #     options.features |= QtGui.QStyleOptionButton.DefaultButton
-        if self.isDown() or (self.menu() and self.menu().isVisible()):
-            options.state |= QtGui.QStyle.State_Sunken
-        if self.isChecked():
-            options.state |= QtGui.QStyle.State_On
-        # if not self.isFlat() and not self.isDown():
-        #     options.state |= QtGui.QStyle.State_Raised
-
-        options.text = self.text()
-        options.icon = self.icon()
-        options.iconSize = self.iconSize()
-        return options
-
-
 
 class ExpandableWidget(QtGui.QWidget):
     """
     port and modification of the initial code from
     https://stackoverflow.com/questions/32476006/how-to-make-an-expandable-collapsable-section-widget-in-qt
     """
+    class ExpandableToolButtonStyle(QtGui.QCommonStyle):
+        def __init__(self):
+            super().__init__()
+
+        def drawPrimitive(self, element, option, painter, widget):
+            print("drawing primitives {0}".format(element))
+            print("widget {0}".format(widget))
+            # if element == 19: #QtGui.QStyle.PE_PanelButtonTool:
+            painter.save()
+            angle = 0 if widget.orientation == QtCore.Qt.Horizontal else 90
+
+            rect = option.rect
+            center = rect.center()
+            transform = painter.transform() 
+            transform.translate( center.x(), center.y() ).rotate( angle ).translate( -center.x(), -center.y() )
+            painter.setTransform(transform)
+            
+            super().drawPrimitive(element, option, painter, widget)
+            painter.restore()
+
+
+        def drawItemText(self, painter,rectangle, alignment, palette, enabled, text, textRole):
+            print("drawing text")
+            super().drawItemText(painter,rectangle, alignment, palette, enabled, text, textRole)
+
+        def drawItemPixmap(self, painter, rect, alignment, pixmap):
+            print("drawing pixmap")
+            super().drawItemPixmap(self, painter, rect, alignment, pixmap)
+            
+        def drawControl(self, controlElement, option, painter, widget):
+            print("drawing control{0}".format(controlElement))
+            super().drawControl(controlElement, option, painter, widget)
+
+
+        def subControlRect(self, complexControl, opt, subControl, widget):
+            print("requesting subcontrol rect {0}".format(subcontrol))
+            return super().subControlRect(complexControl, opt, subControl,widget)
+
+        def subElementRect(self, subElement, option, widget):
+            print("requesting element rect {0}".format(subElement))
+            return super().subElementRect(subElement, option, widget).translated(0,-100)
+    
+
+    class OrientationalToolButton(QtGui.QToolButton):
+        """
+        https://stackoverflow.com/questions/7339685/how-to-rotate-a-qpushbutton
+        """
+        def __init__(self, parent = None, **kwargs):
+            super().__init__(parent)
+            self._anchor = kwargs.get("position", QtCore.Qt.AnchorTop)
+            self._orientation = QtCore.Qt.Horizontal if self._anchor == QtCore.Qt.AnchorTop or self._anchor == QtCore.Qt.AnchorBottom else QtCore.Qt.Vertical
+            self.setStyle(ExpandableWidget.ExpandableToolButtonStyle())
+            # self.resize(self.minimumSizeHint())
+            self.adjustSize()
+
+
+        @property
+        def anchor(self):
+            return self._anchor
+  
+        @property
+        def orientation(self):
+            return self._orientation
+        
+        def paintEvent(self, event):
+            painter = QtGui.QStylePainter(self)
+            if self._anchor == QtCore.Qt.AnchorLeft or self._anchor == QtCore.Qt.AnchorRight:
+                painter.rotate(270)
+                painter.translate(-1 * self.height(), 0)
+
+            # elif self._anchor == QtCore.Qt.AnchorRight:
+                # painter.rotate(90)
+                # painter.translate(0, -1 * self.width())
+            painter.drawComplexControl(QtGui.QStyle.CC_ToolButton, self.getSyleOptions())
+        
+        
+
+
+        def minimumSizeHint(self):
+            # size = QtCore.QSize(200,100)
+            # self.adjustSize()
+            print("min size hint")
+            size = super(ExpandableWidget.OrientationalToolButton, self).minimumSizeHint()
+            # size = QtCore.QSize(size.width(), self.iconSize().height() )
+            print(size)
+            if self._orientation == QtCore.Qt.Vertical:
+                size.transpose()
+            return size
+
+        def sizeHint(self):
+            print("size hint")
+            # self.adjustSize()
+            size = super(ExpandableWidget.OrientationalToolButton, self).sizeHint()
+            # size = QtCore.QSize(size.width(), 100)
+            # size = self.iconSize() # QtCore.QSize(self.width(), 20)
+            # size = QtCore.QSize(self.width(), self.height())#self.iconSize().height())
+            print(size)
+            # size= QtCore.QSize(size.width(), size.height()-100 )
+
+            if self._orientation == QtCore.Qt.Vertical:
+                size.transpose()
+            return size
+
+        
+
+        def getSyleOptions(self):
+            options = QtGui.QStyleOptionToolButton()
+            self.initStyleOption(options)
+            
+            # options.initFrom(self)
+            # size = options.rect.size()
+            # # size.transpose()
+            # options.rect.setSize(size)
+            # options.features = QtGui.QStyleOptionButton()#.None
+            # if self.isFlat():
+            #     options.features |= QtGui.QStyleOptionButton.Flat
+            # if self.menu():
+            #     options.features |= QtGui.QStyleOptionButton.HasMenu
+            # if self.autoDefault() or self.isDefault():
+            #     options.features |= QtGui.QStyleOptionButton.AutoDefaultButton
+            # if self.isDefault():
+            #     options.features |= QtGui.QStyleOptionButton.DefaultButton
+            # if self.isDown() or (self.menu() and self.menu().isVisible()):
+            #     options.state |= QtGui.QStyle.State_Sunken
+            # if self.isChecked():
+            #     options.state |= QtGui.QStyle.State_On
+            # if not self.isFlat() and not self.isDown():
+            #     options.state |= QtGui.QStyle.State_Raised
+
+            # options.text = self.text()
+            # options.icon = self.icon()
+            # # print(self.text())
+            # # print(self.icon())
+            # options.iconSize = self.iconSize()
+            # print(self.iconSize())
+            return options
+
+
+
+
+
+
     def __init__(self, parent = None, **kwargs):
         super().__init__(parent)
         self._mainLayout = QtGui.QGridLayout()
@@ -640,7 +727,7 @@ class ExpandableWidget(QtGui.QWidget):
 
         self._position = kwargs.get("anchor", QtCore.Qt.AnchorTop)
         
-        self._toggleButton = OrientationalToolButton(position=self._position) 
+        self._toggleButton = ExpandableWidget.OrientationalToolButton(position=self._position) 
         
         self._orientation = QtCore.Qt.Horizontal
         if self._position ==  QtCore.Qt.AnchorTop or self._position ==  QtCore.Qt.AnchorBottom:
@@ -696,10 +783,10 @@ class ExpandableWidget(QtGui.QWidget):
 
         
         self._headerLine.setFrameShadow(QtGui.QFrame.Sunken)
-
+        
         self._contentArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
 
-        
+        # self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Maximum)
 
         if self._orientation == QtCore.Qt.Horizontal:
             self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Maximum)
@@ -715,7 +802,7 @@ class ExpandableWidget(QtGui.QWidget):
            
 
         else:
-            self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Expanding)
+            self._toggleButton.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
             self._headerLine.setFrameShape(QtGui.QFrame.VLine)
             self._headerLine.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Expanding)
             self._contentArea.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
@@ -744,14 +831,14 @@ class ExpandableWidget(QtGui.QWidget):
 
         elif self._position == QtCore.Qt.AnchorLeft:
             self._mainLayout.addWidget(self._toggleButton, 0, 0,1,1,QtCore.Qt.AlignLeft)
-            self._mainLayout.addWidget(self._headerLine, 2, 0,1,1)
+            self._mainLayout.addWidget(self._headerLine, 1, 0,1,1)
             self._mainLayout.addWidget(self._contentArea, 0, 1,3,1)
             self._mainLayout.setAlignment(QtCore.Qt.AlignLeft)
             self.setLayout(self._mainLayout)
 
         elif self._position == QtCore.Qt.AnchorRight:
             self._mainLayout.addWidget(self._toggleButton, 0, 1,1,1,QtCore.Qt.AlignLeft)
-            self._mainLayout.addWidget(self._headerLine, 2, 1,1,1)
+            self._mainLayout.addWidget(self._headerLine, 1, 1,1,1)
             self._mainLayout.addWidget(self._contentArea, 0, 0,3,1)
             self._mainLayout.setAlignment(QtCore.Qt.AlignRight)
             self.setLayout(self._mainLayout)
@@ -774,7 +861,7 @@ class ExpandableWidget(QtGui.QWidget):
         #trick to remove parent from layout manager
         l = self._contentArea.layout()
         if l:
-            QtGui.QWidget().setLayout()
+            QtGui.QWidget().setLayout(l)
 
         self._contentArea.setLayout(contentLayout)
         
@@ -817,7 +904,7 @@ def main():
     mainWidget = QtGui.QWidget()
     globalLayout = QtGui.QHBoxLayout()
 
-    wnd = ExpandableWidget(anchor=QtCore.Qt.AnchorTop)
+    wnd = ExpandableWidget(anchor=QtCore.Qt.AnchorRight, title="Settings")
     layout = QtGui.QVBoxLayout()
     widget = QtGui.QLabel()
     widget.setText("asfhakjhahsalkghaskgh")
@@ -827,8 +914,9 @@ def main():
     testEdit = QtGui.QLineEdit()
     testEdit.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
-    globalLayout.addWidget(wnd)
+    
     globalLayout.addWidget(testEdit)
+    globalLayout.addWidget(wnd)
     mainWidget.setLayout(globalLayout)
     mainWidget.show()
     # wnd.show()

@@ -24,10 +24,10 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         super().__init__()
         #this settings - separate class. shoy\uld be saved to file
         self.__simulate_experiment = False #None
-        self.__working_directory = "F:\\" #None
-        self.__experiment_name = "test_exp" #None
-        self.__measurement_name = "test_meas"#None
-        self.__measurement_count  = 123 #None
+        self.__working_directory = None # "F:\\" #None
+        self.__experiment_name = None # "test_exp" #None
+        self.__measurement_name =None# "test_meas"#None
+        self.__measurement_count  = None # 123 #None
         
         self.__calibrate_before_measurement = None
         self.__overload_rejecion = None
@@ -120,6 +120,34 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
 
         self.__current_temperature = value
         self.onPropertyChanged("current_temperature", self, value)
+
+    @property
+    def use_temperature_range(self):
+        return self.__use_temperature_range
+
+    @use_temperature_range.setter
+    @uih.assert_boolean_argument
+    def use_temperature_range(self, value):
+        if self.__use_temperature_range == value:
+            return
+
+        self.__use_temperature_range = value
+        self.onPropertyChanged("use_temperature_range", self, value)
+
+    @property
+    def temperature_range(self):
+        return self.__temp_range
+
+    @temperature_range.setter
+    def temperature_range(self, value):
+        if self.__temp_range == value:
+            return 
+
+        assert isinstance(value, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo))
+
+        self.__temp_range = value
+        self.onPropertyChanged("temperature_range", self, value)
+    
 
     @property
     def simulate_experiment(self):

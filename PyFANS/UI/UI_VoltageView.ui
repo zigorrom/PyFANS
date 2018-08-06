@@ -6,16 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>176</width>
+    <width>250</width>
     <height>88</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Voltage View</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <layout class="QHBoxLayout" name="main_layout">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -29,6 +35,12 @@
          </item>
          <item>
           <widget class="QLineEdit" name="ui_drain_source_voltage">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="readOnly">
             <bool>true</bool>
            </property>
@@ -47,6 +59,12 @@
          </item>
          <item>
           <widget class="QLineEdit" name="ui_gate_source_voltage">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="readOnly">
             <bool>true</bool>
            </property>
@@ -58,6 +76,12 @@
      </item>
      <item>
       <widget class="LedWidget" name="ui_status_led" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>50</width>

@@ -9,10 +9,9 @@ from PyQt4 import uic, QtGui, QtCore
 
 
 import pyfans
-# from pyfans.main_controller import FANS_UI_Controller
 from pyfans.utils.ui_helper import DataContextWidget
 import pyfans.utils.ui_helper as uih
-#from pyfans.utils.ui_helper import Binding, BindingDirection, StringToIntConverter, StringToFloatConverter, StringToVoltageConverter, AssureBoolConverter, AssureIntConverter
+import pyfans.utils.utils as util
 import pyfans.plot as plt
 import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings,CharacteristicType, TimetraceMode
@@ -78,7 +77,14 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
     sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
     sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
-    
+    main_voltage_start = uih.bind("ui_main_voltage_start", "text", float, voltage_format)
+    main_voltage_end = uih.bind("ui_main_voltage_end", "text", float, voltage_format)
+    temperature_start = uih.bind("ui_temperature_start", "text", float, temperature_format)
+    temperature_end = uih.bind("ui_temperature_end", "text", float, temperature_format)
+
+    sigExperimentStart = QtCore.pyqtSignal()
+    sigExperimentStop = QtCore.pyqtSignal()
+    sigMainWindowClosing = QtCore.pyqtSignal()
 
     def __init__(self, parent = None):
        super(mainViewBase,self).__init__(parent)
@@ -89,18 +95,14 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
        self._experiment_settings = None
        
     def showMaximized(self):
-        # super().showMaximized()
-        # self.resize(1200,980)
-        # self.show()
         super().showMaximized()
 
     def setupUi(self):
         print("setting the ui up")
         super().setupUi(self)
+        # self.ui_expandable_container.setContentLayout(self.ui_scroll_area.layout())
         # flags = QtCore.Qt.FramelessWindowHint
         # self.setWindowFlags(flags)
-
-
         self._temperature_checkbox_group = QtGui.QButtonGroup()
         self._temperature_checkbox_group.addButton(self.ui_set_temperature_single)
         self._temperature_checkbox_group.addButton(self.ui_use_set_temperature_range)
@@ -113,7 +115,6 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self._gate_source_checkbox_group.addButton(self.ui_set_gate_source_voltage)
         self._gate_source_checkbox_group.addButton(self.ui_use_set_vfg_range)
 
-        
         self.__setup_folder_browse_button()
         self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
         self.progressBar = QtGui.QProgressBar(self)
@@ -147,7 +148,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.use_homemade_amplifier = uih.Binding(self.ui_use_homemade_amplifier, "checked", sourceObject, "use_homemade_amplifier", converter=uih.AssureBoolConverter())
         self.second_amplifier_gain = uih.Binding(self.ui_second_amp_coeff, "currentText", sourceObject, "second_amp_coeff", converter=uih.StringToIntConverter())
         self.perform_temperature_measurement = uih.Binding(self.ui_need_meas_temp, "checked", sourceObject, "need_measure_temperature", converter=uih.AssureBoolConverter())
-        self.current_temperature =  uih.Binding(self.ui_current_temp, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=self.temperature_format, validator=QtGui.QDoubleValidator()) 
+        self.current_temperature =  uih.Binding(self.ui_temperature, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=self.temperature_format, validator=QtGui.QDoubleValidator()) 
+        self.use_temperature_range =  uih.Binding(self.ui_use_set_temperature_range, "checked", sourceObject, "use_temperature_range", converter=uih.AssureBoolConverter()) 
         self.load_resistance =  uih.Binding(self.ui_load_resistance, "text", sourceObject, "load_resistance", converter=uih.StringToFloatConverter(), validator=QtGui.QIntValidator())
         self.perform_measurement_of_gated_structure = uih.Binding(self.ui_meas_gated_structure, "checked", sourceObject, "meas_gated_structure", converter=uih.AssureBoolConverter())
         # self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_dut_selector", converter=uih.AssureBoolConverter())
@@ -161,20 +163,11 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.measurementName = uih.Binding(self.ui_measurementName, "text", sourceObject, "measurement_name", validator=uih.NameValidator())
         self.measurementCount = uih.Binding(self.ui_measurementCount, "value", sourceObject, "measurement_count")
         self.timetrace_mode = uih.Binding(self.ui_timetrace_mode, "currentIndex", sourceObject, "timetrace_mode", converter=TimetraceModeToIndexConverter())
+        self.timetrace_mode.targetData = TimetraceMode.FULL.value
         self.timetrace_length =uih.Binding(self.ui_timetrace_length, "value", sourceObject, "timetrace_length")
         self.set_zero_after_measurement = uih.Binding(self.ui_set_zero_after_measurement, "checked", sourceObject, "set_zero_after_measurement", converter=uih.AssureBoolConverter())
 
-        ### binding to the other object
-        # self.sample_voltage_start = uih.bind("ui_sample_voltage_start", "text", float, voltage_format)
-        # self.sample_voltage_start = uih.Binding(self.ui_sample_voltage_start, "text", sourceObject, "front_gate_voltage", converter=uih.StringToVoltageConverter())
-        # self.sample_voltage_end = uih.bind("ui_sample_voltage_end", "text", float, voltage_format)
-        # self.front_gate_voltage_start = uih.bind("ui_front_gate_voltage_start", "text", float, voltage_format)
-        # self.front_gate_voltage_end = uih.bind("ui_front_gate_voltage_end", "text", float, voltage_format)
-        # self.sample_current_start = uih.bind("ui_sample_current_start", "text", float, current_format)
-        # self.sample_current_end = uih.bind("ui_sample_current_end", "text", float, current_format)
-        # self.sample_resistance_start = uih.bind("ui_sample_resistance_start", "text", float,resistance_format)
-        # self.sample_resistance_end = uih.bind("ui_sample_resistance_end", "text", float, resistance_format)
-
+       
     def on_showHistoryCurvesAction_toggled(self, state):
         print("show history curves {0}".format(state))
         self._spectrumPlotWidget.setHistoryCurvesVisible(state)
@@ -232,6 +225,17 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     def subscribe_to_analysis_window_open_action(self,slot):
         self.connect(self.actionOpenAnalysisWindow.triggered, slot)
 
+    def subscribe_to_experiment_start_action(self, slot):
+        self.connect(self.sigExperimentStart, slot)
+
+    def subscribe_to_experiment_stop_acion(self, slot):
+        self.connect(self.sigExperimentStop, slot)
+
+    def subscribe_to_window_closing_action(self, slot):
+        self.connect(self.sigMainWindowClosing, slot)
+
+    def subscribe_to_voltage_control_clicked(self, slot):
+        self.connect(self.ui_voltage_control.clicked, slot)
 
     @property
     def controller(self):
@@ -270,10 +274,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.popMenu.exec_(self.folderBrowseButton.mapToGlobal(point))
 
     def on_open_folder_in_explorer(self):
-        print("opening folder")
-        request = 'explorer "{0}"'.format(self.experiment_settings.working_directory)#self._settings.working_directory)
-        print(request)
-        os.system(request)
+        util.open_folder_in_explorer(self.experiment_settings.working_directory)
+        
 
     @QtCore.pyqtSlot()
     def on_folderBrowseButton_clicked(self):
@@ -308,38 +310,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         assert isinstance(settings, ExperimentSettings), "Unsupported experiment settings type"
         self._experiment_settings = settings
         self.dataContext = settings
-        # self.refresh_view()
-
-    # def refresh_view(self):
-    #     assert isinstance(self._experiment_settings, ExperimentSettings), "Not initialized experiment settings"
-    #     settings = self.experiment_settings
-    #     uih.setAllChildObjectSignaling(self,True)
-    #     self.calibrate_before_measurement = settings.calibrate_before_measurement
-    #     self.overload_reject = settings.overload_rejecion
-    #     self.simulate_measurement = settings.simulate_experiment
-    #     self.number_of_averages = settings.averages
-    #     self.use_homemade_amplifier = settings.use_homemade_amplifier
-    #     self.second_amplifier_gain = settings.second_amp_coeff
-    #     self.perform_temperature_measurement = settings.need_measure_temperature
-    #     self.current_temperature = settings.current_temperature  #  "Not initialized" #settings.curre
-    #     self.load_resistance = settings.load_resistance
-    #     self.perform_measurement_of_gated_structure = settings.meas_gated_structure
-    #     self.use_dut_selector = settings.use_transistor_selector #
-    #     self.use_automated_voltage_control = settings.use_automated_voltage_control
-    #     self.measurement_characteristic_type = settings.meas_characteristic_type
-    #     self.drain_source_voltage = settings.drain_source_voltage
-    #     self.use_drain_source_range = settings.use_set_vds_range
-    #     self.front_gate_voltage = settings.front_gate_voltage
-    #     self.use_gate_source_range = settings.use_set_vfg_range
-    #     self.load_timetrace_settings(settings)
-    #     self.set_zero_after_measurement = settings.set_zero_after_measurement
-
-    #     self.experimentName = settings.experiment_name
-    #     self.measurementName = settings.measurement_name
-    #     self.measurementCount = settings.measurement_count
-    #     self.set_selected_folder_context_menu_item_text(settings.working_directory)
-    #     uih.setAllChildObjectSignaling(self,False)
-
+        
     UI_STATE_IDLE, UI_STATE_STARTED, UI_STATE_STOPPING = ui_states = range(3)
     def set_ui_state(self, state):
         if not state in self.ui_states:
@@ -350,15 +321,18 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
             self.ui_stopButton.setEnabled(True)
             self.progressBar.setVisible(False)
             self.progressBar.setValue(0)
+            self.ui_settings_frame.setEnabled(True)
         elif state is self.UI_STATE_STARTED:
             self.ui_startButton.setEnabled(False)
             self.ui_stopButton.setEnabled(True)
             self.progressBar.setVisible(True)
             self.progressBar.setValue(0)
+            self.ui_settings_frame.setEnabled(False)
         elif state is self.UI_STATE_STOPPING:
             self.ui_startButton.setEnabled(False)
             self.ui_stopButton.setEnabled(False)
             self.progressBar.setVisible(True)
+            self.ui_settings_frame.setEnabled(False)
 
     def set_ui_idle(self):
         self.set_ui_state(self.UI_STATE_IDLE)
@@ -374,241 +348,85 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     #**************
 
     # TIMETRACE_NONE, TIMETRACE_PARTIAL, TIMETRACE_FULL = range(3)
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_timetrace_mode_currentIndexChanged(self, index):
-    #     print("timetrace mode changed to {0}".format(index))
-        
-    #     if index is self.TIMETRACE_NONE:
-    #         self.ui_timetrace_length.hide()
-    #     elif index is self.TIMETRACE_PARTIAL:
-    #         self.ui_timetrace_length.show()
-    #     elif index is self.TIMETRACE_FULL:
-    #         self.ui_timetrace_length.hide()
-    #     else:
-    #         return
-    #     self.save_timetrace_settings(self.experiment_settings)
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_timetrace_length_valueChanged(self, value):
-    #     print("timetrace length changed to {0}".format(value))
-    #     self.save_timetrace_settings(self.experiment_settings)
-
-    # def save_timetrace_settings(self, experiment_settings):
-    #     assert isinstance(experiment_settings, ExperimentSettings), "Cannot save timetrace data"
-    #     mode = self.timetrace_mode
-    #     length = self.timetrace_length
-    #     write_timetrace_value = 0
-    #     if mode is self.TIMETRACE_NONE:
-    #         write_timetrace_value = 0    
-    #     elif mode is self.TIMETRACE_PARTIAL:
-    #         write_timetrace_value = length
-    #     elif mode is self.TIMETRACE_FULL:
-    #         write_timetrace_value = -1
-    #     else:
-    #         return
-    #     experiment_settings.write_timetrace = write_timetrace_value
-
-
-    # def load_timetrace_settings(self, experiment_settings):
-    #     assert isinstance(experiment_settings, ExperimentSettings), "Cannot load timetrace data"
-    #     write_timetrace_value = experiment_settings.write_timetrace
-    #     if write_timetrace_value is None:
-    #         write_timetrace_value  = 0
-    #     mode = self.TIMETRACE_NONE
-    #     length = 1
-    #     if write_timetrace_value < 0:
-    #         mode = self.TIMETRACE_FULL
-    #     elif write_timetrace_value == 0:
-    #         mode = self.TIMETRACE_NONE
-    #     elif write_timetrace_value > 0:
-    #         mode = self.TIMETRACE_PARTIAL
-    #         length = write_timetrace_value
-
-    #     self.timetrace_mode = mode
-    #     self.timetrace_length = length 
-    #     self.on_ui_timetrace_mode_currentIndexChanged(mode)
+    @QtCore.pyqtSlot(int)
+    def on_ui_timetrace_mode_currentIndexChanged(self, index):
+        print("timetrace mode changed to {0}".format(index))
+        if index == TimetraceMode.NONE.value:
+            self.ui_timetrace_length.hide()
+        elif index == TimetraceMode.PARTIAL.value:
+            self.ui_timetrace_length.show() 
+        elif index == TimetraceMode.FULL.value:
+            self.ui_timetrace_length.hide()
 
     @QtCore.pyqtSlot()
     def on_ui_open_hardware_settings_clicked(self):
         print("open hardware settings")
         #self.controller.show_hardware_settings_view()
         self.actionHardwareSettings.trigger()
-                
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_calibrate_stateChanged(self, value):
-    #     self.experiment_settings.calibrate_before_measurement = self.calibrate_before_measurement
+
+    @QtCore.pyqtSlot()
+    def on_ui_temp_range_button_clicked(self):
+        print("settings vds range")
+        rng = self.experiment_settings.temperature_range
         
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_overload_reject_stateChanged(self, value):
-    #     self.experiment_settings.overload_rejecion = self.overload_reject
-
-    # def _print_test(self):
-    #     print("test")
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_simulate_stateChanged(self,value):
-    #     self.experiment_settings.simulate_experiment = self.simulate_measurement
-       
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_averages_valueChanged(self,value):
-    #     self.experiment_settings.averages = self.number_of_averages
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_use_homemade_amplifier_stateChanged(self, value):
-    #     self.experiment_settings.use_homemade_amplifier = self.use_homemade_amplifier
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_second_amp_coeff_currentIndexChanged(self,value):
-    #     self.experiment_settings.second_amp_coeff = self.second_amplifier_gain
-    #     #idx = self.experiment_settings.second_amp_coeff 
-    #     #raise NotImplementedError()
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_need_meas_temp_stateChanged(self, value):
-    #     self.experiment_settings.need_measure_temperature = self.perform_temperature_measurement
-    
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_current_temp_textChanged(self, value):
-    #     self.experiment_settings.current_temperature = self.current_temperature
-
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_load_resistance_textChanged(self, value):
-    #     self.experiment_settings.load_resistance = self.load_resistance
-    
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_meas_gated_structure_stateChanged(self, value):
-    #     self.experiment_settings.meas_gated_structure = self.perform_measurement_of_gated_structure
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_use_dut_selector_stateChanged(self, value):
-    #     self.experiment_settings.use_transistor_selector = self.use_dut_selector
-
-    # @QtCore.pyqtSlot()
-    # def on_ui_transistorSelector_clicked(self):
-    #     self._print_test()
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_use_automated_voltage_control_stateChanged(self, value):
-    #     self.experiment_settings.use_automated_voltage_control = self.use_automated_voltage_control
-    
-    # @QtCore.pyqtSlot()
-    # def on_ui_voltage_control_clicked(self):
-    #     self.controller.on_voltage_control_view_clicked()
+        if not isinstance(rng, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
+            rng = mredit.RangeInfo(start=0, end=1, step=1, handler=mredit.HandlersEnum.normal, repeats=1)
         
-    
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_meas_characteristic_type_currentIndexChanged(self, value):
-    #     self.experiment_settings.meas_characteristic_type = self.measurement_characteristic_type
-
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_drain_source_voltage_textChanged(self, value):
-    #     self.ui_drain_source_voltage.setToolTip("Vds = {0} V".format(self.drain_source_voltage))
-    #     val = self.drain_source_voltage
-    #     self.experiment_settings.drain_source_voltage = val
-    #     #self.drain_source_voltage = val
-        
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_use_set_vds_range_stateChanged(self, value):
-    #     self.experiment_settings.use_set_vds_range = self.use_drain_source_range
+        dialog = mredit.RangeEditorView()
+        dialog.setRange(rng)
+        res = dialog.exec_()
+        if res:
+            self.experiment_settings.temperature_range = dialog.generateRangeInfo()
 
     @QtCore.pyqtSlot()
     def on_VdsRange_clicked(self):
         print("settings vds range")
         rng = self.experiment_settings.vds_range
-        # if rng:
-        #     rng = rng.copy_object() #
-        # else:
-        #     rng =  rh.RangeObject.empty_object()
-
+        
         if not isinstance(rng, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
             rng = mredit.RangeInfo(start=0, end=1, step=1, handler=mredit.HandlersEnum.normal, repeats=1)
         
-        # dialog = redit.RangeSelectorView()
         dialog = mredit.RangeEditorView()
         dialog.setRange(rng)
         res = dialog.exec_()
         if res:
             self.experiment_settings.vds_range = dialog.generateRangeInfo()
 
-
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_front_gate_voltage_textChanged(self, value):
-    #     self.ui_front_gate_voltage.setToolTip("Vgs = {0} V".format(self.front_gate_voltage))
-    #     val = self.front_gate_voltage
-    #     self.experiment_settings.front_gate_voltage = val
-    #     #self.front_gate_voltage = val
-    
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_use_set_vfg_range_stateChanged(self, value):
-    #     self.experiment_settings.use_set_vfg_range = self.use_gate_source_range
-
     @QtCore.pyqtSlot()
     def on_VfgRange_clicked(self):
         print("settings vfg range")
         rng = self.experiment_settings.vfg_range
-        # if rng:
-        #     rng = rng.copy_object() #
-        # else:
-        #     rng = rh.RangeObject.empty_object()
         if not isinstance(rng, (mredit.RangeInfo, mredit.CenteredRangeInfo, mredit.CustomRangeInfo)):
             rng = mredit.RangeInfo(start=0, end=1, step=1, handler=mredit.HandlersEnum.normal, repeats=1)
         
-        # dialog = redit.RangeSelectorView()
         dialog = mredit.RangeEditorView()
-        # dialog.set_range(rng)
         dialog.setRange(rng)
         res = dialog.exec_()
         if res:
             self.experiment_settings.vfg_range = dialog.generateRangeInfo()
 
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_set_zero_after_measurement_stateChanged(self, value):
-    #     #print("set zero after measurement changed to {0}".format(value))
-    #     self.experiment_settings.set_zero_after_measurement = self.set_zero_after_measurement
-
-
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_experimentName_textChanged(self, value):
-    #     self.experiment_settings.experiment_name = self.experimentName
-
-    # @QtCore.pyqtSlot(str)
-    # def on_ui_measurementName_textChanged(self,value):
-    #     self.experiment_settings.measurement_name = self.measurementName
-
-    # @QtCore.pyqtSlot(int)
-    # def on_ui_measurementCount_valueChanged(self, value):
-    #     self.experiment_settings.measurement_count = self.measurementCount
-
+   
     @QtCore.pyqtSlot()
     def on_ui_startButton_clicked(self):
         self.set_ui_started()
-        self.controller.start_experiment()
+        self.sigExperimentStart.emit()
+        # self.controller.start_experiment()
         
 
     @QtCore.pyqtSlot()
     def on_ui_stopButton_clicked(self):
         self.set_ui_stopping()
-        self.controller.stop_experiment()
-
-    
-
+        self.sigExperimentStop.emit()
+        # self.controller.stop_experiment()
 
     def closeEvent(self, event):
-        if self.controller:
-            self.controller.on_main_view_closing()
+        self.sigMainWindowClosing.emit()
+        # if self.controller:
+        #     self.controller.on_main_view_closing()
 
     #**************
     #end event handlers
     #**************
-
-    def ui_set_experiment_started(self):
-        pass
-
-    def ui_set_experiment_idle(self):
-        pass
-
-    def ui_set_experiment_stopped(self):
-        pass
 
     def ui_show_message_in_status_bar(self, message = "",  timeout=0):
         self.statusbar.showMessage(message, timeout)
@@ -618,7 +436,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         msg.setIcon(QtGui.QMessageBox.Information)
         msg.setText(message)
         #msg.setInformativeText("This is additional information")
-        msg.setWindowTitle("MessageBox demo")
+        msg.setWindowTitle("Message from PyFANS")
         msg.setDetailedText(message)
         msg.setStandardButtons(QtGui.QMessageBox.Ok)
         retval = msg.exec_()
@@ -626,28 +444,30 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
 
     def ui_set_measurement_info_start(self, measurement_info):
         if isinstance(measurement_info, MeasurementInfo):
-            # self.front_gate_voltage_start = measurement_info.start_gate_voltage
-            # self.sample_voltage_start = measurement_info.start_sample_voltage
-            # self.sample_current_start = measurement_info.sample_current_start
-            # self.sample_resistance_start = measurement_info.sample_resistance_start
-            # self.current_temperature = measurement_info.start_temperature
-            pass
+            self.front_gate_voltage_start = measurement_info.start_gate_voltage
+            self.sample_voltage_start = measurement_info.start_sample_voltage
+            self.sample_current_start = measurement_info.sample_current_start
+            self.sample_resistance_start = measurement_info.sample_resistance_start
+            self.temperature_start = measurement_info.start_temperature
+            self.main_voltage_start = measurement_info.start_main_voltage
+            # pass
             
     def ui_set_measurement_info_end(self, measurement_info):
         if isinstance(measurement_info, MeasurementInfo):
-            # self.front_gate_voltage_end= measurement_info.end_gate_voltage
-            # self.sample_voltage_end = measurement_info.end_sample_voltage
-            # self.sample_current_end = measurement_info.sample_current_end
-            # self.sample_resistance_end = measurement_info.sample_resistance_end
-            # self.current_temperature = measurement_info.end_temperature
-            pass
+            self.front_gate_voltage_end= measurement_info.end_gate_voltage
+            self.sample_voltage_end = measurement_info.end_sample_voltage
+            self.sample_current_end = measurement_info.sample_current_end
+            self.sample_resistance_end = measurement_info.sample_resistance_end
+            self.temperature_end = measurement_info.end_temperature
+            self.main_voltage_end = measurement_info.end_main_voltage
+            # pass
 
 
-    # def ui_set_measurement_count(self, measurement_count):
-    #     self.measurementCount = measurement_count
+    def ui_set_measurement_count(self, measurement_count):
+        self.measurementCount = measurement_count
 
-    # def ui_increment_measurement_count(self):
-    #     self.measurementCount += 1
+    def ui_increment_measurement_count(self):
+        self.measurementCount += 1
 
     def ui_update_spectrum_data(self, rang, data):
         self._spectrumPlotWidget.update_spectrum(rang, data)

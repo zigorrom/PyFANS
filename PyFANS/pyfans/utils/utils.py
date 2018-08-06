@@ -13,7 +13,11 @@ def check_if_script_executed_with_console():
         return True
 
 
-
+def open_folder_in_explorer(self, folder):
+    print("opening folder")
+    request = 'explorer "{0}"'.format(folder)#self._settings.working_directory)
+    print(request)
+    os.system(request)
 
 # The new Stream Object which replaces the default stream associated with sys.stdout
 # This object just puts data in a queue!
