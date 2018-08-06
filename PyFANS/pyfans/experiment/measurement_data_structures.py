@@ -137,7 +137,8 @@ class MeasurementInfo:
             equivalent_resistance = sample_resistance*load_resistance/(sample_resistance+load_resistance)
         except ZeroDivisionError:
             print("zero division error while calculating resistance...")
-            
+        except Exception as e:
+            print("Error while calculating params")   
         return current, sample_resistance, equivalent_resistance
 
 

@@ -551,9 +551,9 @@ class FANS_VoltageSetter(Observable):
         finally:
             self.set_moving_voltage(0)
 
-    def move_step_abs_voltage_increase(self, timeout=0.2):
+    def move_step_abs_voltage_increase(self, timeout=0.5):
         try:
-            self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MIN_MOVING_VOLTAGE)
+            self.set_moving_voltage(ABS_VOLTAGE_INCREASE_DIRECTION * MAX_MOVING_VOLTAGE)#MIN_MOVING_VOLTAGE)
             time.sleep(timeout)
             self.set_moving_voltage(0)
 

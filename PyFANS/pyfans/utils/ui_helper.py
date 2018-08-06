@@ -339,7 +339,11 @@ class Binding:
             self.setErrorStyle()
             
         
-
+    def invalidateSourceData(self):
+        self.__updateSourceData__(self.targetData)
+    
+    def invalidateTargetData(self):
+        self.__updateTargetData__(self._sourcePropertyName, self, self.sourceData)
 
     # @QtCore.pyqtSlot(int)
     def __updateSourceData__(self, value):
@@ -418,6 +422,30 @@ class DataContextWidget:
                     raise TypeError
                     
                 child.setSourceObject(dataContext)
+            except TypeError:
+                continue
+    
+    def updateSourceData(self):
+        for attribute in dir(self):
+            try:
+                child = getattr(self, attribute)
+                if not isinstance(child, Binding):
+                    raise TypeError
+                    
+                child.invalidateSourceData()
+
+            except TypeError:
+                continue
+    
+    def updateTargetData(self):
+        for attribute in dir(self):
+            try:
+                child = getattr(self, attribute)
+                if not isinstance(child, Binding):
+                    raise TypeError
+                    
+                child.invalidateTargetData()
+                
             except TypeError:
                 continue
 

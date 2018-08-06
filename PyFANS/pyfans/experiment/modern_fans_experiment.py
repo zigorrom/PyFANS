@@ -445,8 +445,11 @@ class Experiment:
         
         self.prepare_to_measure_voltages()
         self.perform_start_param_measurement()
+        
         self.prepare_to_measure_spectrum()
         self.perform_single_value_measurement()
+        
+        self.prepare_to_measure_voltages()
         self.perform_end_param_measurement()
         
         self.save_measurement_info()
@@ -595,6 +598,7 @@ class Experiment:
         amplifier_input_resistance = 1000000
         equivalent_resistance = (equivalent_resistance * amplifier_input_resistance) / (equivalent_resistance + amplifier_input_resistance)
         room_temperature = 297
+        temperature = room_temperature if not temperature else temperature
         kB = 1.38064852e-23
         equivalent_load_resistance =  (load_resistance + amplifier_input_resistance) / (load_resistance * amplifier_input_resistance)
         thermal_noise = 4*kB * (temperature/sample_resistance + room_temperature*equivalent_load_resistance) * equivalent_resistance*equivalent_resistance 
@@ -640,6 +644,8 @@ class Experiment:
     def future_single_value_measurement(self, *args, drain_source_voltage = None, gate_voltage = None, automatic_voltage_set = False, temperature = None, automatic_temperature_set = False, transistor = None, automatic_transistor_switch = False, **kwargs):
         #if self.need_exit:
         #    return
+        non_gated = kwargs.get("measure_gated_structure", False)
+
         self.assert_experiment_abort()
 
         # utilize here with statement to be sure all files are properly opened and closed
@@ -649,13 +655,19 @@ class Experiment:
         if automatic_voltage_set:
             self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
-            if drain_source_voltage:
-                self.set_drain_source_voltage(drain_source_voltage)
-            if gate_voltage:
-                self.set_front_gate_voltage(gate_voltage)
-            #specific of measurement setup!!!
-            if drain_source_voltage:
-                self.set_drain_source_voltage(drain_source_voltage)
+
+            if non_gated:
+                if isinstance(drain_source_voltage, (int,float)):
+                    self.set_drain_source_voltage(drain_source_voltage)
+            
+            else:
+                if isinstance(drain_source_voltage, (int,float)):
+                    self.set_drain_source_voltage(drain_source_voltage)
+                if isinstance(gate_voltage,(int, float)):
+                    self.set_front_gate_voltage(gate_voltage)
+                #specific of measurement setup!!!
+                if isinstance(drain_source_voltage, (int, float)):
+                    self.set_drain_source_voltage(drain_source_voltage)
             
             self.report_stop_setting_voltages(0)
         
@@ -682,7 +694,7 @@ class Experiment:
         use_vds_range = self.__exp_settings.use_set_vds_range
         use_vg_range = self.__exp_settings.use_set_vfg_range
 
-        table_generator = ParamGenerator(automatic_voltage_set = automatic_voltage_control, automatic_temperature_set = automatic_temperature_control,automatic_transistor_switch = automatic_transistor_switch)
+        table_generator = ParamGenerator(automatic_voltage_set=automatic_voltage_control, automatic_temperature_set=automatic_temperature_control,automatic_transistor_switch=automatic_transistor_switch, measure_gated_structure=gated_structure)
         table_generator.append_parameter("temperature")
         if automatic_transistor_switch:
             table_generator.append_parameter("transistor")
@@ -870,7 +882,7 @@ class FANSExperiment(Experiment):
         self._frequencies = self._get_frequencies(self._spectrum_ranges)
         self._frequency_indexes = self._get_frequency_linking_indexes(self._spectrum_ranges, self._spectrum_linking_frequencies)
         self._max_timetrace_length = -1 # -1 - means all data, 0 - means no data, number means number seconds
-        self.wait_time_before_voltage_measurement = 10
+        self.wait_time_before_voltage_measurement = 3 #10
         self.wait_time_stabilization_before_spectrum = 30
         self.wait_time_shortcut_amplifier = 5
     
@@ -903,7 +915,8 @@ class FANSExperiment(Experiment):
         self.temperature_controller = tc.LakeShore211TemperatureSensor("COM9")
      
     def create_calibration(self):
-        dir = os.path.join(os.path.dirname(__file__), "calibration_data")
+        # dir = os.path.join(os.path.dirname(__file__), "calibration_data")
+        dir = os.path.join(os.getcwd(), "calibration_data")
         calibration = calib.FANSCalibration(dir)
         calibration.second_amplifier_gain = self.experiment_settings.second_amp_coeff
         calibration.initialize_calibration()
@@ -1078,7 +1091,7 @@ class FANSExperiment(Experiment):
         print("setting gate voltage")
         currentAttempt = 0
         maxAttempts = 3
-        while currentAttempt < maxAttempt:
+        while currentAttempt < maxAttempts:
             try:
                 print("Starting {0} attempt".format(currentAttempt))
                 self.fans_smu.smu_set_gate_voltage(voltage)
@@ -1094,7 +1107,7 @@ class FANSExperiment(Experiment):
         print("setting drain voltage")
         currentAttempt = 0
         maxAttempts = 3
-        while currentAttempt < maxAttempt:
+        while currentAttempt < maxAttempts:
             try:
                 print("Starting {0} attempt".format(currentAttempt))
                 self.fans_smu.smu_set_drain_source_voltage(voltage)
@@ -1182,9 +1195,12 @@ def load_settings_from_file():
                 settings = pickle.load(f)
                 return settings
 
-
-if __name__ == "__main__":
+def main():
     settings = load_settings_from_file()
     
     handl = FANSExperimentHandler(None, settings[0], settings[1])
     handl.run()
+
+
+if __name__ == "__main__":
+    main()

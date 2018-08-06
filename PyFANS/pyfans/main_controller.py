@@ -15,6 +15,7 @@ from pyfans.ui.voltage_widget import UI_VoltageWidget
 from pyfans.ui.console import UI_Console
 from pyfans.ui.time_info import UI_TimeInfo
 from pyfans.ui.lock_window import UI_LockWindow
+from pyfans.ui.theme_switch_window import UI_ThemeSwitchWindow
 from pyfans.utils.sound_player import SoundPlayer
 from pyfans.ui.email_notification import EmailAuthForm, EmailSender
 
@@ -24,6 +25,10 @@ import pyfans.experiment.process_communication_protocol as pcp
 
 from pyfans.hardware.fans_hardware_settings import HardwareSettings, HardwareSettingsView
 import pyfans.hardware.modern_fans_controller as mfans
+import pyfans.hardware.modern_fans_smu as msmu
+from pyfans.hardware.StandAloneVoltageControl import VoltageControlView
+import pyfans.experiment.modern_fans_experiment as mfexp
+
 
 import pyfans_analyzer.experiment_data_analysis as eds
 
@@ -136,7 +141,7 @@ class FANS_UI_Controller(QtCore.QObject):
         if not ext:
             name += ".pfs"
 
-        self.copy_main_view_settings_to_settings_object()
+        # self.copy_main_view_settings_to_settings_object()
         with open(name,"wb") as f:
             pickle.dump(self.experiment_settings, f)
 
@@ -169,7 +174,7 @@ class FANS_UI_Controller(QtCore.QObject):
         
     def start_experiment(self):
         print("start experiment")
-        self.copy_main_view_settings_to_settings_object()
+        # self.copy_main_view_settings_to_settings_object()
         #self.main_view.set_ui_started()
         self.initialize_experiment()
         self.ui_refresh_timer.start()
@@ -231,11 +236,20 @@ class FANS_UI_Controller(QtCore.QObject):
         self.close_child_windows()
 
     def close_child_windows(self):
-        self.voltage_widget.close()
-        self.waterfall_noise_window.close()
-        self._console_window.close()
-        self._time_info_window.close()
-        self._lock_screen_window.close()
+        widgetList = (self.voltage_widget,self.waterfall_noise_window,self._console_window,self._time_info_window,self._voltage_control)
+        for child in widgetList:
+            try:
+                child.close()
+            except:
+                print("Cannot child widget {0}".format(child))
+                pass
+        
+        # self.waterfall_noise_window.close()
+        # self._console_window.close()
+        # self._time_info_window.close()
+        # self._lock_screen_window.close()
+        
+        # self._voltage_control.close()
 
     def show_time_info_window(self):
         self._time_info_window.show()

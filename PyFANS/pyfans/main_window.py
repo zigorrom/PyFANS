@@ -15,7 +15,7 @@ import pyfans.utils.utils as util
 import pyfans.plot as plt
 import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings,CharacteristicType, TimetraceMode
-
+from pyfans.experiment.measurement_data_structures import MeasurementInfo
 import pyfans.ranges.modern_range_editor as mredit
 
 class CharacteristicTypeToStrConverter(uih.ValueConverter):
@@ -150,13 +150,20 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.perform_temperature_measurement = uih.Binding(self.ui_need_meas_temp, "checked", sourceObject, "need_measure_temperature", converter=uih.AssureBoolConverter())
         self.current_temperature =  uih.Binding(self.ui_temperature, "text", sourceObject, "current_temperature", converter=uih.StringToFloatConverter(), stringFormat=self.temperature_format, validator=QtGui.QDoubleValidator()) 
         self.use_temperature_range =  uih.Binding(self.ui_use_set_temperature_range, "checked", sourceObject, "use_temperature_range", converter=uih.AssureBoolConverter()) 
+        self.use_automated_temperature_control =  uih.Binding(self.ui_automated_temperature, "checked", sourceObject, "use_automated_temperature_control", converter=uih.AssureBoolConverter()) 
+        self.use_single_temperature =  uih.Binding(self.ui_set_temperature_single, "checked", sourceObject, "use_single_temperature", converter=uih.AssureBoolConverter()) 
+
         self.load_resistance =  uih.Binding(self.ui_load_resistance, "text", sourceObject, "load_resistance", converter=uih.StringToFloatConverter(), validator=QtGui.QIntValidator())
         self.perform_measurement_of_gated_structure = uih.Binding(self.ui_meas_gated_structure, "checked", sourceObject, "meas_gated_structure", converter=uih.AssureBoolConverter())
         # self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_dut_selector", converter=uih.AssureBoolConverter())
         self.use_automated_voltage_control = uih.Binding(self.ui_use_automated_voltage_control, "checked", sourceObject, "use_automated_voltage_control", converter=uih.AssureBoolConverter())
         self.measurement_characteristic_type = uih.Binding(self.ui_meas_characteristic_type, "currentText", sourceObject, "meas_characteristic_type", converter=CharacteristicTypeToStrConverter())
         self.drain_source_voltage = uih.Binding(self.ui_drain_source_voltage, "text", sourceObject, "drain_source_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
+        self.use_single_vds =  uih.Binding(self.ui_set_drain_source_voltage, "checked", sourceObject, "use_single_vds", converter=uih.AssureBoolConverter()) 
+
         self.front_gate_voltage = uih.Binding(self.ui_front_gate_voltage, "text", sourceObject, "front_gate_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
+        self.use_single_vfg = uih.Binding(self.ui_set_gate_source_voltage, "checked", sourceObject, "use_single_vfg", converter=uih.AssureBoolConverter()) 
+
         self.use_drain_source_range = uih.Binding(self.ui_use_set_vds_range, "checked", sourceObject, "use_set_vds_range", converter=uih.AssureBoolConverter())
         self.use_gate_source_range = uih.Binding(self.ui_use_set_vfg_range, "checked", sourceObject, "use_set_vfg_range", converter=uih.AssureBoolConverter())
         self.experimentName = uih.Binding(self.ui_experimentName, "text", sourceObject, "experiment_name", validator=uih.NameValidator())
@@ -166,6 +173,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self.timetrace_mode.targetData = TimetraceMode.FULL.value
         self.timetrace_length =uih.Binding(self.ui_timetrace_length, "value", sourceObject, "timetrace_length")
         self.set_zero_after_measurement = uih.Binding(self.ui_set_zero_after_measurement, "checked", sourceObject, "set_zero_after_measurement", converter=uih.AssureBoolConverter())
+        self.use_smart_spectrum_option = uih.Binding(self.ui_use_smart_spectrum, "checked", sourceObject, "use_smart_spectrum_option", converter=uih.AssureBoolConverter()) 
+
 
        
     def on_showHistoryCurvesAction_toggled(self, state):
@@ -310,6 +319,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         assert isinstance(settings, ExperimentSettings), "Unsupported experiment settings type"
         self._experiment_settings = settings
         self.dataContext = settings
+        if settings.working_directory:
+            self.set_selected_folder_context_menu_item_text(settings.working_directory)
         
     UI_STATE_IDLE, UI_STATE_STARTED, UI_STATE_STOPPING = ui_states = range(3)
     def set_ui_state(self, state):
@@ -409,6 +420,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     @QtCore.pyqtSlot()
     def on_ui_startButton_clicked(self):
         self.set_ui_started()
+        self.updateSourceData()
         self.sigExperimentStart.emit()
         # self.controller.start_experiment()
         
@@ -420,6 +432,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         # self.controller.stop_experiment()
 
     def closeEvent(self, event):
+        self.updateSourceData()
         self.sigMainWindowClosing.emit()
         # if self.controller:
         #     self.controller.on_main_view_closing()
@@ -464,10 +477,12 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
 
 
     def ui_set_measurement_count(self, measurement_count):
-        self.measurementCount = measurement_count
+        self.experiment_settings.measurement_count = measurement_count
+        # self.measurementCount = measurement_count
 
     def ui_increment_measurement_count(self):
-        self.measurementCount += 1
+        self.experiment_settings.measurement_count += 1
+        # self.measurementCount += 1
 
     def ui_update_spectrum_data(self, rang, data):
         self._spectrumPlotWidget.update_spectrum(rang, data)

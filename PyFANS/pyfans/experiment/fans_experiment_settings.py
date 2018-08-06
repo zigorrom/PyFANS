@@ -61,6 +61,16 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
         self.__set_zero_after_measurement = None
         self.__timetrace_mode = None
         self.__timetrace_length = None
+
+        self.__use_single_vds = None
+        self.__use_single_vfg = None
+        self.__use_automated_temperature_control = None
+        self.__use_single_temperature = None
+
+        self.__use_smart_spectrum_option = None
+
+
+
     
     def __getstate__(self):
         return self.__dict__
@@ -68,7 +78,75 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
     def __setstate__(self, state):
         self.__dict__ = state
         super().__init__()
-   
+    
+    @property
+    def use_single_vds(self):
+        return self.__use_single_vds
+
+    @use_single_vds.setter
+    @uih.assert_boolean_argument
+    def use_single_vds(self, value):
+        if self.__use_single_vds == value:
+            return
+
+        self.__use_single_vds = value
+        self.onPropertyChanged("use_single_vds", self, value)
+
+    @property
+    def use_single_vfg(self):
+        return self.__use_single_vfg
+
+    @use_single_vfg.setter
+    @uih.assert_boolean_argument
+    def use_single_vfg(self, value):
+        if self.__use_single_vfg == value:
+            return
+
+        self.__use_single_vfg = value
+        self.onPropertyChanged("use_single_vfg", self, value)
+
+    @property
+    def use_automated_temperature_control(self):
+        return self.__use_automated_temperature_control
+
+    @use_automated_temperature_control.setter
+    @uih.assert_boolean_argument
+    def use_automated_temperature_control(self, value):
+        if self.__use_automated_temperature_control == value:
+            return
+
+        self.__use_automated_temperature_control = value
+        self.onPropertyChanged("use_automated_temperature_control", self, value)
+
+    @property
+    def use_single_temperature(self):
+        return self.__use_single_temperature
+
+    @use_single_temperature.setter
+    @uih.assert_boolean_argument
+    def use_single_temperature(self, value):
+        if self.__use_single_temperature == value:
+            return
+
+        self.__use_single_temperature = value
+        self.onPropertyChanged("use_single_temperature", self, value)
+
+    @property
+    def use_smart_spectrum_option(self):
+        return self.__use_smart_spectrum_option
+
+    @use_smart_spectrum_option.setter
+    @uih.assert_boolean_argument
+    def use_smart_spectrum_option(self, value):
+        if self.__use_smart_spectrum_option == value:
+            return
+
+        self.__use_smart_spectrum_option = value
+        self.onPropertyChanged("use_smart_spectrum_option", self, value)
+
+
+
+
     @property
     def vds_range(self):
         return self.__vds_range
@@ -470,13 +548,31 @@ class ExperimentSettings(uih.NotifyPropertyChanged):
     #self.__write_timetrace = None
     @property
     def write_timetrace(self):
-        return self.__write_timetrace
+        if self.timetrace_mode == TimetraceMode.NONE:
+            return 0
+        if self.timetrace_mode == TimetraceMode.PARTIAL:
+            return self.timetrace_length
+        else:
+            return -1
+        # return self.__write_timetrace
 
     @write_timetrace.setter
     @uih.assert_integer_argument
     def write_timetrace(self, value):
-        if self.__write_timetrace == value:
-            return
+        # if self.__write_timetrace == value:
+        #     return
+        if value < 0:
+            self.timetrace_mode = TimetraceMode.FULL
+            self.timetrace_length  = -1
+            
+        elif value == 0:
+            self.timetrace_mode = TimetraceMode.NONE
+            self.timetrace_length  = 0
+
+        else:
+            self.timetrace_mode = TimetraceMode.PARTIAL
+            self.timetrace_length  = value
+
 
         self.__write_timetrace = value
         self.onPropertyChanged("write_timetrace", self, value)

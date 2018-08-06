@@ -13,7 +13,7 @@ def check_if_script_executed_with_console():
         return True
 
 
-def open_folder_in_explorer(self, folder):
+def open_folder_in_explorer(folder):
     print("opening folder")
     request = 'explorer "{0}"'.format(folder)#self._settings.working_directory)
     print(request)
