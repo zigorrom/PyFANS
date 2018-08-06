@@ -656,7 +656,7 @@ class Experiment:
             self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
 
-            if measure_gated_structure:
+            if not measure_gated_structure:
                 if isinstance(drain_source_voltage, (int,float)):
                     self.set_drain_source_voltage(drain_source_voltage)
             
