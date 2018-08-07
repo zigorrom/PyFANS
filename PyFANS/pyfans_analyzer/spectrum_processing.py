@@ -2,7 +2,8 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 
-from scipy.interpolate import interp1d, UnivariateSpline, InterpolatedUnivariateSpline
+from scipy import interpolate
+from scipy.interpolate import interp1d, UnivariateSpline, InterpolatedUnivariateSpline, CubicSpline
 from scipy import optimize
 from scipy import signal
 from scipy.signal import cubic
@@ -28,6 +29,19 @@ def smoothSpline(freq,data, NStartPoints = 10):
     V=VF/freq
     return V
 
+def remove_pickups(data, deltaX = 1):
+    res = np.copy(data)
+    sigma = 2*deltaX
+    for i in range(1,len(data)-1):
+        difference = sigma * np.abs(data[i+1]-data[i-1])
+        average = (data[i+1]+data[i-1])/2
+        if np.abs(data[i] - average) > difference:
+            res[i] = average
+    
+    return res
+
+
+
 
 def squareSpline(x1,y1,x2,y2,x3,y3):
     deriv1 = (y2-y1)/(x2-x1)
@@ -37,6 +51,15 @@ def squareSpline(x1,y1,x2,y2,x3,y3):
     c = y1-a*x1*x1-b*x1
     result = a*x2*x2+b*x2+c
     return result
+
+
+def runningMeanFast(x, N):
+    kernel = np.hanning(N)
+    kernel = kernel / kernel.sum()
+    
+
+    # kernel = np.ones((N,))/N
+    return np.convolve(x, kernel)[(N-1):]
 
 # def pretreatSpectrum(self, data):
 #     for i in range(1,len(data)-1):
@@ -77,21 +100,51 @@ def smooth(freq, data):
     
     # smoothed = signal.spline_filter(data)
     
-    freq_selected = freq[::2]
-    data_selected = data[::2]
+    freq_selected = freq #[::2]
+    data_selected = data #[::2]
     # smoothed = UnivariateSpline( freq_selected, data_selected, k=3)
     # smoothed= smoothed(freq_selected)
+
     
-    smoothed = np.convolve(kernel, data_selected, mode='valid')
+    smoothed = remove_pickups(data_selected)
+    
+    # smoothed = np.convolve(kernel, data_selected, mode='valid')
     # smoothed = signal.savgol_filter(data_selected, 21, 1, 0, 1)
 
-    plt = pg.plot(freq_selected[:len(smoothed)],smoothed)
-    plt.plot(freq_selected,data_selected)
+    # plt = pg.plot(freq_selected[:len(smoothed)],smoothed)
+    # spline = UnivariateSpline ( freq_selected, smoothed)
+    # spline.set_smoothing_factor(0.5)
+    # smoothed = spline(freq_selected)
+
+    # smoothed = CubicSpline(freq_selected, smoothed)
+    # smoothed=smoothed(freq_selected)
+    start_freq = np.log10(freq[0])
+    end_freq = np.log10(freq[-1])
+    n = 30*np.floor(end_freq - start_freq)+1
+
+
+    log_spaced_freq = np.logspace(start_freq,end_freq, num=n)
+
+    smoothed = interp1d(freq_selected, smoothed, kind="cubic")
+    smoothed = smoothed(log_spaced_freq)
+
+    # tck = interpolate.splrep(freq_selected, smoothed)
+    # smoothed = interpolate.splev(log_spaced_freq, tck)
+    
+    # smoothed = smoothed(freq_selected)
+    # smoothed = signal.savgol_filter(smoothed, 3, 0, 0, 1)
+    plt = pg.plot(freq_selected,freq_selected*data)
+    # plt.plot(freq_selected,smoothed, pen=pg.mkPen(color="r", width=4))
+    res = log_spaced_freq*smoothed
+    # res = runningMeanFast(res, 10)
+
+    plt.plot(log_spaced_freq, res, pen=pg.mkPen(color="r", width=4))
+   
     plt.setLogMode(True,True)
 
-    smoothed = data
+    # smoothed = data
     # plot = pg.plot(kernel)
-    return smoothed
+    return data
 
 
 def main():
