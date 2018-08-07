@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>Icons/timetrace_conversion_v2_64x64.png</file>
     <file>Icons/analysis_icon_64x64.png</file>
     <file>Icons/theme_switch_64x64.png</file>
     <file>Icons/lock_64x64.png</file>

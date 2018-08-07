@@ -246,6 +246,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     def subscribe_to_voltage_control_clicked(self, slot):
         self.connect(self.ui_voltage_control.clicked, slot)
 
+    def subscribe_to_timetrace_converter_action(self, slot):
+        self.connect(self.actionTimetraceConversion.triggered, slot)
+
     @property
     def controller(self):
         return self._controller

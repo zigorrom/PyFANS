@@ -1586,7 +1586,7 @@
      <x>0</x>
      <y>0</y>
      <width>1030</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1609,6 +1609,7 @@
      <string>Window</string>
     </property>
     <addaction name="actionOpenAnalysisWindow"/>
+    <addaction name="actionTimetraceConversion"/>
     <addaction name="actionOpenTimetraceWindow"/>
     <addaction name="actionOpenRealtimeNoiseWindow"/>
     <addaction name="actionOpenConsoleWindow"/>
@@ -1670,6 +1671,7 @@
    <addaction name="actionOpenConsoleWindow"/>
    <addaction name="actionTimeInfoWindow"/>
    <addaction name="actionOpenRemote"/>
+   <addaction name="actionTimetraceConversion"/>
    <addaction name="actionHardwareSettings"/>
    <addaction name="actionLockScreen"/>
    <addaction name="actionAbout"/>
@@ -1814,6 +1816,15 @@
    </property>
    <property name="toolTip">
     <string>Opens window for data analysis</string>
+   </property>
+  </action>
+  <action name="actionTimetraceConversion">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/timetrace_conversion_v2_64x64.png</normaloff>:/icons/Icons/timetrace_conversion_v2_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>TimetraceConversion</string>
    </property>
   </action>
  </widget>

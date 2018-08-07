@@ -120,6 +120,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_switch_theme_action(self.on_theme_switch_action)
         self.main_view.subscribe_to_analysis_window_open_action(self.on_analysis_window_open_action)
         self.main_view.subscribe_to_voltage_control_clicked(self.on_voltage_control_view_clicked)
+        self.main_view.subscribe_to_timetrace_converter_action(self.on_open_timetrace_conversion)
 
         self.main_view.subscribe_to_experiment_start_action(self.start_experiment)
         self.main_view.subscribe_to_experiment_stop_acion(self.stop_experiment)
@@ -417,6 +418,11 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_experiment_time_update(self, time_dict):
         self._time_info_window.set_time(**time_dict)
+
+    def on_open_timetrace_conversion(self):
+        print("opening timetrace conversion")
+        # import subprocess
+        # subprocess.Popen()
 
     def on_show_about_window(self):
         self.aboutWnd = UI_About()

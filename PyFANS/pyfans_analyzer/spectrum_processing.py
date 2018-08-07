@@ -17,7 +17,7 @@ def read_file(filename):
 
 def smoothSpline(freq,data, NStartPoints = 10):
     VF = freq*data
-    N = 10#len(data)
+    N = len(data)
     count = N - NStartPoints
     result = np.zeros(N)
 
@@ -38,30 +38,58 @@ def squareSpline(x1,y1,x2,y2,x3,y3):
     result = a*x2*x2+b*x2+c
     return result
 
+# def pretreatSpectrum(self, data):
+#     for i in range(1,len(data)-1):
+def test_skipping_values(self, freq, data):
+    plt = pg.plot()
+    plt.addLegend()
+    plt.plot(freq,data, name="initial")
+    for i in range(2,10):
+        plt.plot(freq[::i], data[::i], pen=pg.intColor(i), name="skip {0}".format(i))
+
 
 def smooth(freq, data):
-    kernel = np.hanning(40)
+    
+    kernel_len = 102
+    #convolution 
+    kernel = np.hanning(kernel_len)
     kernel = kernel / kernel.sum()
     
+
+
+    #UnivariateSpline
+
+
+
     # x = linspace(-3, 3, 100)
     # y = exp(-x**2) + randn(100)/10
     # weights = np.arange(1, 2, 0.2)
     # weights = [1,1,1,1,1,1]
-    N=len(data)
-    rmserror = 10
-    s_val = N * (rmserror * np.fabs(data).max())**2
+    # N=len(data)
+    # rmserror = 10
+    # s_val = N * (rmserror * np.fabs(data).max())**2
     # UnivariateSpline( x, y, s=s )
-
-    smoothed = smoothSpline(freq, data)
-    # smoothed = UnivariateSpline(freq, data) #s_val)
-    # smoothed.set_smoothing_factor(0.1)
-    # smoothed = InterpolatedUnivariateSpline(freq, data)
-    # smoothed = signal.spline_filter(data)
-    # smoothed = smoothed(freq)
-
-    # smoothed = np.convolve(kernel, data, mode='VALID')
-    # smoothed = signal.savgol_filter(data, 21, 1, 0, 1)
     
+    # smoothed = smoothSpline(freq, data, 100)
+    # smoothed = smoothSpline(freq, data)
+   
+    #savgolFilter
+    
+    # smoothed = signal.spline_filter(data)
+    
+    freq_selected = freq[::2]
+    data_selected = data[::2]
+    # smoothed = UnivariateSpline( freq_selected, data_selected, k=3)
+    # smoothed= smoothed(freq_selected)
+    
+    smoothed = np.convolve(kernel, data_selected, mode='valid')
+    # smoothed = signal.savgol_filter(data_selected, 21, 1, 0, 1)
+
+    plt = pg.plot(freq_selected[:len(smoothed)],smoothed)
+    plt.plot(freq_selected,data_selected)
+    plt.setLogMode(True,True)
+
+    smoothed = data
     # plot = pg.plot(kernel)
     return smoothed
 
@@ -74,11 +102,12 @@ def main():
 
     freq, data = np.transpose(data)
     # data=freq*data
-    plt = pg.plot(freq, data)
-    plt.setLogMode(True,True)
-
+    # plt = pg.plot(freq, data)
+    # plt.setLogMode(True,True)
+    
+    # test_skipping_values(freq, data)
     res = smooth(freq, data)
-    plt.plot(freq[:len(res)], res, pen="r")
+    # plt.plot(freq[:len(res)], res, pen="r")
 
     print(data)
     return app.exec_()
