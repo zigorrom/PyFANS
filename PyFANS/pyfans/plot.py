@@ -6,6 +6,8 @@ import pyqtgraph as pg
 from pyqtgraph import functions as fn
 from PyQt4 import uic, QtGui, QtCore
 from pyqtgraph import UIGraphicsItem, GraphicsObject
+import pyfans_analyzer.spectrum_processing as sp
+
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
 pg.setConfigOption('background', None) #'w')
@@ -641,13 +643,19 @@ class WaterfallPlotWidget:
 
         if histogram_layout and not isinstance(histogram_layout, pg.GraphicsLayoutWidget):
             raise ValueError("histogram_layout must be instance of pyqtgraph.GraphicsLayoutWidget")
-        self.spectral_ranges = {0:(0,1600,1),1:(0,102400,64)}
-        self.display_range = 0
+        
         self.layout = layout
         self.histogram_layout = histogram_layout
+
+
+        self.spectral_ranges = {0:(1,1600,1),1:(0,102400,64)}
+        self.display_range = 0
         
+        self.points_per_decade = 21
         start, stop, step = self.spectral_ranges[self.display_range]
-        self.data_size = int(stop/step)
+        self.data_size = sp.data_length_log_space(start,stop,points_per_decade=self.points_per_decade) # int((stop-start)/step)
+        print(self.data_size)
+
         self.history_size = 100
         self.history = HistoryBuffer(self.data_size, self.history_size)
         
@@ -657,13 +665,37 @@ class WaterfallPlotWidget:
 
     def create_plot(self):
         """Create waterfall plot"""
-        self.plot = self.layout.addPlot()
+        self.plot = self.layout.addPlot(title="<font size=\"20\">Waterfall spectrum plot</font>")
+        
         self.plot.setLabel("bottom", "Frequency", units="Hz")
         self.plot.setLabel("left", "Time")
 
         self.plot.setYRange(-self.history_size, 0)
         self.plot.setLimits(xMin=0, yMax=0)
+        self.plot.setLogMode(True,False)
         self.plot.showButtons()
+
+        right_axis = self.plot.getAxis("right")
+        right_axis.setStyle(showValues = False)
+        top_axis = self.plot.getAxis("top")
+        top_axis.setStyle(showValues = False)
+
+        left_axis = self.plot.getAxis("left")
+        bottom_axis = self.plot.getAxis("bottom")
+        font = QtGui.QFont()
+        font.setPixelSize(20)
+        left_axis.tickFont = font
+        left_axis.setStyle(tickTextOffset = 10)
+        left_axis.setWidth(100)
+        bottom_axis.tickFont = font
+        bottom_axis.setStyle(tickTextOffset = 10)
+
+        self.plot.showAxis("right", show=True)
+        self.plot.showAxis("top", show=True)
+        # self.plot.setLabel("left", "Power", units="V^2Hz-1")
+        self.plot.setLabel("left", "<font size=\"15\">Time, t (sec)</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
+        # self.plot.setLabel("bottom", "Frequency", units="Hz")
+        self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
         #self.plot.setAspectLocked(True)
         #self.plot.setDownsampling(mode="peak")
         #self.plot.setClipToView(True)
@@ -688,6 +720,10 @@ class WaterfallPlotWidget:
         self.counter += 1
         spectral_data = data['d']
         frequencies = data['f']
+
+        spectral_data = sp.remove50Hz(frequencies, spectral_data)
+        
+        frequencies, spectral_data = interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
 
         self.history.append(spectral_data)
 

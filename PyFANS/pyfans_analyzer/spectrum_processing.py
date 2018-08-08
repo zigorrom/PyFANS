@@ -8,7 +8,7 @@ from scipy import optimize
 from scipy import signal
 from scipy.signal import cubic
 
-fname = 
+fname = "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_1.dat"
 
 def read_file(filename):
     a = np.loadtxt(filename, skiprows=1)
@@ -29,16 +29,24 @@ def smoothSpline(freq,data, NStartPoints = 10):
     V=VF/freq
     return V
 
-def remove_pickups(data, deltaX = 1):
-    res = np.copy(data)
-    sigma = 2*deltaX
-    for i in range(1,len(data)-1):
-        difference = sigma * np.abs(data[i+1]-data[i-1])
-        average = (data[i+1]+data[i-1])/2
-        if np.abs(data[i] - average) > difference:
-            res[i] = average
-    
-    return res
+def remove50Hz(freq, data):
+    data = np.copy(data)
+    data_length = len(data)
+    prev_idx = 0
+    for idx, f in enumerate(freq):
+        if f%50 == 0:
+            if idx < data_length-1:
+                data[idx] = (data[idx+1]+data[idx-1])/2
+            else:
+                data[idx] = data[idx-1]
+
+    return data
+        
+
+
+def remove_pickups_savgol(data, deltaX = 1, window_length=5):
+    result = signal.savgol_filter(data,window_length, 1)
+    return result
 
 
 
@@ -70,6 +78,33 @@ def test_skipping_values(self, freq, data):
     for i in range(2,10):
         plt.plot(freq[::i], data[::i], pen=pg.intColor(i), name="skip {0}".format(i))
 
+def data_length_log_space(freq_start, freq_stop, points_per_decade = 10):
+    log_f_start = np.log10(freq_start)
+    log_f_end = np.log10(freq_stop)
+    log_step = 1/points_per_decade
+    return np.floor((log_f_end-log_f_start)/log_step)
+
+
+def interpolate_data_log_space(freq, data, points_per_decade = 10):
+    
+    freq_in_log_space = np.log10(freq)
+    log_f_start = freq_in_log_space[0]
+    log_f_end = freq_in_log_space[-1]
+    log_step = 1/points_per_decade
+    
+    # log_spaced_frequencies = np.fromiter((10**x for x in np.arange(log_f_start, log_f_end, log_step)),float)
+    
+    desired_log_spaced_frequencies = np.arange(log_f_start, log_f_end, log_step)
+    
+
+    interpolation_function = interp1d(freq_in_log_space,data, kind="linear")
+    result = interpolation_function(desired_log_spaced_frequencies)
+    
+    desired_lin_spaced_frequencies = np.power(10,desired_log_spaced_frequencies)
+
+    return desired_lin_spaced_frequencies, result
+
+
 
 def smooth(freq, data):
     
@@ -79,77 +114,30 @@ def smooth(freq, data):
     kernel = kernel / kernel.sum()
     
 
-
-    #UnivariateSpline
-
-
-
-    # x = linspace(-3, 3, 100)
-    # y = exp(-x**2) + randn(100)/10
-    # weights = np.arange(1, 2, 0.2)
-    # weights = [1,1,1,1,1,1]
-    # N=len(data)
-    # rmserror = 10
-    # s_val = N * (rmserror * np.fabs(data).max())**2
-    # UnivariateSpline( x, y, s=s )
-    
-    # smoothed = smoothSpline(freq, data, 100)
-    # smoothed = smoothSpline(freq, data)
-   
-    #savgolFilter
-    
-    # smoothed = signal.spline_filter(data)
     
     freq_selected = freq #[::2]
     data_selected = data #[::2]
-    # smoothed = UnivariateSpline( freq_selected, data_selected, k=3)
-    # smoothed= smoothed(freq_selected)
 
     
-    smoothed = remove_pickups(data_selected)
+    smoothed = remove50Hz(freq, data) # remove_pickups(data_selected)
+
+    plt = pg.plot(freq_selected,data)
+
+    plt.plot(freq_selected, smoothed, pen=pg.mkPen(color="r", width=4))
     
-    # smoothed = np.convolve(kernel, data_selected, mode='valid')
-    # smoothed = signal.savgol_filter(data_selected, 21, 1, 0, 1)
+    log_spaced_freq, log_spaced_data = interpolate_data_log_space(freq, smoothed, points_per_decade=20) 
 
-    # plt = pg.plot(freq_selected[:len(smoothed)],smoothed)
-    # spline = UnivariateSpline ( freq_selected, smoothed)
-    # spline.set_smoothing_factor(0.5)
-    # smoothed = spline(freq_selected)
-
-    # smoothed = CubicSpline(freq_selected, smoothed)
-    # smoothed=smoothed(freq_selected)
-    start_freq = np.log10(freq[0])
-    end_freq = np.log10(freq[-1])
-    n = 30*np.floor(end_freq - start_freq)+1
-
-
-    log_spaced_freq = np.logspace(start_freq,end_freq, num=n)
-
-    smoothed = interp1d(freq_selected, smoothed, kind="cubic")
-    smoothed = smoothed(log_spaced_freq)
-
-    # tck = interpolate.splrep(freq_selected, smoothed)
-    # smoothed = interpolate.splev(log_spaced_freq, tck)
+    plt.plot(log_spaced_freq, log_spaced_data, pen="g", symbol="o", symbolPen="g", symbolBrush="g")
     
-    # smoothed = smoothed(freq_selected)
-    # smoothed = signal.savgol_filter(smoothed, 3, 0, 0, 1)
-    plt = pg.plot(freq_selected,freq_selected*data)
-    # plt.plot(freq_selected,smoothed, pen=pg.mkPen(color="r", width=4))
-    res = log_spaced_freq*smoothed
-    # res = runningMeanFast(res, 10)
-
-    plt.plot(log_spaced_freq, res, pen=pg.mkPen(color="r", width=4))
-   
     plt.setLogMode(True,True)
 
-    # smoothed = data
-    # plot = pg.plot(kernel)
+   
     return data
 
 
 def main():
     app = pg.QtGui.QApplication(sys.argv)
-    frequency = 1600 #100
+    frequency = 100000 #1600 #100
     data = read_file(fname)[:frequency]
     # print(data)
 
