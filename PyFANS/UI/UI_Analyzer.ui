@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>807</height>
+    <width>1048</width>
+    <height>834</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="GraphicsLayoutWidget" name="widget" native="true">
+       <widget class="GraphicsLayoutWidget" name="ui_plot" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -30,7 +30,7 @@
       <item>
        <widget class="QFrame" name="frame">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -47,13 +47,13 @@
            <property name="title">
             <string>Correction</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout">
+           <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="0" column="0">
-               <widget class="QCheckBox" name="checkBox_2">
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="ui_cutoff_correction_enabled">
                 <property name="text">
-                 <string>Remove pickups</string>
+                 <string>Cutoff correction</string>
                 </property>
                </widget>
               </item>
@@ -64,13 +64,34 @@
                 </property>
                </widget>
               </item>
+              <item row="2" column="2">
+               <widget class="QLineEdit" name="ui_cutoff_correction_capacity"/>
+              </item>
               <item row="0" column="2">
-               <widget class="QSpinBox" name="spinBox"/>
+               <widget class="QSpinBox" name="ui_remove_pickups_winsize">
+                <property name="maximum">
+                 <number>99999</number>
+                </property>
+               </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QCheckBox" name="checkBox_3">
+               <widget class="QCheckBox" name="ui_smoothing_enabled">
                 <property name="text">
                  <string>Smoothing</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QSpinBox" name="ui_smoothing_winsize">
+                <property name="maximum">
+                 <number>99999</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="ui_remove_pickups_enabled">
+                <property name="text">
+                 <string>Remove pickups</string>
                 </property>
                </widget>
               </item>
@@ -81,16 +102,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QSpinBox" name="spinBox_2"/>
-              </item>
-              <item row="2" column="0">
-               <widget class="QCheckBox" name="checkBox_4">
-                <property name="text">
-                 <string>Cutoff correction</string>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="1">
                <widget class="QLabel" name="label_4">
                 <property name="text">
@@ -98,8 +109,58 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="2">
-               <widget class="QLineEdit" name="lineEdit_2"/>
+              <item row="3" column="0" colspan="3">
+               <widget class="QCheckBox" name="ui_multiply_bt_frequency">
+                <property name="text">
+                 <string>Multiply by frequency</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QLineEdit" name="ui_crop_start_frequency">
+                  <property name="placeholderText">
+                   <string>start frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="ui_crop_stop_frequency">
+                  <property name="placeholderText">
+                   <string>stop_frequency</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout">
+                <item>
+                 <widget class="QPushButton" name="ui_crop_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Crop</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="ui_crop_undo_button">
+                  <property name="text">
+                   <string>Undo</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
@@ -107,7 +168,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox">
+          <widget class="QGroupBox" name="ui_thermal_groupbox">
            <property name="title">
             <string>Thermal Noise</string>
            </property>
@@ -121,25 +182,39 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
-               <layout class="QHBoxLayout" name="horizontalLayout">
-                <item>
+               <layout class="QGridLayout" name="gridLayout_3">
+                <item row="0" column="0">
                  <widget class="QLabel" name="label">
                   <property name="text">
                    <string>Equivalent Resistance</string>
                   </property>
                  </widget>
                 </item>
-                <item>
-                 <widget class="QLineEdit" name="lineEdit">
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="ui_equivalent_resistance">
                   <property name="readOnly">
-                   <bool>true</bool>
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Temperature</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="ui_temperature">
+                  <property name="readOnly">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
                </layout>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox">
+               <widget class="QCheckBox" name="ui_subtract_thermal_noise">
                 <property name="text">
                  <string>Subtract Thermal Noise</string>
                 </property>
@@ -151,7 +226,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
+          <widget class="QGroupBox" name="ui_flicker_groupbox">
            <property name="title">
             <string>Flicker Noise</string>
            </property>
@@ -171,7 +246,7 @@
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QLineEdit" name="lineEdit_3"/>
+                 <widget class="QLineEdit" name="ui_flicker_amplitude"/>
                 </item>
                 <item row="1" column="0">
                  <widget class="QLabel" name="label_6">
@@ -181,12 +256,12 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QLineEdit" name="lineEdit_4"/>
+                 <widget class="QLineEdit" name="ui_flicker_alpha"/>
                 </item>
                </layout>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton">
+               <widget class="QPushButton" name="ui_flicker_noise_reset_button">
                 <property name="text">
                  <string>Reset</string>
                 </property>
@@ -198,7 +273,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_3">
+          <widget class="QGroupBox" name="ui_gr_groupbox">
            <property name="title">
             <string>GR Noise</string>
            </property>
@@ -209,21 +284,31 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
-               <widget class="QTableView" name="tableView"/>
+               <widget class="QListView" name="ui_gr_listview"/>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="ui_gr_properties_layout"/>
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_2">
                 <item>
-                 <widget class="QPushButton" name="pushButton_2">
+                 <widget class="QPushButton" name="ui_add_gr_noise_button">
                   <property name="text">
                    <string>Add</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_4">
+                 <widget class="QPushButton" name="ui_remove_gr_noise_button">
                   <property name="text">
                    <string>Remove</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="ui_reset_gr_noise_button">
+                  <property name="text">
+                   <string>Reset</string>
                   </property>
                  </widget>
                 </item>
@@ -233,6 +318,26 @@
             </item>
            </layout>
           </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="ui_fit_data_button">
+           <property name="text">
+            <string>Fit noise model to data</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>107</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -246,7 +351,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1048</width>
      <height>26</height>
     </rect>
    </property>
@@ -255,9 +360,16 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen_File"/>
-    <addaction name="actionSave_As"/>
+    <addaction name="actionSave"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionShowSettingsTree"/>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -271,10 +383,27 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen_File"/>
+   <addaction name="actionSave"/>
+   <addaction name="actionPrev"/>
+   <addaction name="actionNext"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar_2">
+   <property name="windowTitle">
+    <string>toolBar_2</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionFlicker"/>
+   <addaction name="actionGR"/>
+   <addaction name="actionTest"/>
   </widget>
   <action name="actionOpen_File">
    <property name="text">
-    <string>Open File</string>
+    <string>Open</string>
    </property>
   </action>
   <action name="actionOpen_Folder">
@@ -282,9 +411,45 @@
     <string>Open Folder</string>
    </property>
   </action>
-  <action name="actionSave_As">
+  <action name="actionSave">
    <property name="text">
-    <string>Save As</string>
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionFlicker">
+   <property name="text">
+    <string>Flicker</string>
+   </property>
+   <property name="toolTip">
+    <string>Flicker noise handle</string>
+   </property>
+  </action>
+  <action name="actionGR">
+   <property name="text">
+    <string>GR</string>
+   </property>
+   <property name="toolTip">
+    <string>Lorentzian-shape noise handle</string>
+   </property>
+  </action>
+  <action name="actionNext">
+   <property name="text">
+    <string>Next</string>
+   </property>
+  </action>
+  <action name="actionPrev">
+   <property name="text">
+    <string>Prev</string>
+   </property>
+  </action>
+  <action name="actionShowSettingsTree">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionTest">
+   <property name="text">
+    <string>test</string>
    </property>
   </action>
  </widget>

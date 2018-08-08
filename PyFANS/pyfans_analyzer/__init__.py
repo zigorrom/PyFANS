@@ -3,4 +3,4 @@
 # def test_func():
 #     print("test func")
 
-from .experiment_data_analysis import ExperimentData
+#from pyfans_analyzer.experiment_data_analysis import ExperimentData

@@ -1,33 +1,20 @@
-from pyfans.tests import test_binding
-from pyfans.ui.voltage_widget import test_voltage_control
-import pyfans.experiment.modern_fans_experiment as mfe
-
-mfe.main()
+# from pyfans.tests import test_binding
 # test_binding.main()
 # test_binding.test_main_window()
+
+
+# from pyfans.ui.voltage_widget import test_voltage_control
 # test_voltage_control()
 
-# class test_class:
-#     def __init__(self):
-#         self._test = 1
+
+# import pyfans.experiment.modern_fans_experiment as mfe
+# mfe.main()
 
 
-#     @property
-#     def test(self):
-#         return self._test
-
-#     @test.setter
-#     def test(self, value):
-#         self._test = value
-
-# def test_pickle():
-#     import pickle
-    
-    
-#     t = test_class()
-#     t.test = 2
-
-#     print(pickle.dumps(t, protocol=0))
+from pyfans_analyzer.analyzer_window import main
+main()
 
 
-# test_pickle()
+
+
+

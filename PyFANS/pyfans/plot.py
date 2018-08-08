@@ -96,6 +96,10 @@ class Handle(UIGraphicsItem):
     @property
     def name(self):
         return self._name
+    
+    @property
+    def handlePen(self):
+        return self.pen
             
     def setDeletable(self, b):
         self.deletable = b
@@ -368,7 +372,7 @@ class SpectrumPlotWidget:
         self.curves = {}
 
         # self._historySize = 10
-        
+        self.handles = {}
 
         #self.data_size = 10000
         self.historySize = 10
@@ -436,20 +440,90 @@ class SpectrumPlotWidget:
         thermal_noise_curve.setVisible(True)
         self.curves[-2] = thermal_noise_curve
 
-        flickerCurve = self.plot.plot(pen = pg.mkColor("r"))
-        flickerCurve.setZValue(700)
-        flickerCurve.setVisible(True)
-        self.curves["flicker"] =  flickerCurve
+        # flickerCurve = self.plot.plot(pen = pg.mkColor("r"))
+        # flickerCurve.setZValue(700)
+        # flickerCurve.setVisible(True)
+        # self.curves["flicker"] =  flickerCurve
 
-        grCurve = self.plot.plot(pen = pg.mkColor("b"))
-        grCurve.setZValue(700)
-        grCurve.setVisible(True)
-        self.curves["gr"] =  grCurve
+        # grCurve = self.plot.plot(pen = pg.mkColor("b"))
+        # grCurve.setZValue(700)
+        # grCurve.setVisible(True)
+        # self.curves["gr"] =  grCurve
 
 
     def clear_curves(self):
         for rang, curve in self.curves.items():
             curve.clear()
+
+    def remove_handle(self, name):
+        handle_to_remove = self.handles.pop(name, None)
+        if handle_to_remove is not None:
+            self.plot.removeItem(handle_to_remove)
+        
+        curve_to_remove = self.curves.pop(name,None)
+        if curve_to_remove is not None:
+            self.plot.removeItem(curve_to_remove)
+
+
+    def remove_all_handles(self):
+        for k, handle in self.handles.items():
+            self.plot.removeItem(handle)
+            curve_to_remove = self.curves.get(k,None)
+            if curve_to_remove is not None:
+                self.plot.removeItem(curve_to_remove)
+
+    def get_handle_by_name(self, name):
+        return self.handles.get(name,None)
+
+    def create_curve_for_handle(self, handle):
+        curve = self.curves.get(handle.name, None)
+        if curve is None:
+            curve = self.plot.plot(pen = handle.handlePen) #pg.mkColor("b"))
+            curve.setZValue(700)
+            curve.setVisible(True)
+            self.curves[handle.name] =  curve
+        return curve
+
+    
+
+    def create_flicker_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None):
+        handle = self.get_handle_by_name(name)
+        if handle is not None:
+            return handle
+
+        handle = FlickerHandle(name=name, pen=pen)
+        # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
+        if isinstance(initPosition, tuple) and len(initPosition)==2:
+            x,y = initPosition
+            handle.setPos(x,y)
+        else:
+            handle.setPos(1,-2)
+
+        if callable(positionChangedCallback):
+            handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+
+        self.plot.addItem(handle)
+        return handle
+
+    def create_gr_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None):
+        handle = self.get_handle_by_name(name)
+        if handle is not None:
+            return handle
+
+        handle = GRHandle(name=name, pen=pen)
+        # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
+        if isinstance(initPosition, tuple) and len(initPosition)==2:
+            x,y = initPosition
+            handle.setPos(x,y)
+        else:
+            handle.setPos(1,-2)
+
+        if callable(positionChangedCallback):
+            handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+
+        self.plot.addItem(handle)
+        return handle
+
 
     def create_roi(self):
         # self.roi = pg.LineROI([1, -17], [4, -17],width = 0, pen=pg.mkPen('b'))
@@ -463,19 +537,27 @@ class SpectrumPlotWidget:
         # self.plot.addItem(item)
 
         # handle = Handle(radius=10, typ="f", pen=QtGui.QPen(QtGui.QColor(0, 0, 0)), parent=self.plot)
-        handle = FlickerHandle(name = "flicker", pen=pg.mkPen(width=4.5, color='r'))
-        # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
-        handle.setPos(1,-2)
-        handle.sigPositionChanged.connect(self.on_handlePositionChanged)
-        self.plot.addItem(handle)
-        self.flickerHandle = handle
+        
+        
+        # handle = FlickerHandle(name = "flicker", pen=pg.mkPen(width=4.5, color='r'))
+        # # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
+        # handle.setPos(1,-2)
+        # handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+        # self.plot.addItem(handle)
+        # self.flickerHandle = handle
+        self.flickerHandle = self.create_flicker_handle(name = "flicker", pen=pg.mkPen(width=4.5, color='r'), initPosition=(1,-2),positionChangedCallback=self.on_handlePositionChanged)
+        self.create_curve_for_handle(self.flickerHandle)
 
         # handle = Handle(name = "gr", radius=10, typ="r", pen=pg.mkPen(width=4.5, color='b'), deletable=True, handle_offset=QtCore.QPointF(-40, 40))#, parent=self.plot)
-        handle = GRHandle(name="gr", pen=pg.mkPen(width=4.5, color='b'))
-        handle.setPos(2,-2)
-        handle.sigPositionChanged.connect(self.on_handlePositionChanged)
-        self.plot.addItem(handle)
-        self.grHandle = handle
+        # handle = GRHandle(name="gr", pen=pg.mkPen(width=4.5, color='b'))
+        # handle.setPos(2,-2)
+        # handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+        # self.plot.addItem(handle)
+        # self.grHandle = handle
+        self.grHandle = self.create_gr_handle(name = "gr", pen=pg.mkPen(width=4.5, color='b'), initPosition=(2,-2),positionChangedCallback=self.on_handlePositionChanged)
+        self.create_curve_for_handle(self.grHandle)
+
+
 
 
     def create_plot(self):
