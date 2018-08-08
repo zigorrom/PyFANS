@@ -3,6 +3,7 @@ import sys
 from queue import Queue
 from PyQt4 import QtCore
 
+
 def check_if_script_executed_with_console():
     executable = sys.executable
     basename = os.path.basename(executable)

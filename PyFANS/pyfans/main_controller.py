@@ -378,6 +378,13 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.ui_increment_measurement_count()
 
     def on_start_measurement_info_received(self, measurement_info):
+        if self.waterfall_noise_window:
+            equivalent_resistance = measurement_info.equivalent_resistance_start
+            sample_resistance = measurement_info.sample_resistance_start
+            load_resistance = measurement_info.load_resistance
+            temperature = measurement_info.start_temperature
+            self.waterfall_noise_window.update_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
+
         self.main_view.ui_set_measurement_info_start(measurement_info)
 
     def on_end_measurement_info_received(self,measurement_info):

@@ -143,6 +143,14 @@ class MeasurementInfo:
 
 
     @property
+    def load_resistance(self):
+        return self._load_resistance
+
+    @load_resistance.setter
+    def load_resistance(self, value):
+        self._load_resistance = value
+
+    @property
     def second_amplifier_gain(self):
         return self._second_amplifier_gain
 

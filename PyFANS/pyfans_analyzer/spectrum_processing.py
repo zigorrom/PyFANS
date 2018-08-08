@@ -48,6 +48,30 @@ def remove_pickups_savgol(data, deltaX = 1, window_length=5):
     result = signal.savgol_filter(data,window_length, 1)
     return result
 
+def subtract_thermal_noise(data, thermal_noise_level):
+    floor_value = 1e-18
+    data_len_minus_one = len(data)-1
+    for i, val in enumerate(data):
+        new_val = val-thermal_noise_level
+        if new_val < 0:
+            if i<1:
+                new_val = data[i+1]-thermal_noise_level
+                if new_val < 0:
+                    new_val = floor_value
+
+            elif i==data_len_minus_one:
+                new_val = data[i-1]-thermal_noise_level
+                if new_val < 0:
+                    new_val = floor_value
+            else:
+                new_val = (data[i+1]+data[i-1])/2-thermal_noise_level
+                if new_val < 0:
+                    new_val = floor_value
+
+        data[i] = new_val
+
+    return data
+
 
 
 
@@ -82,7 +106,7 @@ def data_length_log_space(freq_start, freq_stop, points_per_decade = 10):
     log_f_start = np.log10(freq_start)
     log_f_end = np.log10(freq_stop)
     log_step = 1/points_per_decade
-    return np.floor((log_f_end-log_f_start)/log_step)
+    return int(np.floor((log_f_end-log_f_start)/log_step))
 
 
 def interpolate_data_log_space(freq, data, points_per_decade = 10):
