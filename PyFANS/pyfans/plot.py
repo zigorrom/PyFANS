@@ -7,7 +7,7 @@ from pyqtgraph import functions as fn
 from PyQt4 import uic, QtGui, QtCore
 from pyqtgraph import UIGraphicsItem, GraphicsObject
 import pyfans_analyzer.spectrum_processing as sp
-
+import pyfans.physics.physical_calculations as phys
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
 pg.setConfigOption('background', None) #'w')
@@ -635,6 +635,8 @@ class HistoryBuffer:
     def __getitem__(self, key):
         return self.buffer[key]
     
+
+
 class WaterfallPlotWidget:
     """Waterfall plot"""
     def __init__(self, layout, histogram_layout=None):
@@ -651,6 +653,8 @@ class WaterfallPlotWidget:
         self.spectral_ranges = {0:(1,1600,1),1:(0,102400,64)}
         self.display_range = 0
         
+        self.thermal_noise = 0
+
         self.points_per_decade = 21
         start, stop, step = self.spectral_ranges[self.display_range]
         self.data_size = sp.data_length_log_space(start,stop,points_per_decade=self.points_per_decade) # int((stop-start)/step)
@@ -665,14 +669,16 @@ class WaterfallPlotWidget:
 
     def create_plot(self):
         """Create waterfall plot"""
-        self.plot = self.layout.addPlot(title="<font size=\"20\">Waterfall spectrum plot</font>")
+        self.plot = self.layout.addPlot(title="<font size=\"20\">fS<sub>V</sub> Color Map</font>")
         
-        self.plot.setLabel("bottom", "Frequency", units="Hz")
+        self.plot.setLabel("bottom", "Frequency") #, units="Hz")
         self.plot.setLabel("left", "Time")
 
         self.plot.setYRange(-self.history_size, 0)
+        
         self.plot.setLimits(xMin=0, yMax=0)
-        self.plot.setLogMode(True,False)
+        self.plot.setLogMode(False,False)
+        # self.plot.setXRange(0, 4)
         self.plot.showButtons()
 
         right_axis = self.plot.getAxis("right")
@@ -712,19 +718,31 @@ class WaterfallPlotWidget:
     #    curve = self.curves[rang]
     #    curve.setData(data['f'],data['d'])
 
+    def update_thermal_noise(self, equivalent_resistance, sample_resistance, load_resistance, temperature):
+        try:
+            self.thermal_noise = phys.calculate_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
+        except:
+            self.thermal_noise = 0
+
+    
+
     def update_plot(self, rang, data):
         """Update waterfall plot"""
         if rang != self.display_range:
             return
 
         self.counter += 1
-        spectral_data = data['d']
-        frequencies = data['f']
+        spectral_data = data['d'][1:]
+        frequencies = data['f'][1:]
 
         spectral_data = sp.remove50Hz(frequencies, spectral_data)
         
-        frequencies, spectral_data = interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
-
+        frequencies, spectral_data = sp.interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
+        spectral_data = sp.subtract_thermal_noise(spectral_data, self.thermal_noise)
+        spectral_data = np.multiply(frequencies,spectral_data)
+        frequencies = np.log10(frequencies)
+        spectral_data = np.log10(spectral_data)
+        
         self.history.append(spectral_data)
 
         # Create waterfall image on first run
@@ -763,6 +781,9 @@ class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
 
     def update_data(self, rang, data):
         self.waterfall_widget.update_plot(rang, data)
+
+    def update_thermal_noise(self, equivalent_resistance, sample_resistance, load_resistance, temperature):
+        self.waterfall_widget.update_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
 
 if __name__ == "__main__":
     import sys
