@@ -654,6 +654,7 @@ class WaterfallPlotWidget:
         self.display_range = 0
         
         self.thermal_noise = 0
+        self.overal_amplification = 100*172
 
         self.points_per_decade = 21
         start, stop, step = self.spectral_ranges[self.display_range]
@@ -718,9 +719,14 @@ class WaterfallPlotWidget:
     #    curve = self.curves[rang]
     #    curve.setData(data['f'],data['d'])
 
+    def update_amplification(self, overal_amplification):
+        self.overal_amplification = overal_amplification
+
     def update_thermal_noise(self, equivalent_resistance, sample_resistance, load_resistance, temperature):
         try:
-            self.thermal_noise = phys.calculate_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
+            value = phys.calculate_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
+            ampified_value = self.overal_amplification * value
+            self.thermal_noise = ampified_value
         except:
             self.thermal_noise = 0
 
@@ -784,6 +790,9 @@ class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
 
     def update_thermal_noise(self, equivalent_resistance, sample_resistance, load_resistance, temperature):
         self.waterfall_widget.update_thermal_noise(equivalent_resistance, sample_resistance, load_resistance, temperature)
+    
+    def update_amplification(self, overal_amplification):
+        self.waterfall_widget.update_amplification(overal_amplification)
 
 if __name__ == "__main__":
     import sys
