@@ -280,7 +280,10 @@ class Binding:
 
         elif widgetPropertyName == "currentText":
             return widget.currentTextChanged
-
+   
+        elif widgetPropertyName == "currentRow":
+            return widget.currentRowChanged
+ 
         else:
             return None
         

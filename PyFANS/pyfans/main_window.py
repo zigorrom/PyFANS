@@ -116,7 +116,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
         self._gate_source_checkbox_group.addButton(self.ui_use_set_vfg_range)
 
         self.__setup_folder_browse_button()
-        self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)})
+        self._spectrumPlotWidget =  plt.SpectrumPlotWidget(self.ui_plot,{0:(0,1600,1),1:(0,102400,64)}, create_helper_handles=True, update_history=True)
         self.progressBar = QtGui.QProgressBar(self)
         self.progressBar.setVisible(True)
         self.progressBar.setRange(0,100)

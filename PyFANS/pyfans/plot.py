@@ -357,7 +357,7 @@ class GRHandle(Handle):
 
 class SpectrumPlotWidget:
     """Main spectrum plot"""
-    def __init__(self, layout, spectrum_ranges):
+    def __init__(self, layout, spectrum_ranges, create_helper_handles=False, update_history=False):
         if not isinstance(layout, pg.GraphicsLayoutWidget):
             raise ValueError("layout must be instance of pyqtgraph.GraphicsLayoutWidget")
 
@@ -381,9 +381,11 @@ class SpectrumPlotWidget:
 
         self.create_plot()
         self.create_curves()
-
-        self.roi = None
-        self.create_roi()
+        
+        self.update_history = update_history
+        # self.roi = None
+        if create_helper_handles:
+            self.create_helper_handle()
         
     @property
     def historySize(self):
@@ -525,7 +527,7 @@ class SpectrumPlotWidget:
         return handle
 
 
-    def create_roi(self):
+    def create_helper_handle(self):
         # self.roi = pg.LineROI([1, -17], [4, -17],width = 0, pen=pg.mkPen('b'))
         # self.plot.addItem(self.roi)
         # item = QtGui.QGraphicsRectItem( 10, 100.0, 1, 11 )
@@ -636,7 +638,8 @@ class SpectrumPlotWidget:
     def updata_resulting_spectrum(self, freq,data, force = False):
         curve = self.curves[-1]
         curve.setData(freq,data)
-        self.appendToHistory(freq, data)
+        if self.update_history:
+            self.appendToHistory(freq, data)
 
     def update_thermal_noise(self, freq, data, force = False):
         curve = self.curves[-2]
