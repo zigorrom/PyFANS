@@ -123,24 +123,35 @@ def data_length_log_space(freq_start, freq_stop, points_per_decade = 10):
 
 
 def interpolate_data_log_space(freq, data, points_per_decade = 10, convolution_winsize = 11):
-    
+    convolution_winsize = 0 if convolution_winsize is None else convolution_winsize
+
     freq_in_log_space = np.log10(freq)
     log_f_start = freq_in_log_space[0]
     log_f_end = freq_in_log_space[-1]
     log_step = 1/points_per_decade
     
     # log_spaced_frequencies = np.fromiter((10**x for x in np.arange(log_f_start, log_f_end, log_step)),float)
-    
-    desired_log_spaced_frequencies = np.arange(log_f_start, log_f_end, log_step)
-    
+    desired_log_spaced_frequencies = None
+    result = None
 
-    interpolation_function = interp1d(freq_in_log_space,data, kind="linear")
-    result = interpolation_function(desired_log_spaced_frequencies)
+    interpolation_function = interp1d(freq_in_log_space,data, kind="linear", fill_value="extrapolate")
+    
+    if convolution_winsize<=0:
+        desired_log_spaced_frequencies = np.arange(log_f_start, log_f_end, log_step)
+        result = interpolation_function(desired_log_spaced_frequencies)
 
     #test
-    if convolution_winsize is not None:
-        if convolution_winsize > 0:
-            desired_log_spaced_frequencies, result = runningMeanFast(desired_log_spaced_frequencies,result, convolution_winsize)
+    
+    else: # convolution_winsize > 0:
+        log_f_start = log_f_start - convolution_winsize*log_step
+        desired_log_spaced_frequencies = np.arange(log_f_start, log_f_end, log_step)
+        result = interpolation_function(desired_log_spaced_frequencies)
+        
+        desired_log_spaced_frequencies, result = runningMeanFast(desired_log_spaced_frequencies,result, convolution_winsize)
+        desired_log_spaced_frequencies =desired_log_spaced_frequencies[convolution_winsize:]
+        result = result[convolution_winsize:]
+
+
     
     desired_lin_spaced_frequencies = np.power(10,desired_log_spaced_frequencies)
 

@@ -308,18 +308,7 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
-               <widget class="QListWidget" name="ui_gr_listview">
-                <item>
-                 <property name="text">
-                  <string>adgagg</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>wadg</string>
-                 </property>
-                </item>
-               </widget>
+               <widget class="QListWidget" name="ui_gr_listview"/>
               </item>
               <item>
                <layout class="QVBoxLayout" name="ui_gr_properties_layout"/>
@@ -471,10 +460,16 @@
    <property name="text">
     <string>Next</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Right</string>
+   </property>
   </action>
   <action name="actionPrev">
    <property name="text">
     <string>Prev</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Left</string>
    </property>
   </action>
   <action name="actionShowSettingsTree">

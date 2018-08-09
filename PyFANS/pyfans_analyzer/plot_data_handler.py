@@ -4,13 +4,17 @@ import pyfans_analyzer.spectrum_processing as sp
 from pyqtgraph import mkPen
 
 
-class ProxyDataPlotHandler:
+class ProxyDataPlotHandler(object):
+    xLabel = "Frequency, f(Hz)"
+    yLabel = "S<sub>V</sub>"
+    xyLabel = "fS<sub>V</sub>"
+
     def __init__(self, plotter):
         self._plotter = plotter
         
         self._originalDataCurve = None
         self._displayDataCurve = None
-        self.setupCurvesOnPlotter()
+        self.setupPlotter()
 
         self._remove_pickups = None
         self._smoothing = None
@@ -19,8 +23,11 @@ class ProxyDataPlotHandler:
         self._use_crop = None
         self._crop_start = None 
         self._crop_end = None
-        self._multiply_by_freq = None
-
+        self._multiply_by_frequency = None
+        self._isMultipliedByFrequency = False
+        self._substractThermal = None
+        self._thermalNoise = None
+        
         self._originalFreq = None
         self._originalData = None
         self._displayFreq = None
@@ -28,12 +35,21 @@ class ProxyDataPlotHandler:
         self._updatingParams = False
 
         
-    def setupCurvesOnPlotter(self):
+    def setPlotterXLabel(self):
+        self._plotter.setXLabel(self.xLabel)
+
+    def setPlotterYLabel(self):
+        self._plotter.setYLabel(self.yLabel)
+
+    def setPlotterXYLabel(self):
+        self._plotter.setYLabel(self.xyLabel)
+
+    def setupPlotter(self):
         original_curve_name = "original"
         display_curve_name = "display"
         curve = self._plotter.get_curve_by_name(original_curve_name)
         if curve is None:
-            curve = self._plotter.create_curve(original_curve_name, pen=mkPen("r", width=3),zValue=900)
+            curve = self._plotter.create_curve(original_curve_name, pen=mkPen("r", width=1),zValue=900)
             self._originalDataCurve=curve
 
         curve = self._plotter.get_curve_by_name(display_curve_name)
@@ -41,10 +57,14 @@ class ProxyDataPlotHandler:
             curve = self._plotter.create_curve(display_curve_name, pen="g",zValue=1000)
             self._displayDataCurve=curve
 
+        self.setPlotterXLabel()
+        self.setPlotterYLabel()
+
         
     def setOriginalData(self, freq, data):
         self._originalFreq = freq
         self._originalData = data
+        self.isMultipliedByFrequency = False
         self.updateDisplayData()
         self.updateOriginalDataPlot()
         # self.updateDisplatDataPlot()
@@ -65,6 +85,10 @@ class ProxyDataPlotHandler:
 
         print("updating original data curve")
         self._originalDataCurve.setData(self._originalFreq,self._originalData)
+ 
+    def updateOriginalAndDisplayPlots(self):
+        self.updateOriginalDataPlot()
+        self.updateDisplatDataPlot()
 
     def beginUpdate(self):
         self._updatingParams = True
@@ -111,6 +135,12 @@ class ProxyDataPlotHandler:
             
             print("finish cropping")
         
+        if self.substract_thermal_noise:
+            self.perform_substract_thermal_noise()
+
+        if self.multiply_by_frequency:
+            self.update_multiply_by_frequency()
+
         if self.remove_pickups == True:
             try:
                  self._displayData = sp.remove50Hz(self._displayFreq, self._displayData)
@@ -132,15 +162,51 @@ class ProxyDataPlotHandler:
 
 
     def update_multiply_by_frequency(self):
-
+        
         if self.multiply_by_frequency:
-            self._displayData = np.multiply(self._displayFreq, self._displayData)
-            self._originalData = np.multiply(self._originalFreq, self._originalData)
+            if not self.isMultipliedByFrequency:
+                self._displayData = np.multiply(self._displayFreq, self._displayData)
+                self._originalData = np.multiply(self._originalFreq, self._originalData)
+                self.isMultipliedByFrequency = True
+                self.setPlotterXYLabel()
+            else: 
+                pass
         else:
-            self._displayData = np.multiply(self._displayFreq, self._displayData)
-            self._originalData = np.multiply(self._originalFreq, self._originalData)
+            if self.isMultipliedByFrequency:
+                self._displayData = np.divide(self._displayData, self._displayFreq)
+                self._originalData = np.divide(self._originalData, self._originalFreq)
+                self.isMultipliedByFrequency = False
+                self.setPlotterYLabel()
+            else:
+                pass
+        
+        self.updateOriginalAndDisplayPlots()
+        # self.updateDisplatDataPlot()
+        # self.updateOriginalDataPlot()
+
+    def perform_substract_thermal_noise(self):
+        if not self.substract_thermal_noise:
+            return 
+
+        if self.isMultipliedByFrequency:
+            converted_back = np.divide(self._displayData, self._displayFreq)
+            converted_back = sp.subtract_thermal_noise(converted_back, self.thermalNoise)
+            self._displayData = np.multiply(self._displayFreq, converted_back)
+            
+        else:
+            self._displayData = sp.subtract_thermal_noise(self._displayData, self.thermalNoise)
+        
         self.updateDisplatDataPlot()
-        self.updateOriginalDataPlot()
+
+    @property
+    def isMultipliedByFrequency(self):
+        return self._isMultipliedByFrequency
+
+    @isMultipliedByFrequency.setter
+    def isMultipliedByFrequency(self, value):
+        if self._isMultipliedByFrequency == value:
+            return 
+        self._isMultipliedByFrequency = value
 
     @property
     def multiply_by_frequency(self):
@@ -151,7 +217,7 @@ class ProxyDataPlotHandler:
         if self._multiply_by_frequency == value:
             return
         self._multiply_by_frequency = value
-        # self.update_multiply_by_frequency()
+        self.update_multiply_by_frequency()
         # self.updateDisplayData()
 
     @property
@@ -226,14 +292,48 @@ class ProxyDataPlotHandler:
 
     @property
     def crop_end(self):
+        print("getting crop end")
         return self._crop_end
-
+    
     @crop_end.setter
     def crop_end(self, value):
+        print("setting crop end")
         if self._crop_end == value:
             return 
         self._crop_end = value
         self.updateDisplayData()
+    
+    @property
+    def substract_thermal_noise(self):
+        return self._substractThermal
+
+    @substract_thermal_noise.setter
+    def substract_thermal_noise(self, value):
+        if self._substractThermal == value:
+            return 
+        self._substractThermal = value
+        self.perform_substract_thermal_noise()
+
+    @property
+    def thermalNoise(self):
+        return self._thermalNoise
+
+    @thermalNoise.setter
+    def thermalNoise(self, value):
+        if self._thermalNoise == value:
+            return 
+
+        self._thermalNoise = value
+        self.perform_substract_thermal_noise()
+
+
+    # @crop_end.setter
+    # def crop_end(self, value):
+    #     if self._crop_end == value:
+    #         return 
+
+    #     self._crop_end = value
+    #     self.updateDisplayData()
 
     
     
