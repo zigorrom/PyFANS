@@ -14,7 +14,15 @@ def read_file(filename):
     a = np.loadtxt(filename, skiprows=1)
     return a
 
-
+def cutoffCorrection(freq, data, resistance, capacity):
+    result = np.zero_like(data)
+    twoPi = 2 * np.pi
+    RC = resistance*capacity
+    twoPiRCsqr = np.power(twoPi * RC, 2)
+    for idx, data in enumerate(data):
+        result[idx] = data*(1 + twoPiRCsqr*freq[idx]*freq[idx])
+    
+    return result
 
 def smoothSpline(freq,data, NStartPoints = 10):
     VF = freq*data
@@ -86,16 +94,20 @@ def squareSpline(x1,y1,x2,y2,x3,y3):
     return result
 
 
-def runningMeanFast(x, N):
+def runningMeanFast(freq, data, N):
+    print("convolution")
     kernel = np.hanning(N)
     kernel = kernel / kernel.sum()
-    
+    res_data =  np.convolve(data, kernel, mode ="same") #[(N-1):]
+    # res_data =  np.convolve(data, kernel)[(N-1):]
+    res_freq = freq #[(N-1):]
+    # print(len(data))
+    # print(len(res_data))
+    # print(len(res_freq))
+    # print("end convolution")
+    return res_freq, res_data
 
-    # kernel = np.ones((N,))/N
-    return np.convolve(x, kernel)[(N-1):]
 
-# def pretreatSpectrum(self, data):
-#     for i in range(1,len(data)-1):
 def test_skipping_values(self, freq, data):
     plt = pg.plot()
     plt.addLegend()
@@ -110,7 +122,7 @@ def data_length_log_space(freq_start, freq_stop, points_per_decade = 10):
     return int(np.floor((log_f_end-log_f_start)/log_step))
 
 
-def interpolate_data_log_space(freq, data, points_per_decade = 10):
+def interpolate_data_log_space(freq, data, points_per_decade = 10, convolution_winsize = 11):
     
     freq_in_log_space = np.log10(freq)
     log_f_start = freq_in_log_space[0]
@@ -124,6 +136,11 @@ def interpolate_data_log_space(freq, data, points_per_decade = 10):
 
     interpolation_function = interp1d(freq_in_log_space,data, kind="linear")
     result = interpolation_function(desired_log_spaced_frequencies)
+
+    #test
+    if convolution_winsize is not None:
+        if convolution_winsize > 0:
+            desired_log_spaced_frequencies, result = runningMeanFast(desired_log_spaced_frequencies,result, convolution_winsize)
     
     desired_lin_spaced_frequencies = np.power(10,desired_log_spaced_frequencies)
 

@@ -40,7 +40,9 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         sourceObject = None
         self.remove_pickups = uih.Binding(self.ui_remove_pickups_enabled,"checked", sourceObject, "remove_pickups", converter=uih.AssureBoolConverter())
         self.smoothing_enable = uih.Binding(self.ui_smoothing_enabled,"checked", sourceObject, "smoothing_enabled", converter=uih.AssureBoolConverter())
+        self.smoothing_winsize = uih.Binding(self.ui_smoothing_winsize,"value", sourceObject, "smoothing_winsize", converter=uih.AssureIntConverter())
         self.cutoff_correction_enabled = uih.Binding(self.ui_cutoff_correction_enabled,"checked", sourceObject, "cutoff_correction", converter=uih.AssureBoolConverter())
+        self.cutoff_correction_capacity = uih.Binding(self.ui_cutoff_correction_capacity,"text", sourceObject, "cutoff_correction_capacity", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.multiply_by_frequency = uih.Binding(self.ui_multiply_by_frequency,"checked", sourceObject, "multiply_by_frequency", converter=uih.AssureBoolConverter())
         self.start_crop_frequency = uih.Binding(self.ui_crop_start_frequency,"text", sourceObject, "start_crop_frequency", converter=uih.StringToIntConverter(),validator=QtGui.QIntValidator())
         self.end_crop_frequency = uih.Binding(self.ui_crop_stop_frequency,"text", sourceObject, "end_crop_frequency", converter=uih.StringToIntConverter(),validator=QtGui.QIntValidator())

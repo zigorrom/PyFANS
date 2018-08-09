@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pyfans.utils.ui_helper as uih
+from pyfans_analyzer.plot_data_handler import ProxyDataPlotHandler
 from pyfans_analyzer.measurement_file_handler import *
 import pyfans_analyzer.spectrum_processing as sp
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
@@ -8,6 +9,13 @@ from pyfans.physics.physical_calculations import calculate_thermal_noise #(equiv
 # spectral_data = sp.remove50Hz(frequencies, spectral_data)
 # frequencies, spectral_data = sp.interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
 # spectral_data = sp.subtract_thermal_noise(spectral_data, self.thermal_noise)
+class NoiseModel():
+    def __init__(self):
+        self.flickerNoise = None
+        self.grList = list()
+        self.thermalNoise = None
+    
+
 
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
@@ -15,7 +23,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         super().__init__()
         self.__remove_pickups = None
         self.__smoothing_enabled = None
+        self.__smoothing_winsize = None
         self.__cutoff_correction = None
+        self.__cutoff_correction_capacity = None
         self.__multiply_by_frequency = None
         self.__start_crop_frequency = None
         self.__end_crop_frequency = None
@@ -37,10 +47,10 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # self._original_data = None
         # self._display_data = None
         self.thermal_noise = None
-        self._originalFreq = None
-        self._originalData=None
-        self._displayFreq = None
-        self._displayData = None
+        # self._originalFreq = None
+        # self._originalData=None
+        # self._displayFreq = None
+        # self._displayData = None
 
         self.freq_column_name = None
         self.data_column_name = None
@@ -48,6 +58,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.analyzerWindow = None #analyzer_window
         self.setwindow(analyzer_window)
+        self.proxyDataPlotHandler=ProxyDataPlotHandler(self.analyzerWindow.plotter)
 
         
 
@@ -77,7 +88,6 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
     def on_file_open_triggered(self, filename):
         wd, fn = os.path.split(filename)
-
         self.working_directory = wd
         self.__measurement_file = MeasurementInfoFile(filename)
         print(self.__measurement_file.columns)
@@ -89,6 +99,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def load_measurement_data(self, filename):
         print("opening file {0}".format(filename))
         try:
+            self.setupParams()
             params = self.__measurement_file.current_measurement_info
 # (equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
             self.thermal_noise = calculate_thermal_noise(
@@ -97,41 +108,38 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
                 params.load_resistance, 
                 params.temperature_end)
 
-
             filename =  os.path.join(self.working_directory, filename)
-            # data = pd.read_csv(filename, delimiter = "\t", skiprows=2)
             data = pd.read_csv(filename, delimiter="\t", index_col=None ) #header=[0,1]
             columns = list(data)
-            #print("All columns read from file")
-            #print(columns)
             
             self.freq_column_name, self.data_column_name = columns[0:2]
             temp = data[[self.freq_column_name, self.data_column_name]]
-            self._originalFreq = temp[self.freq_column_name].values
-            self._originalData = temp[self.data_column_name].values
+            freq = temp[self.freq_column_name].values
+            data = temp[self.data_column_name].values
             
-            self._displayFreq = self._originalFreq
-            self._displayData = self._originalData
+            self.proxyDataPlotHandler.setOriginalData(freq, data)
+
+            self.start_crop_frequency =freq
+            self.end_crop_frequency =data
             
-            self.proxy_plot_curve()
-            #print(frequencies)
-            #print(meas_data)
-            
-            #self.set_measurement_data(frequencies, meas_data)
 
         except Exception as e:
             print("Exception occured while loading measurement data")
             print(str(e))
             print(20*'*')
 
-    def proxy_plot_curve(self):
+    # def proxy_plot_curve(self):
         
-        plotter = self.analyzer_window.plotter
-        plotter.updata_resulting_spectrum(self._displayFreq, self._displayData)
+    #     plotter = self.analyzer_window.plotter
+    #     plotter.updata_resulting_spectrum(self._displayFreq, self._displayData)
 
 
     def on_file_save_triggered(self, filename):
         pass
+
+    def setupParams(self):
+        currentRow = self.__measurement_file.current_measurement_info
+        self.equivalen_resistance = currentRow.equivalent_resistance_end
 
     def on_next_triggered(self):
         meas_info = self.__measurement_file.next_row()
@@ -146,17 +154,25 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_crop_triggered(self):
         # df1.loc[lambda df: df.A > 0, :]
         # df1.loc[:, df1.loc['a'] > 0]
-        idxs = np.where((self._originalFreq>=self.start_crop_frequency)&(self._originalFreq<=self.end_crop_frequency))
-        self._displayFreq = self._originalFreq[idxs]
-        self._displayData = self._originalData[idxs]
-        self.proxy_plot_curve()
+        # idxs = np.where((self._originalFreq>=self.start_crop_frequency)&(self._originalFreq<=self.end_crop_frequency))
+        # self._displayFreq = self._originalFreq[idxs]
+        # self._displayData = self._originalData[idxs]
+        # self.proxy_plot_curve()
+        self.proxyDataPlotHandler.beginUpdate()
+        self.proxyDataPlotHandler.crop_start = self.start_crop_frequency
+        self.proxyDataPlotHandler.crop_stop = self.end_crop_frequency
+        self.proxyDataPlotHandler.use_crop = True
+        self.proxyDataPlotHandler.endUpdate()
+    
+        # self.proxyDataPlotHandler
 
     def on_undo_crop_triggered(self):
-        self._displayFreq = self._originalFreq
-        self._displayData = self._originalData
-        self.start_crop_frequency = self._displayFreq[0]
-        self.end_crop_frequency = self._displayFreq[-1]
-        self.proxy_plot_curve()
+        self.proxyDataPlotHandler.use_crop = False
+        # self._displayFreq = self._originalFreq
+        # self._displayData = self._originalData
+        # self.start_crop_frequency = self._displayFreq[0]
+        # self.end_crop_frequency = self._displayFreq[-1]
+        # self.proxy_plot_curve()
 
     def on_flicker_noise_reset_triggered(self):
         self.flicker_amplitude = 0
@@ -215,13 +231,23 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__remove_pickups = value
         self.onPropertyChanged("remove_pickups", self, value)
 
-        if self.remove_pickups:
-            self._displayData = sp.remove50Hz(self._originalFreq, self._originalData)
-            self._displayFreq = self._originalFreq
-        else:
-            self._displayFreq = self._originalFreq
-            self._displayData = self._originalData
-        self.proxy_plot_curve()
+        self.proxyDataPlotHandler.remove_pickups = value
+        
+# ui_smoothing_winsize
+
+    @property
+    def smoothing_winsize(self):
+        return self.__smoothing_winsize
+
+    @smoothing_winsize.setter
+    @uih.assert_integer_argument
+    def smoothing_winsize(self, value):
+        if self.__smoothing_winsize == value:
+            return 
+
+        self.__smoothing_winsize = value
+        self.onPropertyChanged("smoothing_winsize", self, value)
+        self.proxyDataPlotHandler.smoothing_winsize = value
 
     @property
     def smoothing_enabled(self):
@@ -236,14 +262,16 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__smoothing_enabled = value
         self.onPropertyChanged("smoothing_enabled", self, value)
 
-        if self.smoothing_enabled:
-            # frequencies, spectral_data = sp.interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
+        self.proxyDataPlotHandler.smoothing = value
+         
+        # if self.smoothing_enabled:
+        #     # frequencies, spectral_data = sp.interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
             
-            self._displayFreq, self._displayData = sp.interpolate_data_log_space( self._originalFreq, self._originalData, points_per_decade=21) 
-        else:
-            self._displayFreq = self._originalFreq
-            self._displayData = self._originalData
-        self.proxy_plot_curve()
+        #     self._displayFreq, self._displayData = sp.interpolate_data_log_space( self._originalFreq, self._originalData, points_per_decade=21) 
+        # else:
+        #     self._displayFreq = self._originalFreq
+        #     self._displayData = self._originalData
+        # self.proxy_plot_curve()
         
     @property
     def cutoff_correction(self):
@@ -257,6 +285,33 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__cutoff_correction = value
         self.onPropertyChanged("cutoff_correction", self, value)
+         
+        # if self.cutoff_correction:
+        #     self._displayData = sp.cutoffCorrection(
+        #         self._originalFreq,
+        #         self._originalData,
+        #         self.equivalen_resistance,
+        #         self.cutoff_correction_capacity
+        #         )
+        #     self._displayFreq = self._originalFreq
+        # else:
+        #     self._displayFreq = self._originalFreq
+        #     self._displayData = self._originalData
+
+        # self.proxy_plot_curve()
+
+    @property
+    def cutoff_correction_capacity(self):
+        return self.__cutoff_correction
+
+    @cutoff_correction_capacity.setter
+    @uih.assert_int_or_float_argument
+    def cutoff_correction_capacity(self, value):
+        if self.__cutoff_correction_capacity == value:
+            return 
+
+        self.__cutoff_correction_capacity = value
+        self.onPropertyChanged("cutoff_correction_capacity", self, value)
         
     @property
     def multiply_by_frequency(self):
@@ -349,15 +404,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__subtract_thermal_noise = value
         self.onPropertyChanged("subtract_thermal_noise", self, value)
 
-        if self.subtract_thermal_noise:
+        # if self.subtract_thermal_noise:
             
-            # spectral_data = sp.subtract_thermal_noise(spectral_data, self.thermal_noise)
-            self._displayData = sp.subtract_thermal_noise(self._originalData, self.thermal_noise)
-            self._displayFreq = self._originalFreq
-        else:
-            self._displayFreq = self._originalFreq
-            self._displayData = self._originalData
-        self.proxy_plot_curve()
+        #     # spectral_data = sp.subtract_thermal_noise(spectral_data, self.thermal_noise)
+        #     self._displayData = sp.subtract_thermal_noise(self._originalData, self.thermal_noise)
+        #     self._displayFreq = self._originalFreq
+        # else:
+        #     self._displayFreq = self._originalFreq
+        #     self._displayData = self._originalData
+        # self.proxy_plot_curve()
         
     
     @property

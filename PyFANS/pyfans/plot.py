@@ -451,11 +451,24 @@ class SpectrumPlotWidget:
         # grCurve.setZValue(700)
         # grCurve.setVisible(True)
         # self.curves["gr"] =  grCurve
+    def create_curve(self, name, pen="r",zValue= 1000):
+        curve = self.plot.plot(pen=pen)
+        curve.setZValue(zValue)
+        curve.setVisible(True)
+        self.curves[name] = curve
+        return curve
 
+    def remove_curve(self,name):
+        curve = self.curves.pop(name,None)
+        if curve is not None:
+            self.plot.removeItem(curve)
 
     def clear_curves(self):
         for rang, curve in self.curves.items():
             curve.clear()
+
+    def get_curve_by_name(self, name):
+        return self.curves.get(name, None)
 
     def remove_handle(self, name):
         handle_to_remove = self.handles.pop(name, None)
@@ -559,8 +572,14 @@ class SpectrumPlotWidget:
         self.grHandle = self.create_gr_handle(name = "gr", pen=pg.mkPen(width=4.5, color='b'), initPosition=(2,-2),positionChangedCallback=self.on_handlePositionChanged)
         self.create_curve_for_handle(self.grHandle)
 
+    def setLabelForAxis(self, axis, label, size=15, units=None, **kwargs):
+        self.plot.setLabel(axis, "<font size=\"{s}\">{l}</font>".format(l=label,s=size))#, units="Hz")
 
+    def setXLabel(self, label, **kwargs):
+        self.setLabelForAxis("bottom", label)
 
+    def setYLabel(self, label):
+        self.setLabelForAxis("left", label)
 
     def create_plot(self):
         """Create main spectrum plot"""
@@ -586,9 +605,11 @@ class SpectrumPlotWidget:
         self.plot.showAxis("right", show=True)
         self.plot.showAxis("top", show=True)
         # self.plot.setLabel("left", "Power", units="V^2Hz-1")
-        self.plot.setLabel("left", "<font size=\"15\">Power Spectral Density, S<sub>V</sub> (V<sup>2</sup>Hz<sup>-1</sup>)</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
+        # self.plot.setLabel("left", "<font size=\"15\">Power Spectral Density, S<sub>V</sub> (V<sup>2</sup>Hz<sup>-1</sup>)</font>")#, units="<font size=\"15\">V^2Hz-1</font>")
+        self.setYLabel("Power Spectral Density, S<sub>V</sub> (V<sup>2</sup>Hz<sup>-1</sup>)")
         # self.plot.setLabel("bottom", "Frequency", units="Hz")
-        self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
+        # self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
+        self.setXLabel("Frequency, f (Hz)")
         self.plot.setLimits(xMin=0.01,xMax = 7, yMin = -50, yMax = 10)
         self.plot.setXRange(0.1,5)
         self.plot.setYRange(-20,-1)
