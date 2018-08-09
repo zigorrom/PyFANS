@@ -6,17 +6,6 @@ from pyfans_analyzer.measurement_file_handler import *
 import pyfans_analyzer.spectrum_processing as sp
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
 
-# spectral_data = sp.remove50Hz(frequencies, spectral_data)
-# frequencies, spectral_data = sp.interpolate_data_log_space(frequencies, spectral_data, points_per_decade=self.points_per_decade) 
-# spectral_data = sp.subtract_thermal_noise(spectral_data, self.thermal_noise)
-class NoiseModel():
-    def __init__(self):
-        self.flickerNoise = None
-        self.grList = list()
-        self.thermalNoise = None
-    
-
-
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
     def __init__(self, analyzer_window=None):
@@ -44,23 +33,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__measurement_file = None
 
-        # self._original_data = None
-        # self._display_data = None
         self.thermal_noise = None
-        # self._originalFreq = None
-        # self._originalData=None
-        # self._displayFreq = None
-        # self._displayData = None
-
+        
         self.freq_column_name = None
         self.data_column_name = None
 
 
-        self.analyzerWindow = None #analyzer_window
+        self.analyzerWindow = None 
         self.setwindow(analyzer_window)
         self.proxyDataPlotHandler=ProxyDataPlotHandler(self.analyzerWindow.plotter)
-
-        
 
     def setwindow(self, analyzer_window):
         self.analyzerWindow = analyzer_window
@@ -120,20 +101,14 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             self.proxyDataPlotHandler.setOriginalData(freq, data)
             self.proxyDataPlotHandler.thermalNoise = self.thermal_noise
 
-            self.start_crop_frequency =freq[0]
-            self.end_crop_frequency =freq[-1]
+            self.start_crop_frequency=freq[0]
+            self.end_crop_frequency=freq[-1]
             
 
         except Exception as e:
             print("Exception occured while loading measurement data")
             print(str(e))
             print(20*'*')
-
-    # def proxy_plot_curve(self):
-        
-    #     plotter = self.analyzer_window.plotter
-    #     plotter.updata_resulting_spectrum(self._displayFreq, self._displayData)
-
 
     def on_file_save_triggered(self, filename):
         pass
@@ -156,12 +131,10 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_crop_triggered(self):
         self.proxyDataPlotHandler.beginUpdate()
         self.proxyDataPlotHandler.crop_start = self.start_crop_frequency
-        # print(self.proxyDataPlotHandler.crop_end)
         self.proxyDataPlotHandler.crop_end = self.end_crop_frequency
         self.proxyDataPlotHandler.use_crop = True
         self.proxyDataPlotHandler.endUpdate()
     
-        # self.proxyDataPlotHandler
 
     def on_undo_crop_triggered(self):
         self.proxyDataPlotHandler.use_crop = False
@@ -452,5 +425,4 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.onPropertyChanged("gr_amplitude", self, value)
     
 
-    def openFile(self):
-        pass
+   
