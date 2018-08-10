@@ -475,9 +475,9 @@ class SpectrumPlotWidget:
         if handle_to_remove is not None:
             self.plot.removeItem(handle_to_remove)
         
-        curve_to_remove = self.curves.pop(name,None)
-        if curve_to_remove is not None:
-            self.plot.removeItem(curve_to_remove)
+            curve_to_remove = self.curves.pop(name,None)
+            if curve_to_remove is not None:
+                self.plot.removeItem(curve_to_remove)
 
 
     def remove_all_handles(self):
@@ -515,9 +515,11 @@ class SpectrumPlotWidget:
             handle.setPos(1,-2)
 
         if callable(positionChangedCallback):
-            handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+            handle.sigPositionChanged.connect(positionChangedCallback) #self.on_handlePositionChanged)
 
         self.plot.addItem(handle)
+        self.create_curve_for_handle(handle)
+        self.handles[name] = handle
         return handle
 
     def create_gr_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None):
@@ -534,9 +536,11 @@ class SpectrumPlotWidget:
             handle.setPos(1,-2)
 
         if callable(positionChangedCallback):
-            handle.sigPositionChanged.connect(self.on_handlePositionChanged)
+            handle.sigPositionChanged.connect(positionChangedCallback)#self.on_handlePositionChanged)
 
         self.plot.addItem(handle)
+        self.create_curve_for_handle(handle)
+        self.handles[name] = handle
         return handle
 
 
@@ -561,7 +565,7 @@ class SpectrumPlotWidget:
         # self.plot.addItem(handle)
         # self.flickerHandle = handle
         self.flickerHandle = self.create_flicker_handle(name = "flicker", pen=pg.mkPen(width=4.5, color='r'), initPosition=(1,-2),positionChangedCallback=self.on_handlePositionChanged)
-        self.create_curve_for_handle(self.flickerHandle)
+        # self.create_curve_for_handle(self.flickerHandle)
 
         # handle = Handle(name = "gr", radius=10, typ="r", pen=pg.mkPen(width=4.5, color='b'), deletable=True, handle_offset=QtCore.QPointF(-40, 40))#, parent=self.plot)
         # handle = GRHandle(name="gr", pen=pg.mkPen(width=4.5, color='b'))
@@ -570,7 +574,7 @@ class SpectrumPlotWidget:
         # self.plot.addItem(handle)
         # self.grHandle = handle
         self.grHandle = self.create_gr_handle(name = "gr", pen=pg.mkPen(width=4.5, color='b'), initPosition=(2,-2),positionChangedCallback=self.on_handlePositionChanged)
-        self.create_curve_for_handle(self.grHandle)
+        # self.create_curve_for_handle(self.grHandle)
 
     def setLabelForAxis(self, axis, label, size=15, units=None, **kwargs):
         self.plot.setLabel(axis, "<font size=\"{s}\">{l}</font>".format(l=label,s=size))#, units="Hz")
@@ -627,12 +631,14 @@ class SpectrumPlotWidget:
         self.mouseProxy = pg.SignalProxy(self.plot.scene().sigMouseMoved,
                                          rateLimit=60, slot=self.mouse_moved)
 
-   
+    def getViewRange(self):
+        return self.plot.viewRange()
+
     def on_handlePositionChanged(self, handle, position):
         print(10*"=")
         print(position)
         
-        rng = self.plot.viewRange()
+        rng = self.getViewRange()#self.plot.viewRange()
         xmin, xmax = rng[0]
         npoints = (xmax-xmin)/0.1 +1
         

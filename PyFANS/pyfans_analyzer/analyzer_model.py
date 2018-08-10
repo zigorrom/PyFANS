@@ -1,5 +1,7 @@
 import os
 import numpy as np
+from pyqtgraph import intColor
+
 import pyfans.utils.ui_helper as uih
 from pyfans_analyzer.plot_data_handler import ProxyDataPlotHandler
 from pyfans_analyzer.measurement_file_handler import *
@@ -33,15 +35,19 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__measurement_file = None
 
-        self.thermal_noise = None
+
         
         self.freq_column_name = None
         self.data_column_name = None
 
-
         self.analyzerWindow = None 
         self.setwindow(analyzer_window)
         self.proxyDataPlotHandler=ProxyDataPlotHandler(self.analyzerWindow.plotter)
+
+        self.thermal_noise = None
+        self._noise_model_handles = dict()
+        self.add_flicker_noise()
+
 
     def setwindow(self, analyzer_window):
         self.analyzerWindow = analyzer_window
@@ -100,7 +106,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             
             self.proxyDataPlotHandler.setOriginalData(freq, data)
             self.proxyDataPlotHandler.thermalNoise = self.thermal_noise
-
+            # self.analyzerWindow.plotter.update_thermal_noise()
             self.start_crop_frequency=freq[0]
             self.end_crop_frequency=freq[-1]
             
@@ -143,11 +149,72 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_amplitude = 0
         self.flicker_alpha = 0
 
+    def add_flicker_noise(self):
+        flicker_name = "flicker"
+        # handle = self.plotter.create_flicker_handle(flicker_name)
+        handle = self._noise_model_handles.get(flicker_name)
+        if handle is None:
+            plotter =self.analyzer_window.plotter
+            viewRange =  plotter.getViewRange() #+[2,-1]
+            print("viewRange: {0}".format(viewRange))
+            whereToAddX = 0.9*viewRange[0][0]+0.1*viewRange[0][1]
+            whereToAddY = 0.8*viewRange[1][1]+0.2*viewRange[1][0]
+            whereToAdd = (whereToAddX,whereToAddY)
+            print("where to add: {0}".format(whereToAdd))
+            handle = self.analyzer_window.plotter.create_flicker_handle(flicker_name, positionChangedCallback=self.on_handle_position_changed, initPosition=whereToAdd )
+            self._noise_model_handles[flicker_name]=handle
+
     def on_add_gr_noise_triggered(self):
-        pass
+        count = self.analyzer_window.get_gr_component_count()
+        gr_name = "GR_{0}".format(count)
+        pen = intColor(count)
+
+        handle = self._noise_model_handles.get(gr_name)
+        if handle is None:
+            plotter =self.analyzer_window.plotter
+            viewRange =  plotter.getViewRange() #+[2,-1]
+            print("viewRange: {0}".format(viewRange))
+            whereToAddX = 0.9*viewRange[0][0]+0.1*viewRange[0][1]
+            whereToAddY = 0.8*viewRange[1][1]+0.2*viewRange[1][0]
+            whereToAdd = (whereToAddX,whereToAddY)
+            print("where to add: {0}".format(whereToAdd))
+            handle = plotter.create_gr_handle(gr_name, pen=pen, positionChangedCallback=self.on_handle_position_changed, initPosition=whereToAdd )
+            self._noise_model_handles[gr_name]=handle
+            self.analyzer_window.add_gr_component(gr_name)
 
     def on_remove_gr_noise_triggered(self):
-        pass
+        selected_item_name = self.analyzer_window.get_gr_name_by_index(self.selected_gr_index)
+        handle = self._noise_model_handles.pop(selected_item_name)
+        self.analyzer_window.plotter.remove_handle(selected_item_name)
+
+    def on_handle_position_changed(self, handle, position):
+        plotter = self.analyzer_window.plotter
+        curve = plotter.get_curve_by_name(handle.name)
+        if curve is None:
+            return
+
+        xPosHandle = position.x()
+        xStart = xPosHandle - 1
+        xEnd = xPosHandle + 1
+        # print(10*"=")
+        # print(position)
+        
+        rng = plotter.getViewRange()
+        xmin, xmax = rng[0]
+        xmin = max(xmin, xStart)
+        xmax = min(xmax, xEnd)
+        npoints = (xmax-xmin)/0.1 +1
+        
+        # freq = np.logspace(0,5, 51)
+        freq = np.logspace(xmin,xmax, npoints)
+        data = handle.calculateCurve(freq)
+        
+        
+        # print(freq)
+        # print(data)
+                
+        curve.setData(freq,data)
+        
 
     def on_reset_gr_noise_triggered(self):
         pass

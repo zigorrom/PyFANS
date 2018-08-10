@@ -3,6 +3,18 @@ import numpy as np
 import pyfans_analyzer.spectrum_processing as sp
 from pyqtgraph import mkPen
 
+# class ProxyDataProvider:
+#     def __init__(self):
+#         self._isMultipliedXY = False
+
+#     def setMyltipliedXY(self, value):
+#         if self._isMultipliedXY == value:
+#             return 
+
+#         self._isMultipliedXY = value
+
+#     def data(self, x, y):
+#         if self._isMultipliedXY
 
 class ProxyDataPlotHandler(object):
     xLabel = "Frequency, f(Hz)"
@@ -105,6 +117,8 @@ class ProxyDataPlotHandler(object):
 
         self._displayFreq = self._originalFreq
         self._displayData = self._originalData
+
+        
 
         if self.use_crop == True:
             print("start cropping")

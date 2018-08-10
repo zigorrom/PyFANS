@@ -130,7 +130,22 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def on_ui_gr_listview_currentRowChanged(self):
         self.sigSelectedGRChanged.emit()
 
-    
+    def add_gr_component(self, name):
+        self.ui_gr_listview.addItem(name)
+
+    def remove_gr_component(self, name):
+        pass
+
+    def remove_all_gr_components(self):
+        pass
+
+    def get_gr_name_by_index(self, index):
+        item = self.ui_gr_listview.takeItem(index)
+        self.selected_gr_index.sourceData -= 1
+        return item.text()
+
+    def get_gr_component_count(self):
+        return self.ui_gr_listview.count()
 
     def setModel(self, model):
         pass
