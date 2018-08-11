@@ -39,6 +39,8 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def setupBinding(self):
         sourceObject = None
         self.remove_pickups = uih.Binding(self.ui_remove_pickups_enabled,"checked", sourceObject, "remove_pickups", converter=uih.AssureBoolConverter())
+        self.hide_original = uih.Binding(self.ui_hide_original,"checked", sourceObject, "hide_original", converter=uih.AssureBoolConverter())
+        
         self.smoothing_enable = uih.Binding(self.ui_smoothing_enabled,"checked", sourceObject, "smoothing_enabled", converter=uih.AssureBoolConverter())
         self.smoothing_winsize = uih.Binding(self.ui_smoothing_winsize,"value", sourceObject, "smoothing_winsize", converter=uih.AssureIntConverter())
         self.cutoff_correction_enabled = uih.Binding(self.ui_cutoff_correction_enabled,"checked", sourceObject, "cutoff_correction", converter=uih.AssureBoolConverter())
@@ -142,6 +144,10 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def get_gr_name_by_index(self, index):
         item = self.ui_gr_listview.takeItem(index)
         self.selected_gr_index.sourceData -= 1
+        return item.text()
+
+    def getSelectedGRitem(self):
+        item = self.ui_gr_listview.currentItem()
         return item.text()
 
     def get_gr_component_count(self):

@@ -392,6 +392,7 @@ class Binding:
     @targetData.setter
     def targetData(self, value):
         self._targetObject.setProperty(self._targetPropertyName, value)
+        # self.__updateUi()
         
 
     @property
@@ -405,6 +406,7 @@ class Binding:
     def sourceData(self, value):
         try:
             setattr(self._sourceObject, self._sourcePropertyName, value)
+            # self.__updateUi()
         except Exception:
             pass
  

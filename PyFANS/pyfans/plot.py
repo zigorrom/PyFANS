@@ -93,6 +93,40 @@ class Handle(UIGraphicsItem):
         p = parent.mapToView(p)
         return p
 
+    
+    def setCurrentPosition(self, *args):
+        position = None
+        if len(args) == 1:
+            if isinstance(args[0], QtCore.QPointF):
+                position = args[0]
+            else:
+                raise TypeError()
+
+        elif len(args) == 2:
+            x = args[0]
+            y = args[1]
+            position = QtCore.QPointF(x,y)
+        
+        else:
+            raise TypeError()
+
+        if position is None:
+            return
+
+        parent = self.parentItem()
+        position = parent.mapFromView(position)
+        position = parent.mapToScene(position)
+        position = position+self.handle_offset
+        position = parent.mapFromScene(position)
+        self.setPos(position)
+        self.sigPositionChanged.emit(self, self.currentPosition)
+
+
+
+        
+
+
+
     @property
     def name(self):
         return self._name
@@ -195,7 +229,7 @@ class Handle(UIGraphicsItem):
             # pos = parent.mapToView(pos)
             
             self.sigPositionChanged.emit(self, pos_to_report)
-            print(pos)
+            # print(pos)
 
    
 
@@ -221,6 +255,7 @@ class Handle(UIGraphicsItem):
         p.setRenderHints(p.Antialiasing, True)
         p.setPen(self.currentPen)
         p.drawPath(self.shape())
+        p.fillPath(self.shape(), self.currentPen.brush())
         pos = self.pos()
         # print(pos)
         # p.drawLine(1,-2,2,-4)
@@ -451,10 +486,11 @@ class SpectrumPlotWidget:
         # grCurve.setZValue(700)
         # grCurve.setVisible(True)
         # self.curves["gr"] =  grCurve
-    def create_curve(self, name, pen="r",zValue= 1000):
-        curve = self.plot.plot(pen=pen)
+    def create_curve(self, name, pen="r",zValue= 1000, **kwargs):
+        curve = self.plot.plot(pen=pen, **kwargs)
         curve.setZValue(zValue)
-        curve.setVisible(True)
+        visible = kwargs.get("visible", True)
+        curve.setVisible(visible)
         self.curves[name] = curve
         return curve
 
@@ -584,6 +620,9 @@ class SpectrumPlotWidget:
 
     def setYLabel(self, label):
         self.setLabelForAxis("left", label)
+
+    def setXRange(self, xmin, xmax):
+        self.plot.setXRange(xmin,xmax)
 
     def create_plot(self):
         """Create main spectrum plot"""
