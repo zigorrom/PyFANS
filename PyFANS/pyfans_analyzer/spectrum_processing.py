@@ -15,7 +15,7 @@ def read_file(filename):
     return a
 
 def cutoffCorrection(freq, data, resistance, capacity):
-    result = np.zero_like(data)
+    result = np.zeros_like(data)
     twoPi = 2 * np.pi
     RC = resistance*capacity
     twoPiRCsqr = np.power(twoPi * RC, 2)

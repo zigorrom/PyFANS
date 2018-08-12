@@ -56,7 +56,7 @@ class Handle(UIGraphicsItem):
         self.buildPath()
         self._shape = None
         self.menu = self.buildMenu()
-        self.handle_offset = QtCore.QPointF(0, 20)
+        self._handle_offset = QtCore.QPointF(0, 20)
         if handle_offset:
             self.handle_offset = handle_offset
 
@@ -80,6 +80,15 @@ class Handle(UIGraphicsItem):
     #     self.sigPositionChanged.emit(pos)
     def calculateCurve(self, frequency):
         raise NotImplementedError()
+
+    @property
+    def handle_offset(self):
+        return self._handle_offset
+
+    @handle_offset.setter
+    def handle_offset(self, value):
+        self._handle_offset = value
+    
 
     @property
     def currentPosition(self):
@@ -486,6 +495,7 @@ class SpectrumPlotWidget:
         # grCurve.setZValue(700)
         # grCurve.setVisible(True)
         # self.curves["gr"] =  grCurve
+    
     def create_curve(self, name, pen="r",zValue= 1000, **kwargs):
         curve = self.plot.plot(pen=pen, **kwargs)
         curve.setZValue(zValue)
@@ -623,6 +633,13 @@ class SpectrumPlotWidget:
 
     def setXRange(self, xmin, xmax):
         self.plot.setXRange(xmin,xmax)
+
+    def getViewRange(self):
+        return self.plot.viewRange()
+
+    def subscribe_to_viewbox_x_range_changed(self, slot):
+        self.plot.sigXRangeChanged.connect(slot)
+
 
     def create_plot(self):
         """Create main spectrum plot"""

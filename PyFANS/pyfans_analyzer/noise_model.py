@@ -1,17 +1,23 @@
 import numpy as np
 from PyQt4 import QtCore
-
+from pyfans_analyzer.coordinate_transform import Transformation
 
 class BaseNoiseComponent(QtCore.QObject):
-    def __init__(self, name, enabled, plotter):
+    sigNoiseUpdateRequired = QtCore.pyqtSignal()
+    def __init__(self, name, enabled, plotter, **kwargs):
         super().__init__()
         self._name = name
         self._enabled = enabled
         self._plotter = plotter
+        self._coordinate_transform = kwargs.get("coordinate_transform", Transformation())
     
     @property
     def name(self):
         return self._name
+
+    @property
+    def transform(self):
+        return self._coordinate_transform
 
     @property
     def enabled(self):
@@ -23,6 +29,9 @@ class BaseNoiseComponent(QtCore.QObject):
             return 
         self._enabled = value
         self.on_enabled_changed(value)
+
+    def notifyUpdateRequired(self):
+        self.sigNoiseUpdateRequired.emit()
 
     @property
     def plotter(self):
@@ -51,10 +60,12 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
     ALPHA_FLICKER_OPTION_NAME = "alpha"
     AMPLITUDE_OPTION_NAME = "amplitude"
     FREQUENCY_OPTION_NAME = "frequency"
-    sigAmplitudeChanged = QtCore.pyqtSignal(float)
+    handleOffsetNormal = QtCore.QPointF(-20, 20)
+    handleOffsetMultiplFreq = QtCore.QPointF(0, 20)
+    sigAmplitudeChanged = QtCore.pyqtSignal(object, object)
 
     def __init__(self, name, enabled, plotter, **kwargs):
-        super().__init__(name, enabled, plotter)
+        super().__init__(name, enabled, plotter, **kwargs)
         
         self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
         self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
@@ -63,7 +74,15 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
         self._curve = None
         self.opts = kwargs
         self.__create_handle__()
+        self.transform.sigTransformChanged.connect(self.on_transform_changed)
+        self.__setup_handle__()
     
+    def __setup_handle__(self):
+        if self.transform.is_multiplied:
+            self.handle.handle_offset = self.handleOffsetMultiplFreq
+        else:
+            self.handle.handle_offset = self.handleOffsetNormal
+
     def __create_handle__(self):
         whereToAdd = self.__whereToAdd__()
         pen = self.opts.get("pen", "r")
@@ -107,21 +126,33 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
         freq = np.logspace(xmin,xmax, npoints)
         
         data = func(freq, alpha=self.alpha_flicker, amplitude = currentAmplitude, f0=currentFreq)
+         
+        # freq, data = self.transform.convert(freq, data)
         self.curve.setData(freq,data)
-        
+        self.notifyUpdateRequired()
+         
+
+    def on_transform_changed(self):
+        self.__setup_handle__()
+
+        self.on_update_position(self.frequency, self.amplitude)
+
     def on_enabled_changed(self,new_value):
         self._curve.setVisible(new_value)
         self._handle.setVisible(new_value)
 
     def on_handle_position_changed(self, handle, position):
-        self._frequency= 10**position.x()
-        self._amplitude = 10**position.y()
+        frequency= 10**position.x()
+        amplitude = 10**position.y()
+        self._frequency,self._amplitude = self.transform.convert_back(frequency, amplitude)
         self.update_curve(self.frequency, self.amplitude)
         # print("{0}:{1}".format(position, handle.currentPosition))
-        self.sigAmplitudeChanged.emit(self.absolute_amplitude)
+        self.sigAmplitudeChanged.emit(self, self.absolute_amplitude)
 
     def on_update_position(self, freq, amplitude):
         self.update_curve(freq, amplitude)
+
+        freq, amplitude = self.transform.convert(freq, amplitude)
         freq = np.log10(freq)
         amplitude = np.log10(amplitude)
         self.handle.setCurrentPosition(freq,amplitude)
@@ -213,6 +244,7 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
         def modelFunction(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
             fdivf0 = np.divide(f0,frequency)
             data = amplitude*np.power(fdivf0,alpha)
+            freq, data = self.transform.convert(frequency, data)
             return data
         return modelFunction
     
@@ -223,11 +255,12 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
 
     FREQUENCY_OPTION_NAME = "frequency"
     AMPLITUDE_OPTION_NAME = "amplitude"
-    
+    handleOffsetNormal = QtCore.QPointF(-40, 40)
+    handleOffsetMultiplFreq = QtCore.QPointF(0, 40)
     sigPositionChanged = QtCore.pyqtSignal(float,float)
 
     def __init__(self, name, enabled, plotter, **kwargs):
-        super().__init__(name, enabled, plotter)
+        super().__init__(name, enabled, plotter, **kwargs)
 
         self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
         self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
@@ -235,8 +268,16 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
         self._curve = None
         self.opts = kwargs
         self.__create_handle__()
+        self.transform.sigTransformChanged.connect(self.on_transform_changed)
+        self.__setup_handle__()
         # self.set_params(**kwargs)
         
+    def __setup_handle__(self):
+        if self.transform.is_multiplied:
+            self.handle.handle_offset = self.handleOffsetMultiplFreq
+        else:
+            self.handle.handle_offset = self.handleOffsetNormal
+
     def __create_handle__(self):
         whereToAdd = self.__whereToAdd__()
         pen = self.opts.get("pen", "r")
@@ -264,22 +305,30 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
         freq = np.logspace(xmin,xmax, npoints)
         
         data = func(freq, amplitude = currentAmplitude, f0=currentFreq)
+        # freq, data = self.transform.convert(freq, data)
         self.curve.setData(freq,data)
+        self.notifyUpdateRequired()
         
+    def on_transform_changed(self):
+        self.__setup_handle__()
+        self.on_update_position(self.frequency, self.amplitude)
+    
     def on_enabled_changed(self,new_value):
         self._curve.setVisible(new_value)
         self._handle.setVisible(new_value)
 
     def on_handle_position_changed(self, handle, position):
         print(position)
-        self._frequency= 10**position.x()
-        self._amplitude = 10**position.y()
+        frequency= 10**position.x()
+        amplitude = 10**position.y()
+        self._frequency,self._amplitude = self.transform.convert_back(frequency, amplitude)
         self.update_curve(self.frequency, self.amplitude)
         # print("{0}:{1}".format(position, handle.currentPosition))
         self.sigPositionChanged.emit(self.frequency, self.amplitude)
 
     def on_update_position(self, freq, amplitude):
         self.update_curve(freq, amplitude)
+        freq, amplitude = self.transform.convert(freq, amplitude)
         freq = np.log10(freq)
         amplitude = np.log10(amplitude)
         self.handle.setCurrentPosition(freq,amplitude)
@@ -326,8 +375,9 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
     def getModelFunction(self):
         def modelFunction(frequency, amplitude=self.amplitude, f0=self.frequency):
             fdivf0 = np.divide(frequency,f0)
-            sqrfdivd0 = fdivf0*fdivf0
-            data = amplitude/(1+sqrfdivd0)
+            sqrfdivd0 = np.multiply(fdivf0,fdivf0)
+            data = np.divide(amplitude,(1+sqrfdivd0))
+            freq, data = self.transform.convert(frequency, data)
             return data
         return modelFunction
 
@@ -343,45 +393,96 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
 
 
 
-class ThermalNoiseComponent: #Node):
+class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
     PREFIX = "THERMAL"
     TYPE_NAME = "THERMAL NOISE NODE"
-    
+    BOLTZMAN_CONSTANT = 1.38064852E-23
     RESISTANCE_OPTION_NAME = "resistance"
     TEMPERATURE_OPTION_NAME = "temperature"
     def __init__(self, name, enabled, plotter, **kwargs):
-        super().__init__(name, enabled, plotter)
+        super().__init__(name, enabled, plotter, **kwargs)
 
-        self._resistance = kwargs.get("resistance", None)
-        self._temperature = kwargs.get("temperature", None)
-        # self.set_params(**kwargs)
+        # self._resistance = kwargs.get("resistance", None)
+        # self._temperature = kwargs.get("temperature", None)
+        self._thermal_noise = kwargs.get("thermal_noise", None)
+        self._curve = None
+        self.opts = kwargs
+        rng = self.plotter.getViewRange()
+        self.xMin = 10**rng[0][0]
+        self.xMax = 10**rng[0][1]
+        self.__create_curve__()
+        self.transform.sigTransformChanged.connect(self.on_transform_changed)
 
+    def __create_curve__(self):
+        pen = self.opts.get("pen", "m")
+        self._curve = self.plotter.create_curve(
+            self.name,
+            pen=pen,
+            zValue=800,
+            visible=True
+        )
+        self.plotter.subscribe_to_viewbox_x_range_changed(self.on_viewbox_x_range_changed)
+        
+    def on_viewbox_x_range_changed(self, vb, xrange):
+        xmin,xmax = xrange
+        self.xMin = 10**xmin
+        self.xMax = 10**xmax
+        self.update_thermal_noise()
     
-    @property
-    def resistance(self):
-        return self._resistance
-    
-    @resistance.setter
-    def resistance(self, value):
-        self._resistance = value
+    def update_thermal_noise(self):
+        thermal_noise = self.thermal_noise_level
+        xData = [self.xMin, self.xMax]
+        yData = [thermal_noise,thermal_noise]
+        xData, yData = self.transform.convert(xData, yData)
+        self._curve.setData(xData,yData)
 
-    @property
-    def temperature(self):
-        return self._temperature
+    def on_transform_changed(self):
+        self.update_thermal_noise()
+    # @property
+    # def resistance(self):
+    #     return self._resistance
     
-    @temperature.setter
-    def temperature(self,value):
-        self._temperature = value
+    # @resistance.setter
+    # def resistance(self, value):
+    #     self._resistance = value
+    #     self.update_thermal_noise()
 
+    # @property
+    # def temperature(self):
+    #     return self._temperature
+    
+    # @temperature.setter
+    # def temperature(self,value):
+    #     self._temperature = value
+    #     self.update_thermal_noise()
     # def get_model_data(self, frequency):
     #     return ThermalNoiseFunction(frequency, self.temperature,self.resistance)
 
-    def get_param_dict(self):
-         return {self.RESISTANCE_OPTION_NAME: self.resistance, self.TEMPERATURE_OPTION_NAME: self.temperature}
+    @property
+    def thermal_noise_level(self):
+        return self._thermal_noise
 
-    def set_params(self,**kwargs):
-        self._resistance = kwargs.get(self.RESISTANCE_OPTION_NAME, 0)
-        self._temperature = kwargs.get(self.TEMPERATURE_OPTION_NAME, 0)
+    @thermal_noise_level.setter
+    def thermal_noise_level(self, value):
+        if self._thermal_noise == value:
+            return
+        self._thermal_noise = value
+        self.update_thermal_noise()
+
+    def getModelFunction(self):
+        def modelFunction(frequency):
+            data = np.full_like(frequency, self.thermal_noise_level)
+            freq, data = self.transform.convert(frequency, data)
+            return data
+        return modelFunction
+        # return 4*self.BOLTZMAN_CONSTANT*self.temperature*self.resistance
+
+    # def get_param_dict(self):
+    #      return {self.RESISTANCE_OPTION_NAME: self.resistance, self.TEMPERATURE_OPTION_NAME: self.temperature}
+
+    # def set_params(self,**kwargs):
+    #     self._resistance = kwargs.get(self.RESISTANCE_OPTION_NAME, 0)
+    #     self._temperature = kwargs.get(self.TEMPERATURE_OPTION_NAME, 0)
 
 
 

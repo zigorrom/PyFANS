@@ -9,6 +9,7 @@ import pyfans_analyzer.spectrum_processing as sp
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
 from pyfans.plot import FlickerHandle, GRHandle
 from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent
+from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
     xLabel = "Frequency, f(Hz)"
@@ -18,6 +19,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     displayCurveName = "display_data_curve"
     flickerNoiseName = "flicker"
     thermalNoiseName = "thermal"
+    resultingNoiseName = "resulting"
 
     def __init__(self, analyzer_window=None):
         super().__init__()
@@ -44,6 +46,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__working_directory = None
         self.__measurement_file = None
         self.__isMultipliedByFrequency = False
+
+        self._coordinate_transform = MultipliedXYTransformation()
+        self._coordinate_transform.sigTransformChanged.connect(self.on_coordinate_transform_changed)
         
         self.__hide_original=False
         self._originalDataCurve = None
@@ -54,6 +59,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self._displayFreq = None
         self._displayData = None
 
+        self._resultingDataCurve = None
+
         self.freq_column_name = None
         self.data_column_name = None
 
@@ -62,10 +69,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.setupMainCurvesOnPlotter()
 
         self.thermal_noise = None
-        self._noise_model_handles = dict()
+        # self._noise_model_handles = dict()
         
         self.noise_components = dict()
         self.add_flicker_noise()
+        self.add_thermal_noise()
 
 
     def setwindow(self, analyzer_window):
@@ -97,6 +105,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         if curve is None:
             curve = self.plotter.create_curve(display_curve_name, pen=mkPen("g", width=2),zValue=1000, visible=True) #symbol="o", symbolPen="g", symbolBrush="g", size=10, pxMode=True)
             self._displayDataCurve=curve
+
+        curve = self.plotter.get_curve_by_name(self.resultingNoiseName)
+        if curve is None:
+            curve = self.plotter.create_curve(display_curve_name, pen=mkPen("m", width=1),zValue=950, visible=True)
+            self._resultingDataCurve=curve
 
         self.setPlotterXLabel()
         self.setPlotterYLabel()
@@ -153,10 +166,17 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             print("setting original data")
             self.setOriginalData(freq, data)
             print("original data set")
-            
+            if self.start_crop_frequency is None:
+                self.start_crop_frequency = freq[0]
+            if self.end_crop_frequency is None:
+                self.end_crop_frequency = freq[-1]
+
             self.start_crop_frequency=max(self.start_crop_frequency, freq[0])
             self.end_crop_frequency=min(self.end_crop_frequency, freq[-1])
             
+            thermal = self.noise_components.get(self.thermalNoiseName, None)
+            if thermal is not None:
+                thermal.thermal_noise_level = self.thermal_noise
 
         except Exception as e:
             print("Exception occured while loading measurement data")
@@ -192,6 +212,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # self._originalDataCurve.setVisible(False)
         self._originalDataCurve.setData(self._originalFreq,self._originalData)
  
+    def on_coordinate_transform_changed(self):
+        print("changing coordinate")
 
     def updateDisplayData(self):
         print("updating display data")
@@ -219,6 +241,13 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
                 
             except Exception as e:
                 print("Exception in remove_pickups")
+                print(e)
+        
+        if self.cutoff_correction == True:
+            try:
+                self.perform_cutoff_correction()
+            except Exception as e:
+                print("Exception in cutoff correction")
                 print(e)
 
         if self.use_crop_range == True:
@@ -288,10 +317,30 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         
         self.updateDisplatDataPlot()
 
-
+    def perform_cutoff_correction(self):
+        if not self.cutoff_correction:
+            return
+        
+        self._displayData = sp.cutoffCorrection(self._displayFreq, self._displayData, self.equivalen_resistance, self.cutoff_correction_capacity)
 
     def on_file_save_triggered(self, filename):
         pass
+
+    def on_noise_component_update_required(self):
+        print("updating resulting curve")
+        try:
+            resulting_array = np.zeros_like(self._displayFreq)
+            for name, component in self.noise_components.items():
+                if not component.enabled:
+                    continue
+                func = component.getModelFunction()
+                array = func(self._displayFreq)
+                resulting_array = np.add(resulting_array, array)
+
+            self._resultingDataCurve.setData(self._displayFreq, resulting_array)
+        except Exception as e:
+            print("Error when updating resulting spectrum")
+            print(e)
 
     def setupParams(self):
         currentRow = self.__measurement_file.current_measurement_info
@@ -327,17 +376,27 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_amplitude = 0
         self.flicker_alpha = 0
 
+    def add_thermal_noise(self):
+        thermal_name = self.thermalNoiseName
+        if thermal_name in self.noise_components:
+            return 
+
+        thermal = ThermalNoiseComponent(thermal_name, True, self.plotter, coordinate_transform=self.coordinate_transform)
+        self.noise_components[thermal_name] = thermal
+
     def add_flicker_noise(self):
         flicker_name = self.flickerNoiseName
         if flicker_name in self.noise_components:
             return 
         
-        flicker = FlickerNoiseComponent(flicker_name, True, self.plotter, pen="g" )
+        flicker = FlickerNoiseComponent(flicker_name, True, self.plotter, pen="g", coordinate_transform=self.coordinate_transform)
         flicker.sigAmplitudeChanged.connect(self.on_flicker_handle_position_changed)
+        flicker.sigNoiseUpdateRequired.connect(self.on_noise_component_update_required)
         self.noise_components[flicker_name] = flicker
         
-    def on_flicker_handle_position_changed(self, amplitude):
+    def on_flicker_handle_position_changed(self, flicker, amplitude):
         self.flicker_amplitude = amplitude
+        self.flicker_alpha = flicker.alpha_flicker
         # flicker_name = "flicker"
         # # handle = self.plotter.create_flicker_handle(flicker_name)
         # handle = self._noise_model_handles.get(flicker_name)
@@ -360,7 +419,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         if gr_name in self.noise_components:
             return
         
-        gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen)
+        gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen, coordinate_transform=self.coordinate_transform)
+        gr.sigNoiseUpdateRequired.connect(self.on_noise_component_update_required)
         # gr.sigPositionChanged.connect()
         self.noise_components[gr_name] = gr
         self.analyzer_window.add_gr_component(gr_name)
@@ -381,9 +441,10 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_amplitude = amplitude
 
     def on_remove_gr_noise_triggered(self):
-        selected_item_name = self.analyzer_window.get_gr_name_by_index(self.selected_gr_index)
-        handle = self._noise_model_handles.pop(selected_item_name)
-        self.analyzer_window.plotter.remove_handle(selected_item_name)
+        pass
+        # selected_item_name = self.analyzer_window.get_gr_name_by_index(self.selected_gr_index)
+        # handle = self._noise_model_handles.pop(selected_item_name)
+        # self.analyzer_window.plotter.remove_handle(selected_item_name)
 
     def on_handle_position_changed(self, handle, position):
         plotter = self.analyzer_window.plotter
@@ -422,14 +483,14 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
     def on_selected_gr_changed(self):
         print("selection changed")
-        name = self.analyzer_window.getSelectedGRitem()
-        handle = self._noise_model_handles.get(name)
-        if handle is None:
-            return
+        # name = self.analyzer_window.getSelectedGRitem()
+        # handle = self._noise_model_handles.get(name)
+        # if handle is None:
+        #     return
 
-        handlePos=handle.currentPosition
-        self.gr_frequency = 10**handlePos.x()
-        self.gr_amplitude = 10**handlePos.y()
+        # handlePos=handle.currentPosition
+        # self.gr_frequency = 10**handlePos.x()
+        # self.gr_amplitude = 10**handlePos.y()
 
         
     @property
@@ -551,7 +612,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
     @property
     def cutoff_correction_capacity(self):
-        return self.__cutoff_correction
+        return self.__cutoff_correction_capacity
 
     @cutoff_correction_capacity.setter
     @uih.assert_int_or_float_argument
@@ -565,15 +626,18 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         
     @property
     def multiply_by_frequency(self):
-        return self.__multiply_by_frequency
+        # return self.__multiply_by_frequency
+        return self.coordinate_transform.is_multiplied
 
     @multiply_by_frequency.setter
     @uih.assert_boolean_argument
     def multiply_by_frequency(self, value):
-        if self.__multiply_by_frequency == value:
+        # if self.__multiply_by_frequency == value:
+        if self.multiply_by_frequency == value:
             return 
 
-        self.__multiply_by_frequency = value
+        # self.__multiply_by_frequency = value
+        self.coordinate_transform.is_multiplied = value
         self.onPropertyChanged("multiply_by_frequency", self, value)
         self.updateDisplayData()
         
@@ -725,6 +789,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__flicker_alpha = value
         self.onPropertyChanged("flicker_alpha", self, value)
+        try:
+            flicker = self.noise_components[self.flickerNoiseName]
+            flicker.alpha_flicker = value
+        except Exception as e:
+            print("Exception while setting flicker amplitude")
+            print(e)
     
     @property
     def gr_enabled(self):
@@ -752,15 +822,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__gr_frequency = value
         self.onPropertyChanged("gr_frequency", self, value)
         
-        name = self.analyzer_window.getSelectedGRitem()
-        handle = self._noise_model_handles.get(name)
-        if handle is None:
-            return
+        # name = self.analyzer_window.getSelectedGRitem()
+        # handle = self._noise_model_handles.get(name)
+        # if handle is None:
+        #     return
 
-        handlePos=handle.currentPosition
-        gr_frequency = np.log10(value)
-        gr_amplitude = handlePos.y()
-        handle.setCurrentPosition(gr_frequency, gr_amplitude)
+        # handlePos=handle.currentPosition
+        # gr_frequency = np.log10(value)
+        # gr_amplitude = handlePos.y()
+        # handle.setCurrentPosition(gr_frequency, gr_amplitude)
         # gr_frequency = 10**handlePos.x()
         
 
@@ -779,14 +849,16 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__gr_amplitude = value
         self.onPropertyChanged("gr_amplitude", self, value)
     
-        name = self.analyzer_window.getSelectedGRitem()
-        handle = self._noise_model_handles.get(name)
-        if handle is None:
-            return
+        # name = self.analyzer_window.getSelectedGRitem()
+        # handle = self._noise_model_handles.get(name)
+        # if handle is None:
+        #     return
 
-        handlePos=handle.currentPosition
-        gr_frequency = handlePos.x()
-        gr_amplitude = np.log10(value)
-        handle.setCurrentPosition(gr_frequency, gr_amplitude)
+        # handlePos=handle.currentPosition
+        # gr_frequency = handlePos.x()
+        # gr_amplitude = np.log10(value)
+        # handle.setCurrentPosition(gr_frequency, gr_amplitude)
 
-   
+    @property
+    def coordinate_transform(self):
+        return self._coordinate_transform
