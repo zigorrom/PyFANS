@@ -2,6 +2,7 @@ import numpy as np
 from PyQt4 import QtCore
 from pyfans_analyzer.coordinate_transform import Transformation
 
+
 class BaseNoiseComponent(QtCore.QObject):
     sigNoiseUpdateRequired = QtCore.pyqtSignal()
     def __init__(self, name, enabled, plotter, **kwargs):
@@ -40,10 +41,11 @@ class BaseNoiseComponent(QtCore.QObject):
     def on_enabled_changed(self,new_value):
         raise NotImplementedError()
 
-    def on_handle_position_changed(self, position):
-        raise NotImplementedError()
+    def getModelFunction(self):
+        raise NotImplementedError
 
-    def __whereToAdd__(self):
+    @property
+    def whereToAdd(self):
         viewRange =  self.plotter.getViewRange() #+[2,-1]
         print("viewRange: {0}".format(viewRange))
         whereToAddX = 0.9*viewRange[0][0]+0.1*viewRange[0][1]
@@ -51,56 +53,20 @@ class BaseNoiseComponent(QtCore.QObject):
         whereToAdd = (whereToAddX,whereToAddY)
         return whereToAdd
 
-# class 
-
-class FlickerNoiseComponent(BaseNoiseComponent): #Node):
-    PREFIX = "FLICKER"
-    TYPE_NAME = "FLICKER NOISE NODE"
-
-    ALPHA_FLICKER_OPTION_NAME = "alpha"
-    AMPLITUDE_OPTION_NAME = "amplitude"
-    FREQUENCY_OPTION_NAME = "frequency"
+class ModifiableNoiseComponent(BaseNoiseComponent):
     handleOffsetNormal = QtCore.QPointF(-20, 20)
     handleOffsetMultiplFreq = QtCore.QPointF(0, 20)
-    sigAmplitudeChanged = QtCore.pyqtSignal(object, object)
 
     def __init__(self, name, enabled, plotter, **kwargs):
         super().__init__(name, enabled, plotter, **kwargs)
-        
-        self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
-        self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
-        self._alpha_flicker = kwargs.get(self.ALPHA_FLICKER_OPTION_NAME, 1)
         self._handle = None
         self._curve = None
         self.opts = kwargs
-        self.__create_handle__()
         self.transform.sigTransformChanged.connect(self.on_transform_changed)
-        self.__setup_handle__()
-    
-    def __setup_handle__(self):
-        if self.transform.is_multiplied:
-            self.handle.handle_offset = self.handleOffsetMultiplFreq
-        else:
-            self.handle.handle_offset = self.handleOffsetNormal
+        self.create_handle_and_curve()
+        self.update_handle()
 
-    def __create_handle__(self):
-        whereToAdd = self.__whereToAdd__()
-        pen = self.opts.get("pen", "r")
-        self._handle = self.plotter.create_flicker_handle(
-            self.name, 
-            positionChangedCallback=self.on_handle_position_changed, 
-            initPosition=whereToAdd 
-            )
-        self._curve = self.plotter.get_curve_by_name(self.name)
-        # position = self._handle.currentPosition
-        # print("initial")
-        # print(position)
-        # print("where to add")
-        # # print(whereToAdd)
-        # x,y = position.x(), position.y()
-        # self._frequency = np.power(10, x)
-        # self._amplitude = np.power(10, y)
-        # self.update_curve(self.frequency, self.amplitude)
+
 
     @property
     def handle(self):
@@ -110,8 +76,68 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
     def curve(self):
         return self._curve
     
+    def on_enabled_changed(self, new_value):
+        self._curve.setVisible(new_value)
+        self._handle.setVisible(new_value)
+
+    def on_transform_changed(self):
+        self.update_handle()
+        self.update_position()
+        # self.on_update_position(self.frequency, self.amplitude)
+
+    def update_handle(self):
+        if self.transform.is_multiplied:
+            self.handle.handle_offset = self.handleOffsetMultiplFreq
+        else:
+            self.handle.handle_offset = self.handleOffsetNormal
+
+    def create_handle(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def create_handle_and_curve(self):
+        whereToAdd = self.whereToAdd
+        pen = self.opts.get("pen", "r")
+        # self._handle = self.plotter.create_flicker_handle(
+        #     self.name, 
+        #     positionChangedCallback=self.on_handle_position_changed, 
+        #     initPosition=whereToAdd 
+        #     )
+        self._handle = self.create_handle(
+            self.name,
+            positionChangedCallback=self.on_handle_position_changed, 
+            initPosition=whereToAdd,
+            pen=pen
+        )
+        self._curve = self.plotter.get_curve_by_name(self.name)
+
+    def on_handle_position_changed(self, handle, position):
+        frequency= 10**position.x()
+        amplitude = 10**position.y()
+        self._frequency,self._amplitude = self.transform.convert_back(frequency, amplitude)
+        self.update_curve(self.frequency, self.amplitude)
+        # print("{0}:{1}".format(position, handle.currentPosition))
+        # self.sigAmplitudeChanged.emit(self, self.absolute_amplitude)
+        self.update_params_on_handle_position_changed()
+
+    def update_params_on_handle_position_changed(self):
+        raise NotImplementedError()
+
+    def generate_position(self):
+        raise NotImplementedError()
+
+    def update_position(self):# , freq, amplitude):
+        freq, amplitude = self.generate_position()
+        self.update_curve(freq, amplitude)
+        freq, amplitude = self.transform.convert(freq, amplitude)
+        freq = np.log10(freq)
+        amplitude = np.log10(amplitude)
+        self.handle.setCurrentPosition(freq,amplitude)
+
+    def calculate_curve(self, frequency):
+        raise NotImplementedError()
+
     def update_curve(self, currentFreq, currentAmplitude):
-        func = self.getModelFunction()
+        
         xPosHandle = np.log10(currentFreq)
         xStart = xPosHandle - 1
         xEnd = xPosHandle + 1
@@ -124,38 +150,43 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
         
         # freq = np.logspace(0,5, 51)
         freq = np.logspace(xmin,xmax, npoints)
-        
-        data = func(freq, alpha=self.alpha_flicker, amplitude = currentAmplitude, f0=currentFreq)
+        data = self.calculate_curve(freq)
+        # data = func(freq, alpha=self.alpha_flicker, amplitude = currentAmplitude, f0=currentFreq)
          
         # freq, data = self.transform.convert(freq, data)
         self.curve.setData(freq,data)
         self.notifyUpdateRequired()
-         
+    
+class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
+    # PREFIX = "FLICKER"
+    # TYPE_NAME = "FLICKER NOISE NODE"
 
-    def on_transform_changed(self):
-        self.__setup_handle__()
+    ALPHA_FLICKER_OPTION_NAME = "alpha"
+    AMPLITUDE_OPTION_NAME = "amplitude"
+    FREQUENCY_OPTION_NAME = "frequency"
+    handleOffsetNormal = QtCore.QPointF(-20, 20)
+    handleOffsetMultiplFreq = QtCore.QPointF(0, 20)
+    sigAmplitudeChanged = QtCore.pyqtSignal(object, object)
 
-        self.on_update_position(self.frequency, self.amplitude)
+    def __init__(self, name, enabled, plotter, **kwargs):
+        super().__init__(name, enabled, plotter, **kwargs)
+        self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
+        self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
+        self._alpha_flicker = kwargs.get(self.ALPHA_FLICKER_OPTION_NAME, 1)
+        
+    def create_handle(self, *args, **kwargs):
+        return self.plotter.create_flicker_handle(*args, **kwargs)
 
-    def on_enabled_changed(self,new_value):
-        self._curve.setVisible(new_value)
-        self._handle.setVisible(new_value)
+    def calculate_curve(self, frequency):
+        func = self.getModelFunction()
+        data = func(frequency, alpha=self.alpha_flicker, amplitude = self.amplitude, f0=self.frequency)
+        return data
 
-    def on_handle_position_changed(self, handle, position):
-        frequency= 10**position.x()
-        amplitude = 10**position.y()
-        self._frequency,self._amplitude = self.transform.convert_back(frequency, amplitude)
-        self.update_curve(self.frequency, self.amplitude)
-        # print("{0}:{1}".format(position, handle.currentPosition))
+    def update_params_on_handle_position_changed(self):
         self.sigAmplitudeChanged.emit(self, self.absolute_amplitude)
 
-    def on_update_position(self, freq, amplitude):
-        self.update_curve(freq, amplitude)
-
-        freq, amplitude = self.transform.convert(freq, amplitude)
-        freq = np.log10(freq)
-        amplitude = np.log10(amplitude)
-        self.handle.setCurrentPosition(freq,amplitude)
+    def generate_position(self):
+        return self.frequency, self.amplitude
         
     @property
     def frequency(self):
@@ -167,7 +198,7 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
             return 
 
         self._frequency = value
-        self.on_update_position(self.frequency, self.amplitude)
+        self.update_position()
 
     @property
     def alpha_flicker(self):
@@ -179,7 +210,7 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
             return
 
         self._alpha_flicker = value
-        self.on_update_position(self.frequency, self.amplitude)
+        self.update_position()
 
     @property
     def amplitude(self):
@@ -191,7 +222,7 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
             return
 
         self._amplitude = value
-        self.on_update_position(self.frequency, self.amplitude)
+        self.update_position()
 
     @property
     def absolute_amplitude(self):
@@ -206,40 +237,6 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
             self.frequency = 1.0
             self.amplitude = value
 
-    # def set_position(self, position):
-    #     x,y = position
-    #     self.frequency = x
-    #     self.amplitude = y
-        
-    # def get_position(self):
-    #     return (self.frequency, self.amplitude)
-
-    # def get_model_data(self, frequency):
-    #     # result = np.apply_along_axis(FlickerShapeFunction, 0, frequency, alphaFlicker = self.alpha_flicker, Amplitude = self.absolute_amplitude)
-    #     return FlickerShapeFunction(frequency, self.alpha_flicker, self.absolute_amplitude)
-        # return result #FlickerShapeFunction(frequency, self.alpha_flicker, self.absolute_amplitude)
-
-    # def get_param_dict(self):
-    #     key_format = "{n}_{p}"
-    #     return {
-    #         key_format.format(n=self.name, p=self.ALPHA_FLICKER_OPTION_NAME) : self.alpha_flicker,
-    #         key_format.format(n=self.name,p=self.FREQUENCY_OPTION_NAME): self.frequency, 
-    #         key_format.format(n=self.name,p=self.AMPLITUDE_OPTION_NAME): self.amplitude
-    #     }
-
-    # def set_params(self, **kwargs):
-    #     # flicker_keys = kwargs.keys()
-    #     # list(filter(lambda x: x < 0, number_list)
-    #     # )
-    #     #flicker_keys = filter(lambda x: x.startswith(FlickerNoiseNode.PREFIX), kwargs.keys())
-        
-    #     self._alpha_flicker = kwargs.get(self.ALPHA_FLICKER_OPTION_NAME, 1)
-    #     self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, 1e-11)
-    #     self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, 1)
-
-    # def calculateCurve(self, frequency):
-    #    
-    
     def getModelFunction(self):
         def modelFunction(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
             fdivf0 = np.divide(f0,frequency)
@@ -247,101 +244,39 @@ class FlickerNoiseComponent(BaseNoiseComponent): #Node):
             freq, data = self.transform.convert(frequency, data)
             return data
         return modelFunction
-    
 
-class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
-    PREFIX = "GR"
-    TYPE_NAME = "GR NOISE NODE"
+
+class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
+    # PREFIX = "GR"
+    # TYPE_NAME = "GR NOISE NODE"
 
     FREQUENCY_OPTION_NAME = "frequency"
     AMPLITUDE_OPTION_NAME = "amplitude"
     handleOffsetNormal = QtCore.QPointF(-40, 40)
     handleOffsetMultiplFreq = QtCore.QPointF(0, 40)
-    sigPositionChanged = QtCore.pyqtSignal(float,float)
+    sigPositionChanged = QtCore.pyqtSignal(object, float,float)
 
     def __init__(self, name, enabled, plotter, **kwargs):
         super().__init__(name, enabled, plotter, **kwargs)
 
         self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
         self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
-        self._handle = None
-        self._curve = None
-        self.opts = kwargs
-        self.__create_handle__()
-        self.transform.sigTransformChanged.connect(self.on_transform_changed)
-        self.__setup_handle__()
-        # self.set_params(**kwargs)
         
-    def __setup_handle__(self):
-        if self.transform.is_multiplied:
-            self.handle.handle_offset = self.handleOffsetMultiplFreq
-        else:
-            self.handle.handle_offset = self.handleOffsetNormal
+        
+    def create_handle(self, *args, **kwargs):
+        return self.plotter.create_gr_handle(*args, **kwargs)
 
-    def __create_handle__(self):
-        whereToAdd = self.__whereToAdd__()
-        pen = self.opts.get("pen", "r")
-        self._handle = self.plotter.create_gr_handle(
-            self.name, 
-            positionChangedCallback=self.on_handle_position_changed, 
-            initPosition=whereToAdd,
-            pen=pen
-            )
-        self._curve = self.plotter.get_curve_by_name(self.name)
-
-    def update_curve(self, currentFreq, currentAmplitude):
+    def calculate_curve(self, frequency):
         func = self.getModelFunction()
-        xPosHandle = np.log10(currentFreq)
-        xStart = xPosHandle - 1
-        xEnd = xPosHandle + 1
-        
-        rng = self.plotter.getViewRange()
-        xmin, xmax = rng[0]
-        xmin = max(xmin, xStart)
-        xmax = min(xmax, xEnd)
-        npoints = (xmax-xmin)/0.1 +1
-        
-        # freq = np.logspace(0,5, 51)
-        freq = np.logspace(xmin,xmax, npoints)
-        
-        data = func(freq, amplitude = currentAmplitude, f0=currentFreq)
-        # freq, data = self.transform.convert(freq, data)
-        self.curve.setData(freq,data)
-        self.notifyUpdateRequired()
-        
-    def on_transform_changed(self):
-        self.__setup_handle__()
-        self.on_update_position(self.frequency, self.amplitude)
+        data = func(frequency, amplitude = self.amplitude, f0=self.frequency)
+        return data
+
+    def update_params_on_handle_position_changed(self):
+        self.sigPositionChanged.emit(self, self.frequency, self.amplitude)
+
+    def generate_position(self):
+        return self.frequency, self.amplitude
     
-    def on_enabled_changed(self,new_value):
-        self._curve.setVisible(new_value)
-        self._handle.setVisible(new_value)
-
-    def on_handle_position_changed(self, handle, position):
-        print(position)
-        frequency= 10**position.x()
-        amplitude = 10**position.y()
-        self._frequency,self._amplitude = self.transform.convert_back(frequency, amplitude)
-        self.update_curve(self.frequency, self.amplitude)
-        # print("{0}:{1}".format(position, handle.currentPosition))
-        self.sigPositionChanged.emit(self.frequency, self.amplitude)
-
-    def on_update_position(self, freq, amplitude):
-        self.update_curve(freq, amplitude)
-        freq, amplitude = self.transform.convert(freq, amplitude)
-        freq = np.log10(freq)
-        amplitude = np.log10(amplitude)
-        self.handle.setCurrentPosition(freq,amplitude)
-
-    @property
-    def curve(self):
-        return self._curve
-
-    @property
-    def handle(self):
-        return self._handle
-
-
     @property
     def amplitude(self):
         return self._amplitude
@@ -351,7 +286,7 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
         if self._amplitude == value:
             return
         self._amplitude = value
-        self.on_update_position(self.frequency, self.amplitude)
+        self.update_position()
 
     @property
     def frequency(self):
@@ -362,15 +297,7 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
         if self._frequency == value:
             return
         self._frequency = value
-        self.on_update_position(self.frequency, self.amplitude)
-
-    # def set_position(self, position):
-    #     x,y = position
-    #     self.frequency = x #position.x()
-    #     self.amplitude = y #position.y()
-
-    # def get_position(self):
-    #     return (self.frequency, self.amplitude)
+        self.update_position()
 
     def getModelFunction(self):
         def modelFunction(frequency, amplitude=self.amplitude, f0=self.frequency):
@@ -381,21 +308,10 @@ class GenerationRecombinationNoiseComponent(BaseNoiseComponent): # Node):
             return data
         return modelFunction
 
-    # def get_model_data(self, frequency):
-    #     return LorentzianShapeFunction(frequency, self.frequency,self.amplitude)
-
-    # def get_param_dict(self):
-    #      return {self.FREQUENCY_OPTION_NAME: self.frequency, self.AMPLITUDE_OPTION_NAME: self.amplitude}
-
-    # def set_params(self,**kwargs):
-    #     self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, 1)
-    #     self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, 0)
-
-
 
 class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
-    PREFIX = "THERMAL"
-    TYPE_NAME = "THERMAL NOISE NODE"
+    # PREFIX = "THERMAL"
+    # TYPE_NAME = "THERMAL NOISE NODE"
     BOLTZMAN_CONSTANT = 1.38064852E-23
     RESISTANCE_OPTION_NAME = "resistance"
     TEMPERATURE_OPTION_NAME = "temperature"

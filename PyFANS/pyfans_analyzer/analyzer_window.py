@@ -55,7 +55,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         self.flicker_enabled = uih.Binding(self.ui_flicker_groupbox,"checked", sourceObject, "flicker_enabled", converter=uih.AssureBoolConverter())
         self.flicker_amplitude = uih.Binding(self.ui_flicker_amplitude,"text", sourceObject, "flicker_amplitude", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.flicker_alpha = uih.Binding(self.ui_flicker_alpha,"text", sourceObject, "flicker_alpha", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
-        self.gr_enabled = uih.Binding(self.ui_gr_groupbox,"checked", sourceObject, "gr_enabled", converter=uih.AssureBoolConverter())
+        self.gr_enabled = uih.Binding(self.ui_gr_enabled,"checked", sourceObject, "gr_enabled", converter=uih.AssureBoolConverter())
         self.gr_frequency = uih.Binding(self.ui_gr_frequency,"text", sourceObject, "gr_frequency", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.gr_amplitude = uih.Binding(self.ui_gr_amplitude,"text", sourceObject, "gr_amplitude", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.selected_gr_index = uih.Binding(self.ui_gr_listview,"currentRow", sourceObject, "selected_gr_index", converter=uih.AssureIntConverter())
@@ -141,14 +141,19 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def remove_all_gr_components(self):
         pass
 
-    def get_gr_name_by_index(self, index):
+    def remove_gr_name_by_index(self, index):
         item = self.ui_gr_listview.takeItem(index)
         self.selected_gr_index.sourceData -= 1
         return item.text()
 
-    def getSelectedGRitem(self):
+    def getSelectedGRitemText(self):
         item = self.ui_gr_listview.currentItem()
         return item.text()
+
+    def getIndexFromGRname(self, name):
+        item = self.ui_gr_listview.findItems(name, QtCore.Qt.MatchExactly)[0]
+        index = self.ui_gr_listview.row(item)
+        return index
 
     def get_gr_component_count(self):
         return self.ui_gr_listview.count()

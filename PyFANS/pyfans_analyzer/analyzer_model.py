@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from functools import reduce
 from pyqtgraph import intColor, mkPen
 
 import pyfans.utils.ui_helper as uih
@@ -11,6 +12,8 @@ from pyfans.plot import FlickerHandle, GRHandle
 from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
 
+from lmfit import Model, CompositeModel
+
 class AnalyzerModel(uih.NotifyPropertyChanged):
     xLabel = "Frequency, f(Hz)"
     yLabel = "S<sub>V</sub>"
@@ -20,6 +23,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     flickerNoiseName = "flicker"
     thermalNoiseName = "thermal"
     resultingNoiseName = "resulting"
+    initFitName = "init_fit"
+    bestFitName = "best_fit"
 
     def __init__(self, analyzer_window=None):
         super().__init__()
@@ -60,6 +65,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self._displayData = None
 
         self._resultingDataCurve = None
+        self._initFitDataCurve = None
+        self._bestFitDataCurve = None  
 
         self.freq_column_name = None
         self.data_column_name = None
@@ -108,8 +115,19 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         curve = self.plotter.get_curve_by_name(self.resultingNoiseName)
         if curve is None:
-            curve = self.plotter.create_curve(display_curve_name, pen=mkPen("m", width=1),zValue=950, visible=True)
+            curve = self.plotter.create_curve(self.resultingNoiseName, pen=mkPen("m", width=1),zValue=950, visible=True)
             self._resultingDataCurve=curve
+
+        curve = self.plotter.get_curve_by_name(self.initFitName)
+        if curve is None:
+            curve = self.plotter.create_curve(self.initFitName, pen=mkPen("y", width=3),zValue=1001, visible=True)
+            self._initFitDataCurve=curve
+        
+        curve = self.plotter.get_curve_by_name(self.bestFitName)
+        if curve is None:
+            curve = self.plotter.create_curve(self.bestFitName, pen=mkPen("k", width=3),zValue=1002, visible=True)
+            self._bestFitDataCurve=curve
+
 
         self.setPlotterXLabel()
         self.setPlotterYLabel()
@@ -363,14 +381,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         xmax = np.log10(self.end_crop_frequency)
         self.plotter.setXRange(xmin,xmax)
         self.updateDisplayData()
-        # self._originalDataCurve.setVisible(False)
         
 
     def on_undo_crop_triggered(self):
         self.use_crop_range = False
         self.updateDisplayData()
-        # self._originalDataCurve.setVisible(True)
-
+        
 
     def on_flicker_noise_reset_triggered(self):
         self.flicker_amplitude = 0
@@ -397,20 +413,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_flicker_handle_position_changed(self, flicker, amplitude):
         self.flicker_amplitude = amplitude
         self.flicker_alpha = flicker.alpha_flicker
-        # flicker_name = "flicker"
-        # # handle = self.plotter.create_flicker_handle(flicker_name)
-        # handle = self._noise_model_handles.get(flicker_name)
-        # if handle is None:
-        #     plotter =self.analyzer_window.plotter
-        #     viewRange =  plotter.getViewRange() #+[2,-1]
-        #     print("viewRange: {0}".format(viewRange))
-        #     whereToAddX = 0.9*viewRange[0][0]+0.1*viewRange[0][1]
-        #     whereToAddY = 0.8*viewRange[1][1]+0.2*viewRange[1][0]
-        #     whereToAdd = (whereToAddX,whereToAddY)
-        #     print("where to add: {0}".format(whereToAdd))
-        #     handle = self.analyzer_window.plotter.create_flicker_handle(flicker_name, positionChangedCallback=self.on_handle_position_changed, initPosition=whereToAdd )
-        #     self._noise_model_handles[flicker_name]=handle
-
+        
     def on_add_gr_noise_triggered(self):
         count = self.analyzer_window.get_gr_component_count()
         gr_name = "GR_{0}".format(count)
@@ -420,77 +423,50 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             return
         
         gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen, coordinate_transform=self.coordinate_transform)
+        gr.sigPositionChanged.connect(self.on_gr_handle_position_changed)
         gr.sigNoiseUpdateRequired.connect(self.on_noise_component_update_required)
         # gr.sigPositionChanged.connect()
         self.noise_components[gr_name] = gr
         self.analyzer_window.add_gr_component(gr_name)
         self.selected_gr_index = count
-        # handle = self._noise_model_handles.get(gr_name)
-        # if handle is None:
-        #     plotter =self.analyzer_window.plotter
-        #     viewRange =  plotter.getViewRange() #+[2,-1]
-        #     print("viewRange: {0}".format(viewRange))
-        #     whereToAddX = 0.9*viewRange[0][0]+0.1*viewRange[0][1]
-        #     whereToAddY = 0.8*viewRange[1][1]+0.2*viewRange[1][0]
-        #     whereToAdd = (whereToAddX,whereToAddY)
-        #     print("where to add: {0}".format(whereToAdd))
-        #     handle = plotter.create_gr_handle(gr_name, pen=pen, positionChangedCallback=self.on_handle_position_changed, initPosition=whereToAdd )
-        #     self._noise_model_handles[gr_name]=handle
-        #     self.analyzer_window.add_gr_component(gr_name)
-    def on_gr_handle_position_changed(self, frequency, amplitude):
-        self.flicker_amplitude = amplitude
+        
+
+    def on_gr_handle_position_changed(self, handle, frequency, amplitude):
+        # name = self.analyzer_window.remove_gr_name_by_index(self.selected_gr_index )
+        # if handle.name != name:
+        #     return
+        print(handle.name)
+        self.selected_gr_index = self.analyzer_window.getIndexFromGRname(handle.name)
+        self.gr_amplitude = amplitude
+        self.gr_frequency = frequency
+
+    
+
 
     def on_remove_gr_noise_triggered(self):
         pass
-        # selected_item_name = self.analyzer_window.get_gr_name_by_index(self.selected_gr_index)
+        # selected_item_name = self.analyzer_window.remove_gr_name_by_index(self.selected_gr_index)
         # handle = self._noise_model_handles.pop(selected_item_name)
         # self.analyzer_window.plotter.remove_handle(selected_item_name)
 
-    def on_handle_position_changed(self, handle, position):
-        plotter = self.analyzer_window.plotter
-        curve = plotter.get_curve_by_name(handle.name)
-        if curve is None:
-            return
-
-        xPosHandle = position.x()
-        xStart = xPosHandle - 1
-        xEnd = xPosHandle + 1
-        # print(10*"=")
-        # print(position)
-        
-        rng = plotter.getViewRange()
-        xmin, xmax = rng[0]
-        xmin = max(xmin, xStart)
-        xmax = min(xmax, xEnd)
-        npoints = (xmax-xmin)/0.1 +1
-        
-        # freq = np.logspace(0,5, 51)
-        freq = np.logspace(xmin,xmax, npoints)
-        data = handle.calculateCurve(freq)
-        
-        curve.setData(freq,data)
-        if isinstance(handle, GRHandle):
-            self.gr_frequency = 10**position.x()
-            self.gr_amplitude = 10**position.y()
-
-#  FlickerHandle, GRHandle       
+ 
 
     def on_reset_gr_noise_triggered(self):
         pass
 
-    def on_fit_data_triggered(self):
-        pass
+    
 
     def on_selected_gr_changed(self):
         print("selection changed")
-        # name = self.analyzer_window.getSelectedGRitem()
-        # handle = self._noise_model_handles.get(name)
-        # if handle is None:
-        #     return
+        name = self.analyzer_window.getSelectedGRitemText()
+        component = self.noise_components.get(name, None)
+        if component is None:
+            return
+        self.gr_enabled = component.enabled
+        self.gr_amplitude = component.amplitude
+        self.gr_frequency = component.frequency
 
-        # handlePos=handle.currentPosition
-        # self.gr_frequency = 10**handlePos.x()
-        # self.gr_amplitude = 10**handlePos.y()
+       
 
         
     @property
@@ -808,6 +784,13 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__gr_enabled = value
         self.onPropertyChanged("gr_enabled", self, value)
+        name = self.analyzer_window.getSelectedGRitemText()
+        component = self.noise_components.get(name, None)
+        if component is None:
+            return
+        component.enabled = value
+        
+
     
     @property
     def gr_frequency(self):
@@ -821,17 +804,13 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__gr_frequency = value
         self.onPropertyChanged("gr_frequency", self, value)
+        name = self.analyzer_window.getSelectedGRitemText()
+        component = self.noise_components.get(name, None)
+        if component is None:
+            return
+        component.frequency = value
+        print("frequency updated")
         
-        # name = self.analyzer_window.getSelectedGRitem()
-        # handle = self._noise_model_handles.get(name)
-        # if handle is None:
-        #     return
-
-        # handlePos=handle.currentPosition
-        # gr_frequency = np.log10(value)
-        # gr_amplitude = handlePos.y()
-        # handle.setCurrentPosition(gr_frequency, gr_amplitude)
-        # gr_frequency = 10**handlePos.x()
         
 
 
@@ -848,17 +827,32 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.__gr_amplitude = value
         self.onPropertyChanged("gr_amplitude", self, value)
-    
-        # name = self.analyzer_window.getSelectedGRitem()
-        # handle = self._noise_model_handles.get(name)
-        # if handle is None:
-        #     return
-
-        # handlePos=handle.currentPosition
-        # gr_frequency = handlePos.x()
-        # gr_amplitude = np.log10(value)
-        # handle.setCurrentPosition(gr_frequency, gr_amplitude)
+        name = self.analyzer_window.getSelectedGRitemText()
+        component = self.noise_components.get(name, None)
+        if component is None:
+            return
+        component.amplitude = value
 
     @property
     def coordinate_transform(self):
         return self._coordinate_transform
+
+    
+    def on_fit_data_triggered(self):
+        print("start fitting")
+        import operator
+        list_of_models = [Model(v.getModelFunction(),prefix=k, nan_policy="propagate") for k,v in self.noise_components.items()] 
+        fit_model = reduce(operator.add, list_of_models)
+        # fit_model = reduce()
+        # params = comp_model.make_params()
+        print(fit_model)
+
+        params = fit_model.make_params()
+        print(params)
+
+        result = fit_model.fit(self._displayData, params, frequency=self._displayFreq)
+        print(result.fit_report())
+        print(result.init_fit)
+        self._initFitDataCurve.setData(self._displayFreq, result.init_fit)
+        # self._bestFitDataCurve.setData(self._displayData, result.best_fit)
+        
