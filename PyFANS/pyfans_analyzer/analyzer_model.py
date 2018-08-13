@@ -12,7 +12,7 @@ from pyfans.plot import FlickerHandle, GRHandle
 from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
 
-from lmfit import Model, CompositeModel
+from lmfit import Model, CompositeModel, Parameters
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
     xLabel = "Frequency, f(Hz)"
@@ -369,11 +369,13 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         meas_info = self.__measurement_file.next_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
+        self.on_fit_data_triggered()
 
     def on_prev_triggered(self):
         meas_info = self.__measurement_file.prev_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
+        self.on_fit_data_triggered()
 
     def on_crop_triggered(self):
         self.use_crop_range = True
@@ -444,10 +446,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
 
     def on_remove_gr_noise_triggered(self):
-        pass
-        # selected_item_name = self.analyzer_window.remove_gr_name_by_index(self.selected_gr_index)
-        # handle = self._noise_model_handles.pop(selected_item_name)
-        # self.analyzer_window.plotter.remove_handle(selected_item_name)
+        selected_item_name = self.analyzer_window.remove_gr_name_by_index(self.selected_gr_index)
+        item = self.noise_components.pop(selected_item_name)
+        item.remove_handle()
 
  
 
@@ -670,6 +671,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__thermal_enabled = value
         self.onPropertyChanged("thermal_enabled", self, value)
         self.updateDisplayData()
+        try:
+            thermal = self.noise_components[self.thermalNoiseName]
+            thermal.enabled = value
+        except Exception as e:
+            print("Exception while enabling flicker")
+            print(e)
     
     @property
     def equivalen_resistance(self):
@@ -841,18 +848,41 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_fit_data_triggered(self):
         print("start fitting")
         import operator
-        list_of_models = [Model(v.getModelFunction(),prefix=k, nan_policy="propagate") for k,v in self.noise_components.items()] 
+        # list_of_models = [Model(v.getModelFunction(),prefix=k, nan_policy="propagate") for k,v in self.noise_components.items()] 
+        list_of_models = list()
+        list_of_params = list()
+        for name,component in self.noise_components.items():
+            if not component.enabled:
+                continue
+            model, param = component.getFittingModelAndParams()
+            list_of_models.append(model)
+            parameters = list(param.values())
+            list_of_params.extend(parameters)
+            # print()
+        # list_of_models = [v.getFittingModelAndParams for k,v in self.noise_components.items()]
+        # print("list of parameters")
+        print(list_of_params)
         fit_model = reduce(operator.add, list_of_models)
-        # fit_model = reduce()
-        # params = comp_model.make_params()
-        print(fit_model)
+        fit_parameters = Parameters()
+        fit_parameters.add_many(*list_of_params)
+        print()
+        print(fit_parameters)
+        # print()
+        # # # fit_model = reduce()
+        # # # params = comp_model.make_params()
+        # print(fit_model)
 
-        params = fit_model.make_params()
-        print(params)
+        # params = fit_model.make_params()
+        # print(params)
 
-        result = fit_model.fit(self._displayData, params, frequency=self._displayFreq)
+        result = fit_model.fit(self._displayData, fit_parameters, frequency=self._displayFreq)
         print(result.fit_report())
-        print(result.init_fit)
+        # print(result.init_fit)
         self._initFitDataCurve.setData(self._displayFreq, result.init_fit)
-        # self._bestFitDataCurve.setData(self._displayData, result.best_fit)
+        self._bestFitDataCurve.setData(self._displayFreq, result.best_fit)
         
+        result_data = result.eval_components() 
+        for name, data in result_data.items():
+            curve = self.plotter.get_curve_by_name(name)
+            curve.setData(self._displayFreq, data)
+        # print(result.eval_components())

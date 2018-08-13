@@ -1,6 +1,8 @@
 import numpy as np
 from PyQt4 import QtCore
+from lmfit import Model
 from pyfans_analyzer.coordinate_transform import Transformation
+
 
 
 class BaseNoiseComponent(QtCore.QObject):
@@ -43,6 +45,9 @@ class BaseNoiseComponent(QtCore.QObject):
 
     def getModelFunction(self):
         raise NotImplementedError
+
+    def getFittingModelAndParams(self):
+        raise NotImplementedError()
 
     @property
     def whereToAdd(self):
@@ -93,6 +98,9 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
 
     def create_handle(self, *args, **kwargs):
         raise NotImplementedError()
+
+    def remove_handle(self):
+        self.plotter.remove_handle(self.name)
 
     def create_handle_and_curve(self):
         whereToAdd = self.whereToAdd
@@ -245,6 +253,19 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
             return data
         return modelFunction
 
+    def getFittingModelAndParams(self):
+        func = self.getModelFunction()
+        model = Model(func, prefix=self.name)
+        params = model.make_params()
+        amplitudeParamName = "{0}amplitude".format(self.name)
+        alphaParamName = "{0}alpha".format(self.name)
+        f0ParamName = "{0}f0".format(self.name)
+        params[alphaParamName].vary = False
+        # params[f0ParamName].vary = False
+        params[amplitudeParamName].min = 0.0
+
+        return model, params
+
 
 class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
     # PREFIX = "GR"
@@ -307,6 +328,17 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
             freq, data = self.transform.convert(frequency, data)
             return data
         return modelFunction
+
+    
+    def getFittingModelAndParams(self):
+        func = self.getModelFunction()
+        model = Model(func, prefix=self.name)
+        params = model.make_params()
+        amplitudeParamName = "{0}amplitude".format(self.name)
+        f0ParamName = "{0}f0".format(self.name)
+        params[f0ParamName].min = 0.0
+        params[amplitudeParamName].min = 0.0
+        return model, params
 
 
 class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
@@ -393,13 +425,20 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         return modelFunction
         # return 4*self.BOLTZMAN_CONSTANT*self.temperature*self.resistance
 
+    def getFittingModelAndParams(self):
+        func = self.getModelFunction()
+        model = Model(func, prefix=self.name)
+        params = model.make_params()
+        return model, params
+
+
     # def get_param_dict(self):
     #      return {self.RESISTANCE_OPTION_NAME: self.resistance, self.TEMPERATURE_OPTION_NAME: self.temperature}
 
     # def set_params(self,**kwargs):
     #     self._resistance = kwargs.get(self.RESISTANCE_OPTION_NAME, 0)
     #     self._temperature = kwargs.get(self.TEMPERATURE_OPTION_NAME, 0)
-
+    
 
 
 
