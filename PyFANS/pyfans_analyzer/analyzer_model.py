@@ -874,15 +874,18 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         # params = fit_model.make_params()
         # print(params)
-
-        result = fit_model.fit(self._displayData, fit_parameters, frequency=self._displayFreq)
+        print(self._displayData)
+        data = np.log10(self._displayData)
+        print(data)
+        result = fit_model.fit(data, fit_parameters, frequency=self._displayFreq)
         print(result.fit_report())
         # print(result.init_fit)
-        self._initFitDataCurve.setData(self._displayFreq, result.init_fit)
-        self._bestFitDataCurve.setData(self._displayFreq, result.best_fit)
+        self._initFitDataCurve.setData(self._displayFreq, np.power(10,result.init_fit))
+        self._bestFitDataCurve.setData(self._displayFreq, np.power(10,result.best_fit))
         
         result_data = result.eval_components() 
         for name, data in result_data.items():
             curve = self.plotter.get_curve_by_name(name)
+            data = np.power(10,data)
             curve.setData(self._displayFreq, data)
         # print(result.eval_components())

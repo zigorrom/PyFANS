@@ -43,7 +43,7 @@ class BaseNoiseComponent(QtCore.QObject):
     def on_enabled_changed(self,new_value):
         raise NotImplementedError()
 
-    def getModelFunction(self):
+    def getModelFunction(self,logMode):
         raise NotImplementedError
 
     def getFittingModelAndParams(self):
@@ -245,16 +245,27 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
             self.frequency = 1.0
             self.amplitude = value
 
-    def getModelFunction(self):
+    def getModelFunction(self, logMode=False):
         def modelFunction(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
             fdivf0 = np.divide(f0,frequency)
             data = amplitude*np.power(fdivf0,alpha)
             freq, data = self.transform.convert(frequency, data)
             return data
-        return modelFunction
+        
+        def modelFunctionLog(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
+            fdivf0 = np.divide(f0,frequency)
+            data = amplitude*np.power(fdivf0,alpha)
+            freq, data = self.transform.convert(frequency, data)
+            data = np.log10(data)
+            return data
+        
+        if logMode:
+            return modelFunctionLog
+        else:
+            return modelFunction
 
     def getFittingModelAndParams(self):
-        func = self.getModelFunction()
+        func = self.getModelFunction(logMode=True)
         model = Model(func, prefix=self.name)
         params = model.make_params()
         amplitudeParamName = "{0}amplitude".format(self.name)
@@ -320,18 +331,32 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
         self._frequency = value
         self.update_position()
 
-    def getModelFunction(self):
+    def getModelFunction(self, logMode=False):
         def modelFunction(frequency, amplitude=self.amplitude, f0=self.frequency):
             fdivf0 = np.divide(frequency,f0)
             sqrfdivd0 = np.multiply(fdivf0,fdivf0)
             data = np.divide(amplitude,(1+sqrfdivd0))
             freq, data = self.transform.convert(frequency, data)
             return data
-        return modelFunction
+        # return modelFunction
+
+        def modelFunctionLog(frequency, amplitude=self.amplitude, f0=self.frequency):
+            fdivf0 = np.divide(frequency,f0)
+            sqrfdivd0 = np.multiply(fdivf0,fdivf0)
+            data = np.divide(amplitude,(1+sqrfdivd0))
+            freq, data = self.transform.convert(frequency, data)
+            data = np.log10(data)
+            return data
+
+        if logMode:
+            return modelFunctionLog
+        else:
+            return modelFunction
+        
 
     
     def getFittingModelAndParams(self):
-        func = self.getModelFunction()
+        func = self.getModelFunction(logMode=True)
         model = Model(func, prefix=self.name)
         params = model.make_params()
         amplitudeParamName = "{0}amplitude".format(self.name)
@@ -417,16 +442,28 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         self._thermal_noise = value
         self.update_thermal_noise()
 
-    def getModelFunction(self):
+    def getModelFunction(self, logMode=False):
         def modelFunction(frequency):
             data = np.full_like(frequency, self.thermal_noise_level)
             freq, data = self.transform.convert(frequency, data)
             return data
-        return modelFunction
+        # return modelFunction
+
+        def modelFunctionLog(frequency):
+            data = np.full_like(frequency, self.thermal_noise_level)
+            freq, data = self.transform.convert(frequency, data)
+            data = np.log10(data)
+            return data
+        # return modelFunction
+
+        if logMode:
+            return modelFunctionLog
+        else:
+            return modelFunction
         # return 4*self.BOLTZMAN_CONSTANT*self.temperature*self.resistance
 
     def getFittingModelAndParams(self):
-        func = self.getModelFunction()
+        func = self.getModelFunction(logMode=True)
         model = Model(func, prefix=self.name)
         params = model.make_params()
         return model, params
