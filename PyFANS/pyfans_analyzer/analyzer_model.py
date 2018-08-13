@@ -110,7 +110,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         curve = self.plotter.get_curve_by_name(display_curve_name)
         if curve is None:
-            curve = self.plotter.create_curve(display_curve_name, pen=mkPen("g", width=2),zValue=1000, visible=True) #symbol="o", symbolPen="g", symbolBrush="g", size=10, pxMode=True)
+            curve = self.plotter.create_curve(display_curve_name, pen=mkPen("g", width=1),zValue=1000, visible=True) #symbol="o", symbolPen="g", symbolBrush="g", size=10, pxMode=True)
             self._displayDataCurve=curve
 
         curve = self.plotter.get_curve_by_name(self.resultingNoiseName)
@@ -333,7 +333,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         else:
             self._displayData = sp.subtract_thermal_noise(self._displayData, self.thermal_noise)
         
-        self.updateDisplatDataPlot()
+        self.updateDisplayDataPlot()
 
     def perform_cutoff_correction(self):
         if not self.cutoff_correction:
