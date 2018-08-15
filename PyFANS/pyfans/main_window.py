@@ -249,6 +249,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     def subscribe_to_timetrace_converter_action(self, slot):
         self.connect(self.actionTimetraceConversion.triggered, slot)
 
+    def subscribe_to_dut_selector_action(self, slot):
+        self.connect(self.ui_transistorSelector.clicked, slot)
+
     @property
     def controller(self):
         return self._controller

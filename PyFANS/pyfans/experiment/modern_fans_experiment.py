@@ -18,6 +18,7 @@ import pyfans.hardware.modern_fans_controller as mfans
 import pyfans.hardware.modern_fans_smu as msmu
 import pyfans.hardware.temperature_controller as tc
 from pyfans.hardware.fans_hardware_settings import HardwareSettings
+from pyfans.hardware.fans_channel_switch import FANS_DUT_Switch
 
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings, CharacteristicType, TimetraceMode
 import pyfans.experiment.modern_fans_experiment_writer as mfew
@@ -89,7 +90,8 @@ class Experiment:
         self._calibration = None
         self._total_measurement_iterations = 0
         self._average_measurement_time = 0
-        self._current_measurement_index = 0                                                                                                                                             
+        self._current_measurement_index = 0   
+        self._current_transistor = -1                                                                                                                                          
     
     @property
     def need_exit(self):
@@ -100,6 +102,8 @@ class Experiment:
     @property
     def calibration(self):
         return self._calibration
+
+    
 
     #@property
     #def configuration(self):
@@ -650,7 +654,11 @@ class Experiment:
 
         # utilize here with statement to be sure all files are properly opened and closed
         self.open_measurement()
-        
+        if automatic_transistor_switch == True:
+            if self._current_transistor != transistor:
+                self._current_transistor = transistor
+                self.switch_transistor(transistor)
+            
         #assert isinstance(self.experiment_settings, ExperimentSettings)
         if automatic_voltage_set:
             self.report_start_setting_voltages()
@@ -695,10 +703,9 @@ class Experiment:
         use_vg_range = self.__exp_settings.use_set_vfg_range
 
         table_generator = ParamGenerator(automatic_voltage_set=automatic_voltage_control, automatic_temperature_set=automatic_temperature_control,automatic_transistor_switch=automatic_transistor_switch, measure_gated_structure=gated_structure)
-        table_generator.append_parameter("temperature")
+        table_generator.append_parameter("temperature", rang=self.__exp_settings.current_temperature)
         if automatic_transistor_switch:
-            table_generator.append_parameter("transistor")
-
+            table_generator.append_parameter("transistor", rang=self.__exp_settings.transistor_list)
 
         if not automatic_voltage_control:
             table_generator.append_parameter("drain_source_voltage")
@@ -1080,7 +1087,9 @@ class FANSExperiment(Experiment):
         return super().perform_non_gated_single_value_measurement()
 
     def switch_transistor(self, transistor):
-        return super().switch_transistor(transistor)
+        switcher = FANS_DUT_Switch(self.fans_controller)
+        switcher.switch_to_dut(transistor)
+        # return super().switch_transistor(transistor)
 
     def on_drain_source_voltage_changed(self, voltage):
         self._send_command_with_param(pcp.ExperimentCommands.DRAIN_SOURCE_VOLTAGE_CHANGED, voltage)

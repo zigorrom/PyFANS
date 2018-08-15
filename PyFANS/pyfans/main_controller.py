@@ -18,6 +18,7 @@ from pyfans.ui.lock_window import UI_LockWindow
 from pyfans.ui.theme_switch_window import UI_ThemeSwitchWindow
 from pyfans.utils.sound_player import SoundPlayer
 from pyfans.ui.email_notification import EmailAuthForm, EmailSender
+from pyfans.ui.dut_selector import DUT_Selector
 
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
 from pyfans.experiment.measurement_data_structures import MeasurementInfo
@@ -121,6 +122,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_analysis_window_open_action(self.on_analysis_window_open_action)
         self.main_view.subscribe_to_voltage_control_clicked(self.on_voltage_control_view_clicked)
         self.main_view.subscribe_to_timetrace_converter_action(self.on_open_timetrace_conversion)
+        self.main_view.subscribe_to_dut_selector_action(self.on_dut_selector_opened)
 
         self.main_view.subscribe_to_experiment_start_action(self.start_experiment)
         self.main_view.subscribe_to_experiment_stop_acion(self.stop_experiment)
@@ -435,6 +437,17 @@ class FANS_UI_Controller(QtCore.QObject):
         print("opening timetrace conversion")
         # import subprocess
         # subprocess.Popen()
+
+    def on_dut_selector_opened(self):
+        print("selecting dut")
+        dut_selector = DUT_Selector()
+        if self.experiment_settings.transistor_list is not None:
+            dut_selector.selected_dut_list = self.experiment_settings.transistor_list
+            
+        result= dut_selector.exec_()
+        if result:
+            print(dut_selector.selected_dut_list)
+            self.experiment_settings.transistor_list = dut_selector.selected_dut_list
 
     def on_show_about_window(self):
         self.aboutWnd = UI_About()
