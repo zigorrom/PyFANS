@@ -9,6 +9,7 @@ class FANS_DUT_Switch:
         self._fans_controller = fans_controller
         self.control_channel = daq.DIG_CHANNEL_501
         self.pulse_bit = daq.DIG_CH503_BIT3
+        self.set_reset_bit = daq.DIG_CH504_BIT1
     
     @property
     def fans_controller(self):
@@ -26,6 +27,7 @@ class FANS_DUT_Switch:
         if not (0 <= dut < self.MAX_CHANNELS):
             raise ValueError("channel should be in the range from 0 to 31 inclusively")
 
+        self.daq_device.digital_write_bit(self.set_reset_bit, 1)
         self.daq_device.digital_write(self.control_channel, dut)
         self.daq_device.digital_pulse_bit(self.pulse_bit, pulse_width=0.005)
 
