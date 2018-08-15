@@ -232,7 +232,7 @@ class VoltageControlView(mainViewBase,mainViewForm):
         self._fans_smu.smu_set_gate_voltage(value)
         print("done setting gs value")
 
-    
+    @QtCore.pyqtSlot()
     def on_ui_switch_dut_clicked(self):
         if not self._initialized:
             return
