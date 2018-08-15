@@ -241,15 +241,25 @@
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="ui_flicker_amplitude"/>
                 </item>
-                <item row="1" column="0">
+                <item row="2" column="0">
                  <widget class="QLabel" name="label_6">
                   <property name="text">
                    <string>Power</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
+                <item row="2" column="1">
                  <widget class="QLineEdit" name="ui_flicker_alpha"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>Frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="ui_flicker_frequency"/>
                 </item>
                </layout>
               </item>
@@ -376,7 +386,7 @@
      <x>0</x>
      <y>0</y>
      <width>1048</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

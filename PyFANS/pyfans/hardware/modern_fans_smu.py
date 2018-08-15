@@ -139,7 +139,9 @@ class FANS_SMU:
         self.smu_averaging_number = averaging
         self._fans_controller.set_sampling_rate(self._smu_sample_rate)
         
-    
+    @property
+    def fans_controller(self):
+        return self._fans_controller
 
     @property
     def smu_averaging_number(self):

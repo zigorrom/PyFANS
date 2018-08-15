@@ -55,6 +55,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         self.flicker_enabled = uih.Binding(self.ui_flicker_groupbox,"checked", sourceObject, "flicker_enabled", converter=uih.AssureBoolConverter())
         self.flicker_amplitude = uih.Binding(self.ui_flicker_amplitude,"text", sourceObject, "flicker_amplitude", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.flicker_alpha = uih.Binding(self.ui_flicker_alpha,"text", sourceObject, "flicker_alpha", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
+        self.flicker_frequency = uih.Binding(self.ui_flicker_frequency,"text", sourceObject, "flicker_frequency", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.gr_enabled = uih.Binding(self.ui_gr_enabled,"checked", sourceObject, "gr_enabled", converter=uih.AssureBoolConverter())
         self.gr_frequency = uih.Binding(self.ui_gr_frequency,"text", sourceObject, "gr_frequency", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.gr_amplitude = uih.Binding(self.ui_gr_amplitude,"text", sourceObject, "gr_amplitude", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())

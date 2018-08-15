@@ -320,7 +320,7 @@ class Binding:
                     self.targetData = self._converter.convert_back(value, stringFormat=self._stringFormat)
                 else:
                     self.targetData = self._converter.convert_back(value)
-
+                self.__check_target_data_valid__()
             except ConversionException as e:
                 print_exception(e)
             

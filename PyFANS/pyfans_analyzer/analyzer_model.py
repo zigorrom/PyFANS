@@ -9,7 +9,7 @@ from pyfans_analyzer.measurement_file_handler import *
 import pyfans_analyzer.spectrum_processing as sp
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
 from pyfans.plot import FlickerHandle, GRHandle
-from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent
+from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent, BaseNoiseComponent
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
 
 from lmfit import Model, CompositeModel, Parameters
@@ -44,6 +44,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__flicker_enabled = None
         self.__flicker_amplitude = None
         self.__flicker_alpha = None
+        self.__flicker_frequency = None
         self.__gr_enabled = None
         self.__gr_frequency = None
         self.__gr_amplitude = None
@@ -393,6 +394,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_flicker_noise_reset_triggered(self):
         self.flicker_amplitude = 0
         self.flicker_alpha = 0
+        self.flicker_frequency = 0
 
     def add_thermal_noise(self):
         thermal_name = self.thermalNoiseName
@@ -415,6 +417,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_flicker_handle_position_changed(self, flicker, amplitude):
         self.flicker_amplitude = amplitude
         self.flicker_alpha = flicker.alpha_flicker
+        self.flicker_frequency = flicker.frequency
+        self.flicker_enabled = flicker.enabled
         
     def on_add_gr_noise_triggered(self):
         count = self.analyzer_window.get_gr_component_count()
@@ -441,6 +445,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.selected_gr_index = self.analyzer_window.getIndexFromGRname(handle.name)
         self.gr_amplitude = amplitude
         self.gr_frequency = frequency
+        self.gr_enabled = handle.enabled
 
     
 
@@ -780,6 +785,26 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             print(e)
     
     @property
+    def flicker_frequency(self):
+        return self.__flicker_frequency
+
+    @flicker_frequency.setter
+    @uih.assert_int_or_float_argument
+    def flicker_frequency(self, value):
+        if self.__flicker_frequency == value:
+            return 
+
+        self.__flicker_frequency = value
+        self.onPropertyChanged("flicker_frequency", self, value)
+        try:
+            flicker = self.noise_components[self.flickerNoiseName]
+            flicker.frequency = value
+        except Exception as e:
+            print("Exception while setting flicker amplitude")
+            print(e)
+
+    # 
+    @property
     def gr_enabled(self):
         return self.__gr_enabled
 
@@ -854,7 +879,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         for name,component in self.noise_components.items():
             if not component.enabled:
                 continue
-            model, param = component.getFittingModelAndParams()
+            model, param = component.getFittingModelAndParams(logMode=False)
             list_of_models.append(model)
             parameters = list(param.values())
             list_of_params.extend(parameters)
@@ -874,18 +899,39 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         # params = fit_model.make_params()
         # print(params)
-        print(self._displayData)
-        data = np.log10(self._displayData)
-        print(data)
-        result = fit_model.fit(data, fit_parameters, frequency=self._displayFreq)
+        # print(self._displayData)
+        data = self._displayData
+        # data = np.log10(self._displayData)
+        # print(data)
+        result = fit_model.fit(data, fit_parameters, f=self._displayFreq)
         print(result.fit_report())
+        print("best values")
+        print(result.params)
         # print(result.init_fit)
-        self._initFitDataCurve.setData(self._displayFreq, np.power(10,result.init_fit))
-        self._bestFitDataCurve.setData(self._displayFreq, np.power(10,result.best_fit))
+        # print("init fit")
+        # print(result.init_fit)
+        # print("best fit")
+        # print(result.best_fit)
+        # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.init_fit)
+        # self._initFitDataCurve.setData(freq, data_converted)
+        # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.best_fit)
+        # self._bestFitDataCurve.setData(freq, data_converted)
         
-        result_data = result.eval_components() 
-        for name, data in result_data.items():
-            curve = self.plotter.get_curve_by_name(name)
-            data = np.power(10,data)
-            curve.setData(self._displayFreq, data)
+        for name, param in result.best_values.items(): #items():
+            try:
+                component_name, param_name = name.split(BaseNoiseComponent.PREFIX_SPLITTER)
+                component = self.noise_components[component_name]
+                setattr(component, param_name, param)
+
+            except Exception as e:
+                print("exception while setting fitted values")
+                print(e)
+            
+            
+
+        # result_data = result.eval_components() 
+        # for name, data in result_data.items():
+        #     curve = self.plotter.get_curve_by_name(name)
+        #     # data = np.power(10,data)
+        #     curve.setData(self._displayFreq, data)
         # print(result.eval_components())

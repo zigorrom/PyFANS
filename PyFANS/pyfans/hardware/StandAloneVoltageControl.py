@@ -4,6 +4,7 @@ from PyQt4 import uic, QtGui, QtCore
 
 import pyfans.hardware.modern_fans_controller as mfc
 import pyfans.hardware.modern_fans_smu as mfs
+import pyfans.hardware.fans_channel_switch as dut_switch
 from pyfans.hardware.communication_layer import get_available_gpib_resources, get_available_com_resources
 
 
@@ -20,7 +21,8 @@ mainViewBase, mainViewForm = uic.loadUiType("UI/UI_VoltageControl.ui")
 class VoltageControlView(mainViewBase,mainViewForm):
     def __init__(self,parent = None, parent_fans_smu = None ):
         super(mainViewBase,self).__init__(parent)
-        self.setupUi(self)
+        self.setupUi()
+        
         self.stand_alone_program = True
         self._fans_smu = None
         self._initialized = False
@@ -38,6 +40,15 @@ class VoltageControlView(mainViewBase,mainViewForm):
             self._gpib_resources = get_available_gpib_resources()
             self.ui_controller_resource.addItems(self._gpib_resources)
             
+    def setupUi(self):
+        super().setupUi(self)
+        ds_validator = QtGui.QDoubleValidator()
+        ds_validator.setNotation(ds_validator.StandardNotation)
+        self.ui_ds_value.setValidator(ds_validator)
+
+        gs_validator = QtGui.QDoubleValidator()
+        gs_validator.setNotation(gs_validator.StandardNotation)
+        self.ui_gs_value.setValidator(gs_validator)
 
         
     def __set_initialization_ui_dizabled(self):
@@ -208,7 +219,7 @@ class VoltageControlView(mainViewBase,mainViewForm):
         if not self._initialized:
             return
         print("setting ds value clicked")
-        value = self.ui_ds_value.value()
+        value = float(self.ui_ds_value.text()) #value()
         self._fans_smu.smu_set_drain_source_voltage(value)
         print("done setting ds value")
 
@@ -217,9 +228,20 @@ class VoltageControlView(mainViewBase,mainViewForm):
         if not self._initialized:
             return
         print("setting gs value clicked")
-        value = self.ui_gs_value.value()
+        value = float(self.ui_gs_value.text()) #.value()
         self._fans_smu.smu_set_gate_voltage(value)
         print("done setting gs value")
+
+    
+    def on_ui_switch_dut_clicked(self):
+        if not self._initialized:
+            return
+        
+        print("selectig dut")
+        new_dut = self.ui_selected_dut.value()-1
+        fans_controller = self._fans_smu.fans_controller
+        dut_switcher = dut_switch.FANS_DUT_Switch(fans_controller)
+        dut_switcher.switch_to_dut(new_dut)
 
 
 if __name__ == "__main__":

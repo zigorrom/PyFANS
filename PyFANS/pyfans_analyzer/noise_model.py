@@ -7,6 +7,7 @@ from pyfans_analyzer.coordinate_transform import Transformation
 
 class BaseNoiseComponent(QtCore.QObject):
     sigNoiseUpdateRequired = QtCore.pyqtSignal()
+    PREFIX_SPLITTER = "_p_"
     def __init__(self, name, enabled, plotter, **kwargs):
         super().__init__()
         self._name = name
@@ -32,6 +33,7 @@ class BaseNoiseComponent(QtCore.QObject):
             return 
         self._enabled = value
         self.on_enabled_changed(value)
+        self.sigNoiseUpdateRequired.emit()
 
     def notifyUpdateRequired(self):
         self.sigNoiseUpdateRequired.emit()
@@ -43,10 +45,13 @@ class BaseNoiseComponent(QtCore.QObject):
     def on_enabled_changed(self,new_value):
         raise NotImplementedError()
 
+    def getModelPrefix(self):
+        return "{0}{1}".format(self.name, self.PREFIX_SPLITTER)
+
     def getModelFunction(self,logMode):
         raise NotImplementedError
 
-    def getFittingModelAndParams(self):
+    def getFittingModelAndParams(self, logMode=True):
         raise NotImplementedError()
 
     @property
@@ -187,7 +192,7 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
 
     def calculate_curve(self, frequency):
         func = self.getModelFunction()
-        data = func(frequency, alpha=self.alpha_flicker, amplitude = self.amplitude, f0=self.frequency)
+        data = func(frequency, alpha=self.alpha_flicker, amplitude = self.amplitude, frequency=self.frequency)
         return data
 
     def update_params_on_handle_position_changed(self):
@@ -246,16 +251,16 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
             self.amplitude = value
 
     def getModelFunction(self, logMode=False):
-        def modelFunction(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
-            fdivf0 = np.divide(f0,frequency)
+        def modelFunction(f, alpha=self.alpha_flicker, amplitude=self.amplitude, frequency=self.frequency):
+            fdivf0 = np.divide(frequency,f)
             data = amplitude*np.power(fdivf0,alpha)
-            freq, data = self.transform.convert(frequency, data)
+            freq, data = self.transform.convert(f, data)
             return data
         
-        def modelFunctionLog(frequency, alpha=self.alpha_flicker, amplitude=self.amplitude, f0=self.frequency):
-            fdivf0 = np.divide(f0,frequency)
+        def modelFunctionLog(f, alpha=self.alpha_flicker, amplitude=self.amplitude, frequency=self.frequency):
+            fdivf0 = np.divide(frequency,f)
             data = amplitude*np.power(fdivf0,alpha)
-            freq, data = self.transform.convert(frequency, data)
+            freq, data = self.transform.convert(f, data)
             data = np.log10(data)
             return data
         
@@ -264,15 +269,16 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
         else:
             return modelFunction
 
-    def getFittingModelAndParams(self):
-        func = self.getModelFunction(logMode=True)
-        model = Model(func, prefix=self.name)
+    def getFittingModelAndParams(self,logMode=True):
+        func = self.getModelFunction(logMode=logMode)
+        name = self.getModelPrefix() #"{0}>".format(self.name)
+        model = Model(func, prefix=name)
         params = model.make_params()
-        amplitudeParamName = "{0}amplitude".format(self.name)
-        alphaParamName = "{0}alpha".format(self.name)
-        f0ParamName = "{0}f0".format(self.name)
+        amplitudeParamName = "{0}amplitude".format(name)
+        alphaParamName = "{0}alpha".format(name)
+        f0ParamName = "{0}frequency".format(name)
         params[alphaParamName].vary = False
-        # params[f0ParamName].vary = False
+        params[f0ParamName].vary = False
         params[amplitudeParamName].min = 0.0
 
         return model, params
@@ -300,7 +306,7 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
 
     def calculate_curve(self, frequency):
         func = self.getModelFunction()
-        data = func(frequency, amplitude = self.amplitude, f0=self.frequency)
+        data = func(frequency, amplitude = self.amplitude, frequency=self.frequency)
         return data
 
     def update_params_on_handle_position_changed(self):
@@ -332,19 +338,19 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
         self.update_position()
 
     def getModelFunction(self, logMode=False):
-        def modelFunction(frequency, amplitude=self.amplitude, f0=self.frequency):
-            fdivf0 = np.divide(frequency,f0)
+        def modelFunction(f, amplitude=self.amplitude, frequency=self.frequency):
+            fdivf0 = np.divide(f,frequency)
             sqrfdivd0 = np.multiply(fdivf0,fdivf0)
             data = np.divide(amplitude,(1+sqrfdivd0))
-            freq, data = self.transform.convert(frequency, data)
+            freq, data = self.transform.convert(f, data)
             return data
         # return modelFunction
 
-        def modelFunctionLog(frequency, amplitude=self.amplitude, f0=self.frequency):
-            fdivf0 = np.divide(frequency,f0)
+        def modelFunctionLog(f, amplitude=self.amplitude, frequency=self.frequency):
+            fdivf0 = np.divide(f,frequency)
             sqrfdivd0 = np.multiply(fdivf0,fdivf0)
             data = np.divide(amplitude,(1+sqrfdivd0))
-            freq, data = self.transform.convert(frequency, data)
+            freq, data = self.transform.convert(f, data)
             data = np.log10(data)
             return data
 
@@ -355,12 +361,13 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
         
 
     
-    def getFittingModelAndParams(self):
-        func = self.getModelFunction(logMode=True)
-        model = Model(func, prefix=self.name)
+    def getFittingModelAndParams(self, logMode=True):
+        func = self.getModelFunction(logMode=logMode)
+        name = self.getModelPrefix() #"{0}>".format(self.name)
+        model = Model(func, prefix=name)
         params = model.make_params()
-        amplitudeParamName = "{0}amplitude".format(self.name)
-        f0ParamName = "{0}f0".format(self.name)
+        amplitudeParamName = "{0}amplitude".format(name)
+        f0ParamName = "{0}frequency".format(name)
         params[f0ParamName].min = 0.0
         params[amplitudeParamName].min = 0.0
         return model, params
@@ -443,15 +450,15 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         self.update_thermal_noise()
 
     def getModelFunction(self, logMode=False):
-        def modelFunction(frequency):
-            data = np.full_like(frequency, self.thermal_noise_level)
-            freq, data = self.transform.convert(frequency, data)
+        def modelFunction(f):
+            data = np.full_like(f, self.thermal_noise_level)
+            freq, data = self.transform.convert(f, data)
             return data
         # return modelFunction
 
-        def modelFunctionLog(frequency):
-            data = np.full_like(frequency, self.thermal_noise_level)
-            freq, data = self.transform.convert(frequency, data)
+        def modelFunctionLog(f):
+            data = np.full_like(f, self.thermal_noise_level)
+            freq, data = self.transform.convert(f, data)
             data = np.log10(data)
             return data
         # return modelFunction
@@ -462,9 +469,10 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
             return modelFunction
         # return 4*self.BOLTZMAN_CONSTANT*self.temperature*self.resistance
 
-    def getFittingModelAndParams(self):
-        func = self.getModelFunction(logMode=True)
-        model = Model(func, prefix=self.name)
+    def getFittingModelAndParams(self, logMode=True):
+        func = self.getModelFunction(logMode=logMode)
+        name = self.getModelPrefix() #"{0}>".format(self.name)
+        model = Model(func, prefix=name)
         params = model.make_params()
         return model, params
 
