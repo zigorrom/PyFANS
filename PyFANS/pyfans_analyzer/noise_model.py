@@ -278,7 +278,7 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
         alphaParamName = "{0}alpha".format(name)
         f0ParamName = "{0}frequency".format(name)
         params[alphaParamName].vary = False
-        params[f0ParamName].vary = False
+        params[f0ParamName].vary = True
         params[amplitudeParamName].min = 0.0
 
         return model, params
@@ -487,7 +487,15 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
 
 
 
+class NoiseModelSerializer:
+    def __init__(self):
+        pass
 
+    def serialize(self, model):
+        pass
+
+    def deserialize(self, obj):
+        pass
     
 
     

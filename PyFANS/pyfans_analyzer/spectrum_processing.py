@@ -58,24 +58,25 @@ def remove_pickups_savgol(data, deltaX = 1, window_length=5):
 
 def subtract_thermal_noise(data, thermal_noise_level):
     data = np.copy(data)
-    floor_value = thermal_noise_level
+    floor_value = 1e-20 #thermal_noise_level
     data_len_minus_one = len(data)-1
     for i, val in enumerate(data):
         new_val = val-thermal_noise_level
         if new_val < 0:
-            if i<1:
-                new_val = data[i+1]-thermal_noise_level
-                if new_val < 0:
-                    new_val = floor_value
+            new_val = 0
+            # if i<1:
+            #     new_val = data[i+1]-thermal_noise_level
+            #     if new_val < 0:
+            #         new_val = floor_value
 
-            elif i==data_len_minus_one:
-                new_val = data[i-1]-thermal_noise_level
-                if new_val < 0:
-                    new_val = floor_value
-            else:
-                new_val = (data[i+1]+data[i-1])/2-thermal_noise_level
-                if new_val < 0:
-                    new_val = floor_value
+            # elif i==data_len_minus_one:
+            #     new_val = data[i-1]-thermal_noise_level
+            #     if new_val < 0:
+            #         new_val = floor_value
+            # else:
+            #     new_val = (data[i+1]+data[i-1])/2-thermal_noise_level
+            #     if new_val < 0:
+            #         new_val = floor_value
 
         data[i] = new_val
 

@@ -52,6 +52,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__working_directory = None
         self.__measurement_file = None
         self.__isMultipliedByFrequency = False
+        self.__autofit = False
 
         self._coordinate_transform = MultipliedXYTransformation()
         self._coordinate_transform.sigTransformChanged.connect(self.on_coordinate_transform_changed)
@@ -116,7 +117,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         curve = self.plotter.get_curve_by_name(self.resultingNoiseName)
         if curve is None:
-            curve = self.plotter.create_curve(self.resultingNoiseName, pen=mkPen("m", width=1),zValue=950, visible=True)
+            curve = self.plotter.create_curve(self.resultingNoiseName, pen=mkPen("m", width=1),zValue=1001, visible=True)
             self._resultingDataCurve=curve
 
         curve = self.plotter.get_curve_by_name(self.initFitName)
@@ -370,13 +371,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         meas_info = self.__measurement_file.next_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
-        self.on_fit_data_triggered()
+        if self.autofit:
+            self.on_fit_data_triggered()
 
     def on_prev_triggered(self):
         meas_info = self.__measurement_file.prev_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
-        self.on_fit_data_triggered()
+        if self.autofit:
+            self.on_fit_data_triggered()
 
     def on_crop_triggered(self):
         self.use_crop_range = True
@@ -868,6 +871,18 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     @property
     def coordinate_transform(self):
         return self._coordinate_transform
+
+    @property
+    def autofit(self):
+        return self.__autofit
+
+    @autofit.setter
+    def autofit(self, value):
+        if self.__autofit == value:
+            return 
+
+        self.__autofit = value
+        self.onPropertyChanged("autofit", self, value)
 
     
     def on_fit_data_triggered(self):

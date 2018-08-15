@@ -562,7 +562,7 @@ class SpectrumPlotWidget:
 
         if callable(positionChangedCallback):
             handle.sigPositionChanged.connect(positionChangedCallback) #self.on_handlePositionChanged)
-
+        handle.setZValue(1500)
         self.plot.addItem(handle)
         self.create_curve_for_handle(handle)
         self.handles[name] = handle
@@ -583,7 +583,7 @@ class SpectrumPlotWidget:
 
         if callable(positionChangedCallback):
             handle.sigPositionChanged.connect(positionChangedCallback)#self.on_handlePositionChanged)
-
+        handle.setZValue(1500)
         self.plot.addItem(handle)
         self.create_curve_for_handle(handle)
         self.handles[name] = handle

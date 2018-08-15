@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1048</width>
-    <height>894</height>
+    <height>948</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -354,6 +354,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QCheckBox" name="ui_autofit">
+           <property name="text">
+            <string>AutoFit</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="ui_fit_data_button">
            <property name="text">
             <string>Fit noise model to data</string>
@@ -386,7 +393,7 @@
      <x>0</x>
      <y>0</y>
      <width>1048</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

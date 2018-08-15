@@ -60,6 +60,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         self.gr_frequency = uih.Binding(self.ui_gr_frequency,"text", sourceObject, "gr_frequency", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.gr_amplitude = uih.Binding(self.ui_gr_amplitude,"text", sourceObject, "gr_amplitude", converter=uih.StringToFloatConverter(),validator=QtGui.QDoubleValidator())
         self.selected_gr_index = uih.Binding(self.ui_gr_listview,"currentRow", sourceObject, "selected_gr_index", converter=uih.AssureIntConverter())
+        self.autofit = uih.Binding(self.ui_autofit,"checked", sourceObject, "autofit", converter=uih.AssureBoolConverter())
 
     @property
     def plotter(self):
