@@ -40,7 +40,7 @@ class ConversionException(Exception):
 
 class NameValidator(QtGui.QRegExpValidator):
     def __init__(self, parent=None):
-        regex = QtCore.QRegExp("^[a-zA-Z][^.,;:?/\\`~|!@#$%^&* ]*$")
+        regex = QtCore.QRegExp("^[a-zA-Z][^.,;:?/\\`~|!@$%^&* ]*$")
         super().__init__(regex, parent)
         
     def fixup(self, string):

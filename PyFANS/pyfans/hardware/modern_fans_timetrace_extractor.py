@@ -268,30 +268,38 @@ def perform_timetrace_extraction(**kwargs):
 #self._amplification_factor = kwargs.get("amplification", None)
 #self._decimated_sample_rate = kwargs.get("decimated_sample_rate", 0)
 
+class Parameters:
+    MeasurementDataFileOption = "-mf"
+    SampleRateOption = "-sr"
+    PointsPerShotOption = "-pps"
+    LengthOption = "-l"
+    FilenameOption  = "-f"
+    AmplificationOption = "-a"
+    DecimatedSampleRateOption = "-dr"
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert timetrace from binary format to readable .dat format')
     
-    parser.add_argument('-mf', metavar='measurement_data_file', type=str, nargs='?', default = "",
+    parser.add_argument(Parameters.MeasurementDataFileOption, metavar='measurement_data_file', type=str, nargs='?', default = "",
                     help='The name of main file where all measured data is stored')
 
-    parser.add_argument('-sr', metavar='sample_rate', type = int, nargs='?' , default = 500000,
+    parser.add_argument(Parameters.SampleRateOption, metavar='sample_rate', type = int, nargs='?' , default = 500000,
                         help = 'The sample rate of data in binary file')
     
-    parser.add_argument('-pps', metavar='points_per_sample', type = int, nargs='?' , default = 50000,
+    parser.add_argument(Parameters.PointsPerShotOption, metavar='points_per_sample', type = int, nargs='?' , default = 50000,
                         help = 'Number of points in single block of data')
 
-    parser.add_argument('-l', metavar='length', type = int, nargs='?' , default = -1,
+    parser.add_argument(Parameters.LengthOption, metavar='length', type = int, nargs='?' , default = -1,
                         help = 'The time in seconds to convert from binary file')
 
-    parser.add_argument('-f', metavar='filename', type = str, nargs='?' , default = "",
+    parser.add_argument(Parameters.FilenameOption, metavar='filename', type = str, nargs='?' , default = "",
                         help = 'The name of file to convert. You would need to specify params for convertion')
 
-    parser.add_argument('-a', metavar='amplification', type = int, nargs='?' , default = None,
+    parser.add_argument(Parameters.AmplificationOption, metavar='amplification', type = int, nargs='?' , default = None,
                         help = 'The total amplification (Preamplified + main amplifier + PyFANS amplifier) used for the signal recording')
 
-    parser.add_argument('-dr', metavar='decimated_sample_rate', type = int, nargs='?' , default = 0,
+    parser.add_argument(Parameters.DecimatedSampleRateOption, metavar='decimated_sample_rate', type = int, nargs='?' , default = 0,
                         help = 'The sample rate to decimate to...')
 
     parser.add_argument('--open', dest = 'open_folder', action= 'store_true')

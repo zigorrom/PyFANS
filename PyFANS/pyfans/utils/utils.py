@@ -20,6 +20,13 @@ def open_folder_in_explorer(folder):
     print(request)
     os.system(request)
 
+def open_folder_with_file_selected(filename):
+    print("opening folder")
+    request = 'explorer /select, "{0}"'.format(filename)#self._settings.working_directory)
+    print(request)
+    os.system(request)
+
+
 # The new Stream Object which replaces the default stream associated with sys.stdout
 # This object just puts data in a queue!
 class WriteStream(object):

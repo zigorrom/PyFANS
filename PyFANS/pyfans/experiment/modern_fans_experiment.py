@@ -316,14 +316,17 @@ class Experiment:
             self.set_drain_source_voltage(0)
 
         
-    def set_voltages_to_zero(self):
+    def set_voltages_to_zero(self, forceSet=False):
         if not self.experiment_settings.use_automated_voltage_control:
             return
-
-        if not self.experiment_settings.set_zero_after_measurement:
-            print("Setting to zero is switched off. Leaving voltages at the same level")
-            return
         
+        if forceSet == False:
+            if not self.experiment_settings.set_zero_after_measurement:
+                print("Setting to zero is switched off. Leaving voltages at the same level")
+                return
+        else:
+            print("Force setting zero") 
+
         self.report_start_setting_voltages()
         #print("setting to zero is off")
         print("Setting DS to 0")
@@ -657,6 +660,7 @@ class Experiment:
         if automatic_transistor_switch == True:
             if self._current_transistor != transistor:
                 self._current_transistor = transistor
+                self.set_voltages_to_zero(forceSet=True)
                 self.switch_transistor(transistor)
             
         #assert isinstance(self.experiment_settings, ExperimentSettings)

@@ -11,9 +11,11 @@
 # mfe.main()
 
 
-from pyfans_analyzer.analyzer_window import main
-main()
+# from pyfans_analyzer.analyzer_window import main
+# main()
 
+from pyfans.timetrace_extractor_gui import gui
+gui()
 
 
 

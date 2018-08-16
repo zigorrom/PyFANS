@@ -155,7 +155,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
 
         self.load_resistance =  uih.Binding(self.ui_load_resistance, "text", sourceObject, "load_resistance", converter=uih.StringToFloatConverter(), validator=QtGui.QIntValidator())
         self.perform_measurement_of_gated_structure = uih.Binding(self.ui_meas_gated_structure, "checked", sourceObject, "meas_gated_structure", converter=uih.AssureBoolConverter())
-        # self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_dut_selector", converter=uih.AssureBoolConverter())
+        self.use_dut_selector = uih.Binding(self.ui_use_dut_selector, "checked", sourceObject, "use_transistor_selector", converter=uih.AssureBoolConverter())
         self.use_automated_voltage_control = uih.Binding(self.ui_use_automated_voltage_control, "checked", sourceObject, "use_automated_voltage_control", converter=uih.AssureBoolConverter())
         self.measurement_characteristic_type = uih.Binding(self.ui_meas_characteristic_type, "currentText", sourceObject, "meas_characteristic_type", converter=CharacteristicTypeToStrConverter())
         self.drain_source_voltage = uih.Binding(self.ui_drain_source_voltage, "text", sourceObject, "drain_source_voltage", converter=uih.StringToVoltageConverter(), validator=uih.VoltageValidator())
