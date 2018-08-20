@@ -251,5 +251,13 @@ class MeasurementInfoFile(object):
         # noise_params.set_params(**params)
 
         return noise_params
-
+    
+    @current_noise_parameters.setter
+    def current_noise_parameters(self, noise_parameters):
+        meas_info = self.current_measurement_info
+        if not meas_info:
+            return
+        
+        filename = meas_info.measurement_filename
+        self._noise_params[filename]= noise_parameters
 

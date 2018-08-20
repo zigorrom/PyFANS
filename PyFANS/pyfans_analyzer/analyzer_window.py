@@ -12,7 +12,7 @@ main_view_base, main_view = uic.loadUiType("UI/UI_Analyzer.ui")
 
 class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigOpenFileTriggered = QtCore.pyqtSignal(str)
-    sigSaveFileTriggered = QtCore.pyqtSignal(str)
+    sigSaveFileTriggered = QtCore.pyqtSignal()
     sigNextTriggered = QtCore.pyqtSignal()
     sigPrevTriggered = QtCore.pyqtSignal()
     sigCropTriggered = QtCore.pyqtSignal()
@@ -135,13 +135,16 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         self.sigSelectedGRChanged.emit()
 
     def add_gr_component(self, name):
+        items = self.ui_gr_listview.findItems(name, QtCore.Qt.MatchExactly)
+        if len(items)>0:
+            return
         self.ui_gr_listview.addItem(name)
 
     def remove_gr_component(self, name):
         pass
 
     def remove_all_gr_components(self):
-        pass
+        self.ui_gr_listview.clear()
 
     def remove_gr_name_by_index(self, index):
         item = self.ui_gr_listview.takeItem(index)

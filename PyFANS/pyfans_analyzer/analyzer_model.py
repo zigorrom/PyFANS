@@ -9,7 +9,7 @@ from pyfans_analyzer.measurement_file_handler import *
 import pyfans_analyzer.spectrum_processing as sp
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
 from pyfans.plot import FlickerHandle, GRHandle
-from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent, BaseNoiseComponent
+from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent, BaseNoiseComponent, NoiseModelToDictionaryConverter
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
 
 from lmfit import Model, CompositeModel, Parameters
@@ -25,6 +25,21 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     resultingNoiseName = "resulting"
     initFitName = "init_fit"
     bestFitName = "best_fit"
+
+    attributes_to_save = [
+            "hide_original",
+            "remove_pickups",
+            "smoothing_winsize",
+            "smoothing_enabled",
+            "cutoff_correction",
+            "cutoff_correction_capacity",
+            "start_crop_frequency",
+            "end_crop_frequency",
+            "use_crop_range",
+            "thermal_enabled",
+            "subtract_thermal_noise",
+            "autofit"
+        ]
 
     def __init__(self, analyzer_window=None):
         super().__init__()
@@ -67,8 +82,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self._displayData = None
 
         self._resultingDataCurve = None
-        self._initFitDataCurve = None
-        self._bestFitDataCurve = None  
+        # self._initFitDataCurve = None
+        # self._bestFitDataCurve = None  
 
         self.freq_column_name = None
         self.data_column_name = None
@@ -81,8 +96,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # self._noise_model_handles = dict()
         
         self.noise_components = dict()
-        self.add_flicker_noise()
-        self.add_thermal_noise()
+        # self.add_flicker_noise()
+        # self.add_thermal_noise()
 
 
     def setwindow(self, analyzer_window):
@@ -120,15 +135,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             curve = self.plotter.create_curve(self.resultingNoiseName, pen=mkPen("m", width=1),zValue=1001, visible=True)
             self._resultingDataCurve=curve
 
-        curve = self.plotter.get_curve_by_name(self.initFitName)
-        if curve is None:
-            curve = self.plotter.create_curve(self.initFitName, pen=mkPen("y", width=3),zValue=1001, visible=True)
-            self._initFitDataCurve=curve
+        # curve = self.plotter.get_curve_by_name(self.initFitName)
+        # if curve is None:
+        #     curve = self.plotter.create_curve(self.initFitName, pen=mkPen("y", width=3),zValue=1001, visible=True)
+        #     self._initFitDataCurve=curve
         
-        curve = self.plotter.get_curve_by_name(self.bestFitName)
-        if curve is None:
-            curve = self.plotter.create_curve(self.bestFitName, pen=mkPen("k", width=3),zValue=1002, visible=True)
-            self._bestFitDataCurve=curve
+        # curve = self.plotter.get_curve_by_name(self.bestFitName)
+        # if curve is None:
+        #     curve = self.plotter.create_curve(self.bestFitName, pen=mkPen("k", width=3),zValue=1002, visible=True)
+        #     self._bestFitDataCurve=curve
 
 
         self.setPlotterXLabel()
@@ -193,15 +208,108 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
             self.start_crop_frequency=max(self.start_crop_frequency, freq[0])
             self.end_crop_frequency=min(self.end_crop_frequency, freq[-1])
-            
+
+            self.add_flicker_noise()
+            self.add_thermal_noise()
+
             thermal = self.noise_components.get(self.thermalNoiseName, None)
             if thermal is not None:
                 thermal.thermal_noise_level = self.thermal_noise
+
+            self.loadNoiseModelData()
 
         except Exception as e:
             print("Exception occured while loading measurement data")
             print(str(e))
             print(20*'*')
+
+    def saveNoiseModelData(self):
+        #self.attributes_to_save
+        dict_to_save = dict()
+        for attr in self.attributes_to_save:
+            try:
+                dict_to_save[attr] = getattr(self, attr)
+            except AttributeError as e:
+                pass
+        
+        noise_model = dict()
+        for name, item in self.noise_components.items():
+            state = item.get_state()
+            noise_model[name] = state
+        
+        if noise_model:
+            dict_to_save["noise_components"]=noise_model
+
+        self.__measurement_file.current_noise_parameters = dict_to_save
+
+    def saveAllNoiseModels(self):
+        self.saveNoiseModelData()
+        self.__measurement_file.saveNoiseParams()
+#  self.__measurement_file.current_noise_parameters
+        
+
+    def loadNoiseModelData(self):
+        data = self.__measurement_file.current_noise_parameters
+        for attr in self.attributes_to_save:
+            try:
+                value = data.get(attr)
+                setattr(self, attr, value) 
+            except KeyError as e:
+                pass
+            except Exception as e:
+                print("Exception while setting model data")
+                print(e)
+        
+        noise_model = data.get("noise_components", None)
+        if not noise_model:
+            return
+        
+        print("cleaning components")
+        self.remove_all_noise_components()
+        
+
+        print("loading noise model")
+        print(noise_model)
+        gr_count = 0
+        for name, component in noise_model.items():
+
+            try:
+                typ = component["component_type"]
+                n = component["name"]
+                if typ == "__flicker__":
+                    noise_comp = self.add_flicker_noise(name=n)
+                    noise_comp.set_state(component)
+                elif typ == "__thermal__":
+                    noise_comp = self.add_thermal_noise(name=n)
+                    noise_comp.set_state(component)
+                elif typ == "__gr__":
+                    pen = intColor(gr_count)
+                    gr_count+=1
+                    noise_comp = self.add_gr_noise(name=n, pen=pen)
+                    noise_comp.set_state(component)
+                else:
+                    continue
+
+            except Exception as e:
+                print("Cannot setup")
+
+        # for name, item in noise_model.items():
+        #     state = item.get_state()
+        #     noise_model[name] = state
+
+    def remove_all_noise_components(self):
+        for name, item in self.noise_components.items():
+            try:
+                item.remove()
+            except Exception as e:
+                print("Exception while removing noise component")
+                print(e)
+        
+        self.analyzer_window.remove_all_gr_components()    
+
+        self.noise_components.clear()
+        
+
 
     def setOriginalData(self, frequency, data):
         self._originalFreq = frequency
@@ -241,6 +349,13 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self._displayFreq = self._originalFreq
         self._displayData = self._originalData
 
+        if self.cutoff_correction == True:
+            try:
+                self.perform_cutoff_correction()
+            except Exception as e:
+                print("Exception in cutoff correction")
+                print(e)
+
         if self.subtract_thermal_noise:
             self.perform_subtract_thermal_noise()
 
@@ -263,12 +378,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
                 print("Exception in remove_pickups")
                 print(e)
         
-        if self.cutoff_correction == True:
-            try:
-                self.perform_cutoff_correction()
-            except Exception as e:
-                print("Exception in cutoff correction")
-                print(e)
+        
 
         if self.use_crop_range == True:
             print("start cropping")
@@ -341,16 +451,21 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         if not self.cutoff_correction:
             return
         
-        self._displayData = sp.cutoffCorrection(self._displayFreq, self._displayData, self.equivalen_resistance, self.cutoff_correction_capacity)
+        self._displayData = sp.cutoffCorrection(self._displayFreq, self._displayData, self.equivalent_resistance, self.cutoff_correction_capacity)
 
-    def on_file_save_triggered(self, filename):
-        pass
+    def on_file_save_triggered(self):
+        print("saving triggered")
+        self.saveAllNoiseModels()
 
     def on_noise_component_update_required(self):
         print("updating resulting curve")
         try:
             resulting_array = np.zeros_like(self._displayFreq)
             for name, component in self.noise_components.items():
+                if name == self.thermalNoiseName:
+                    if self.subtract_thermal_noise == True:
+                        continue
+
                 if not component.enabled:
                     continue
                 func = component.getModelFunction()
@@ -364,10 +479,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
     def setupParams(self):
         currentRow = self.__measurement_file.current_measurement_info
-        self.equivalen_resistance = currentRow.equivalent_resistance_end
+        self.equivalent_resistance = currentRow.equivalent_resistance_end
         self.temperature = currentRow.temperature_end
 
     def on_next_triggered(self):
+        self.saveNoiseModelData()
         meas_info = self.__measurement_file.next_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
@@ -375,6 +491,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             self.on_fit_data_triggered()
 
     def on_prev_triggered(self):
+        self.saveNoiseModelData()
         meas_info = self.__measurement_file.prev_row()
         print(meas_info)
         self.load_measurement_data(meas_info.measurement_filename)
@@ -399,23 +516,33 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_alpha = 0
         self.flicker_frequency = 0
 
-    def add_thermal_noise(self):
+    def add_thermal_noise(self, name=None):
         thermal_name = self.thermalNoiseName
+        if name is not None:
+            thermal_name = name
+
         if thermal_name in self.noise_components:
-            return 
+            return self.noise_components[thermal_name]
 
         thermal = ThermalNoiseComponent(thermal_name, True, self.plotter, coordinate_transform=self.coordinate_transform)
         self.noise_components[thermal_name] = thermal
+        self.on_noise_component_update_required()
+        return thermal
 
-    def add_flicker_noise(self):
+    def add_flicker_noise(self, name=None):
         flicker_name = self.flickerNoiseName
+        if name is not None:
+            flicker_name = name
+        
         if flicker_name in self.noise_components:
-            return 
+            return self.noise_components[flicker_name]
         
         flicker = FlickerNoiseComponent(flicker_name, True, self.plotter, pen="g", coordinate_transform=self.coordinate_transform)
         flicker.sigAmplitudeChanged.connect(self.on_flicker_handle_position_changed)
         flicker.sigNoiseUpdateRequired.connect(self.on_noise_component_update_required)
         self.noise_components[flicker_name] = flicker
+        self.on_noise_component_update_required()
+        return flicker
         
     def on_flicker_handle_position_changed(self, flicker, amplitude):
         self.flicker_amplitude = amplitude
@@ -423,13 +550,17 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_frequency = flicker.frequency
         self.flicker_enabled = flicker.enabled
         
-    def on_add_gr_noise_triggered(self):
-        count = self.analyzer_window.get_gr_component_count()
-        gr_name = "GR_{0}".format(count)
-        pen = intColor(count)
+    def add_gr_noise(self, name=None, pen=None):
+        if not name:
+            return None
+        
+        if not pen:
+            pen=mkPen("r")
+
+        gr_name = name
 
         if gr_name in self.noise_components:
-            return
+            return self.noise_components[gr_name]
         
         gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen, coordinate_transform=self.coordinate_transform)
         gr.sigPositionChanged.connect(self.on_gr_handle_position_changed)
@@ -437,7 +568,17 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # gr.sigPositionChanged.connect()
         self.noise_components[gr_name] = gr
         self.analyzer_window.add_gr_component(gr_name)
-        self.selected_gr_index = count
+        self.selected_gr_index = 0 #count
+        self.on_noise_component_update_required()
+        return gr
+
+
+    def on_add_gr_noise_triggered(self):
+        count = self.analyzer_window.get_gr_component_count()
+        gr_name = "GR_{0}".format(count)
+        pen = intColor(count)
+        self.add_gr_noise(gr_name, pen)
+        
         
 
     def on_gr_handle_position_changed(self, handle, frequency, amplitude):
@@ -457,8 +598,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         selected_item_name = self.analyzer_window.remove_gr_name_by_index(self.selected_gr_index)
         item = self.noise_components.pop(selected_item_name)
         item.remove_handle()
-
- 
+        self.on_noise_component_update_required()
+    # def remove_all_noise_components(self):
+    #     for name, item in self.noise
 
     def on_reset_gr_noise_triggered(self):
         pass
@@ -687,12 +829,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             print(e)
     
     @property
-    def equivalen_resistance(self):
+    def equivalent_resistance(self):
         return self.__equivalent_resistance
 
-    @equivalen_resistance.setter
+    @equivalent_resistance.setter
     @uih.assert_int_or_float_argument
-    def equivalen_resistance(self, value):
+    def equivalent_resistance(self, value):
         if self.__equivalent_resistance == value:
             return 
 
@@ -907,21 +1049,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         fit_parameters.add_many(*list_of_params)
         print()
         print(fit_parameters)
-        # print()
-        # # # fit_model = reduce()
-        # # # params = comp_model.make_params()
-        # print(fit_model)
-
-        # params = fit_model.make_params()
-        # print(params)
-        # print(self._displayData)
+        
         data = self._displayData
-        # data = np.log10(self._displayData)
-        # print(data)
         result = fit_model.fit(data, fit_parameters, f=self._displayFreq)
         print(result.fit_report())
-        print("best values")
-        print(result.params)
+        # print("best values")
+        # print(result.params)
         # print(result.init_fit)
         # print("init fit")
         # print(result.init_fit)

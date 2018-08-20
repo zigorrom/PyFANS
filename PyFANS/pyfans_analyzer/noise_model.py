@@ -19,6 +19,10 @@ class BaseNoiseComponent(QtCore.QObject):
     def name(self):
         return self._name
 
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     @property
     def transform(self):
         return self._coordinate_transform
@@ -42,8 +46,14 @@ class BaseNoiseComponent(QtCore.QObject):
     def plotter(self):
         return self._plotter
 
+    def component_type(self):
+        return self.TYPE_NAME
+
     def on_enabled_changed(self,new_value):
         raise NotImplementedError()
+
+    def on_setting_state_finished(self):
+        pass
 
     def getModelPrefix(self):
         return "{0}{1}".format(self.name, self.PREFIX_SPLITTER)
@@ -54,6 +64,9 @@ class BaseNoiseComponent(QtCore.QObject):
     def getFittingModelAndParams(self, logMode=True):
         raise NotImplementedError()
 
+    def remove(self):
+        pass
+
     @property
     def whereToAdd(self):
         viewRange =  self.plotter.getViewRange() #+[2,-1]
@@ -62,6 +75,44 @@ class BaseNoiseComponent(QtCore.QObject):
         whereToAddY = 0.8*viewRange[1][1]+0.2*viewRange[1][0]
         whereToAdd = (whereToAddX,whereToAddY)
         return whereToAdd
+
+    def params_to_serialize(self):
+        return [
+            "name",
+            "enabled",
+            "component_type"
+        ]
+
+    def get_state(self):
+        d = dict()
+        params = self.params_to_serialize()
+        for attr in self.params_to_serialize():
+            try:
+                value = getattr(self, attr, None)
+                if callable(value):
+                    value = value()
+                d[attr] = value
+            except Exception as e:
+                print(e)
+
+        return d
+
+    def set_state(self, state_dict):
+        params = self.params_to_serialize()
+        params.remove("component_type")
+        for attr in params:
+            try:
+                setattr(self, attr, state_dict[attr])
+            except Exception as e:
+                print("Cannot set attribute {0}".format(attr))
+        
+        self.on_setting_state_finished()
+
+    # #pickling area
+    # def __getstate__(self):
+    #     d = {""}
+    #     pass
+    # #\pickling area
 
 class ModifiableNoiseComponent(BaseNoiseComponent):
     handleOffsetNormal = QtCore.QPointF(-20, 20)
@@ -103,6 +154,9 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
 
     def create_handle(self, *args, **kwargs):
         raise NotImplementedError()
+
+    def remove(self):
+        self.remove_handle()
 
     def remove_handle(self):
         self.plotter.remove_handle(self.name)
@@ -149,6 +203,11 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
     def calculate_curve(self, frequency):
         raise NotImplementedError()
 
+    def on_setting_state_finished(self):
+        self.update_position()
+        self.update_params_on_handle_position_changed()
+        self.notifyUpdateRequired()
+
     def update_curve(self, currentFreq, currentAmplitude):
         
         xPosHandle = np.log10(currentFreq)
@@ -173,7 +232,7 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
 class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
     # PREFIX = "FLICKER"
     # TYPE_NAME = "FLICKER NOISE NODE"
-
+    TYPE_NAME = "__flicker__"
     ALPHA_FLICKER_OPTION_NAME = "alpha"
     AMPLITUDE_OPTION_NAME = "amplitude"
     FREQUENCY_OPTION_NAME = "frequency"
@@ -186,7 +245,7 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
         self._frequency = kwargs.get(self.FREQUENCY_OPTION_NAME, None)
         self._amplitude = kwargs.get(self.AMPLITUDE_OPTION_NAME, None)
         self._alpha_flicker = kwargs.get(self.ALPHA_FLICKER_OPTION_NAME, 1)
-        
+    
     def create_handle(self, *args, **kwargs):
         return self.plotter.create_flicker_handle(*args, **kwargs)
 
@@ -250,6 +309,16 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
             self.frequency = 1.0
             self.amplitude = value
 
+    def params_to_serialize(self):
+        parent_params = super().params_to_serialize()
+        this_params = ["frequency", "amplitude", "alpha_flicker"]
+        this_params.extend(parent_params)
+        return this_params
+        # return [
+        #     "name",
+        #     "enabled"
+        # ]
+
     def getModelFunction(self, logMode=False):
         def modelFunction(f, alpha=self.alpha_flicker, amplitude=self.amplitude, frequency=self.frequency):
             fdivf0 = np.divide(frequency,f)
@@ -287,7 +356,7 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
 class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
     # PREFIX = "GR"
     # TYPE_NAME = "GR NOISE NODE"
-
+    TYPE_NAME = "__gr__"
     FREQUENCY_OPTION_NAME = "frequency"
     AMPLITUDE_OPTION_NAME = "amplitude"
     handleOffsetNormal = QtCore.QPointF(-40, 40)
@@ -337,6 +406,12 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
         self._frequency = value
         self.update_position()
 
+    def params_to_serialize(self):
+        parent_params = super().params_to_serialize()
+        this_params = ["frequency", "amplitude"]
+        this_params.extend(parent_params)
+        return this_params
+
     def getModelFunction(self, logMode=False):
         def modelFunction(f, amplitude=self.amplitude, frequency=self.frequency):
             fdivf0 = np.divide(f,frequency)
@@ -376,6 +451,7 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
 class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
     # PREFIX = "THERMAL"
     # TYPE_NAME = "THERMAL NOISE NODE"
+    TYPE_NAME = "__thermal__"
     BOLTZMAN_CONSTANT = 1.38064852E-23
     RESISTANCE_OPTION_NAME = "resistance"
     TEMPERATURE_OPTION_NAME = "temperature"
@@ -394,7 +470,7 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         self.transform.sigTransformChanged.connect(self.on_transform_changed)
 
     def __create_curve__(self):
-        pen = self.opts.get("pen", "m")
+        pen = self.opts.get("pen", "k")
         self._curve = self.plotter.create_curve(
             self.name,
             pen=pen,
@@ -415,6 +491,9 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         yData = [thermal_noise,thermal_noise]
         xData, yData = self.transform.convert(xData, yData)
         self._curve.setData(xData,yData)
+
+    def on_setting_state_finished(self):
+        self.update_thermal_noise()
 
     def on_transform_changed(self):
         self.update_thermal_noise()
@@ -437,6 +516,8 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
     #     self.update_thermal_noise()
     # def get_model_data(self, frequency):
     #     return ThermalNoiseFunction(frequency, self.temperature,self.resistance)
+    def remove(self):
+        self.plotter.remove_curve(self.name)
 
     @property
     def thermal_noise_level(self):
@@ -448,6 +529,12 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
             return
         self._thermal_noise = value
         self.update_thermal_noise()
+
+    def params_to_serialize(self):
+        parent_params = super().params_to_serialize()
+        this_params = ["thermal_noise_level"]
+        this_params.extend(parent_params)
+        return this_params
 
     def getModelFunction(self, logMode=False):
         def modelFunction(f):
@@ -487,15 +574,25 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
 
 
 
-class NoiseModelSerializer:
+class NoiseModelToDictionaryConverter:
     def __init__(self):
         pass
 
-    def serialize(self, model):
+    def convert(self, model):
+        if not isinstance(model, dict):
+            print("cannot convert non dictionary type")
+            return None
+        result = dict()
+        
+        for name, item in model.items():
+            state = item.get_state()
+            result[name] = state
+
+        return result
+
+    def convert_back(self):
         pass
 
-    def deserialize(self, obj):
-        pass
     
 
     
