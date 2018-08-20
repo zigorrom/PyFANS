@@ -13,6 +13,7 @@ main_view_base, main_view = uic.loadUiType("UI/UI_Analyzer.ui")
 class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigOpenFileTriggered = QtCore.pyqtSignal(str)
     sigSaveFileTriggered = QtCore.pyqtSignal()
+    sigExportTriggered = QtCore.pyqtSignal()
     sigNextTriggered = QtCore.pyqtSignal()
     sigPrevTriggered = QtCore.pyqtSignal()
     sigCropTriggered = QtCore.pyqtSignal()
@@ -24,6 +25,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigRemoveAllGRTriggered = QtCore.pyqtSignal()
     sigFitTriggered = QtCore.pyqtSignal()
     sigSelectedGRChanged = QtCore.pyqtSignal()
+    sigAppClosing = QtCore.pyqtSignal()
     
 
     def __init__(self):
@@ -94,6 +96,10 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def on_actionSave_triggered(self):
         self.sigSaveFileTriggered.emit()
     
+    @QtCore.pyqtSlot()
+    def on_action_export_triggered(self):
+        self.sigExportTriggered.emit()
+
     @QtCore.pyqtSlot()
     def on_actionPrev_triggered(self):
         self.sigPrevTriggered.emit()
@@ -167,7 +173,8 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         pass
 
     def closeEvent(self, event):
-        pass
+        self.sigAppClosing.emit()
+        event.accept()
 
 def main():
     import ctypes

@@ -181,6 +181,7 @@ class MeasurementInfoFile(object):
         filename, extension = os.path.splitext(basename)
         noise_params_filename = os.path.join(filepath, filename + ".npar")
         self._noise_params_filename = noise_params_filename
+        self._extended_measurement_info_filename = os.path.join(filepath, "{0}_extended{1}".format(filename, extension))
         self.loadNoiseParams(noise_params_filename)
 
         self.reset()
@@ -201,6 +202,31 @@ class MeasurementInfoFile(object):
                 pickle.dump(self._noise_params, file)
 
     
+    def save_extended_measurement_info(self):
+        result_df = pd.DataFrame()
+        for fname, params in self._noise_params.items():
+            try:
+                noise_components = params["noise_components"]
+                cols_to_skip = ["name", "enabled", "component_type"]
+                res_dict = {"Filename": fname}
+                for comp_name, component in noise_components.items():
+                    for attribute, value in component.items():
+                        if attribute in cols_to_skip:
+                            continue
+                        
+                        res_dict["_".join((comp_name, attribute))]=value
+                
+                result_df = result_df.append(res_dict, ignore_index=True)
+
+
+            except Exception as e:
+                print("Exception while generating extended measurement info")
+                print(e)
+
+        result = pd.merge(self._measurement_info, result_df, on="Filename", how="outer")
+        result.to_csv(self._extended_measurement_info_filename, sep="\t")
+        # print(result)
+
     @property
     def columns(self):
         return list(self._measurement_info)

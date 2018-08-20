@@ -156,6 +156,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
         self.analyzerWindow.sigOpenFileTriggered.connect(self.on_file_open_triggered)
         self.analyzerWindow.sigSaveFileTriggered.connect(self.on_file_save_triggered)
+        self.analyzerWindow.sigExportTriggered.connect(self.on_export_triggered)
         self.analyzerWindow.sigNextTriggered.connect(self.on_next_triggered)
         self.analyzerWindow.sigPrevTriggered.connect(self.on_prev_triggered)
         self.analyzerWindow.sigCropTriggered.connect(self.on_crop_triggered)
@@ -166,6 +167,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.analyzerWindow.sigResetGRTriggered.connect(self.on_reset_gr_noise_triggered)
         self.analyzerWindow.sigFitTriggered.connect(self.on_fit_data_triggered)
         self.analyzerWindow.sigSelectedGRChanged.connect(self.on_selected_gr_changed)
+        self.analyzerWindow.sigAppClosing.connect(self.on_app_closing)
     
 
     def on_file_open_triggered(self, filename):
@@ -296,6 +298,14 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # for name, item in noise_model.items():
         #     state = item.get_state()
         #     noise_model[name] = state
+
+
+    def on_export_triggered(self):
+        print("exporting")
+        self.__measurement_file.save_extended_measurement_info()
+
+    def on_app_closing(self):
+        self.saveAllNoiseModels()
 
     def remove_all_noise_components(self):
         for name, item in self.noise_components.items():

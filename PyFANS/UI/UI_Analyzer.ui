@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1048</width>
-    <height>948</height>
+    <height>975</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -402,6 +402,7 @@
     </property>
     <addaction name="actionOpen_File"/>
     <addaction name="actionSave"/>
+    <addaction name="action_export"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -425,6 +426,7 @@
    </attribute>
    <addaction name="actionOpen_File"/>
    <addaction name="actionSave"/>
+   <addaction name="action_export"/>
    <addaction name="actionPrev"/>
    <addaction name="actionNext"/>
   </widget>
@@ -497,6 +499,11 @@
   <action name="actionTest">
    <property name="text">
     <string>test</string>
+   </property>
+  </action>
+  <action name="action_export">
+   <property name="text">
+    <string>Export</string>
    </property>
   </action>
  </widget>
