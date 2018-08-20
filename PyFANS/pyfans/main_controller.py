@@ -348,6 +348,32 @@ class FANS_UI_Controller(QtCore.QObject):
         msg.setDetailedText("Data saved in folder: {0}".format(self.experiment_settings.working_directory))
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         retval = msg.exec_()
+
+        if self.experiment_settings.write_timetrace != 0:
+            msg = QtGui.QMessageBox()
+            msg.setText("Would you like to perform timetrace file convertion now?")
+            msg.setInformativeText("You can always do this with this software")
+            msg.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            retval = msg.exec_()
+            if retval == QtGui.QMessageBox.Yes:
+                filename = os.path.join(self.experiment_settings.working_directory, "{0}.dat".format(self.experiment_settings.experiment_name))
+                self.open_timetrace_convertion_window(filename)
+
+    def open_timetrace_convertion_window(self, measurement_data_filename):
+        params = []
+        params.append("python")
+        script_directory = os.path.dirname(__file__)
+        timetrace_converter_script_name = os.path.join(script_directory, "timetrace_extractor_gui.py")
+        params.append(timetrace_converter_script_name)
+        if measurement_data_filename:
+            params.append("-mf")
+            params.append(measurement_data_filename)
+
+        command = " ".join(params) 
+        import subprocess
+        p = subprocess.Popen(command, shell=False)
+        #os.system(command)
+        #os.spawnl(os.P_DETACH, command)
         
     def on_voltage_control_view_clicked(self):
         if not self._voltage_control:
