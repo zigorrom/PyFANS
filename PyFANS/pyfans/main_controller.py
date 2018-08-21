@@ -461,6 +461,8 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_open_timetrace_conversion(self):
         print("opening timetrace conversion")
+        filename = os.path.join(self.experiment_settings.working_directory, "{0}.dat".format(self.experiment_settings.experiment_name))
+        self.open_timetrace_convertion_window(filename)
         # import subprocess
         # subprocess.Popen()
 

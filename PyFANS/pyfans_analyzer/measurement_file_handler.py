@@ -228,6 +228,7 @@ class MeasurementInfoFile(object):
                 print(e)
 
         result = pd.merge(self._measurement_info, result_df, on="Filename", how="outer")
+        result.fillna(0)
         result.to_csv(self._extended_measurement_info_filename, sep="\t")
         # print(result)
 
