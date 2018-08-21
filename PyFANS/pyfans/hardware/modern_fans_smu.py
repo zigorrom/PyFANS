@@ -450,6 +450,9 @@ class DesiredErrorReachedError(Exception):
 class PolaritySwitchError(Exception):
     pass
 
+class InstabilityError(Exception):
+    pass
+
 class IterationCounter(object):
     def __init__(self, max_iteration, exception_to_call = None):
         self._max_iteration = max_iteration
@@ -494,6 +497,7 @@ class FANS_VoltageSetter(Observable):
     ZERO_VOLTAGE_INTERVAL = 0.01
     NEGATIVE_POLARITY, POSITIVE_POLARITY = (-1,1)
     STABILIZATION_COUNTER = 50
+    INSTABILITY_COUNTER = 7
     MAX_ITERATIONS = 100*STABILIZATION_COUNTER
 
     def __init__(self):#,voltage):
@@ -514,6 +518,7 @@ class FANS_VoltageSetter(Observable):
         self.current_polarity = self.POSITIVE_POLARITY
         self.iteration_counter = IterationCounter(self.MAX_ITERATIONS, MaxIterationReachedError)
         self.stabilization_counter = IterationCounter(self.STABILIZATION_COUNTER, DesiredErrorReachedError)
+        self.instability_counter = IterationCounter(self.INSTABILITY_COUNTER, InstabilityError)
 
     def subscribe_to_voltage_change(self, callback):
         self.addObserver("set_voltage", callback)
@@ -691,45 +696,56 @@ class FANS_VoltageSetter(Observable):
 
         try:
             while True:
-                value = self.read_feedback_voltage()
-                abs_value = math.fabs(value)
-                difference = math.fabs(value - self.voltage_to_set)
-                motor_value_to_set = 0
-                self.on_voltage_changed(value)
-               
+                try:
+                    value = self.read_feedback_voltage()
+                    abs_value = math.fabs(value)
+                    difference = math.fabs(value - self.voltage_to_set)
+                    motor_value_to_set = 0
+                    self.on_voltage_changed(value)
+                
 
-                if self.mode == self.COARSE_MODE:
-                    if difference < VoltageTuningInterval:
-                        self.mode = self.FINE_MODE
-                        continue
+                    if self.mode == self.COARSE_MODE:
+                        if difference < VoltageTuningInterval:
+                            self.mode = self.FINE_MODE
+                            continue
 
-                    motor_value_to_set = self.voltage_setting_function(value,voltage_to_set, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
-                    motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY))  #self.voltage_set_sign_calculation(voltage_to_set, value, self.current_polarity)) 
-                    motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
-                    self.set_moving_voltage(motor_value_to_set)
+                        motor_value_to_set = self.voltage_setting_function(value,voltage_to_set, correction_coefficient = self.correction_coefficient) # main_voltage/sample_voltage)
+                        motor_value_to_set = math.copysign(motor_value_to_set, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY))  #self.voltage_set_sign_calculation(voltage_to_set, value, self.current_polarity)) 
+                        motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
+                        self.set_moving_voltage(motor_value_to_set)
 
-                elif self.mode == self.FINE_MODE:
-                    if difference < VoltageSetError:
-                        self.mode = self.STABILIZATION_MODE
-                        self.set_moving_voltage(0)
-                        continue
+                    elif self.mode == self.FINE_MODE:
+                        if difference < VoltageSetError:
+                            self.mode = self.STABILIZATION_MODE
+                            self.set_moving_voltage(0)
+                            continue
 
-                    motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY)) 
-                    motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
-                    self.set_moving_voltage(motor_value_to_set)
-                    self.iteration_counter.increment()
+                        motor_value_to_set = math.copysign(MIN_MOVING_VOLTAGE, self.voltage_set_sign_calculation(abs_voltage_to_set, abs_value, self.POSITIVE_POLARITY)) 
+                        motor_value_to_set = self.normalize_motor_value(motor_value_to_set)
+                        self.set_moving_voltage(motor_value_to_set)
+                        self.iteration_counter.increment()
 
-                elif self.mode == self.STABILIZATION_MODE:
-                    if difference < VoltageSetError:
-                        self.stabilization_counter.increment()
+                    elif self.mode == self.STABILIZATION_MODE:
+                        if difference < VoltageSetError:
+                            self.stabilization_counter.increment()
+                        else:
+                            self.mode = self.FINE_MODE
+                            self.stabilization_counter.reset()
+                            self.instability_counter.increment()
+
                     else:
-                        self.mode = self.FINE_MODE
-                        self.stabilization_counter.reset()
+                        raise ValueError("mode valiable has wrong value")
 
-                else:
-                    raise ValueError("mode valiable has wrong value")
+                    print("CURRENT VALUE:{0}; GOAL:{1}; MOTOR:{2}; MODE:{3}; ERR:{4}".format(value, voltage_to_set, motor_value_to_set,self.mode, VoltageSetError))
 
-                print("CURRENT VALUE:{0}; GOAL:{1}; MOTOR:{2}; MODE:{3}; ERR:{4}".format(value, voltage_to_set, motor_value_to_set,self.mode, VoltageSetError))
+                except InstabilityError as err:
+                    self.instability_counter.reset()
+                    error_to_add = math.fabs(VoltageSetError)
+                    if voltage_to_set != 0.0:
+                        error_to_add = 0.01* math.fabs(voltage_to_set)
+                        
+                    VoltageSetError += error_to_add
+                    VoltageTuningInterval += error_to_add
 
         except DesiredErrorReachedError as err:
             print("Desired error is reached")
