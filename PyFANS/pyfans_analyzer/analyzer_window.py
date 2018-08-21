@@ -26,20 +26,18 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigFitTriggered = QtCore.pyqtSignal()
     sigSelectedGRChanged = QtCore.pyqtSignal()
     sigAppClosing = QtCore.pyqtSignal()
-    
 
     def __init__(self):
         super().__init__()
         self.setupUi()
-        self.setupBinding()
-        
+        self.setupBinding()        
 
     def setupUi(self):
         super().setupUi(self)
         self._spectrumPlotWidget = plt.SpectrumPlotWidget(self.ui_plot, {})
         self.status_label = QtGui.QLabel(self)
         self.statusbar.addPermanentWidget(self.status_label)
-        
+    
     def setupBinding(self):
         sourceObject = None
         self.remove_pickups = uih.Binding(self.ui_remove_pickups_enabled,"checked", sourceObject, "remove_pickups", converter=uih.AssureBoolConverter())

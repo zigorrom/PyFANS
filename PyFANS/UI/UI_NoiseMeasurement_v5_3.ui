@@ -1586,7 +1586,7 @@
      <x>0</x>
      <y>0</y>
      <width>1030</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1609,6 +1609,7 @@
      <string>Window</string>
     </property>
     <addaction name="actionOpenAnalysisWindow"/>
+    <addaction name="actionOpenPlotterWindow"/>
     <addaction name="actionTimetraceConversion"/>
     <addaction name="actionOpenTimetraceWindow"/>
     <addaction name="actionOpenRealtimeNoiseWindow"/>
@@ -1671,6 +1672,7 @@
    <addaction name="actionOpenConsoleWindow"/>
    <addaction name="actionTimeInfoWindow"/>
    <addaction name="actionOpenRemote"/>
+   <addaction name="actionOpenPlotterWindow"/>
    <addaction name="actionTimetraceConversion"/>
    <addaction name="actionHardwareSettings"/>
    <addaction name="actionLockScreen"/>
@@ -1825,6 +1827,15 @@
    </property>
    <property name="text">
     <string>TimetraceConversion</string>
+   </property>
+  </action>
+  <action name="actionOpenPlotterWindow">
+   <property name="icon">
+    <iconset resource="icon_resources.qrc">
+     <normaloff>:/icons/Icons/plotter_icon_64x64.png</normaloff>:/icons/Icons/plotter_icon_64x64.png</iconset>
+   </property>
+   <property name="text">
+    <string>OpenPlotterWindow</string>
    </property>
   </action>
  </widget>

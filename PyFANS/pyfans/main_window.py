@@ -233,6 +233,9 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
 
     def subscribe_to_analysis_window_open_action(self,slot):
         self.connect(self.actionOpenAnalysisWindow.triggered, slot)
+        
+    def subscribe_to_plotter_window_open_action(self,slot):
+        self.connect(self.actionOpenPlotterWindow.triggered, slot)
 
     def subscribe_to_experiment_start_action(self, slot):
         self.connect(self.sigExperimentStart, slot)

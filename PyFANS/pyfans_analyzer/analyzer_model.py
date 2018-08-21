@@ -27,18 +27,18 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     bestFitName = "best_fit"
 
     attributes_to_save = [
-            "hide_original",
-            "remove_pickups",
-            "smoothing_winsize",
-            "smoothing_enabled",
-            "cutoff_correction",
-            "cutoff_correction_capacity",
-            "start_crop_frequency",
-            "end_crop_frequency",
-            "use_crop_range",
-            "thermal_enabled",
-            "subtract_thermal_noise",
-            "autofit"
+        "hide_original",
+        "remove_pickups",
+        "smoothing_winsize",
+        "smoothing_enabled",
+        "cutoff_correction",
+        "cutoff_correction_capacity",
+        "start_crop_frequency",
+        "end_crop_frequency",
+        "use_crop_range",
+        "thermal_enabled",
+        "subtract_thermal_noise",
+        "autofit"
         ]
 
     def __init__(self, analyzer_window=None):

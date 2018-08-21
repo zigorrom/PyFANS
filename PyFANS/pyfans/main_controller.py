@@ -32,6 +32,8 @@ import pyfans.experiment.modern_fans_experiment as mfexp
 
 
 import pyfans_analyzer.experiment_data_analysis as eds
+from pyfans_analyzer.analyzer_model import AnalyzerModel
+from pyfans_analyzer.analyzer_window import MainView
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -46,6 +48,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.show_main_view()
 
         self.experimentData = eds.ExperimentData()
+        self.plotter_window = None
         self.analysis_window = None
 
         self._voltage_control = None
@@ -120,6 +123,7 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.subscribe_to_lock_screen_action(self.on_lock_screen_action)
         self.main_view.subscribe_to_switch_theme_action(self.on_theme_switch_action)
         self.main_view.subscribe_to_analysis_window_open_action(self.on_analysis_window_open_action)
+        self.main_view.subscribe_to_plotter_window_open_action(self.on_plotter_window_open_action)
         self.main_view.subscribe_to_voltage_control_clicked(self.on_voltage_control_view_clicked)
         self.main_view.subscribe_to_timetrace_converter_action(self.on_open_timetrace_conversion)
         self.main_view.subscribe_to_dut_selector_action(self.on_dut_selector_opened)
@@ -495,12 +499,21 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def on_analysis_window_open_action(self):
         print("analysis window")
-        # if not hasattr(self, "analysis_window"):
         if not self.analysis_window:
-            self.analysis_window = eds.ExperimentDataAnalysis(layout="horizontal")
-            self.analysis_window.setData(self.experimentData)
+            self.analysis_window = MainView()
+            data = AnalyzerModel(analyzer_window=self.analysis_window)
+            self.analysis_window.dataContext = data
         self.analysis_window.show()
+
+    def on_plotter_window_open_action(self):
+        print("plotter window")
+        # if not hasattr(self, "analysis_window"):
+        if not self.plotter_window:
+            self.plotter_window = eds.ExperimentDataAnalysis(layout="horizontal")
+            self.plotter_window.setData(self.experimentData)
+        self.plotter_window.show()
         # self.main_view.ui_dock_widget.setWidget(widget)
+
 
     def on_log_message_received(self, message):
         if message:
