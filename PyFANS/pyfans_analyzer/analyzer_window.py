@@ -37,6 +37,8 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def setupUi(self):
         super().setupUi(self)
         self._spectrumPlotWidget = plt.SpectrumPlotWidget(self.ui_plot, {})
+        self.status_label = QtGui.QLabel(self)
+        self.statusbar.addPermanentWidget(self.status_label)
         
     def setupBinding(self):
         sourceObject = None
@@ -139,6 +141,9 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     @QtCore.pyqtSlot(int)
     def on_ui_gr_listview_currentRowChanged(self):
         self.sigSelectedGRChanged.emit()
+
+    def set_current_analysis_state(self, max_rows, current_row):
+        self.status_label.setText("{0} of {1}".format(current_row, max_rows))
 
     def add_gr_component(self, name):
         items = self.ui_gr_listview.findItems(name, QtCore.Qt.MatchExactly)

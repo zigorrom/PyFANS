@@ -11,7 +11,7 @@ from pyfans.physics.physical_calculations import calculate_thermal_noise #(equiv
 from pyfans.plot import FlickerHandle, GRHandle
 from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent, BaseNoiseComponent, NoiseModelToDictionaryConverter
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
-
+from pyfans.utils.utils import open_folder_with_file_selected
 from lmfit import Model, CompositeModel, Parameters
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
@@ -180,10 +180,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__measurement_file.print_rows()
         self.load_measurement_data(self.__measurement_file.current_measurement_info.measurement_filename)
         
+        
     def load_measurement_data(self, filename):
         print("opening file {0}".format(filename))
         try:
             self.setupParams()
+            self.setupCurrentState()
             params = self.__measurement_file.current_measurement_info
             self.thermal_noise = calculate_thermal_noise(
                 params.equivalent_resistance_end, 
@@ -247,6 +249,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def saveAllNoiseModels(self):
         self.saveNoiseModelData()
         self.__measurement_file.saveNoiseParams()
+        
 #  self.__measurement_file.current_noise_parameters
         
 
@@ -303,6 +306,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_export_triggered(self):
         print("exporting")
         self.__measurement_file.save_extended_measurement_info()
+        fname = self.__measurement_file.extended_measurement_info_filename
+        if os.path.isfile(fname):
+            open_folder_with_file_selected(fname)
 
     def on_app_closing(self):
         self.saveAllNoiseModels()
@@ -491,6 +497,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         currentRow = self.__measurement_file.current_measurement_info
         self.equivalent_resistance = currentRow.equivalent_resistance_end
         self.temperature = currentRow.temperature_end
+
+    def setupCurrentState(self):
+        rows = self.__measurement_file.row_count
+        current_row = self.__measurement_file.current_row + 1
+        self.analyzer_window.set_current_analysis_state(rows, current_row)
 
     def on_next_triggered(self):
         self.saveNoiseModelData()

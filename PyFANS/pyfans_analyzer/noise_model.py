@@ -83,6 +83,9 @@ class BaseNoiseComponent(QtCore.QObject):
             "component_type"
         ]
 
+    #def pretty_names(self):
+
+
     def get_state(self):
         d = dict()
         params = self.params_to_serialize()
@@ -247,7 +250,9 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
         self._alpha_flicker = kwargs.get(self.ALPHA_FLICKER_OPTION_NAME, 1)
     
     def create_handle(self, *args, **kwargs):
-        return self.plotter.create_flicker_handle(*args, **kwargs)
+        handle = self.plotter.create_flicker_handle(*args, **kwargs)
+        handle.sigAlphaChanged.connect(self.update_alpha_flicker)
+        return handle
 
     def calculate_curve(self, frequency):
         func = self.getModelFunction()
@@ -271,6 +276,9 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
 
         self._frequency = value
         self.update_position()
+
+    def update_alpha_flicker(self, value):
+        self.alpha_flicker = value
 
     @property
     def alpha_flicker(self):
@@ -311,7 +319,8 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
 
     def params_to_serialize(self):
         parent_params = super().params_to_serialize()
-        this_params = ["frequency", "amplitude", "alpha_flicker"]
+        # this_params = ["frequency", "amplitude", "alpha_flicker"]
+        this_params = ["frequency", "amplitude", "absolute_amplitude", "alpha_flicker"]
         this_params.extend(parent_params)
         return this_params
         # return [

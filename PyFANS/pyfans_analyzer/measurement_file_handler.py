@@ -186,6 +186,10 @@ class MeasurementInfoFile(object):
 
         self.reset()
 
+    @property
+    def extended_measurement_info_filename(self):
+        return self._extended_measurement_info_filename
+
     def loadNoiseParams(self, noise_params_filename):
         if os.path.isfile(noise_params_filename):
             try:
@@ -237,6 +241,10 @@ class MeasurementInfoFile(object):
     
     def reset(self):
         self._current_row = 0
+
+    @property
+    def current_row(self):
+        return self._current_row
 
     def next_row(self):
         self._current_row += 1
