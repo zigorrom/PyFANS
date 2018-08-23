@@ -130,10 +130,7 @@ class Handle(UIGraphicsItem):
         self.setPos(position)
         self.sigPositionChanged.emit(self, self.currentPosition)
 
-
-
-        
-
+   
 
 
     @property
@@ -547,14 +544,18 @@ class SpectrumPlotWidget:
 
     
 
-    def create_flicker_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None):
+    def create_flicker_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None, scenePosition=None):
         handle = self.get_handle_by_name(name)
         if handle is not None:
             return handle
 
         handle = FlickerHandle(name=name, pen=pen)
         # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
-        if isinstance(initPosition, tuple) and len(initPosition)==2:
+        if scenePosition is not None:
+            pos = self.plot.vb.mapSceneToView(scenePosition)
+            handle.setPos(pos)
+
+        elif isinstance(initPosition, tuple) and len(initPosition)==2:
             x,y = initPosition
             handle.setPos(x,y)
         else:
@@ -568,16 +569,23 @@ class SpectrumPlotWidget:
         self.handles[name] = handle
         return handle
 
-    def create_gr_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None):
+    def create_gr_handle(self, name, pen="r", initPosition=None, positionChangedCallback=None, scenePosition=None):
         handle = self.get_handle_by_name(name)
         if handle is not None:
             return handle
 
         handle = GRHandle(name=name, pen=pen)
         # handle = Handle(name = "flicker", radius=10, typ="t", pen=pg.mkPen(width=4.5, color='r'), deletable=True)#, parent=self.plot)
-        if isinstance(initPosition, tuple) and len(initPosition)==2:
+        if scenePosition is not None:
+            pos = self.plot.vb.mapSceneToView(scenePosition)
+            handle.setPos(pos)
+            # print(pos)
+            # handle.setScenePosition(scenePosition)
+
+        elif isinstance(initPosition, tuple) and len(initPosition)==2:
             x,y = initPosition
             handle.setPos(x,y)
+
         else:
             handle.setPos(1,-2)
 

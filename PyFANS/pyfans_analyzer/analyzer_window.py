@@ -20,6 +20,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigCropUndoTriggered = QtCore.pyqtSignal()
     sigFlickerResetTriggered = QtCore.pyqtSignal()
     sigAddGRTriggered = QtCore.pyqtSignal()
+    sigAddGRAtPosTriggered = QtCore.pyqtSignal(object)
     sigResetGRTriggered = QtCore.pyqtSignal()
     sigRemoveGRTriggered = QtCore.pyqtSignal()
     sigRemoveAllGRTriggered = QtCore.pyqtSignal()
@@ -96,7 +97,8 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
         evt=evt[0]
         if evt.button() == QtCore.Qt.LeftButton:
             if evt.double() == True:
-                self.on_ui_add_gr_noise_button_clicked()  
+                self.on_add_gr_noise_at_position_triggered(evt.scenePos())
+                #self.on_ui_add_gr_noise_button_clicked()  
         # elif evt.button() == QtCore.Qt.RightButton:
         #     print("right")
         # if evt.type() == QtCore.QEvent.MouseButtonPress:
@@ -142,6 +144,9 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     @QtCore.pyqtSlot()
     def on_ui_add_gr_noise_button_clicked(self):
         self.sigAddGRTriggered.emit()
+
+    def on_add_gr_noise_at_position_triggered(self,position):
+        self.sigAddGRAtPosTriggered.emit(position)
 
     @QtCore.pyqtSlot()
     def on_ui_remove_gr_noise_button_clicked(self):

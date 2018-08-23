@@ -163,6 +163,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.analyzerWindow.sigCropUndoTriggered.connect(self.on_undo_crop_triggered)
         self.analyzerWindow.sigFlickerResetTriggered.connect(self.on_flicker_noise_reset_triggered)
         self.analyzerWindow.sigAddGRTriggered.connect(self.on_add_gr_noise_triggered)
+        self.analyzerWindow.sigAddGRAtPosTriggered.connect(self.on_add_gr_noise_at_position_triggered)
         self.analyzerWindow.sigRemoveGRTriggered.connect(self.on_remove_gr_noise_triggered)
         self.analyzerWindow.sigResetGRTriggered.connect(self.on_reset_gr_noise_triggered)
         self.analyzerWindow.sigFitTriggered.connect(self.on_fit_data_triggered)
@@ -571,7 +572,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.flicker_frequency = flicker.frequency
         self.flicker_enabled = flicker.enabled
         
-    def add_gr_noise(self, name=None, pen=None):
+    def add_gr_noise(self, name=None, pen=None, scenePosition=None):
         if not name:
             return None
         
@@ -583,7 +584,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         if gr_name in self.noise_components:
             return self.noise_components[gr_name]
         
-        gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen, coordinate_transform=self.coordinate_transform)
+        gr = GenerationRecombinationNoiseComponent(gr_name, True, self.plotter, pen=pen, coordinate_transform=self.coordinate_transform, scenePosition=scenePosition)
         gr.sigPositionChanged.connect(self.on_gr_handle_position_changed)
         gr.sigNoiseUpdateRequired.connect(self.on_noise_component_update_required)
         # gr.sigPositionChanged.connect()
@@ -600,6 +601,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         pen = intColor(count)
         self.add_gr_noise(gr_name, pen)
         
+    def on_add_gr_noise_at_position_triggered(self,position):
+        count = self.analyzer_window.get_gr_component_count()
+        gr_name = "GR_{0}".format(count)
+        pen = intColor(count)
+        self.add_gr_noise(gr_name, pen, scenePosition=position)
         
 
     def on_gr_handle_position_changed(self, handle, frequency, amplitude):

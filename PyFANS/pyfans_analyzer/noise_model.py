@@ -167,6 +167,7 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
     def create_handle_and_curve(self):
         whereToAdd = self.whereToAdd
         pen = self.opts.get("pen", "r")
+        scene_position = self.opts.get("scenePosition", None)
         # self._handle = self.plotter.create_flicker_handle(
         #     self.name, 
         #     positionChangedCallback=self.on_handle_position_changed, 
@@ -176,7 +177,8 @@ class ModifiableNoiseComponent(BaseNoiseComponent):
             self.name,
             positionChangedCallback=self.on_handle_position_changed, 
             initPosition=whereToAdd,
-            pen=pen
+            pen=pen,
+            scenePosition=scene_position
         )
         self._curve = self.plotter.get_curve_by_name(self.name)
 
