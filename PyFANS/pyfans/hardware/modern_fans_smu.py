@@ -6,6 +6,7 @@ import pyfans.hardware.modern_fans_controller as mfc
 import pyfans.hardware.modern_agilent_u2542a as mdaq
 import pyfans.hardware.modern_fans_pid_controller as mfpid
 from pyfans.utils.binding import Observable
+from multiprocessing import Event
 
 DRAIN_SOURCE_SWITCH_VOLTAGE = 8.4
 
@@ -453,6 +454,9 @@ class PolaritySwitchError(Exception):
 class InstabilityError(Exception):
     pass
 
+class VoltageSetInterruptError(Exception):
+    pass
+
 class IterationCounter(object):
     def __init__(self, max_iteration, exception_to_call = None):
         self._max_iteration = max_iteration
@@ -660,7 +664,15 @@ class FANS_VoltageSetter(Observable):
         return motor_value
 
 
-    def set_voltage(self, voltage_to_set, error = None):
+    def set_voltage(self, voltage_to_set, error = None, stopEvent = None):
+
+        def assert_stop_voltage_set():
+            if stopEvent.is_set():
+                raise VoltageSetInterruptError()
+            
+        assert_stop_func = assert_stop_voltage_set if stopEvent is not None else lambda *args: None
+
+        assert_stop_func()
         self.voltage_to_set = voltage_to_set
         abs_voltage_to_set = math.fabs(voltage_to_set)
         value = self.read_feedback_voltage()
@@ -697,6 +709,7 @@ class FANS_VoltageSetter(Observable):
         try:
             while True:
                 try:
+                    assert_stop_func()
                     value = self.read_feedback_voltage()
                     abs_value = math.fabs(value)
                     difference = math.fabs(value - self.voltage_to_set)
@@ -746,13 +759,22 @@ class FANS_VoltageSetter(Observable):
                         
                     VoltageSetError += error_to_add
                     VoltageTuningInterval += error_to_add
+            
+            return 0
+
+        except VoltageSetInterruptError as err:
+            print("Voltage setting interrupted")
+            raise err
 
         except DesiredErrorReachedError as err:
             print("Desired error is reached")
+            return 0
         except ValueError as err:
             print(str(err))
+            return 1
         except MaxIterationReachedError as err:
             print("Max iteratuions achieved")
+            return 2
         finally:
             self.set_moving_voltage(0)
 
@@ -819,9 +841,9 @@ class FANS_DrainSourceVoltageSetter(FANS_VoltageSetter):
         #return back to main channel
         self.__prepare_feedback_voltage_measurement()
 
-    def set_voltage(self, voltage_to_set):
+    def set_voltage(self, voltage_to_set, stopEvent=None):
         self.__prepare_feedback_voltage_measurement()
-        return super().set_voltage(voltage_to_set)
+        return super().set_voltage(voltage_to_set, stopEvent=stopEvent)
 
     
 class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
@@ -867,9 +889,9 @@ class FANS_GateSourceVoltageSetter(FANS_VoltageSetter):
         #return back to main channel
         self.__prepare_feedback_voltage_measurement()
 
-    def set_voltage(self, voltage_to_set, error = None):
+    def set_voltage(self, voltage_to_set, error=None, stopEvent=None):
         self.__prepare_feedback_voltage_measurement()
-        return super().set_voltage(voltage_to_set, error)
+        return super().set_voltage(voltage_to_set, error, stopEvent=stopEvent)
 
 
 class FANS_SMU_Specialized(FANS_SMU):
@@ -890,13 +912,13 @@ class FANS_SMU_Specialized(FANS_SMU):
     def subscribe_to_gate_source_voltage_change(self, callback):
         self.gate_source_voltage_setter.subscribe_to_voltage_change(callback)
 
-    def smu_set_drain_source_voltage(self, voltage, error = None):
+    def smu_set_drain_source_voltage(self, voltage, error = None, stopEvent=None):
         self.drain_source_voltage_setter.reset()
-        self.drain_source_voltage_setter.set_voltage(voltage)
+        self.drain_source_voltage_setter.set_voltage(voltage, stopEvent=stopEvent)
 
-    def smu_set_gate_voltage(self, voltage, error = None):
+    def smu_set_gate_voltage(self, voltage, error = None, stopEvent=None):
         self.gate_source_voltage_setter.reset()
-        self.gate_source_voltage_setter.set_voltage(voltage)
+        self.gate_source_voltage_setter.set_voltage(voltage, stopEvent=stopEvent)
 
     def read_all_test(self):
         drain_source_switch_channel = self._fans_controller.get_fans_output_channel(self._drain_source_switch_channel)

@@ -338,7 +338,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
 
         if state is self.UI_STATE_IDLE:
             self.ui_startButton.setEnabled(True)
-            self.ui_stopButton.setEnabled(True)
+            self.ui_stopButton.setEnabled(False)
             self.progressBar.setVisible(False)
             self.progressBar.setValue(0)
             self.ui_settings_frame.setEnabled(True)

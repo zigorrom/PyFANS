@@ -344,7 +344,11 @@ class Experiment:
 
     def wait_for_stabilization_after_switch(self, time_to_wait_sec = 5 ):
         print("waiting for stabilization")
-        time.sleep(time_to_wait_sec)
+        start_wait_time=time.time()
+        while (time.time() - start_wait_time) < time_to_wait_sec:
+            self.assert_experiment_abort()
+
+        # time.sleep(time_to_wait_sec)
     #value: sample or main
     def switch_voltage_measurement_relay_to(self, value):
         raise NotImplementedError()
@@ -665,12 +669,14 @@ class Experiment:
             
         #assert isinstance(self.experiment_settings, ExperimentSettings)
         if automatic_voltage_set:
-            self.report_start_setting_voltages()
+            # self.report_start_setting_voltages()
             self.prepare_to_set_voltages()
 
             if not measure_gated_structure:
                 if isinstance(drain_source_voltage, (int,float)):
+                    # self.report_start_setting_voltages()
                     self.set_drain_source_voltage(drain_source_voltage)
+                    # self.report_stop_setting_voltages(result)
             
             else:
                 if isinstance(drain_source_voltage, (int,float)):
@@ -811,7 +817,13 @@ class Experiment:
         except Exception as exc:
             print(str(exc))
         finally:
-            self.set_voltages_to_zero()
+            try:
+                self._stop_event.clear()
+                self.set_voltages_to_zero()
+            except Exception as e:
+                print("Could not finalize because of exception")
+                print(e)
+            
 
         try:
             self.close_experiment()
@@ -1047,6 +1059,7 @@ class FANSExperiment(Experiment):
             
             while counter < total_averaging:
                 try:
+                    self.assert_experiment_abort()
                     ####f2_aver_counter += 1####
                     new_fill_value = fill_value + npoints
                     data = read_data()[0]
@@ -1076,23 +1089,26 @@ class FANSExperiment(Experiment):
                     
                     seconds_counter += time_step_sec
 
+                except StopExperiment as e:
+                    raise e
+
                 except Exception as e:
                     print(e)
                     break
 
-            except StopExperiment as exc:
-                raise e
+        except StopExperiment as e:
+            raise e
 
-            finally:    
-                adc.stop()
-                try:
-                    print("Counter reached: {0}".format(counter))
-                    data = self.update_resulting_spectrum()
-                    data = data.transpose()
-                    self._experiment_writer.write_measurement(data)
-                except Exception as e:
-                    print("Exception when finalizing mewsurement")
-                    print(e)
+        finally:    
+            adc.stop()
+            try:
+                print("Counter reached: {0}".format(counter))
+                data = self.update_resulting_spectrum()
+                data = data.transpose()
+                self._experiment_writer.write_measurement(data)
+            except Exception as e:
+                print("Exception when finalizing mewsurement")
+                print(e)
 
                 adc.clear_buffer()
 
@@ -1118,8 +1134,15 @@ class FANSExperiment(Experiment):
         while currentAttempt < maxAttempts:
             try:
                 print("Starting {0} attempt".format(currentAttempt))
-                self.fans_smu.smu_set_gate_voltage(voltage)
+                self.report_start_setting_voltages()
+                result = self.fans_smu.smu_set_gate_voltage(voltage,stopEvent=self._stop_event)
+                self.report_stop_setting_voltages(result)
                 return
+
+            except msmu.VoltageSetInterruptError as e:
+                self.report_stop_setting_voltages(1)
+                raise StopExperiment()
+
             except Exception as e:
                 print("Exception occured on {0} attempt".format(currentAttempt))
                 currentAttempt += 1
@@ -1134,8 +1157,15 @@ class FANSExperiment(Experiment):
         while currentAttempt < maxAttempts:
             try:
                 print("Starting {0} attempt".format(currentAttempt))
-                self.fans_smu.smu_set_drain_source_voltage(voltage)
+                self.report_start_setting_voltages()
+                result = self.fans_smu.smu_set_drain_source_voltage(voltage,stopEvent=self._stop_event)
+                self.report_stop_setting_voltages(result)
                 return
+            
+            except msmu.VoltageSetInterruptError as e:
+                self.report_stop_setting_voltages(1)
+                raise StopExperiment()
+
             except Exception as e:
                 print("Exception occured on {0} attempt".format(currentAttempt))
                 currentAttempt += 1

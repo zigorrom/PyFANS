@@ -96,7 +96,7 @@ def squareSpline(x1,y1,x2,y2,x3,y3):
 
 
 def runningMeanFast(freq, data, N):
-    print("convolution")
+    # print("convolution")
     kernel = np.hanning(N)
     kernel = kernel / kernel.sum()
     res_data =  np.convolve(data, kernel, mode ="same") #[(N-1):]
