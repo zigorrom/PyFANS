@@ -32,8 +32,10 @@ import pyfans.experiment.modern_fans_experiment as mfexp
 
 
 import pyfans_analyzer.experiment_data_analysis as eds
-from pyfans_analyzer.analyzer_model import AnalyzerModel
-from pyfans_analyzer.analyzer_window import MainView
+import pyfans_analyzer.analyzer_model # as analyzer_model
+import pyfans_analyzer.analyzer_window # as analyzer_window
+# from pyfans_analyzer import analyzer_model # import AnalyzerModel
+# from pyfans_analyzer import analyzer_window # import MainView
 
 class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
@@ -500,8 +502,8 @@ class FANS_UI_Controller(QtCore.QObject):
     def on_analysis_window_open_action(self):
         print("analysis window")
         if not self.analysis_window:
-            self.analysis_window = MainView()
-            data = AnalyzerModel(analyzer_window=self.analysis_window)
+            self.analysis_window = pyfans_analyzer.analyzer_window.MainView()
+            data = pyfans_analyzer.analyzer_model.AnalyzerModel(analyzer_window=self.analysis_window)
             self.analysis_window.dataContext = data
         self.analysis_window.show()
 

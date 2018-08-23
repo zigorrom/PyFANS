@@ -30,13 +30,15 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     def __init__(self):
         super().__init__()
         self.setupUi()
-        self.setupBinding()        
+        self.setupBinding()  
+        # self.awaiting_for_command = False      
 
     def setupUi(self):
         super().setupUi(self)
         self._spectrumPlotWidget = plt.SpectrumPlotWidget(self.ui_plot, {})
         self.status_label = QtGui.QLabel(self)
         self.statusbar.addPermanentWidget(self.status_label)
+        self.mouseClickedEvent = self._spectrumPlotWidget.subscribe_to_mouse_clicked(self.on_mouse_clicked_in_plot_area)
     
     def setupBinding(self):
         sourceObject = None
@@ -89,6 +91,23 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
             msg.setText("File selection cancelled")
         retval = msg.exec_()
 
+    def on_mouse_clicked_in_plot_area(self, evt):
+        # print("mouse clicked event")
+        evt=evt[0]
+        if evt.button() == QtCore.Qt.LeftButton:
+            if evt.double() == True:
+                self.on_ui_add_gr_noise_button_clicked()  
+        # elif evt.button() == QtCore.Qt.RightButton:
+        #     print("right")
+        # if evt.type() == QtCore.QEvent.MouseButtonPress:
+
+        if evt.button() == QtCore.Qt.MidButton:
+            self.on_ui_fit_data_button_clicked()
+            evt.accept()
+        
+        # elif evt.type() == QtCore.QEvent.MouseButtonDblClick:
+        #     self.on_ui_add_gr_noise_button_clicked()
+        
 
         
 
@@ -174,6 +193,23 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
 
     def setModel(self, model):
         pass
+    
+    def keyPressEvent(self, event):
+        if event.modifiers() == QtCore.Qt.AltModifier:
+            if event.key() == QtCore.Qt.Key_E:
+                self.on_actionNext_triggered()
+            elif event.key() == QtCore.Qt.Key_Q:
+                self.on_actionPrev_triggered()
+            # print("control pressed")
+            # self.awaiting_for_command = True
+
+
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Control:
+            print("control released")
+            # self.awaiting_for_command = False
+            
+    
 
     def closeEvent(self, event):
         self.sigAppClosing.emit()

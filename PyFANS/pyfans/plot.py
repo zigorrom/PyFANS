@@ -640,6 +640,12 @@ class SpectrumPlotWidget:
     def subscribe_to_viewbox_x_range_changed(self, slot):
         self.plot.sigXRangeChanged.connect(slot)
 
+    def subscribe_to_mouse_clicked(self, slot):
+        return pg.SignalProxy(
+            self.plot.scene().sigMouseClicked, 
+            rateLimit=60, 
+            slot=slot
+            )
 
     def create_plot(self):
         """Create main spectrum plot"""
@@ -686,6 +692,11 @@ class SpectrumPlotWidget:
         self.plot.addItem(self.hLine, ignoreBounds=True)
         self.mouseProxy = pg.SignalProxy(self.plot.scene().sigMouseMoved,
                                          rateLimit=60, slot=self.mouse_moved)
+        # self.mouseClickedProxy = pg.SignalProxy(
+        #     self.plot.scene().sigMouseClicked, 
+        #     rateLimit=60, 
+        #     slot=self.mouse_clicked
+        #     )
 
     def getViewRange(self):
         return self.plot.viewRange()
@@ -771,6 +782,9 @@ class SpectrumPlotWidget:
             )
             self.vLine.setPos(mousePoint.x())
             self.hLine.setPos(mousePoint.y())
+
+    # def mouse_clicked(self, evt):
+    #     print("clicked")
 
 class HistoryBuffer:
     """Fixed-size NumPy array ring buffer"""
