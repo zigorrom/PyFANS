@@ -985,7 +985,7 @@ class FANSExperiment(Experiment):
 
     def perform_single_value_measurement(self):
         assert isinstance(self.experiment_settings, ExperimentSettings)
-        
+        self.assert_experiment_abort()
         screen_update = self.experiment_settings.display_refresh  #10;
         total_averaging = self.experiment_settings.averages;
         adc = self.fans_acquisition
@@ -1042,49 +1042,59 @@ class FANSExperiment(Experiment):
         update_spectrum_func = self.update_spectrum
         #time_now = time.time()
         #time_after = time.time()
-        adc.start()
-        
-        while counter < total_averaging:
-            try:
-                ####f2_aver_counter += 1####
-                new_fill_value = fill_value + npoints
-                data = read_data()[0]
-                total_array[fill_value:new_fill_value] = data
-                fill_value = new_fill_value
+        try:
+            adc.start()
+            
+            while counter < total_averaging:
+                try:
+                    ####f2_aver_counter += 1####
+                    new_fill_value = fill_value + npoints
+                    data = read_data()[0]
+                    total_array[fill_value:new_fill_value] = data
+                    fill_value = new_fill_value
 
-                f, psd = periodogram(data, fs)
-                update_spectrum_func(psd,1,1) #self.update_spectrum(psd,1,1)
-                
-                if new_fill_value % fs == 0:
-                    decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
-                    f, psd = periodogram(decimated, new_fs)
-                    update_spectrum_func(psd,0,1)#self.update_spectrum(psd, 0,1)
-                    fill_value = 0
-                    counter+=1
-                    #print(counter)
-                   
-                    #if write_timetrace_confition():
-                    #    print(counter)
-                    #    #this should be under previous IF confition!!!
-                    #    self._experiment_writer.write_timetrace_data(total_array) #data)
-                #time_now = time.time()
-                if write_timetrace_confition():
-                    write_timetrace_function(data)
-                #time_after = time.time()
-                #print(time_after - time_now)
-                
-                seconds_counter += time_step_sec
+                    f, psd = periodogram(data, fs)
+                    update_spectrum_func(psd,1,1) #self.update_spectrum(psd,1,1)
+                    
+                    if new_fill_value % fs == 0:
+                        decimated = decimate(total_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
+                        f, psd = periodogram(decimated, new_fs)
+                        update_spectrum_func(psd,0,1)#self.update_spectrum(psd, 0,1)
+                        fill_value = 0
+                        counter+=1
+                        #print(counter)
+                    
+                        #if write_timetrace_confition():
+                        #    print(counter)
+                        #    #this should be under previous IF confition!!!
+                        #    self._experiment_writer.write_timetrace_data(total_array) #data)
+                    #time_now = time.time()
+                    if write_timetrace_confition():
+                        write_timetrace_function(data)
+                    #time_after = time.time()
+                    #print(time_after - time_now)
+                    
+                    seconds_counter += time_step_sec
 
-            except Exception as e:
-                print(e)
-                break
-        adc.stop()
-        print("Counter reached: {0}".format(counter))
-        data = self.update_resulting_spectrum()
-        data = data.transpose()
-        self._experiment_writer.write_measurement(data)
+                except Exception as e:
+                    print(e)
+                    break
 
-        adc.clear_buffer()
+            except StopExperiment as exc:
+                raise e
+
+            finally:    
+                adc.stop()
+                try:
+                    print("Counter reached: {0}".format(counter))
+                    data = self.update_resulting_spectrum()
+                    data = data.transpose()
+                    self._experiment_writer.write_measurement(data)
+                except Exception as e:
+                    print("Exception when finalizing mewsurement")
+                    print(e)
+
+                adc.clear_buffer()
 
     
     def perform_non_gated_single_value_measurement(self):

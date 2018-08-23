@@ -201,13 +201,14 @@ class FANS_UI_Controller(QtCore.QObject):
 
     def stop_experiment(self):
         print("stop experiment")
-        self.experiment_stop_event.set()
+        # self.experiment_stop_event.set()
         self.experiment_thread.stop()
-        self.processing_thread.stop()
-        #self.ui_refresh_timer.stop()
-        self.experiment_thread.join()
-        self.ui_refresh_timer.stop()
-        self.main_view.set_ui_idle()
+        # self.experiment_thread.stop()
+        # self.processing_thread.stop()
+        
+        # self.experiment_thread.join()
+        # self.ui_refresh_timer.stop()
+        # self.main_view.set_ui_idle()
         #self.save_settings_to_file()
 
     # def copy_main_view_settings_to_settings_object(self):
@@ -344,7 +345,16 @@ class FANS_UI_Controller(QtCore.QObject):
         self.main_view.ui_show_message_in_status_bar(msg, 1000)
         #self.wa.send_message(msg)
         self.send_message_via_email(msg)
-        self.stop_experiment()
+        # self.stop_experiment()
+        #stopping experiment
+        # self.experiment_thread.stop()
+        self.processing_thread.stop()
+        
+        self.experiment_thread.join()
+        self.ui_refresh_timer.stop()
+        self.main_view.set_ui_idle()
+        #end stopping experiment
+
         self._time_info_window.stop_timer()
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Information)
