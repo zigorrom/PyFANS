@@ -27,9 +27,16 @@ def print_error(error):
     print(str(error))
     print(10*"*")
 
-def generate_output_filename(initial_filename, postfix, output_extension):
-    filename, file_extension = os.path.splitext(initial_filename)
-    out_file = ".".join([filename+postfix, output_extension])
+def generate_output_filename(initial_filename, postfix, output_extension, output_folder=None):
+    base_name = os.path.basename(initial_filename)
+    dirname = os.path.dirname(initial_filename)
+    if os.path.isdir(output_folder):
+        dirname = output_folder
+
+    filename, file_extension = os.path.splitext(base_name)
+    # filename, file_extension = os.path.splitext(initial_filename)
+    #out_file = ".".join([filename+postfix, output_extension])
+    out_file = os.path.join(dirname, filename+postfix+"."+output_extension)
     return out_file
 
 def LengthOfFile(f):
@@ -80,6 +87,7 @@ def DecimateSignal(signal_array, signal_sampling_rate, decimated_sample_rate):
 class FANS_TimetraceExtractor:
     def __init__(self, **kwargs):
         self._working_directory = kwargs.get("working_directory", "")
+        self._output_folder = kwargs.get("output_folder", "")
         self._sample_rate = kwargs.get("sample_rate", 500000)
         self._points_per_sample = kwargs.get("points_per_sample", 50000)
         self._total_time_to_convert = kwargs.get("length", -1)
@@ -92,7 +100,7 @@ class FANS_TimetraceExtractor:
     def perform_convertion(self):
         if self._filename_to_convert and os.path.isfile(self._filename_to_convert):
             try:
-                self.process_single_timetrace_file(self._filename_to_convert)
+                self.process_single_timetrace_file(self._filename_to_convert, output_folder = self._output_folder)
             except Exception as e:
                 print_error(e)
             return 
@@ -141,7 +149,7 @@ class FANS_TimetraceExtractor:
             if not os.path.isfile(filename):
                 print("No such file...")
             try:
-                self.process_single_timetrace_file(filename, amplification = amplification)
+                self.process_single_timetrace_file(filename, amplification = amplification, output_folder = self._output_folder)
             except Exception as e:
                 print("Exception while processing file: {0}".format(filename))
                 print_error(e)
@@ -149,9 +157,9 @@ class FANS_TimetraceExtractor:
 
         print("FINISHED PROCESSING OF MEASUREMENT DATA FILE")
 
-    def process_single_timetrace_file(self, filename, output_filename = None, amplification = None):
-        if not output_filename:
-            output_filename = generate_output_filename(filename, "_extracted" , self._output_extension)
+    def process_single_timetrace_file(self, filename, output_folder = None, amplification = None):
+        # if os.path.isdir(output_folder): #not output_filename:
+        output_filename = generate_output_filename(filename, "_extracted" , self._output_extension, output_folder=output_folder)
 
         with open(filename, "rb") as timetrace_file, open(output_filename,"wb") as output_file:
             print("Start processing ...")
@@ -274,6 +282,7 @@ class Parameters:
     PointsPerShotOption = "-pps"
     LengthOption = "-l"
     FilenameOption  = "-f"
+    OutputFolderOption = "-o"
     AmplificationOption = "-a"
     DecimatedSampleRateOption = "-dr"
 
@@ -302,13 +311,16 @@ if __name__ == "__main__":
     parser.add_argument(Parameters.DecimatedSampleRateOption, metavar='decimated_sample_rate', type = int, nargs='?' , default = 0,
                         help = 'The sample rate to decimate to...')
 
+    parser.add_argument(Parameters.OutputFolderOption, metavar='output_folder', type = str, nargs='?' , default = None,
+                        help = 'The folder for output')
+
     parser.add_argument('--open', dest = 'open_folder', action= 'store_true')
     parser.set_defaults(open_folder = False)
 
     args = parser.parse_args()
     args = vars(args)
     type_of_program = args.get("t","console")
-    m = {'mf': 'measurement_data_file', 'sr' : 'sample_rate', 'pps' :  'points_per_sample', 'l': 'length', 'f': 'filename', 'a': 'amplification', 'dr' : 'decimated_sample_rate', 'open_folder': 'open_folder' }
+    m = {'mf': 'measurement_data_file','o': 'output_folder', 'sr' : 'sample_rate', 'pps' :  'points_per_sample', 'l': 'length', 'f': 'filename', 'a': 'amplification', 'dr' : 'decimated_sample_rate', 'open_folder': 'open_folder' }
     args = dict((m.get(k, k), v) for (k, v) in args.items())
     #if type_of_program == "console":
     sys.exit(perform_timetrace_extraction(**args))

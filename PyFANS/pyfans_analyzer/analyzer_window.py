@@ -228,6 +228,15 @@ def main():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("PyFANS Analyzer")
     app.setStyle("cleanlooks")
+    icon_file = "UI/Icons/pyfans_icon2.png"
+    
+    app_icon = QtGui.QIcon()
+    app_icon.addFile(icon_file, QtCore.QSize(16,16))
+    app_icon.addFile(icon_file, QtCore.QSize(24,24))
+    app_icon.addFile(icon_file, QtCore.QSize(32,32))
+    app_icon.addFile(icon_file, QtCore.QSize(48,48))
+    app_icon.addFile(icon_file, QtCore.QSize(256,256))
+    app.setWindowIcon(app_icon)
     
     main_window = MainView()
     data = AnalyzerModel(analyzer_window=main_window)

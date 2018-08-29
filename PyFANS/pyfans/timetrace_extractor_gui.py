@@ -18,7 +18,7 @@ if __name__ =="__main__":
 
 
 import pyfans.utils.ui_helper as uih
-from pyfans.utils.utils import open_folder_with_file_selected
+from pyfans.utils.utils import open_folder_with_file_selected, open_folder_in_explorer
 from pyfans.hardware.modern_fans_timetrace_extractor import Parameters
 
 
@@ -41,12 +41,14 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     use_amplification = uih.bind("ui_use_amplification", "checked", bool)
     use_total_time = uih.bind("ui_use_total_time", "checked", bool)
     use_decimated_sample_rate = uih.bind("ui_use_decimated_sample_rate", "checked", bool)
+    use_redirect_output = uih.bind("ui_redirect_output", "checked", bool)
 
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi()
 
         self._working_directory  = ""
+        self._output_directory = ""
         self._measurement_data_filename=  ""
         self._filename = ""
 
@@ -102,6 +104,10 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
             if self.use_decimated_sample_rate:
                 settings_params.append(Parameters.DecimatedSampleRateOption)
                 settings_params.append(self.decimated_sample_rate_ui)
+        
+        if self.use_redirect_output:
+            settings_params.append(Parameters.OutputFolderOption)
+            settings_params.append(self._output_directory)
 
         return settings_params
 
@@ -138,6 +144,8 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         self.ui_open_file.setEnabled(state)
         self.ui_convert_file.setEnabled(state)
         self.ui_use_timetrace_settings.setEnabled(state)
+        self.ui_redirect_output.setEnabled(state)
+        self.ui_select_output_folder.setEnabled(state)
 
     def enable_user_input(self):
         self.set_user_input_state(True)
@@ -198,6 +206,8 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     def on_ui_open_measurement_data_file_clicked(self):
         print("open_folder")
         open_folder_with_file_selected(self._measurement_data_filename)
+        if os.path.isdir(self._output_directory) and self.use_redirect_output:
+            open_folder_in_explorer(self._output_directory)
 
     @QtCore.pyqtSlot()
     def on_ui_convert_all_clicked(self):
@@ -221,6 +231,8 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
     def on_ui_open_file_clicked(self):
         print("select file")
         open_folder_with_file_selected(self._filename)
+        if os.path.isdir(self._output_directory) and self.use_redirect_output:
+            open_folder_in_explorer(self._output_directory)
 
     @QtCore.pyqtSlot()
     def on_ui_convert_file_clicked(self):
@@ -232,9 +244,16 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
             param_list.append(self._filename)
             param_list.extend(self.collectSettingsParams())
             self.callProgram(param_list)
-   
+    
+    @QtCore.pyqtSlot()
+    def on_ui_select_output_folder_clicked(self):
+        folder = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self,caption="Select output folder", directory = self._working_directory))
+        self._output_directory = folder
 
-
+    @QtCore.pyqtSlot()
+    def on_ui_terminate_execution_clicked(self):
+        if self.process.state() != QtCore.QProcess.NotRunning:
+            self.process.kill()
 
 def gui(**kwargs):
     import ctypes
