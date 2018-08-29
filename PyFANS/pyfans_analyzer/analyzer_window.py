@@ -12,6 +12,7 @@ main_view_base, main_view = uic.loadUiType("UI/UI_Analyzer.ui")
 
 class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigOpenFileTriggered = QtCore.pyqtSignal(str)
+    sigOpenWorkingFolderTriggered = QtCore.pyqtSignal()
     sigSaveFileTriggered = QtCore.pyqtSignal()
     sigExportTriggered = QtCore.pyqtSignal()
     sigNextTriggered = QtCore.pyqtSignal()
@@ -27,6 +28,7 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigFitTriggered = QtCore.pyqtSignal()
     sigSelectedGRChanged = QtCore.pyqtSignal()
     sigAppClosing = QtCore.pyqtSignal()
+    sigOpenPlotterTriggered = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -163,6 +165,15 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     @QtCore.pyqtSlot(int)
     def on_ui_gr_listview_currentRowChanged(self):
         self.sigSelectedGRChanged.emit()
+
+    @QtCore.pyqtSlot()
+    def on_action_open_working_folder_triggered(self):
+        self.sigOpenWorkingFolderTriggered.emit()
+
+    @QtCore.pyqtSlot()
+    def on_action_open_plotter_triggered(self):
+        self.sigOpenPlotterTriggered.emit()
+
 
     def set_current_analysis_state(self, max_rows, current_row):
         self.status_label.setText("{0} of {1}".format(current_row, max_rows))

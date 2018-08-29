@@ -129,6 +129,12 @@ class ExperimentData(QtCore.QObject):
         keys = list(self._data)
         self.newDataArrived.emit(keys)
 
+    def fromDataFrame(self, dataframe):
+        if not isinstance(dataframe, pd.DataFrame):
+            return
+        self._data = dataframe
+        keys = list(self._data)
+        self.newDataArrived.emit(keys)
 
     @property
     def variables(self):

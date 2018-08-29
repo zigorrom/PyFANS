@@ -1,5 +1,6 @@
 import os
 import pickle
+import numpy as np
 import pandas as pd
 
 
@@ -218,7 +219,10 @@ class MeasurementInfoFile(object):
                         if attribute in cols_to_skip:
                             continue
                         
-                        res_dict["_".join((comp_name, attribute))]=value
+                        name = value.get("pretty_name", comp_name)
+                        val = value.get("value")
+                        res_dict[name]=val
+                        # res_dict["_".join((comp_name, attribute))]=value
                 
                 result_df = result_df.append(res_dict, ignore_index=True)
 
@@ -229,9 +233,28 @@ class MeasurementInfoFile(object):
 
         result = pd.merge(self._measurement_info, result_df, on="Filename", how="outer")
         result.fillna(0)
+        try:
+            result["Abs_Id(end)"] = np.abs(result["Id (end)"])
+        except Exception as e:
+            print("Exception occured while calculating absolute value of current")
+
+        try:
+            si = np.divide(result["Sv@1Hz_flicker"], np.power(result["Req (end)"],2))
+            result["Si@1Hz_flicker"] = si
+            result["SiI2@1Hz_flicker"] = np.divide(si, np.power(result["Id (end)"],2))
+            
+        except Exception as e:
+            print("Exception occured while calculating Si")
+        
+
+
         result.to_csv(self._extended_measurement_info_filename, sep="\t")
         # print(result)
 
+    @property
+    def measurement_info(self):
+        return self._measurement_info
+    
     @property
     def columns(self):
         return list(self._measurement_info)

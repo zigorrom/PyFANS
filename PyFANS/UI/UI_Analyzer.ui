@@ -393,7 +393,7 @@
      <x>0</x>
      <y>0</y>
      <width>1048</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -403,11 +403,14 @@
     <addaction name="actionOpen_File"/>
     <addaction name="actionSave"/>
     <addaction name="action_export"/>
+    <addaction name="separator"/>
+    <addaction name="action_open_working_folder"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
+    <addaction name="action_open_plotter"/>
     <addaction name="actionShowSettingsTree"/>
    </widget>
    <addaction name="menuFile"/>
@@ -490,6 +493,16 @@
   <action name="action_export">
    <property name="text">
     <string>Export</string>
+   </property>
+  </action>
+  <action name="action_open_working_folder">
+   <property name="text">
+    <string>Open Folder</string>
+   </property>
+  </action>
+  <action name="action_open_plotter">
+   <property name="text">
+    <string>Open Plotter</string>
    </property>
   </action>
  </widget>

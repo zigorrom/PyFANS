@@ -7,12 +7,14 @@ import pyfans.utils.ui_helper as uih
 # from pyfans_analyzer.plot_data_handler import ProxyDataPlotHandler
 from pyfans_analyzer.measurement_file_handler import *
 import pyfans_analyzer.spectrum_processing as sp
+import pyfans_analyzer.experiment_data_analysis as eds
 from pyfans.physics.physical_calculations import calculate_thermal_noise #(equivalent_resistance, sample_resistance, load_resistance, temperature, amplifier_input_resistance = 1000000)
 from pyfans.plot import FlickerHandle, GRHandle
 from pyfans_analyzer.noise_model import FlickerNoiseComponent, GenerationRecombinationNoiseComponent, ThermalNoiseComponent, BaseNoiseComponent, NoiseModelToDictionaryConverter
 from pyfans_analyzer.coordinate_transform import MultipliedXYTransformation
-from pyfans.utils.utils import open_folder_with_file_selected
+from pyfans.utils.utils import open_folder_with_file_selected, open_folder_in_explorer
 from lmfit import Model, CompositeModel, Parameters
+
 
 class AnalyzerModel(uih.NotifyPropertyChanged):
     xLabel = "Frequency, f(Hz)"
@@ -96,6 +98,10 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         # self._noise_model_handles = dict()
         
         self.noise_components = dict()
+        
+        self.exp_data = eds.ExperimentData()
+        self.data_plotter = eds.ExperimentDataAnalysis(layout="horizontal")
+        self.data_plotter.setData(self.exp_data)
         # self.add_flicker_noise()
         # self.add_thermal_noise()
 
@@ -169,7 +175,15 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.analyzerWindow.sigFitTriggered.connect(self.on_fit_data_triggered)
         self.analyzerWindow.sigSelectedGRChanged.connect(self.on_selected_gr_changed)
         self.analyzerWindow.sigAppClosing.connect(self.on_app_closing)
+        self.analyzer_window.sigOpenWorkingFolderTriggered.connect(self.on_open_working_folder)
+        self.analyzer_window.sigOpenPlotterTriggered.connect(self.on_open_plotter)
     
+    def on_open_plotter(self):
+        self.data_plotter.show()
+
+    def on_open_working_folder(self):
+        if self.working_directory:
+            open_folder_in_explorer(self.working_directory) 
 
     def on_file_open_triggered(self, filename):
         wd, fn = os.path.split(filename)
@@ -180,7 +194,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.working_directory = os.path.dirname(filename)
         self.__measurement_file.print_rows()
         self.load_measurement_data(self.__measurement_file.current_measurement_info.measurement_filename)
-        
+        self.exp_data.fromDataFrame(self.__measurement_file.measurement_info)
         
     def load_measurement_data(self, filename):
         print("opening file {0}".format(filename))
@@ -222,6 +236,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
                 thermal.thermal_noise_level = self.thermal_noise
 
             self.loadNoiseModelData()
+            
 
         except Exception as e:
             print("Exception occured while loading measurement data")
@@ -280,8 +295,9 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         for name, component in noise_model.items():
 
             try:
-                typ = component["component_type"]
-                n = component["name"]
+                
+                typ = component["component_type"]["value"]
+                n = component["name"]["value"]
                 if typ == "__flicker__":
                     noise_comp = self.add_flicker_noise(name=n)
                     noise_comp.set_state(component)

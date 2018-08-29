@@ -77,24 +77,34 @@ class BaseNoiseComponent(QtCore.QObject):
         return whereToAdd
 
     def params_to_serialize(self):
-        return [
-            "name",
-            "enabled",
-            "component_type"
-        ]
-
-    #def pretty_names(self):
+        d =  self.pretty_names()
+        return list(d.keys())
+        # return [
+        #     "name",
+        #     "enabled",
+        #     "component_type"
+        # ]
+    
+    def pretty_names(self):
+        return {
+            "name": "Name",
+            "enabled": "Enabled",
+            "component_type": "component_type"
+        }
+            
 
 
     def get_state(self):
         d = dict()
-        params = self.params_to_serialize()
-        for attr in self.params_to_serialize():
+        # params = self.params_to_serialize()
+        # pretty_params = self.pretty_names()
+        for attr, pretty_name in self.pretty_names().items(): #self.params_to_serialize():
             try:
                 value = getattr(self, attr, None)
                 if callable(value):
                     value = value()
-                d[attr] = value
+                
+                d[attr] = {"value": value, "pretty_name": pretty_name} #value
             except Exception as e:
                 print(e)
 
@@ -105,7 +115,13 @@ class BaseNoiseComponent(QtCore.QObject):
         params.remove("component_type")
         for attr in params:
             try:
-                setattr(self, attr, state_dict[attr])
+                item =  state_dict[attr]
+                if isinstance(item, dict):
+                    value = item.get("value")
+                    setattr(self, attr,value)
+                else:
+                    setattr(self, attr,item)
+                # setattr(self, attr, state_dict[attr])
             except Exception as e:
                 print("Cannot set attribute {0}".format(attr))
         
@@ -319,16 +335,27 @@ class FlickerNoiseComponent(ModifiableNoiseComponent): #Node):
             self.frequency = 1.0
             self.amplitude = value
 
-    def params_to_serialize(self):
-        parent_params = super().params_to_serialize()
-        # this_params = ["frequency", "amplitude", "alpha_flicker"]
-        this_params = ["frequency", "amplitude", "absolute_amplitude", "alpha_flicker"]
-        this_params.extend(parent_params)
-        return this_params
-        # return [
-        #     "name",
-        #     "enabled"
-        # ]
+    # def params_to_serialize(self):
+    #     parent_params = super().params_to_serialize()
+    #     # this_params = ["frequency", "amplitude", "alpha_flicker"]
+    #     this_params = ["frequency", "amplitude", "absolute_amplitude", "alpha_flicker"]
+    #     this_params.extend(parent_params)
+    #     return this_params
+    #     # return [
+    #     #     "name",
+    #     #     "enabled"
+    #     # ]
+ 
+    def pretty_names(self):
+        freq_name = "{0}_({1})".format("Frequency",self.name)
+        p = {
+            "frequency": freq_name,
+            "amplitude": "Sv@{0}".format(freq_name),
+            "absolute_amplitude": "Sv@1Hz_{0}".format(self.name),
+            "alpha_flicker" : "FlickerAlpha"
+        }
+        p.update(super().pretty_names())
+        return p
 
     def getModelFunction(self, logMode=False):
         def modelFunction(f, alpha=self.alpha_flicker, amplitude=self.amplitude, frequency=self.frequency):
@@ -417,11 +444,19 @@ class GenerationRecombinationNoiseComponent(ModifiableNoiseComponent): # Node):
         self._frequency = value
         self.update_position()
 
-    def params_to_serialize(self):
-        parent_params = super().params_to_serialize()
-        this_params = ["frequency", "amplitude"]
-        this_params.extend(parent_params)
-        return this_params
+    # def params_to_serialize(self):
+    #     parent_params = super().params_to_serialize()
+    #     this_params = ["frequency", "amplitude"]
+    #     this_params.extend(parent_params)
+    #     return this_params
+
+    def pretty_names(self):
+        p = {
+            "frequency": "{0}_({1})".format("Frequency",self.name),
+            "amplitude": "{0}_({1})".format("Sv0", self.name),
+        }
+        p.update(super().pretty_names())
+        return p
 
     def getModelFunction(self, logMode=False):
         def modelFunction(f, amplitude=self.amplitude, frequency=self.frequency):
@@ -541,11 +576,18 @@ class ThermalNoiseComponent(BaseNoiseComponent):  #Node):
         self._thermal_noise = value
         self.update_thermal_noise()
 
-    def params_to_serialize(self):
-        parent_params = super().params_to_serialize()
-        this_params = ["thermal_noise_level"]
-        this_params.extend(parent_params)
-        return this_params
+    # def params_to_serialize(self):
+    #     parent_params = super().params_to_serialize()
+    #     this_params = ["thermal_noise_level"]
+    #     this_params.extend(parent_params)
+    #     return this_params
+
+    def pretty_names(self):
+        p = {
+            "thermal_noise_level": "SvThermal",
+        }
+        p.update(super().pretty_names())
+        return p
 
     def getModelFunction(self, logMode=False):
         def modelFunction(f):
