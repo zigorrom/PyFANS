@@ -127,6 +127,7 @@ class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewFo
         ready_text = str(self.process.readAll(), encoding = "utf-8")
         cursor.insertText(ready_text)
         self.ui_program_output.ensureCursorVisible()
+        self.ui_program_output.verticalScrollBar().setValue(self.ui_program_output.verticalScrollBar().maximum())
 
     def on_programm_execution_started(self):
         print("started")
@@ -270,7 +271,7 @@ def gui(**kwargs):
     app.setApplicationName("PyFANS TimetraceExtractor")
     app.setStyle("cleanlooks")
     #icon_file = "pyfans.ico"
-    icon_file = "UI/Icons/pyfans.png"
+    icon_file = "UI/Icons/pyfans_icon.png"
     app_icon = QtGui.QIcon()
     app_icon.addFile(icon_file, QtCore.QSize(16,16))
     app_icon.addFile(icon_file, QtCore.QSize(24,24))
