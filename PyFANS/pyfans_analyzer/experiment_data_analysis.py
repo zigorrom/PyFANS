@@ -1033,10 +1033,22 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         print(abs_fname)
         print(output_fname)
         with tb.TimetraceFileBuffer(abs_fname) as timetrace:
-            time, data = timetrace.get_timetrace_data(start_time = 0, end_time=1)
-            data = data[::3]
-            res = tp.TimeLagPlotCalculator.calculate_tlp(data)
-            print(res)
+            time, data = timetrace.get_timetrace_data(start_time = 0, end_time=0.5)
+            minVal = np.amin(data)
+            maxVal = np.amax(data)
+            diff = maxVal-minVal
+            minVal -= diff
+            maxVal += diff
+
+            histBuilder = tp.TimeLapHistogram2DBuilder(minVal, maxVal, 1000, minVal, maxVal, 1000)
+            histBuilder.append_data(data)
+            hist, xedges, yedges = histBuilder.get_histogram()
+            xcenters = (xedges[1:]+xedges[:-1])/2
+            ycenters = (yedges[1:]+yedges[:-1])/2
+            res = np.vstack( (xcenters, ycenters, hist)).transpose()
+            # data = data[::3]
+            # res = tp.TimeLagPlotCalculator.calculate_tlp(data)
+            # print(res)
             np.savetxt(output_fname, res)
             
         # if os.path.isfile(abs_fname):

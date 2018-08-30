@@ -12,15 +12,85 @@ from contextlib import contextmanager
 
 def phiFunction(i, data, coeff1, coeff2):
     data_len = len(data)-1
-    values = np.array(list(map(lambda j: coeff1*math.exp(-math.hypot(data[i]-data[j],data[i+1]-data[j+1]/coeff2)), range(data_len))))
+    values = np.array(list(map(lambda j: coeff1*math.exp(-math.hypot(data[i]-data[j],data[i+1]-data[j+1])/coeff2)), range(data_len)))
     phi = np.sum(values)
     return phi #  values
+
+
+def epsFunction(i, data, appearance_radius):
+    data_len = len(data)-1
+    values = np.array(list(map(lambda j: 1 if math.hypot(data[i]-data[j],data[i+1]-data[j+1]) <= appearance_radius else 0, range(data_len))))
+    s = np.sum(values)
+    return s #  values
 
 @contextmanager    
 def poolcontext(*args, **kwargs):
     pool = multiprocessing.Pool(*args, **kwargs)
     yield pool
     pool.terminate()
+
+class TimeLapHistogram2DBuilder:
+    def __init__(self, xStart, xEnd, xBinCount, yStart, yEnd, yBinCount):
+        self._x_start = xStart
+        self._x_end = xEnd
+        self._x_bin_count = xBinCount
+        self._x_bin_size = (xEnd-xStart)/xBinCount
+
+        
+        self._y_start = yStart
+        self._y_end = yEnd
+        self._y_bin_count = yBinCount
+        self._y_bin_size = (yEnd - yStart)/yBinCount
+      
+        self.reset()
+        
+    
+    def reset(self):
+        self._histogram_array = np.zeros(self._x_bin_count, self._y_bin_count)
+
+
+    def assign_data(self, x,y,z):
+        if x < self._x_start or x > self._x_end:
+            return
+        
+        if y < self._y_start or y > self._y_end:
+            return 
+
+        x_idx = math.floor((x-self._x_start)/self._x_bin_size)
+        y_idx = math.floot((y-self._y_start)/self._y_bin_size)
+
+        self._histogram_array[x_idx, y_idx] += z
+
+        
+
+    def append_data(self, data):
+        stDev = np.std(data)
+        doubleStDevSqr = 2*stDev*stDev
+        coeff = 1/(math.pi*doubleStDevSqr)
+        data_len = len(data) - 1
+        result = np.zeros(data_len)
+
+        for i in tqdm.tqdm(range(data_len)):
+            val = epsFunction(i, data, stDev)
+            result[i] = val #np.sum(values)
+            self.assign_data(data[i], data[i+1], phi)
+        
+
+
+        #max_phi = np.max(result)
+        #result = np.divide(result, max_phi)
+        #result = np.vstack((data[:data_len],data[1:data_len+1],result)).transpose()
+
+
+        #return result
+
+    def get_histogram(self):
+        m = np.amax(self._histogram_array)
+        hist = np.divide(self._histogram_array, m)
+        xBinEdges = np.linspace(self._x_start, self._x_end, self._x_bin_count+1, endpoint=True)
+        yBinEdges = np.linspace(self._y_start, self._y_end, self._y_bin_count+1, endpoint=True)
+        return hist, xBinEdges, yBinEdges
+
 
 class TimeLagPlotCalculator:
     def __init__(self):
