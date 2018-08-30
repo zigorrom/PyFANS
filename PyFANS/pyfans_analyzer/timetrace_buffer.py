@@ -128,8 +128,8 @@ class TimetraceFileBuffer:
         except Exception as e:
             return None
 
-    def get_timetrace_data(self,start_idx=None, end_idx=None, start_time=None, end_time=None):
-        pass
+    # def get_timetrace_data(self,start_idx=None, end_idx=None, start_time=None, end_time=None):
+    #     pass
 
     def _read_timetrace_interval_from_file(self, start_idx, end_idx):
         

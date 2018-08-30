@@ -19,7 +19,8 @@ from pyqtgraph import exporters as pg_exp
 
 from pyfans_analyzer.expression_parser_patch import PatchedParser
 from pyfans.experiment.measurement_data_structures import MeasurementInfo
-
+import pyfans_analyzer.timetrace_buffer as tb
+import pyfans_analyzer.timetrace_processing as tp
 # def getValueAndName(func, var):
 # def get_function_variables(function):
 def updateDockLabelStylePatched(self):
@@ -1016,6 +1017,32 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         if self.working_directory:
             open_folder_in_explorer(self.working_directory)
     
+    @QtCore.pyqtSlot()
+    def on_action_plot_histogram_triggered(self):
+        print("plotting histogram")
+
+    @QtCore.pyqtSlot()
+    def on_action_plot_tlp_triggered(self):
+        print("plotting tlp")
+        fname = self.data["Filename"].iloc[self._current_selected_point_index]
+        print("working directory:", self.working_directory)
+        # selected_fname = fname[]
+        base_fname, ext = os.path.splitext(fname)
+        abs_fname = os.path.join(self.working_directory, "{0}_timetrace.npy".format(base_fname))
+        output_fname = os.path.join(self.working_directory, "{0}_tlp{1}".format(base_fname, ext))
+        print(abs_fname)
+        print(output_fname)
+        with tb.TimetraceFileBuffer(abs_fname) as timetrace:
+            time, data = timetrace.get_timetrace_data(start_time = 0, end_time=1)
+            data = data[::3]
+            res = tp.TimeLagPlotCalculator.calculate_tlp(data)
+            print(res)
+            np.savetxt(output_fname, res)
+            
+        # if os.path.isfile(abs_fname):
+        #     print("file exists")
+        #     print(fname)
+
 
     def linkViews(self, plotName1, plotName2, linkX=False, linkY=False):
         plot1 = self._plot_dict.get(plotName1)

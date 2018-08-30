@@ -190,6 +190,7 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
     def on_file_open_triggered(self, filename):
         wd, fn = os.path.split(filename)
         self.working_directory = wd
+        self.data_plotter.setWorkingDirectory(wd)
         self.__measurement_file = MeasurementInfoFile(filename)
         print(self.__measurement_file.columns)
         print(self.__measurement_file.row_count)

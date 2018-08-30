@@ -36,9 +36,18 @@
      <addaction name="actionLinkAxes"/>
      <addaction name="actionUnlink"/>
     </widget>
+    <widget class="QMenu" name="menuTimetrace">
+     <property name="title">
+      <string>Timetrace</string>
+     </property>
+     <addaction name="action_plot_histogram"/>
+     <addaction name="action_plot_tlp"/>
+    </widget>
     <addaction name="actionAddPlot"/>
     <addaction name="actionRemovePlot"/>
     <addaction name="menuLink"/>
+    <addaction name="separator"/>
+    <addaction name="menuTimetrace"/>
    </widget>
    <widget class="QMenu" name="menuCurve">
     <property name="title">
@@ -119,6 +128,16 @@
   <action name="actionOpenWorkingFolder">
    <property name="text">
     <string>Open working folder</string>
+   </property>
+  </action>
+  <action name="action_plot_histogram">
+   <property name="text">
+    <string>Histogram</string>
+   </property>
+  </action>
+  <action name="action_plot_tlp">
+   <property name="text">
+    <string>TLP</string>
    </property>
   </action>
  </widget>
