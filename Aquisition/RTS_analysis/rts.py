@@ -95,7 +95,7 @@ def perform_analysis(fn, ns, s, e, sigma):
 
 def main():
     parser = argparse.ArgumentParser(description='Process timetraces in order to check RTS appearance using TLP method')
-    parser.add_argument('fn', metavar='f', type=str, nargs='?', default = "MeasurDataCapture.dat",
+    parser.add_argument('-fn', metavar='f', type=str, nargs='?', default = "MeasurDataCapture.dat",
                     help='The name of main file where all measured data is stored')
 
     parser.add_argument('-ns', metavar='Number of Samples', type = int, nargs='?' , default = -1,

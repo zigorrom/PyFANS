@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 import math
 sigma = 10e-7
 
-filepath = "G:\\Study\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K"
+filepath = "D:\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K"
+# filepath = "G:\\Study\\PhD\\Measurements\\2016\\SiNW\\SOI#18\\Chip19\\2016.12.13\\VacuumPot\\Noise\\T=300K"
 filename = join(filepath,"t16-100x100nm_noise_4.dat")
 f = np.loadtxt(filename).transpose()
+print(f)
+# raise StopIteration()
+f = f[:,:1000].copy()
 
 current = f[1]
 cpp = current[1:]

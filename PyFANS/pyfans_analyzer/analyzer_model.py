@@ -101,6 +101,8 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         
         self.exp_data = eds.ExperimentData()
         self.data_plotter = eds.ExperimentDataAnalysis(layout="horizontal")
+        self.data_plotter.use_point_selection_tool = True
+
         self.data_plotter.setData(self.exp_data)
         # self.add_flicker_noise()
         # self.add_thermal_noise()
@@ -195,10 +197,11 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
         self.__measurement_file.print_rows()
         self.load_measurement_data(self.__measurement_file.current_measurement_info.measurement_filename)
         self.exp_data.fromDataFrame(self.__measurement_file.measurement_info)
-        
+
     def load_measurement_data(self, filename):
         print("opening file {0}".format(filename))
         try:
+            self.data_plotter.update_current_selected_index(self.__measurement_file.current_row)
             self.setupParams()
             self.setupCurrentState()
             params = self.__measurement_file.current_measurement_info
@@ -242,6 +245,12 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
             print("Exception occured while loading measurement data")
             print(str(e))
             print(20*'*')
+        finally:
+            try:
+                self.on_noise_component_update_required()
+            except Exception as e:
+                print("Exception when drawing overal curve")
+                print(str(e))
 
     def saveNoiseModelData(self):
         #self.attributes_to_save
@@ -296,8 +305,14 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
             try:
                 
-                typ = component["component_type"]["value"]
-                n = component["name"]["value"]
+                typ = component["component_type"]  #["value"]
+                if isinstance(typ, dict):
+                    typ = typ["value"]
+
+                n = component["name"]    #["value"]
+                if isinstance(n, dict):
+                    n = n["value"]
+
                 if typ == "__flicker__":
                     noise_comp = self.add_flicker_noise(name=n)
                     noise_comp.set_state(component)

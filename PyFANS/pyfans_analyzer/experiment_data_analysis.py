@@ -351,6 +351,36 @@ class UpdatablePlotDataItem(PlotDataItem):
     # def getBareData(self):
     #     return self.xData, self.yData
 
+class PlotPointSelectionTool:
+    def __init__(self, parentPlot):
+        self._parentPlot = parentPlot
+        self._vLine = pg.InfiniteLine(angle=90, movable=False)
+        # self._vLine.setZValue(1)
+        self._hLine = pg.InfiniteLine(angle=0, movable=False)
+        # self._hLine.setZValue(1)
+        self._parentPlot.addItem(self._vLine, ignoreBounds=True)
+        self._parentPlot.addItem(self._hLine, ignoreBounds=True)
+
+
+    def __del__(self):
+        self.remove()
+
+    def remove(self):
+        self._parentPlot.removeItem(self._hLine)
+        self._parentPlot.removeItem(self._vLine)
+
+    def setPosition(self, x,y):
+        try:
+            print(x,y)
+            self._vLine.setPos(x)
+            self._hLine.setPos(y)
+        except Exception as e:
+            print("Exception while setting position to point selector")
+        
+    
+    
+
+
 
 class PlotDock(Dock):
     def __init__(self, plotName, label, closable=True, logX=False, logY=False, **kwargs):
@@ -358,7 +388,8 @@ class PlotDock(Dock):
         self._plot = pg.PlotWidget(title=label)
         self.addWidget(self._plot)
         self.setupPlot(logX=logX, logY=logY)
-
+        self.pointSelectionTool = None
+        self.selectedCurve = 0
         self.curves = []
 
     def setupPlot(self, **kwargs):
@@ -373,6 +404,61 @@ class PlotDock(Dock):
         logY = kwargs.get("logY", False)
         self._plot.setLogMode(x=logX, y=logY)
         self._plot.addLegend()
+
+    def setSelectionToolEnabled(self, enabled):
+        if enabled:
+            self.addPointSelectionTool()
+        else:
+            self.removePointSelectionTool()
+
+    def addPointSelectionTool(self):
+        if self.pointSelectionTool:
+            return
+
+        self.pointSelectionTool = PlotPointSelectionTool(self)
+
+    def removePointSelectionTool(self):
+        if self.pointSelectionTool:
+            self.pointSelectionTool.remove()
+            self.pointSelectionTool = None
+
+
+    def setSelectedPointIndex(self, index):
+        if not self.pointSelectionTool:
+            return 
+        
+        try:
+            xPos = 0
+            yPos = 0
+            l = len(self.curves) 
+            
+
+            if l < 1:
+                return
+            
+            if self.selectedCurve >= l:
+                self.selectedCurve = l-1
+
+            elif l == 1:
+                c = self.curves[self.selectedCurve]
+                xData = c.xDisp
+                yData = c.yDisp
+                xPos = xData[index]
+                yPos = yData[index]
+            else:
+                c = self.curves[self.selectedCurve]
+                xData = c.xData
+                xPos = xData[index]
+
+            self.pointSelectionTool.setPosition(xPos, yPos)
+
+        except Exception as e:
+            print("Exception occured when setting selected point index")
+            print(e)
+            
+
+
+
 
     def setLogScale(self, logX=False, logY=False):
         self._plot.setLogMode(x=logX, y=logY)
@@ -392,6 +478,7 @@ class PlotDock(Dock):
         self._plot.addItem(curve)
         # curve = self._plot.plot(*args, **kwargs)
         self.curves.append(curve)
+        self.selectedCurve = len(self.curves)-1
         
         return curve
 
@@ -428,8 +515,12 @@ class PlotDock(Dock):
     def items(self):
         return self._plot.getPlotItem().items
 
+    def addItem(self, item, **kwargs):
+        self._plot.addItem(item, **kwargs)
+
     def removeItem(self, item):
         self._plot.removeItem(item)
+        self.selectedCurve = len(self.curves)-1
 
     def exportAsImage(self, filename, folder):
         vb = self._plot.plotItem#.getViewBox()
@@ -648,6 +739,8 @@ class SelectPlotsDialog(selectPlotViewBase, selectPlotViewForm):
     
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
 class ExperimentDataAnalysis(mainViewBase,mainViewForm):
+    sigCurrentSelectedPointIndexChanged = QtCore.pyqtSignal(int)
+    sigUsePointSelectionToolChanged = QtCore.pyqtSignal(bool)
     def __init__(self, experimentData = None, layout="horizontal", parent = None ):
         super(mainViewBase,self).__init__(parent)
         self.setupUi()
@@ -662,7 +755,10 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
         # self.counter = 0
         # self.max_count = 1000
-        
+
+        self._use_point_selection_tool = False
+        self._current_selected_point_index = 0
+        self.sigUsePointSelectionToolChanged.connect(self.update_selection_tool_for_plots)
         self.working_directory = None
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(500)
@@ -680,6 +776,32 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     def data(self):
         return self._data
     
+    @property
+    def use_point_selection_tool(self):
+        return self._use_point_selection_tool
+
+    @use_point_selection_tool.setter
+    def use_point_selection_tool(self, value):
+        if self._use_point_selection_tool == value:
+            return 
+        
+        self._use_point_selection_tool = value
+        self.sigUsePointSelectionToolChanged.emit(value)
+        
+
+    def update_selection_tool_for_plots(self, use_point_selection_tool):
+        for name, plt in self._plot_dict.items():
+            plt.setSelectionToolEnabled(use_point_selection_tool)
+
+    def update_current_selected_index(self, index):
+        if not isinstance(index, int):
+            return
+        
+        self._current_selected_point_index = index
+        self.sigCurrentSelectedPointIndexChanged.emit(index)
+        for name, plt in self._plot_dict.items():
+            plt.setSelectedPointIndex(index)
+
     def setData(self, data):
         if not isinstance(data, ExperimentData):
             raise TypeError("data should of ExperimentData type ")
@@ -735,8 +857,14 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         plotName = "plot_{0}".format(len(self._plot_dict))
         curveName = "curve {0}".format(len(self._curve_dict))
         plot = PlotDock(plotName,plotName)
+        plot.setSelectionToolEnabled(self.use_point_selection_tool)
+         
         whereToAppend = self.whereToAppendDockPlot()
         curve, position = self.addCurve(plot, curveName)
+        
+        plot.setSelectedPointIndex(self._current_selected_point_index)
+        
+
         if not curve:
             print("cancelled")
             return
