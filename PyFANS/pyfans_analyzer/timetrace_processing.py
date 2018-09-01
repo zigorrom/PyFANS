@@ -12,7 +12,7 @@ from contextlib import contextmanager
 
 def phiFunction(i, data, coeff1, coeff2):
     data_len = len(data)-1
-    values = np.array(list(map(lambda j: coeff1*math.exp(-math.hypot(data[i]-data[j],data[i+1]-data[j+1])/coeff2)), range(data_len)))
+    values = np.array(list(map(lambda j: coeff1*math.exp(-math.hypot(data[i]-data[j],data[i+1]-data[j+1])/coeff2), range(data_len))))
     phi = np.sum(values)
     return phi #  values
 
@@ -46,7 +46,7 @@ class TimeLapHistogram2DBuilder:
         
     
     def reset(self):
-        self._histogram_array = np.zeros(self._x_bin_count, self._y_bin_count)
+        self._histogram_array = np.zeros((self._x_bin_count, self._y_bin_count))
 
 
     def assign_data(self, x,y,z):
@@ -57,7 +57,7 @@ class TimeLapHistogram2DBuilder:
             return 
 
         x_idx = math.floor((x-self._x_start)/self._x_bin_size)
-        y_idx = math.floot((y-self._y_start)/self._y_bin_size)
+        y_idx = math.floor((y-self._y_start)/self._y_bin_size)
 
         self._histogram_array[x_idx, y_idx] += z
 
@@ -70,11 +70,15 @@ class TimeLapHistogram2DBuilder:
         data_len = len(data) - 1
         result = np.zeros(data_len)
 
-        for i in tqdm.tqdm(range(data_len)):
-            val = epsFunction(i, data, stDev)
-            result[i] = val #np.sum(values)
-            self.assign_data(data[i], data[i+1], phi)
+        # for i in tqdm.tqdm(range(data_len)):
+        #     val = epsFunction(i, data, stDev)
+        #     result[i] = val #np.sum(values)
+        #     self.assign_data(data[i], data[i+1], val)
         
+        for i in tqdm.tqdm(range(data_len)):
+            phi = phiFunction(i, data, coeff, doubleStDevSqr)
+            result[i] = phi #np.sum(values)
+            self.assign_data(data[i], data[i+1], phi)
 
 
         #max_phi = np.max(result)

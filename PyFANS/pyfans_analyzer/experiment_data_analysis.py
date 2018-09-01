@@ -1023,6 +1023,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
 
     @QtCore.pyqtSlot()
     def on_action_plot_tlp_triggered(self):
+        import matplotlib.pyplot as plt
         print("plotting tlp")
         fname = self.data["Filename"].iloc[self._current_selected_point_index]
         print("working directory:", self.working_directory)
@@ -1033,7 +1034,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         print(abs_fname)
         print(output_fname)
         with tb.TimetraceFileBuffer(abs_fname) as timetrace:
-            time, data = timetrace.get_timetrace_data(start_time = 0, end_time=0.5)
+            time, data = timetrace.get_timetrace_data(start_time = 0, end_time=0.001)
             minVal = np.amin(data)
             maxVal = np.amax(data)
             diff = maxVal-minVal
@@ -1050,6 +1051,13 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             # res = tp.TimeLagPlotCalculator.calculate_tlp(data)
             # print(res)
             np.savetxt(output_fname, res)
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111)#, projection='3d')
+            
+            # surf = ax.plot_surface(xcenters, ycenters, hist)
+            # plt.title('Simplest default with labels')
+            # plt.show()
+
             
         # if os.path.isfile(abs_fname):
         #     print("file exists")
