@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>891</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPlot">
@@ -61,9 +61,24 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuExport_As">
+     <property name="title">
+      <string>Export As</string>
+     </property>
+     <addaction name="actionExportAsImage"/>
+     <addaction name="actionExportAsFile"/>
+    </widget>
+    <widget class="QMenu" name="menuRemove">
+     <property name="title">
+      <string>Remove</string>
+     </property>
+     <addaction name="actionRemoveColumns"/>
+    </widget>
     <addaction name="actionImport"/>
-    <addaction name="actionExport"/>
+    <addaction name="actionSaveFile"/>
+    <addaction name="menuExport_As"/>
     <addaction name="actionOpenWorkingFolder"/>
+    <addaction name="menuRemove"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlot"/>
@@ -120,11 +135,6 @@
     <string>Import</string>
    </property>
   </action>
-  <action name="actionExport">
-   <property name="text">
-    <string>Export</string>
-   </property>
-  </action>
   <action name="actionOpenWorkingFolder">
    <property name="text">
     <string>Open working folder</string>
@@ -138,6 +148,26 @@
   <action name="action_plot_tlp">
    <property name="text">
     <string>TLP</string>
+   </property>
+  </action>
+  <action name="actionExportAsImage">
+   <property name="text">
+    <string>Image</string>
+   </property>
+  </action>
+  <action name="actionExportAsFile">
+   <property name="text">
+    <string>File</string>
+   </property>
+  </action>
+  <action name="actionSaveFile">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionRemoveColumns">
+   <property name="text">
+    <string>Columns</string>
    </property>
   </action>
  </widget>

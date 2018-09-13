@@ -116,19 +116,28 @@ class VariableMapper:
 
         return None
 
+class FileNotSetError(Exception):
+    pass
+
 class ExperimentData(QtCore.QObject):
     newDataArrived = QtCore.pyqtSignal(object)
 
     def __init__(self):
         super().__init__()
         cols = MeasurementInfo.header_options()
+        self._filename = None
         self._data = pd.DataFrame(columns = cols)
-        
+
+    @property
+    def filename(self):
+        return self._filename
     
     def importFromFile(self, filename):
         self._data = pd.read_csv(filename, delimiter="\t")
+        self._filename = filename
         keys = list(self._data)
         self.newDataArrived.emit(keys)
+        
 
     def fromDataFrame(self, dataframe):
         if not isinstance(dataframe, pd.DataFrame):
@@ -159,6 +168,12 @@ class ExperimentData(QtCore.QObject):
     def clear(self):
         self._data = self._data.iloc[0:0]
 
+    def save(self):
+        if self.filename is None:
+            raise FileNotSetError("The data was passed by referrence cannot specify the path to save")
+        else:
+            self._data.to_csv(self.filename, sep="\t")
+
     def append(self, measurement_data):
         new_data = measurement_data.to_dict()
         # newdf = pd.DataFrame.from_dict(new_data)
@@ -172,6 +187,10 @@ class ExperimentData(QtCore.QObject):
         # print("appending data")
         # print(new_data)
         # print(self._data)
+
+    def drop(self, *args, **kwargs):
+        self._data.drop(*args, **kwargs)
+        self.newDataArrived.emit(self.variables)
 
     def __getitem__(self, *args):
         # print("getting index {0}".format(args))
@@ -714,10 +733,10 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
         if res:
             self.y_axis_function = dialog.parsedExpression
 
-selectPlotViewBase, selectPlotViewForm = uic.loadUiType("UI/UI_SelectPlots.ui")
-class SelectPlotsDialog(selectPlotViewBase, selectPlotViewForm):
+selectItemsViewBase, selectItemsViewForm = uic.loadUiType("UI/UI_SelectItems.ui")
+class SelectItemsDialog(selectItemsViewBase, selectItemsViewForm):
     def __init__(self, parent = None):
-        super(selectPlotViewBase,self).__init__(parent)
+        super(selectItemsViewBase,self).__init__(parent)
         self.setupUi()
 
     def setupUi(self):
@@ -1007,8 +1026,8 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             self.data.importFromFile(fname)
 
     @QtCore.pyqtSlot()
-    def on_actionExport_triggered(self):
-        print("exporting")
+    def on_actionExportAsImage_triggered(self):
+        print("exporting image")
         saveFolder = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", directory=self.working_directory)
         plotNames = self.selectPlotsNames()
         print(plotNames)
@@ -1025,6 +1044,55 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         # items = list(self._plot_dict.keys())
         # plotName, ok = QtGui.QInputDialog.getItem(self, "Select plot", "list of plots", items, 0, False)
 
+    @QtCore.pyqtSlot()
+    def on_actionExportAsFile_triggered(self):
+        print("exporting file")
+        saveFile = QtGui.QFileDialog.getSaveFileName(self, "Save File", self.working_directory, "DataFile (*.dat)")
+        print(saveFile)
+        columns = self.data.variables
+        dialog = SelectItemsDialog()
+        dialog.setList(columns)
+        res = dialog.exec_()
+        columns = dialog.getSelectedList()
+        if len(columns)<=0:
+            print("No columns for export were selected")
+            return
+        
+        resultingDataFrame = self.data[columns]
+        resultingDataFrame.to_csv(saveFile, sep="\t")
+        
+
+    @QtCore.pyqtSlot()
+    def on_actionSaveFile_triggered(self):
+        print("saving file")
+        try:
+            self.data.save()
+        except FileNotSetError as e:
+            msg = QtGui.QMessageBox()
+            msg.setText("Cannot find path. Woule you like to export data?")
+            msg.setInformativeText("Data were passed by reference and the filepath is not specified. Would you like to export data to selected file?")
+            msg.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            retval = msg.exec_()
+            if retval == QtGui.QMessageBox.Yes:
+                self.on_actionExportAsFile_triggered()
+
+
+    @QtCore.pyqtSlot()
+    def on_actionRemoveColumns_triggered(self):
+        print("removing columns")
+        columns = self.data.variables
+        dialog = SelectItemsDialog()
+        dialog.setList(columns)
+        res = dialog.exec_()
+        columns = dialog.getSelectedList()
+        msg = QtGui.QMessageBox()
+        msg.setText("Are you sure you want to remove columns? (No way to undo)")
+        msg.setInformativeText("Data would be deleted from the data set.\n!!!If you save this data you might lose important information!!!")
+        msg.setIcon(QtGui.QMessageBox.Warning)
+        msg.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        retval = msg.exec_()
+        if retval == QtGui.QMessageBox.Yes:
+            self._data.drop(columns, inplace=True, axis=1)            
 
     @QtCore.pyqtSlot()
     def on_actionOpenWorkingFolder_triggered(self):
@@ -1095,7 +1163,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     
     def selectPlotsNames(self):
         plotNames = list(self._plot_dict.keys())
-        dialog = SelectPlotsDialog()
+        dialog = SelectItemsDialog()
         dialog.setList(plotNames)
         res = dialog.exec_()
         plotList = dialog.getSelectedList()
