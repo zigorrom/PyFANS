@@ -536,7 +536,7 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
         self.setupUi(stringExpression)
         self._variableMapper = variableMapper
         self._parsedExpression = None
-        self._availableFunctions = ['+','-','*','/','PI','E','abs()','sin()','cos()','tan()','log()','Sv(filename,frequency)', "Si(filename,frequency,resistance)", "Sinorm(filename,frequency,resistance,current)"]
+        self._availableFunctions = ['+','-','*','/','PI','E','abs()','sin()','cos()','tan()','log()','Sv(filename,frequency)', "Si(filename,frequency,resistance)", "Sinorm(filename,frequency,resistance,current)", "Su(filename,frequency,resistance, gm)"]
 
     @property
     def stringExpression(self):

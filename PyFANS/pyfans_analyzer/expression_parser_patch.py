@@ -8,8 +8,8 @@ class PatchedParser(py_eval.Parser):
         self.ops1.update({
             "Sv": self.voltageSpectralDensity,
             "Si": self.currentSpectralDensity,
-            "Sinorm": self.normalizedCurrentSpectralDensity
-
+            "Sinorm": self.normalizedCurrentSpectralDensity,
+            "Su": self.inputReferredSpectralDensity
         })
 
     def importFunc(self, fname):
@@ -62,6 +62,21 @@ class PatchedParser(py_eval.Parser):
                 ValueError("Not enough arguments") 
         else:
             ValueError("Not enough arguments") 
+    
+    def inputReferredSpectralDensity(self, args):
+        if isinstance(args, list):
+            if len(args)>3:
+                gm = args.pop()
+                if not isinstance(gm, (int, float)):
+                    TypeError("Unexpected transconductance data type")
+
+                gmsqr = gm*gm
+                si = self.currentSpectralDensity(args)
+                return si/gmsqr
+        
+        else:
+            ValueError("Not enough arguments") 
+
 
     def currentSpectralDensity(self, args):
         if isinstance(args, list):
@@ -77,7 +92,7 @@ class PatchedParser(py_eval.Parser):
                 ValueError("Not enough arguments") 
         else:
             ValueError("Not enough arguments") 
-
+   
     def voltageSpectralDensity(self, args):# fname, atFrequency=None):
         # print("calculating Sv")
         # print(args)
