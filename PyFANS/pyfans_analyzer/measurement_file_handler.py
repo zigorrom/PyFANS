@@ -2,7 +2,7 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-
+from scipy import signal, interpolate
 
 
 class MeasurementInfo(object):
@@ -246,6 +246,48 @@ class MeasurementInfoFile(object):
         except Exception as e:
             print("Exception occured while calculating Si")
         
+        try:
+            #calculate derivative
+            gate_voltage_col = result["Vgate (end)"]
+            min_voltage_step = np.abs(gate_voltage_col.diff().min(skipna=True)) #.mean(skipna=True)
+            min_voltage = gate_voltage_col.min(skipna=True)
+            max_voltage = gate_voltage_col.max(skipna=True)
+            
+            gate_voltage = gate_voltage_col.values
+            drain_current = result["Id (end)"].values
+            
+            interpolation_func = interpolate.interp1d(gate_voltage, drain_current)
+            
+            number_of_points = int(np.floor((max_voltage-min_voltage)/min_voltage_step) + 1)
+
+
+            equally_spaced_gate_voltage, min_voltage_step = np.linspace(min_voltage, max_voltage, num=number_of_points, endpoint=True, retstep=True) #np.arange(min_voltage, max_voltage + min_voltage_step, min_voltage_step )
+            drain_current = interpolation_func(equally_spaced_gate_voltage)
+
+            l = len(equally_spaced_gate_voltage)
+            if l <= 1:
+                raise ValueError("The length of array is not enough to calculate derivative")
+                
+            wnd_size = int(np.floor(5 * np.log10(l)))
+            transconductance = signal.savgol_filter(drain_current,wnd_size, 2, 1, min_voltage_step)
+            interpolation_func = interpolate.interp1d(equally_spaced_gate_voltage, transconductance)
+            transconductance = interpolation_func(gate_voltage)
+            result["gm"] = transconductance
+            
+
+        except Exception as e:
+            print("Exception occured while calculating derivative")
+            print(e)
+
+        try:
+            #calculate SU
+            si = result["Si@1Hz_flicker"]
+            sqr_gm = np.power(result["gm"], 2)
+            result["Su@1Hz_flicker"] = np.divide(si, sqr_gm)
+            
+        except Exception as e:
+            print("Exception occured while calculating input referred noise")
+            print(e)
 
 
         result.to_csv(self._extended_measurement_info_filename, sep="\t")
