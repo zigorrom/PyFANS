@@ -177,6 +177,12 @@ class ExperimentData(QtCore.QObject):
         # print("getting index {0}".format(args))
         return self._data.__getitem__(*args)
 
+    def __setitem__(self, key, value):
+        return self._data.__setitem__(key, value)
+
+    def remove_column(self, key):
+        self._data.drop(key, axis=1, inplace=True)
+
     def __str__(self, *args, **kwargs):
         return "ExpeimentData\n"+str(self._data)
 
@@ -232,10 +238,18 @@ class CurveDataProvider(QtCore.QObject):
         else:
             raise ValueError("Not enough data to intialize data provider")
 
+    def forceRefreshData(self):
+        self.__refreshData__()
 
     def __refreshData__(self):
         self._currentXdata = self._xDataProducer()
         self._currentYdata = self._yDataProducer()
+        
+        if self._xFunction is not None:
+            self._dataSource[self._xCaption] = self._currentXdata 
+
+        if self._yFunction is not None:
+            self._dataSource[self._yCaption] = self._currentYdata 
 
     @property
     def AutoUpdated(self):
