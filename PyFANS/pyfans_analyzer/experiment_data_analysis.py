@@ -1053,6 +1053,9 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         dialog = SelectItemsDialog()
         dialog.setList(columns)
         res = dialog.exec_()
+        if not res:
+            return
+
         columns = dialog.getSelectedList()
         if len(columns)<=0:
             print("No columns for export were selected")
@@ -1084,6 +1087,9 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
         dialog = SelectItemsDialog()
         dialog.setList(columns)
         res = dialog.exec_()
+        if not res:
+            return
+
         columns = dialog.getSelectedList()
         msg = QtGui.QMessageBox()
         msg.setText("Are you sure you want to remove columns? (No way to undo)")
