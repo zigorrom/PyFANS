@@ -278,6 +278,25 @@ class MeasurementInfoFile(object):
         except Exception as e:
             print("Exception occured while calculating derivative")
             print(e)
+        
+        try:
+            gate_voltages = result["Vgate (end)"].values
+            sign = np.sign(gate_voltages[1]-gate_voltages[0])
+            absolute_current = np.abs(result["Id (end)"].values)
+            transconductance = result["gm"].values
+            max_transcond_idx = np.argmax(transconductance)
+            max_transcond_voltage, max_transcond = (gate_voltages[max_transcond_idx], sign * transconductance[max_transcond_idx])
+            ## calculate threshold
+            #y = f(x0) + f'(x0)(x-x0)
+            #x = (y - f(x0) + x0*f'(x0))/f'(x0)
+            treshold_voltage = (np.amin(absolute_current) - absolute_current[max_transcond_idx] + max_transcond_voltage * max_transcond)/ max_transcond
+            treshold_voltage_array = np.full_like(gate_voltages, treshold_voltage)
+            result["Vth"] = treshold_voltage_array 
+            result["Voverdrive"] = np.subtract(gate_voltages, treshold_voltage_array)
+
+        except Exception as e:
+            print("Exception occured while calculating threshold voltage")
+            print(str(e))
 
         try:
             #calculate SU
@@ -290,7 +309,7 @@ class MeasurementInfoFile(object):
             print(e)
 
 
-        result.to_csv(self._extended_measurement_info_filename, sep="\t")
+        result.to_csv(self._extended_measurement_info_filename, sep="\t", index=False)
         # print(result)
 
     @property

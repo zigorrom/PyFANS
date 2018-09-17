@@ -1087,53 +1087,57 @@ class AnalyzerModel(uih.NotifyPropertyChanged):
 
     
     def on_fit_data_triggered(self):
-        print("start fitting")
-        import operator
-        # list_of_models = [Model(v.getModelFunction(),prefix=k, nan_policy="propagate") for k,v in self.noise_components.items()] 
-        list_of_models = list()
-        list_of_params = list()
-        for name,component in self.noise_components.items():
-            if not component.enabled:
-                continue
-            model, param = component.getFittingModelAndParams(logMode=False)
-            list_of_models.append(model)
-            parameters = list(param.values())
-            list_of_params.extend(parameters)
-            # print()
-        # list_of_models = [v.getFittingModelAndParams for k,v in self.noise_components.items()]
-        # print("list of parameters")
-        print(list_of_params)
-        fit_model = reduce(operator.add, list_of_models)
-        fit_parameters = Parameters()
-        fit_parameters.add_many(*list_of_params)
-        print()
-        print(fit_parameters)
-        
-        data = self._displayData
-        result = fit_model.fit(data, fit_parameters, f=self._displayFreq)
-        print(result.fit_report())
-        # print("best values")
-        # print(result.params)
-        # print(result.init_fit)
-        # print("init fit")
-        # print(result.init_fit)
-        # print("best fit")
-        # print(result.best_fit)
-        # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.init_fit)
-        # self._initFitDataCurve.setData(freq, data_converted)
-        # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.best_fit)
-        # self._bestFitDataCurve.setData(freq, data_converted)
-        
-        for name, param in result.best_values.items(): #items():
-            try:
-                component_name, param_name = name.split(BaseNoiseComponent.PREFIX_SPLITTER)
-                component = self.noise_components[component_name]
-                setattr(component, param_name, param)
-
-            except Exception as e:
-                print("exception while setting fitted values")
-                print(e)
+        try:
+            print("start fitting")
+            import operator
+            # list_of_models = [Model(v.getModelFunction(),prefix=k, nan_policy="propagate") for k,v in self.noise_components.items()] 
+            list_of_models = list()
+            list_of_params = list()
+            for name,component in self.noise_components.items():
+                if not component.enabled:
+                    continue
+                model, param = component.getFittingModelAndParams(logMode=False)
+                list_of_models.append(model)
+                parameters = list(param.values())
+                list_of_params.extend(parameters)
+                # print()
+            # list_of_models = [v.getFittingModelAndParams for k,v in self.noise_components.items()]
+            # print("list of parameters")
+            print(list_of_params)
+            fit_model = reduce(operator.add, list_of_models)
+            fit_parameters = Parameters()
+            fit_parameters.add_many(*list_of_params)
+            print()
+            print(fit_parameters)
             
+            data = self._displayData
+            result = fit_model.fit(data, fit_parameters, f=self._displayFreq)
+            print(result.fit_report())
+            # print("best values")
+            # print(result.params)
+            # print(result.init_fit)
+            # print("init fit")
+            # print(result.init_fit)
+            # print("best fit")
+            # print(result.best_fit)
+            # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.init_fit)
+            # self._initFitDataCurve.setData(freq, data_converted)
+            # freq, data_converted = self.coordinate_transform.convert(self._displayFreq, result.best_fit)
+            # self._bestFitDataCurve.setData(freq, data_converted)
+            
+            for name, param in result.best_values.items(): #items():
+                try:
+                    component_name, param_name = name.split(BaseNoiseComponent.PREFIX_SPLITTER)
+                    component = self.noise_components[component_name]
+                    setattr(component, param_name, param)
+
+                except Exception as e:
+                    print("exception while setting fitted values")
+                    print(e)
+
+        except Exception as e:
+            print("Exception occured while fitting data")
+            print(str(e))        
             
 
         # result_data = result.eval_components() 

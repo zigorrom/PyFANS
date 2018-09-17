@@ -172,7 +172,7 @@ class ExperimentData(QtCore.QObject):
         if self.filename is None:
             raise FileNotSetError("The data was passed by referrence cannot specify the path to save")
         else:
-            self._data.to_csv(self.filename, sep="\t")
+            self._data.to_csv(self.filename, sep="\t", index=False)
 
     def append(self, measurement_data):
         new_data = measurement_data.to_dict()
@@ -1062,7 +1062,7 @@ class ExperimentDataAnalysis(mainViewBase,mainViewForm):
             return
         
         resultingDataFrame = self.data[columns]
-        resultingDataFrame.to_csv(saveFile, sep="\t")
+        resultingDataFrame.to_csv(saveFile, sep="\t", index=False)
         
 
     @QtCore.pyqtSlot()
