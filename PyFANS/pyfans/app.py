@@ -7,8 +7,8 @@ from queue import Queue
 from PyQt4 import QtCore, QtGui
 
 from pyfans import __app_id__, __app_name__, __version__ #, FANS_UI_Controller, FANS_UI_MainView
-from pyfans.main_window import FANS_UI_MainView
-from pyfans.main_controller import FANS_UI_Controller
+import pyfans.main_window #import FANS_UI_MainView
+import pyfans.main_controller #import FANS_UI_Controller
 
 import pyfans.utils.utils as util
 
@@ -35,8 +35,8 @@ class PyFANSapp(QtGui.QApplication):
         self.setWindowIcon(app_icon)
 
     def setupApplication(self):
-        self._main_window = FANS_UI_MainView()
-        self._controller = FANS_UI_Controller(self._main_window)
+        self._main_window = pyfans.main_window.FANS_UI_MainView()
+        self._controller = pyfans.main_controller.FANS_UI_Controller(self._main_window)
 
         script_executed_with_console = util.check_if_script_executed_with_console()
         self._controller.script_executed_with_console = script_executed_with_console

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>751</width>
+      <height>232</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Selected Measurement Files</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QListWidget" name="listWidget"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuImport">
+     <property name="title">
+      <string>Import</string>
+     </property>
+     <addaction name="actionImportSingle"/>
+     <addaction name="actionImportMany"/>
+     <addaction name="actionClear_Imports"/>
+    </widget>
+    <widget class="QMenu" name="menuExport_As">
+     <property name="title">
+      <string>Export As</string>
+     </property>
+     <addaction name="actionExportSingleFile"/>
+     <addaction name="actionExportToOriginalLocation"/>
+    </widget>
+    <addaction name="menuImport"/>
+    <addaction name="menuExport_As"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionImportSingle">
+   <property name="text">
+    <string>Single</string>
+   </property>
+  </action>
+  <action name="actionImportMany">
+   <property name="text">
+    <string>Many</string>
+   </property>
+  </action>
+  <action name="actionExportSingleFile">
+   <property name="text">
+    <string>Single File</string>
+   </property>
+  </action>
+  <action name="actionExportToOriginalLocation">
+   <property name="text">
+    <string>To original location</string>
+   </property>
+  </action>
+  <action name="actionClear_Imports">
+   <property name="text">
+    <string>Clear Imports</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

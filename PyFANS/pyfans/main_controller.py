@@ -9,6 +9,7 @@ from multiprocessing import Event
 from PyQt4 import uic, QtGui, QtCore
 
 import pyfans
+import pyfans.main_window
 import pyfans.plot as plt
 from pyfans.ui.about import UI_About
 from pyfans.ui.voltage_widget import UI_VoltageWidget
@@ -41,7 +42,7 @@ class FANS_UI_Controller(QtCore.QObject):
     settings_filename = "settings.cfg"
     def __init__(self, view):
         super().__init__()
-        assert isinstance(view, pyfans.FANS_UI_MainView)
+        assert isinstance(view, pyfans.main_window.FANS_UI_MainView)
         
         self.threadPool = QtCore.QThreadPool()
         
@@ -239,7 +240,7 @@ class FANS_UI_Controller(QtCore.QObject):
     
 
     def show_main_view(self):
-        assert isinstance(self.main_view, pyfans.FANS_UI_MainView)
+        assert isinstance(self.main_view, pyfans.main_window.FANS_UI_MainView)
         #self.main_view.show()
         self.main_view.showMaximized()
 

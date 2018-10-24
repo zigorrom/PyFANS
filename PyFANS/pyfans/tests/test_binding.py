@@ -7,7 +7,7 @@ from PyQt4 import uic, QtCore, QtGui
 import pyfans.utils.ui_helper as uih
 from pyfans.experiment.fans_experiment_settings import CharacteristicType
 from pyfans.main_window import CharacteristicTypeToStrConverter
-from pyfans import FANS_UI_MainView as MainWindow
+from pyfans.main_window import FANS_UI_MainView as MainWindow
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings
 
 class Settings(uih.NotifyPropertyChanged):

@@ -9,6 +9,7 @@ from PyQt4 import uic, QtGui, QtCore
 
 
 import pyfans
+import pyfans.main_controller
 from pyfans.utils.ui_helper import DataContextWidget
 import pyfans.utils.ui_helper as uih
 import pyfans.utils.utils as util
@@ -261,7 +262,7 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     
     @controller.setter
     def controller(self,value):
-        assert isinstance(value, pyfans.FANS_UI_Controller)
+        assert isinstance(value, pyfans.main_controller.FANS_UI_Controller)
         self._controller = value
           
     def set_controller(self, controller):

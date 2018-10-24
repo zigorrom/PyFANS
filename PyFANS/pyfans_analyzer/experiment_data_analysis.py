@@ -770,7 +770,19 @@ class SelectItemsDialog(selectItemsViewBase, selectItemsViewForm):
         for index in range(self.ui_plot_list.count()):
             item = self.ui_plot_list.item(index)
             item.setCheckState(QtCore.Qt.Unchecked)
+
+extractorMainViewBase, extractorMainViewForm = uic.loadUiType("UI/UI_ExperimentDataExtractor.ui")
+class ExperimentDataExtractor(extractorMainViewBase, extractorMainViewForm):
+    def __init__(self):
+        self._list_of_meas_data_filenames = list()
+
+    def clear_meas_data_filename_list(self):
+        self._list_of_meas_data_filenames.clear()
     
+    
+
+
+
 mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
 class ExperimentDataAnalysis(mainViewBase,mainViewForm):
     sigCurrentSelectedPointIndexChanged = QtCore.pyqtSignal(int)
