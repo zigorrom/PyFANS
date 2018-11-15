@@ -684,8 +684,9 @@ class SpectrumPlotWidget:
         # self.plot.setLabel("bottom", "Frequency", units="Hz")
         # self.plot.setLabel("bottom", "<font size=\"15\">Frequency, f (Hz)</font>")#, units="Hz")
         self.setXLabel("Frequency, f (Hz)")
-        self.plot.setLimits(xMin=0.01,xMax = 7, yMin = -50, yMax = 10)
-        self.plot.setXRange(0.1,5)
+        #self.plot.setLimits(xMin=0.01,xMax = 7, yMin = -50, yMax = 10)
+        self.plot.setLimits(xMin=-1,xMax = 7, yMin = -50, yMax = 10)
+        self.plot.setXRange(-1,5)#(0.1,5)
         self.plot.setYRange(-20,-1)
 
         
