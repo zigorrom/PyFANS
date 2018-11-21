@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import fnmatch
+# import traceback
 from tqdm import tqdm
 from scipy.signal import decimate
 
@@ -25,13 +26,16 @@ def print_error(error):
     print("Exception occured")
     print(10*"*")
     print(str(error))
+    # traceback.print_exc()
     print(10*"*")
 
 def generate_output_filename(initial_filename, postfix, output_extension, output_folder=None):
     base_name = os.path.basename(initial_filename)
     dirname = os.path.dirname(initial_filename)
-    if os.path.isdir(output_folder):
-        dirname = output_folder
+    if isinstance(output_folder, str):
+        if os.path.isdir(output_folder):
+            dirname = output_folder
+    
 
     filename, file_extension = os.path.splitext(base_name)
     # filename, file_extension = os.path.splitext(initial_filename)
@@ -160,7 +164,8 @@ class FANS_TimetraceExtractor:
     def process_single_timetrace_file(self, filename, output_folder = None, amplification = None):
         # if os.path.isdir(output_folder): #not output_filename:
         output_filename = generate_output_filename(filename, "_extracted" , self._output_extension, output_folder=output_folder)
-
+        # print("Output File:")
+        # print(output_filename)
         with open(filename, "rb") as timetrace_file, open(output_filename,"wb") as output_file:
             print("Start processing ...")
             print("Input filename: {0}".format(filename))

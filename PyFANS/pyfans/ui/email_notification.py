@@ -18,6 +18,13 @@ class EmailAuthForm(QtGui.QDialog, Ui_EmailAuth):
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import re
+
+def isValidEmail(email):
+    if len(email) > 7:
+        if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", email) != None:
+            return True
+    return False
 
 class EmailSender:
     email_cfg = "em.cfg"
@@ -36,11 +43,16 @@ class EmailSender:
         
         with open("em.cfg") as cfg:
             self._server = cfg.readline().rstrip()
-            self._my_address = cfg.readline().rstrip()
+            # self._my_address = cfg.readline().rstrip()
 
-    def initialize(self, login, password):
-        assert isinstance(login, str)
+    def initialize(self, email, password):
+        assert isinstance(email, str)
         assert isinstance(password, str)
+        if not isValidEmail(email):
+            raise ValueError("invalid email")
+        
+        self._my_address = email
+        login = email.split("@")[0]
         try:
             server = smtplib.SMTP(self._server)
             res_code, res_message = server.starttls()
@@ -64,6 +76,7 @@ class EmailSender:
     def logoff(self):
         self._login_successful = False
         self._login = ""
+        self._my_address = ""
         self._password = ""
         print("logoff successful")
 
@@ -80,7 +93,7 @@ class EmailSender:
             res_code, res_message = server.rcpt(self._my_address)
             assert res_code == 250, "Sender FAILURE"
 
-            my_address = self._my_address.format(login = self._login)
+            my_address = self._my_address #.format(login = self._login)
             msg = MIMEMultipart()
             msg['From'] = my_address
             msg['To'] = my_address
