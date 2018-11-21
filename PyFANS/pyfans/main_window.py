@@ -18,6 +18,7 @@ import pyfans.experiment.process_communication_protocol as pcp
 from pyfans.experiment.fans_experiment_settings import ExperimentSettings,CharacteristicType, TimetraceMode
 from pyfans.experiment.measurement_data_structures import MeasurementInfo
 import pyfans.ranges.modern_range_editor as mredit
+from pyfans.forms.UI_NoiseMeasurement_v5_3 import Ui_NoiseMeasurement
 
 class CharacteristicTypeToStrConverter(uih.ValueConverter):
     def __init__(self):
@@ -62,8 +63,9 @@ class TimetraceModeToIndexConverter(uih.ValueConverter):
             raise uih.ConversionException()
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5_3.ui")
-class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
+# mainViewBase, mainViewForm = uic.loadUiType("UI/UI_NoiseMeasurement_v5_3.ui")
+# class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
+class FANS_UI_MainView(QtGui.QMainWindow, Ui_NoiseMeasurement, DataContextWidget):
     ureg = UnitRegistry()
     voltage_format = "{:8.6f}"
     resistance_format = "{:.3f}"
@@ -88,7 +90,8 @@ class FANS_UI_MainView(mainViewBase,mainViewForm, DataContextWidget):
     sigMainWindowClosing = QtCore.pyqtSignal()
 
     def __init__(self, parent = None):
-       super(mainViewBase,self).__init__(parent)
+    #    super(mainViewBase,self).__init__(parent)
+       super().__init__(parent)
        self.setupUi()
        self.setupBinding()
        self.init_values()

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>HardwareSettings</class>
+ <widget class="QDialog" name="HardwareSettings">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>251</width>
-    <height>197</height>
+    <height>224</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -116,7 +116,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>HardwareSettings</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -132,7 +132,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>HardwareSettings</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

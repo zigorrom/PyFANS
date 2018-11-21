@@ -1,8 +1,10 @@
 from PyQt4 import uic, QtCore, QtGui
 from functools import partial
+from pyfans.ui.forms.UI_TransistorSelector import Ui_TransistorSelector
 
-dutSelectorViewBase, dutSelectorViewForm = uic.loadUiType("UI/UI_TransistorSelector.ui")
-class DUT_Selector(dutSelectorViewBase, dutSelectorViewForm):
+# dutSelectorViewBase, dutSelectorViewForm = uic.loadUiType("UI/UI_TransistorSelector.ui")
+# class DUT_Selector(dutSelectorViewBase, dutSelectorViewForm):
+class DUT_Selector(QtGui.QDialog, Ui_TransistorSelector):
     MAX_DUT_COUNT = 32
     DUT_NAME_FORMAT = "DUT#{0}"
     BUTTON_NAME_FORMAT = "pushButton_{0}"

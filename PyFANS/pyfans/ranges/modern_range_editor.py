@@ -8,6 +8,7 @@ from PyQt4.QtGui import QDoubleValidator
 import pyqtgraph as pg
 
 import pyfans.utils.ui_helper as uih
+from pyfans.ranges.forms.UI_RangeSelector_v6 import Ui_RangeSelector
 
 class HandlersEnum(Enum):
     normal = 0
@@ -836,8 +837,10 @@ class RangeHandlerFactory(QtCore.QObject):
             raise TypeError("rangeInfo has wrong data type")
 
 
-RangeEditorBase, RangeEditorForm = uic.loadUiType("UI/UI_RangeSelector_v6.ui")
-class RangeEditorView(RangeEditorBase, RangeEditorForm):
+
+# RangeEditorBase, RangeEditorForm = uic.loadUiType("UI/UI_RangeSelector_v6.ui")
+# class RangeEditorView(RangeEditorBase, RangeEditorForm):
+class RangeEditorView(QtGui.QDialog, Ui_RangeSelector):
     rangeStart = uih.bind("ui_start_val", "text", float)
     rangeEnd = uih.bind("ui_stop_val", "text", float)
     rangeStep = uih.bind("ui_step_val", "text", float)
@@ -846,7 +849,8 @@ class RangeEditorView(RangeEditorBase, RangeEditorForm):
     # rangeRepeats = uih.bind("ui_range_repeats", "value", int)
 
     def __init__(self, parent = None):
-        super(RangeEditorBase, self).__init__(parent)
+        # super(RangeEditorBase, self).__init__(parent)
+        super().__init__(parent)
         self._composed_range_view = False
         
 

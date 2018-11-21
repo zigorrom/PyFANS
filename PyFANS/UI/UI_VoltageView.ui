@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ui_voltage_setting_monitoring</class>
- <widget class="QWidget" name="ui_voltage_setting_monitoring">
+ <class>VoltageView</class>
+ <widget class="QWidget" name="VoltageView">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>250</width>
-    <height>88</height>
+    <height>93</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -117,7 +117,7 @@
   <customwidget>
    <class>LedWidget</class>
    <extends>QWidget</extends>
-   <header>pyfans.ui.voltage_widget</header>
+   <header>led_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

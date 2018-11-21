@@ -7,7 +7,7 @@ import pyfans.hardware.modern_fans_smu as mfs
 import pyfans.hardware.fans_channel_switch as dut_switch
 from pyfans.hardware.communication_layer import get_available_gpib_resources, get_available_com_resources
 
-
+from pyfans.hardware.forms.UI_VoltageControl import Ui_VoltageControl
 #from fans_smu import ManualSMU, voltage_setting_function
 #from fans_controller import FANS_AO_channel, FANS_CONTROLLER
 #from fans_constants import *
@@ -17,10 +17,12 @@ from pyfans.hardware.communication_layer import get_available_gpib_resources, ge
 #from fans_smu import HybridSMU_System
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI/UI_VoltageControl.ui")
-class VoltageControlView(mainViewBase,mainViewForm):
+# mainViewBase, mainViewForm = uic.loadUiType("UI/UI_VoltageControl.ui")
+# class VoltageControlView(mainViewBase,mainViewForm):
+class VoltageControlView(QtGui.QWidget, Ui_VoltageControl):
     def __init__(self,parent = None, parent_fans_smu = None ):
-        super(mainViewBase,self).__init__(parent)
+        # super(mainViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi()
         
         self.stand_alone_program = True

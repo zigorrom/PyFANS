@@ -1,8 +1,10 @@
-from PyQt4 import uic, QtCore
+from PyQt4 import uic, QtCore, QtGui
 
 import pyfans.hardware.modern_fans_controller as mfc
 import pyfans.utils.ui_helper as uih
 from pyfans.hardware.communication_layer import get_available_gpib_resources, get_available_com_resources
+
+from pyfans.hardware.forms.UI_HardwareSettings_v3 import Ui_HardwareSettings
 
 def fans_channel_to_string(channel):
     #assert isinstance(channel, (mfc.FANS_AI_CHANNELS, mfc.FANS_AO_CHANNELS)), "Unsupported channel type"
@@ -21,8 +23,9 @@ def string_index_to_ao_channel_converter(index):
     return mfc.get_fans_ao_channels_from_number(int_index)
 
 
-HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI/UI_HardwareSettings_v3.ui")
-class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
+# HardwareSettingsBase, HardwareSettingsForm = uic.loadUiType("UI/UI_HardwareSettings_v3.ui")
+# class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
+class HardwareSettingsView(QtGui.QDialog, Ui_HardwareSettings):
     
     fans_controller_resource = uih.bind("ui_fans_controller", "currentText", str)
     fans_sample_motor_channel = uih.bind("ui_sample_channel", "currentText",  string_index_to_ao_channel_converter)
@@ -35,7 +38,8 @@ class HardwareSettingsView(HardwareSettingsBase, HardwareSettingsForm):
     fans_main_feedback_channel = uih.bind("ui_main_feedback_channel", "currentText", string_index_to_ai_channel_converter)
 
     def __init__(self,parent = None):
-        super(HardwareSettingsBase,self).__init__(parent)
+        # super(HardwareSettingsBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self.hardware_settings = None
         gpib_resources = get_available_gpib_resources()

@@ -3,6 +3,7 @@ import os
 import argparse
 from PyQt4 import uic, QtGui, QtCore
 
+
 def get_pyfans_folder():
     this_folder = os.path.dirname(__file__)
     head, tail = os.path.split(this_folder)
@@ -20,12 +21,13 @@ if __name__ =="__main__":
 import pyfans.utils.ui_helper as uih
 from pyfans.utils.utils import open_folder_with_file_selected, open_folder_in_explorer
 from pyfans.hardware.modern_fans_timetrace_extractor import Parameters
+from pyfans.forms.UI_TimetraceExtractor import Ui_TimetraceExtractor
 
 
 
-
-timetraceExtractorViewBase, timetraceExtractorViewForm = uic.loadUiType(os.path.join(get_pyfans_folder(), "UI/UI_TimetraceExtractor.ui"))
-class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewForm):
+# timetraceExtractorViewBase, timetraceExtractorViewForm = uic.loadUiType(os.path.join(get_pyfans_folder(), "UI/UI_TimetraceExtractor.ui"))
+# class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewForm):
+class TimetraceExtractorGUI(QtGui.QWidget, Ui_TimetraceExtractor):
     measurement_data_filename_ui = uih.bind("ui_measurement_data_filename","text",str)
     filename_ui = uih.bind("ui_filename","text",str)
 

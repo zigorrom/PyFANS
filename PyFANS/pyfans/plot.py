@@ -8,6 +8,7 @@ from PyQt4 import uic, QtGui, QtCore
 from pyqtgraph import UIGraphicsItem, GraphicsObject
 import pyfans_analyzer.spectrum_processing as sp
 import pyfans.physics.physical_calculations as phys
+from pyfans.forms.UI_WaterfallNoise import Ui_WaterfallNoise
 # Basic PyQtGraph settings
 pg.setConfigOptions(antialias=True)
 pg.setConfigOption('background', None) #'w')
@@ -969,10 +970,12 @@ class WaterfallPlotWidget:
         self.counter = 0
 
 
-waterfallViewBase, waterfallViewForm = uic.loadUiType("UI/UI_WaterfallNoise.ui")
-class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
+# waterfallViewBase, waterfallViewForm = uic.loadUiType("UI/UI_WaterfallNoise.ui")
+# class WaterfallNoiseWindow(waterfallViewBase, waterfallViewForm):
+class WaterfallNoiseWindow(QtGui.QWidget, Ui_WaterfallNoise):
     def __init__(self, parent = None):
-        super(waterfallViewBase, self).__init__(parent)
+        # super(waterfallViewBase, self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self.waterfall_widget = WaterfallPlotWidget(self.ui_waterfall_plot, self.ui_histogram_layout)
 

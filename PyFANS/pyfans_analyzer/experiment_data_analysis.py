@@ -21,6 +21,14 @@ from pyfans_analyzer.expression_parser_patch import PatchedParser
 from pyfans.experiment.measurement_data_structures import MeasurementInfo
 import pyfans_analyzer.timetrace_buffer as tb
 import pyfans_analyzer.timetrace_processing as tp
+
+from pyfans_analyzer.forms.UI_EditExpression import Ui_EditExpression
+from pyfans_analyzer.forms.UI_AddCurveDialog import Ui_AddCurveDialog
+from pyfans_analyzer.forms.UI_SelectItems import Ui_SelectItems
+from pyfans_analyzer.forms.UI_ExperimentDataExtractor import Ui_ExperimentDataExtractor
+from pyfans_analyzer.forms.UI_ExperimentDataAnalysis import Ui_ExperimentDataAnalysis
+
+
 # def getValueAndName(func, var):
 # def get_function_variables(function):
 def updateDockLabelStylePatched(self):
@@ -562,8 +570,9 @@ class PlotDock(Dock):
         exporter.export(os.path.join(folder,"{0}.png".format(filename)))
     
         
-editExpressionViewBase, editExpressionViewForm = uic.loadUiType("UI/UI_EditExpression.ui")
-class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
+#editExpressionViewBase, editExpressionViewForm = uic.loadUiType("UI/UI_EditExpression.ui")
+# class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
+class EditExpressionDialog(QtGui.QDialog, Ui_EditExpression):
     def __init__(self, variableMapper, stringExpression = "",  parent = None):
         super().__init__(parent)
         self.setupUi(stringExpression)
@@ -633,10 +642,12 @@ class EditExpressionDialog(editExpressionViewBase, editExpressionViewForm):
             traceback.print_exc(file=sys.stdout)
             print(e)
 
-addCurveViewBase, addCurveViewForm = uic.loadUiType("UI/UI_AddCurveDialog.ui")
-class AddCurveDialog(addCurveViewBase, addCurveViewForm):
+# addCurveViewBase, addCurveViewForm = uic.loadUiType("UI/UI_AddCurveDialog.ui")
+# class AddCurveDialog(addCurveViewBase, addCurveViewForm):
+class AddCurveDialog(QtGui.QDialog, Ui_AddCurveDialog):
     def __init__(self, variableMapper,  parent = None , **kwargs):
-        super(addCurveViewBase,self).__init__(parent)
+        # super(addCurveViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi()
         self.variableMapper = variableMapper
         self.x_axis_function = None
@@ -733,10 +744,12 @@ class AddCurveDialog(addCurveViewBase, addCurveViewForm):
         if res:
             self.y_axis_function = dialog.parsedExpression
 
-selectItemsViewBase, selectItemsViewForm = uic.loadUiType("UI/UI_SelectItems.ui")
-class SelectItemsDialog(selectItemsViewBase, selectItemsViewForm):
+# selectItemsViewBase, selectItemsViewForm = uic.loadUiType("UI/UI_SelectItems.ui")
+# class SelectItemsDialog(selectItemsViewBase, selectItemsViewForm):
+class SelectItemsDialog(QtGui.QDialog, Ui_SelectItems):
     def __init__(self, parent = None):
-        super(selectItemsViewBase,self).__init__(parent)
+        # super(selectItemsViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi()
 
     def setupUi(self):
@@ -771,8 +784,9 @@ class SelectItemsDialog(selectItemsViewBase, selectItemsViewForm):
             item = self.ui_plot_list.item(index)
             item.setCheckState(QtCore.Qt.Unchecked)
 
-extractorMainViewBase, extractorMainViewForm = uic.loadUiType("UI/UI_ExperimentDataExtractor.ui")
-class ExperimentDataExtractor(extractorMainViewBase, extractorMainViewForm):
+# extractorMainViewBase, extractorMainViewForm = uic.loadUiType("UI/UI_ExperimentDataExtractor.ui")
+# class ExperimentDataExtractor(extractorMainViewBase, extractorMainViewForm):
+class ExperimentDataExtractor(QtGui.QMainWindow, Ui_ExperimentDataExtractor): #extractorMainViewBase, extractorMainViewForm):
     def __init__(self):
         self._list_of_meas_data_filenames = list()
 
@@ -783,12 +797,14 @@ class ExperimentDataExtractor(extractorMainViewBase, extractorMainViewForm):
 
 
 
-mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
-class ExperimentDataAnalysis(mainViewBase,mainViewForm):
+# mainViewBase, mainViewForm = uic.loadUiType("UI/UI_ExperimentDataAnalysis.ui")
+# class ExperimentDataAnalysis(mainViewBase,mainViewForm):
+class ExperimentDataAnalysis(QtGui.QMainWindow, Ui_ExperimentDataAnalysis):
     sigCurrentSelectedPointIndexChanged = QtCore.pyqtSignal(int)
     sigUsePointSelectionToolChanged = QtCore.pyqtSignal(bool)
     def __init__(self, experimentData = None, layout="horizontal", parent = None ):
-        super(mainViewBase,self).__init__(parent)
+        # super(mainViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi()
         self._layout = layout
         self._data = experimentData #ExperimentData()

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>NoiseMeasurement</class>
+ <widget class="QMainWindow" name="NoiseMeasurement">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -1586,7 +1586,7 @@
      <x>0</x>
      <y>0</y>
      <width>1030</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

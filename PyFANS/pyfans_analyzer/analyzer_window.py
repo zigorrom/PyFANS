@@ -7,10 +7,11 @@ from PyQt4 import QtCore, QtGui, uic
 import pyfans.plot as plt
 import pyfans.utils.ui_helper as uih
 from pyfans_analyzer.analyzer_model import AnalyzerModel
+from pyfans_analyzer.forms.UI_Analyzer import Ui_Analyzer
+# main_view_base, main_view = uic.loadUiType("UI/UI_Analyzer.ui")
 
-main_view_base, main_view = uic.loadUiType("UI/UI_Analyzer.ui")
-
-class MainView(main_view_base, main_view, uih.DataContextWidget):
+# class MainView(main_view_base, main_view, uih.DataContextWidget):
+class MainView(QtGui.QMainWindow, Ui_Analyzer, uih.DataContextWidget):
     sigOpenFileTriggered = QtCore.pyqtSignal(str)
     sigOpenWorkingFolderTriggered = QtCore.pyqtSignal()
     sigSaveFileTriggered = QtCore.pyqtSignal()
@@ -30,8 +31,9 @@ class MainView(main_view_base, main_view, uih.DataContextWidget):
     sigAppClosing = QtCore.pyqtSignal()
     sigOpenPlotterTriggered = QtCore.pyqtSignal()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        # super().__init__()
+        super().__init__(parent=parent)
         self.setupUi()
         self.setupBinding()  
         # self.awaiting_for_command = False      

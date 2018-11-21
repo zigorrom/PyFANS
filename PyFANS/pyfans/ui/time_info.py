@@ -1,10 +1,13 @@
 import time
-from PyQt4 import uic, QtCore 
+from PyQt4 import uic, QtCore, QtGui
+from pyfans.ui.forms.UI_TimeInfo import Ui_TimeInfo
 
-timeinfoViewBase, timeinfoViewForm = uic.loadUiType("UI/UI_TimeInfo.ui")
-class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
+# timeinfoViewBase, timeinfoViewForm = uic.loadUiType("UI/UI_TimeInfo.ui")
+# class UI_TimeInfo(timeinfoViewBase, timeinfoViewForm):
+class UI_TimeInfo(QtGui.QWidget, Ui_TimeInfo):
     def __init__(self, parent = None):
-        super(timeinfoViewBase,self).__init__(parent)
+        # super(timeinfoViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self._timer = QtCore.QTimer()
         self.reset()

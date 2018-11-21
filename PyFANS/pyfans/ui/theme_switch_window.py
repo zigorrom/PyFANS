@@ -1,10 +1,12 @@
 import qdarkstyle
 from PyQt4 import uic, QtCore, QtGui
-
-ThemeSwitchViewBase, ThemeSwitchViewForm = uic.loadUiType("UI/UI_ThemeSwitch.ui")
-class UI_ThemeSwitchWindow(ThemeSwitchViewBase, ThemeSwitchViewForm):
+from pyfans.ui.forms.UI_ThemeSwitch import Ui_ThemeSwitch
+# ThemeSwitchViewBase, ThemeSwitchViewForm = uic.loadUiType("UI/UI_ThemeSwitch.ui")
+# class UI_ThemeSwitchWindow(ThemeSwitchViewBase, ThemeSwitchViewForm):
+class UI_ThemeSwitchWindow(QtGui.QDialog, Ui_ThemeSwitch):
     def __init__(self, parent = None):
-        super(ThemeSwitchViewBase,self).__init__(parent)
+        # super(ThemeSwitchViewBase,self).__init__(parent)
+        super().__init__(parent)
         self.setupUi()
 
     def setupUi(self):

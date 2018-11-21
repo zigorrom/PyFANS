@@ -1,8 +1,10 @@
-from PyQt4 import uic
+from PyQt4 import uic, QtGui
 import pyfans.utils.ui_helper as uih
+from pyfans.ui.forms.UI_email_auth import Ui_EmailAuth
 
-emailAuthBase, emailAuthForm = uic.loadUiType("UI/UI_email_auth.ui")
-class EmailAuthForm(emailAuthBase, emailAuthForm):
+# emailAuthBase, emailAuthForm = uic.loadUiType("UI/UI_email_auth.ui")
+# class EmailAuthForm(emailAuthBase, emailAuthForm):
+class EmailAuthForm(QtGui.QDialog, Ui_EmailAuth):
     #email_cfg = "em.cfg"
 
     username = uih.bind("ui_login", "text", str)
