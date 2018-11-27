@@ -10,6 +10,9 @@ import pyqtgraph as pg
 import pyfans.utils.ui_helper as uih
 from pyfans.ranges.forms.UI_RangeSelector_v6 import Ui_RangeSelector
 
+def assert_range_info(obj):
+    assert isinstance(obj, (RangeInfo, CenteredRangeInfo, CustomRangeInfo))
+
 class HandlersEnum(Enum):
     normal = 0
     back_forth = 1

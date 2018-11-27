@@ -137,6 +137,22 @@ class StringToVoltageConverter(StringToTypeConverter):
         except Exception as e:
             raise ConversionException()
 
+class StringToCurrentConverter(StringToTypeConverter):
+    def __init__(self):
+        self.ureg = UnitRegistry()
+        super().__init__(type(self.ureg))
+
+    def convert(self, value, **kwargs):
+        try:
+            v = self.ureg(value)
+            if not isinstance(v,pint.quantity._Quantity):
+                v = float(v) * self.ureg.ampere
+            print("{0} {1}".format(v.magnitude, v.units))
+            v.ito(self.ureg.ampere)
+            return v.magnitude
+        except Exception as e:
+            raise ConversionException()
+
 class AssureConverter(ValueConverter):
     def __init__(self, type_to_assure):
         if not isinstance(type_to_assure, type):
@@ -574,6 +590,12 @@ class VoltageValidator(QtGui.QRegExpValidator):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[V]")   #"(\d+).?(\d*)\s*(m|cm|km)")
+        self.setRegExp(regex)
+
+class CurrentValidator(QtGui.QRegExpValidator):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        regex = QtCore.QRegExp("^-?(?:0|[1-9]\d*).?(\d*)\s*(?:[yzafpnumcdhkMGTPEZY])?[A]")   #"(\d+).?(\d*)\s*(m|cm|km)")
         self.setRegExp(regex)
 
 def convert_value_to_volts(ureg, value):
