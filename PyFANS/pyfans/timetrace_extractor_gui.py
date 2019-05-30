@@ -20,10 +20,15 @@ if __name__ =="__main__":
 
 import pyfans.utils.ui_helper as uih
 from pyfans.utils.utils import open_folder_with_file_selected, open_folder_in_explorer
-from pyfans.hardware.modern_fans_timetrace_extractor import Parameters
-from pyfans.forms.UI_TimetraceExtractor import Ui_TimetraceExtractor
+from pyfans.hardware.modern_fans_timetrace_extractor import Parameters, DecimationType
+from pyfans.forms.UI_TimetraceExtractor_v2 import Ui_TimetraceExtractor
 
-
+def ConvertIndexToDecimationType(idx):
+    try:
+        return DecimationType(idx)
+    except Exception as e:
+        print("Exception occured converting decimation type.")
+        return DecimationType.Downsampling
 
 # timetraceExtractorViewBase, timetraceExtractorViewForm = uic.loadUiType(os.path.join(get_pyfans_folder(), "UI/UI_TimetraceExtractor.ui"))
 # class TimetraceExtractorGUI(timetraceExtractorViewBase, timetraceExtractorViewForm):
@@ -44,11 +49,12 @@ class TimetraceExtractorGUI(QtGui.QWidget, Ui_TimetraceExtractor):
     use_total_time = uih.bind("ui_use_total_time", "checked", bool)
     use_decimated_sample_rate = uih.bind("ui_use_decimated_sample_rate", "checked", bool)
     use_redirect_output = uih.bind("ui_redirect_output", "checked", bool)
-
+    decimation_type = uih.bind("ui_decimation_type", "currentIndex", int)
+    
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setupUi()
-
+        self.setupBinding()
         self._working_directory  = ""
         self._output_directory = ""
         self._measurement_data_filename=  ""
@@ -68,7 +74,10 @@ class TimetraceExtractorGUI(QtGui.QWidget, Ui_TimetraceExtractor):
     def __del__(self):
         if self.process:
             self.process.kill()
-
+    
+    def setupBinding(self):
+        pass
+        #self.decimation_type = uih.Binding(self.ui_decimation_type, "currentIndex", sourceObject, "timetrace_mode", converter=TimetraceModeToIndexConverter())
 
     def setupUi(self):
         super().setupUi(self)
@@ -106,6 +115,8 @@ class TimetraceExtractorGUI(QtGui.QWidget, Ui_TimetraceExtractor):
             if self.use_decimated_sample_rate:
                 settings_params.append(Parameters.DecimatedSampleRateOption)
                 settings_params.append(self.decimated_sample_rate_ui)
+                settings_params.append(Parameters.DecimationTypeOption)
+                settings_params.append(ConvertIndexToDecimationType(self.decimation_type).value)
         
         if self.use_redirect_output:
             settings_params.append(Parameters.OutputFolderOption)

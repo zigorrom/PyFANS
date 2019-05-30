@@ -1,16 +1,21 @@
 import sys
 import time
+import datetime
 import qrcode
+import json
+import numpy as np
 import pyqtgraph as pg
 from PyQt4 import QtGui, QtCore
 from PIL import Image
 from PIL.ImageQt import ImageQt
-from flask import Flask
+from flask import Flask, jsonify, request
 from flask import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired
 import socket
+
+from PyQt4 import QtCore, QtGui, uic
 
 
 # import  pyfans_v2 as pyf
@@ -81,7 +86,7 @@ class FANS_RemoteController:
         #assert isinstance(fans_ui_controller, pyf.FANS_UI_Controller)
         self.flask_app = None # Flask("FANS controller")
         self._app_thread = None
-        self._test_var = "test_var"
+        self._test_var = {"a":0, "b":1, "c":2} #"test_var"
         self._ip_addresses = None
         self._hostname = None
         
@@ -95,17 +100,22 @@ class FANS_RemoteController:
         return self._ip_addresses
 
     def index(self):
-        form  = FANS_ControlWebView()
-        return render_template("index.html", form = form)
+        # form  = FANS_ControlWebView()
+        # return render_template("index.html", form = form)
         #content = get_file("index.html")
         #return content
+        #string = json.dumps(self._test_var, indent=4)
+        return jsonify(self._test_var)
 
-        #return self._test_var
+    def data(self):
+        a = np.arange(100).tolist()
+        return jsonify(a)
 
     def initialize_flask_app(self):
         self.flask_app = Flask("FANS controller") 
         self.flask_app.config['SECRET_KEY'] = 'any secret string'
         self.flask_app.add_url_rule("/", "index", self.index)
+        self.flask_app.add_url_rule("/data", "data", self.data)
 
 
 
@@ -141,6 +151,102 @@ class FlaskQThread(QtCore.QThread):
 
     def __del__(self):
         self.wait()
+
+
+class FANS_FlaskServerSignals(QtCore.QObject):
+    sigServerStarted = QtCore.pyqtSignal()
+    sigServetStopped = QtCore.pyqtSignal()
+    sigRemoteEnabled = QtCore.pyqtSignal(bool)
+    sigTextArrived = QtCore.pyqtSignal(str)
+
+
+class FANS_FlaskServer(QtCore.QRunnable):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self._signals = FANS_FlaskServerSignals()
+        self._ip_address = kwargs.get("ip_address")
+        self._port = kwargs.get("port")
+        self._flask_app = None
+        self.init_server()
+
+    def init_server(self):
+        self._flask_app = Flask("FANS controller")  
+        self._flask_app.config['SECRET_KEY'] = 'any secret string'
+        self._flask_app.add_url_rule("/remote_enabled", "remote_enabled", self.on_remote_enabled)
+        #self._flask_app.add_url_rule("/remote_enabled/<remote_enabled>", "remote_enabled", self.on_remote_enabled)
+        self._flask_app.add_url_rule("/text", "text", self.on_text_arrived)
+        #self._flask_app.add_url_rule("/text/<text>", "text", self.on_text_arrived)
+
+    def on_remote_enabled(self):
+        print("remote_requested")
+        result = request.args.get("enabled")
+        remote_enabled = result in ["True", "1"]
+        self._signals.sigRemoteEnabled.emit(remote_enabled)
+        return "Remote operation is set to: {0}".format(remote_enabled)
+
+    def on_text_arrived(self):
+        print("text_requested")
+        text = request.args.get("text")
+        self._signals.sigTextArrived.emit(text)
+        return "Text Appended:\n {0}".format(text)
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        self._flask_app.run(host=self._ip_address, port=self._port)
+        
+    def shutdown(self):
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+
+
+
+mainViewBase, mainViewForm = uic.loadUiType("test.ui")
+class FANS_UI_Remote(mainViewBase,mainViewForm):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setupUi()
+        self._thread = QtCore.QThreadPool()
+        self._server = FANS_FlaskServer(ip_address="0.0.0.0", port=5000)
+        self._server._signals.sigTextArrived.connect(self.on_text_requested)
+        self._server._signals.sigRemoteEnabled.connect(self.on_remote_enabled)
+        self._thread.start(self._server)
+
+    def setupUi(self):
+        super().setupUi(self)
+
+    def startServer(self):
+        pass
+
+    def stopServer(self):
+        pass
+
+    def restartServer(self):
+        pass
+
+    def on_text_requested(self, text):
+        print("from UI: text requested")
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        self.ui_remote_text.appendPlainText(current_time)
+        self.ui_remote_text.appendPlainText(text)
+
+    def on_remote_enabled(self, enabled):
+        print("from UI: remote enabled")
+        self.ui_remote_enabled.setChecked(enabled)
+    
+    def closeEvent(self, event):
+        self._server.shutdown()
+        self._thread.waitForDone()
+
+
+
+
+def test_ui_remote():
+    app = QtGui.QApplication(sys.argv)
+    wnd = FANS_UI_Remote()
+    wnd.show()
+    return app.exec_()
 
 
 
@@ -180,8 +286,11 @@ def test_flask():
     if ok and item:
         imageLabel.create_qr_code("{0}:{1}".format(item, PORT))
         imageLabel.show()
-        
-    app.exec_()
+        app.exec_()
+    else:
+        return
+    
+    
     
     
     #c.get_list_of_ip_addresses()
@@ -220,7 +329,7 @@ def test_ip_addresses():
 
 if __name__ == "__main__":
     #test_ui()
-    test_flask()
+    # test_flask()
     #test_ip_addresses()
+    test_ui_remote()
 
-♣

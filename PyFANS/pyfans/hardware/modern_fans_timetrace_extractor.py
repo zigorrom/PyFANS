@@ -6,9 +6,12 @@ import pandas as pd
 import fnmatch
 # import traceback
 from tqdm import tqdm
-from scipy.signal import decimate
+from enum import Enum
+from scipy.signal import decimate, resample
 
-
+class DecimationType(Enum):
+    Downsampling = 0
+    DownsamplingFilter = 1
 
 def search_for_new_style_measurement_data_file(folder):
     print("SEARCHING FOT MEASUREMENT DATA FILE IN:\n\r{0}".format(folder))
@@ -73,7 +76,10 @@ def CheckDecimationConditions(signal_sampling_rate, decimated_sample_rate):
     try:
         if not isinstance(signal_sampling_rate, int) or not isinstance(decimated_sample_rate, int):
             raise TypeError("signal_sampling_rate or decimated sampling rate is of wrong format")
-
+        
+        if signal_sampling_rate == decimated_sample_rate:
+            return False
+            
         sr_div,sr_mod = divmod(signal_sampling_rate, decimated_sample_rate)
         if sr_mod == 0:
             condition_is_good = True
@@ -84,6 +90,12 @@ def CheckDecimationConditions(signal_sampling_rate, decimated_sample_rate):
         return condition_is_good
 
 def DecimateSignal(signal_array, signal_sampling_rate, decimated_sample_rate):
+    decimation_factor = int(signal_sampling_rate / decimated_sample_rate)
+    decimated_len = int(len(signal_array) * decimated_sample_rate / signal_sampling_rate)
+    decimated = resample(signal_array,decimated_len)
+    return decimated
+
+def DecimateSignalFilter(signal_array, signal_sampling_rate, decimated_sample_rate):
     decimation_factor = int(signal_sampling_rate / decimated_sample_rate)
     decimated = decimate(signal_array,decimation_factor,n=8,ftype="iir",axis = 0 ,zero_phase=True)
     return decimated
@@ -100,6 +112,7 @@ class FANS_TimetraceExtractor:
         self._output_extension = "dat"
         self._amplification_factor = kwargs.get("amplification", None)
         self._decimated_sample_rate = kwargs.get("decimated_sample_rate", 0)
+        self._decimation_type = DecimationType(kwargs.get("decimation_type", 0))
 
     def perform_convertion(self):
         if self._filename_to_convert and os.path.isfile(self._filename_to_convert):
@@ -171,6 +184,15 @@ class FANS_TimetraceExtractor:
             print("Input filename: {0}".format(filename))
             print("Output filename: {0}".format(output_filename))
             
+            decimation_function = DecimateSignal
+            if self._decimation_type == DecimationType.Downsampling:
+                decimation_function = DecimateSignal
+            elif self._decimation_type == DecimationType.DownsamplingFilter:
+                decimation_function = DecimateSignalFilter
+            else:
+                decimation_function = DecimateSignal
+
+
             header = timetrace_file.readline()
             header_str = header.decode()
             sample_rate = float(header_str.split("=")[1])
@@ -205,7 +227,8 @@ class FANS_TimetraceExtractor:
                         arr = arr / amplification
 
                         if CheckDecimationConditions(self._sample_rate, self._decimated_sample_rate):
-                            arr = DecimateSignal(arr, self._sample_rate, self._decimated_sample_rate)
+                            arr = decimation_function(arr, self._sample_rate, self._decimated_sample_rate)
+                            # arr = DecimateSignal(arr, self._sample_rate, self._decimated_sample_rate)
 
                         np.savetxt(output_file, arr)
                         time_span = time_period * len(arr) 
@@ -290,6 +313,7 @@ class Parameters:
     OutputFolderOption = "-o"
     AmplificationOption = "-a"
     DecimatedSampleRateOption = "-dr"
+    DecimationTypeOption = "-dt"
 
 
 if __name__ == "__main__":
@@ -316,6 +340,9 @@ if __name__ == "__main__":
     parser.add_argument(Parameters.DecimatedSampleRateOption, metavar='decimated_sample_rate', type = int, nargs='?' , default = 0,
                         help = 'The sample rate to decimate to...')
 
+    parser.add_argument(Parameters.DecimationTypeOption, metavar='decimation_type', type = int, nargs='?' , default = 0,
+                        help = 'The decimation type: 0 - w.o. fiter, 1 - with filter')
+
     parser.add_argument(Parameters.OutputFolderOption, metavar='output_folder', type = str, nargs='?' , default = None,
                         help = 'The folder for output')
 
@@ -325,7 +352,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
     type_of_program = args.get("t","console")
-    m = {'mf': 'measurement_data_file','o': 'output_folder', 'sr' : 'sample_rate', 'pps' :  'points_per_sample', 'l': 'length', 'f': 'filename', 'a': 'amplification', 'dr' : 'decimated_sample_rate', 'open_folder': 'open_folder' }
+    m = {'mf': 'measurement_data_file','o': 'output_folder', 'sr' : 'sample_rate', 'pps' :  'points_per_sample', 'l': 'length', 'f': 'filename', 'a': 'amplification', 'dr' : 'decimated_sample_rate', 'dt' : "decimation_type", 'open_folder': 'open_folder' }
     args = dict((m.get(k, k), v) for (k, v) in args.items())
     #if type_of_program == "console":
     sys.exit(perform_timetrace_extraction(**args))
