@@ -253,7 +253,8 @@ class TimetraceExtractorGUI(QtGui.QWidget, Ui_TimetraceExtractor):
         print("select convert file")
         param_list = []
         #self.callProgram()
-        if self._measurement_data_filename and os.path.isfile(self._measurement_data_filename):
+        # if self._measurement_data_filename and os.path.isfile(self._measurement_data_filename):
+        if self._filename and os.path.isfile(self._filename):
             param_list.append(Parameters.FilenameOption)
             param_list.append(self._filename)
             param_list.extend(self.collectSettingsParams())

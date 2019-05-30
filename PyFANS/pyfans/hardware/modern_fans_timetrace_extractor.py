@@ -117,7 +117,7 @@ class FANS_TimetraceExtractor:
     def perform_convertion(self):
         if self._filename_to_convert and os.path.isfile(self._filename_to_convert):
             try:
-                self.process_single_timetrace_file(self._filename_to_convert, output_folder = self._output_folder)
+                self.process_single_timetrace_file(self._filename_to_convert,amplification = self._amplification_factor, output_folder = self._output_folder)
             except Exception as e:
                 print_error(e)
             return 
