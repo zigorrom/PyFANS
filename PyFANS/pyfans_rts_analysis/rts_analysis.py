@@ -4,6 +4,7 @@ import time
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
+from scipy import signal
 
 def main():
     app = QtGui.QApplication([])
@@ -17,9 +18,14 @@ def main():
     p1 = win.addPlot(title="Basic array plotting", colspan=3)
     timetrace_curve = p1.plot(pen="r")
     moving_normalization_curve = p1.plot(pen="y")
-    p_psd = win.addPlot(title = "PSD", rowspan=4)
+    filtered_timetrace = p1.plot(pen="g")
+
+
+    p_psd = win.addPlot(title = "PSD", rowspan=3)
+    p_psd.setLogMode(x=True, y=True)
     psd_curve = p_psd.plot(pen="r")
-    psd_corrected = p_psd.plot(pen="y")
+    psd_corrected_curve = p_psd.plot(pen="y")
+    psd_smoothed_curve = p_psd.plot(pen="g")
     win.nextRow()
     p2 = win.addPlot(title="Basic array plotting", colspan=3)
     distance_curve = p2.plot(pen="r")
@@ -51,9 +57,9 @@ def main():
     transition_up = np.array([0,1,-1,0])
     transition_down = np.array([0,-1,1,0])
 
-    # fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
+    fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
     # fname =  "H:\\WorkPC\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
-    fname = "F:\\TestData\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"
+    #fname = "F:\\TestData\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"
     with open(fname, 'rb') as f:
         header = f.readline()
         decoded_header = header.decode()
@@ -88,30 +94,124 @@ def main():
 
         try:
             # while True:
-            while counter <2:
+            while counter <1:
                 print(counter)
                 counter += 1 
                 x = np.load(f)
+                xlen = len(x)
+                x_is_odd_len = ( xlen%2 == 0 )
+                #print("x is odd ", x_is_odd_len)
+
+
+                fft_spectrum = np.fft.fft(x)
                 
-                fft_spectrum = np.fft.fft(x, norm="ortho")
+
+
+
                 psd = np.array([x.real**2 + x.imag**2 for x in fft_spectrum])
                 fft_freq = np.fft.fftfreq(psd.size, d=timestep)
-                
-                fft_freq_abs = np.abs(fft_freq)
-                f_psd = psd*fft_freq_abs
-                f_psd[0] = 1
-                min_val = np.amin(f_psd[1:])
-                psd_cor = np.zeros_like(psd)
-                psd_cor[0] = 1
-                psd_cor[1:] = (f_psd[1:] - min_val)
-                # psd_cor[1:] = (f_psd[1:] - min_val)/fft_freq_abs[1:]
-
-
-                print(psd)
                 print(fft_freq)
 
-                psd_curve.setData(fft_freq, f_psd)
-                psd_corrected.setData(fft_freq, psd_cor)
+                psd_len = x.size
+                start_psd_idx = 1
+                end_psd_idx = psd_len//2
+
+                psd_positive = psd[start_psd_idx:end_psd_idx]
+                fft_positive_freq = fft_freq[start_psd_idx:end_psd_idx]
+                fpsd_positive = psd_positive*fft_positive_freq
+
+                psd_positive_smoothed = signal.savgol_filter(fpsd_positive, 101, 3, delta=10)
+                psd_positive_smoothed = psd_positive_smoothed / fft_positive_freq
+                
+                psd_change_factor = np.sqrt(psd_positive_smoothed / psd_positive)
+                
+                print("PSD change factor ", psd_change_factor)
+                print(fft_positive_freq)
+
+                
+                coefficients = np.ones(fft_spectrum.shape)
+                if x_is_odd_len:
+                    coefficients[start_psd_idx:end_psd_idx] = psd_change_factor
+                    coefficients[end_psd_idx] = psd_change_factor[-1]
+                    coefficients[end_psd_idx+1:] = psd_change_factor[-1::-1]
+
+                else:
+                    coefficients[start_psd_idx:end_psd_idx] = psd_change_factor
+                    coefficients[end_psd_idx:] =  psd_change_factor[-1::-1]
+                
+                # print("coefficients")
+                # idx = 0
+                # displen = 100
+                # arrlen = coefficients.size
+                # while idx < arrlen:
+                #     print(coefficients[idx:idx+displen])
+                #     idx+=displen
+                print("coefficients", coefficients)
+
+
+                fft_filtered = np.copy(fft_spectrum)
+                for i, val in enumerate(fft_filtered):
+                    fft_filtered[i] = val*coefficients[i]
+                    if coefficients[i] == np.nan:
+                        raise Exception("Nan at {0}".format(i))
+                    
+                
+                # for idx, (x, c) in enumerate(zip(fft_spectrum, coefficients)):
+                #     fft_filtered[idx]
+
+
+
+
+                # fft_spectrum[start_psd_idx:end_psd_idx] = fft_spectrum[start_psd_idx:end_psd_idx]*psd_change_factor
+                # fft_spectrum[end_psd_idx+1:] = fft_spectrum[end_psd_idx+1:]*psd_change_factor[-1::-1]
+
+                # fft_spectrum /= 2
+
+                print(fft_spectrum)
+                     
+                x_filtered = np.fft.ifft(fft_filtered)
+                print(x_filtered )
+                x_filtered = np.array([val.real for val in x_filtered])
+                print(x_filtered )
+
+
+                 
+
+                filtered_timetrace.setData(x_filtered)
+
+
+
+
+
+
+
+
+                
+
+
+
+
+
+                
+
+
+
+                # fft_freq_abs = np.abs(fft_freq)
+                # f_psd = psd*fft_freq_abs
+                # f_psd[0] = 1
+                # min_val = np.amin(f_psd[1:])
+                # psd_cor = np.zeros_like(psd)
+                # psd_cor[0] = 1
+                # psd_cor[1:] = (f_psd[1:] - min_val)
+                # # psd_cor[1:] = (f_psd[1:] - min_val)/fft_freq_abs[1:]
+
+
+                # print(psd)
+                # print(fft_freq)
+
+                psd_curve.setData(fft_positive_freq, psd_positive)
+                psd_corrected_curve.setData(fft_positive_freq, fpsd_positive)
+                psd_smoothed_curve.setData(fft_positive_freq, psd_positive_smoothed)
                 # moving_normalization_x = np.zeros_like(x)
                 # for i in range(len(x)-normalization_window):
                 #     sub_array = x[i:i+normalization_window]
