@@ -14,21 +14,46 @@ def main():
     # Enable antialiasing for prettier plots
     pg.setConfigOptions(antialias=True)
 
-    p1 = win.addPlot(title="Basic array plotting", colspan=2)
+    p1 = win.addPlot(title="Basic array plotting", colspan=3)
     timetrace_curve = p1.plot(pen="r")
+    moving_normalization_curve = p1.plot(pen="y")
+    p_psd = win.addPlot(title = "PSD", rowspan=4)
+    psd_curve = p_psd.plot(pen="r")
+    psd_corrected = p_psd.plot(pen="y")
     win.nextRow()
-    p2 = win.addPlot(title="Basic array plotting", colspan=2)
+    p2 = win.addPlot(title="Basic array plotting", colspan=3)
     distance_curve = p2.plot(pen="r")
     cumulative_distance_curve = p2.plot(pen="g")
+    diff_cumulative_distance_curve = p2.plot(pen="b")
+    standard_deviation_curve = p2.plot(pen="y")
     p2.setXLink(p1)
+    p2.setYLink(p1)
+    win.nextRow()
+    p_corr = win.addPlot(title="Correlation", colspan=3)
+    p_corr.setXLink(p1)
+    p_corr.setYLink(p1)
+    correlation_curve_up = p_corr.plot(pen="g")
+    correlation_curve_down = p_corr.plot(pen="b")
+    initial_minus_diff_cumulative_curve = p_corr.plot(pen="y")
     win.nextRow()
     p3 = win.addPlot(title="Histogram ")
-    histogram_curve = p3.plot(pen="r", symbol='o', brush='r')
+    histogram_curve = p3.plot(pen="r", symbol='o', brush='r', symbolBrush='r')
     
     p4 = win.addPlot(title="Histogram distance")
-    histogram_distance = p4.plot(pen='r', symbol='o', brush='r')
-    threshold_value = 10
-    fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
+    histogram_distance = p4.plot(pen='g', symbol='o', brush='g', symbolBrush='g')
+
+    p5 = win.addPlot(title="Histogram abs distance")
+    histogram_abs_distance = p5.plot(pen='b', symbol='o', brush='b', symbolBrush='b')
+
+    threshold_value = 0
+    normalization_window = 10
+    standard_deviation_window = 4
+    transition_up = np.array([0,1,-1,0])
+    transition_down = np.array([0,-1,1,0])
+
+    # fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
+    # fname =  "H:\\WorkPC\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
+    fname = "F:\\TestData\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"
     with open(fname, 'rb') as f:
         header = f.readline()
         decoded_header = header.decode()
@@ -38,6 +63,8 @@ def main():
         
         print(frequency)
         timestep = 1/frequency
+        maximal_transition_len = 4
+
 
         start_transition_idx = 0
         prev_sign = current_sign = 0
@@ -51,18 +78,53 @@ def main():
         histogram_cumulative_values = None
         histogram_cumulative_edges = None
         histogram_cumulative_bin_centers = None
+
+        histogram_diff_values = None
+        histogram_diff_edges = None
+        histogram_diff_bin_centers = None
         counter = 0
         prev_time = time.time()
         time_delay = 0.5
 
         try:
-            while True:
+            # while True:
+            while counter <2:
                 print(counter)
                 counter += 1 
                 x = np.load(f)
+                
+                fft_spectrum = np.fft.fft(x, norm="ortho")
+                psd = np.array([x.real**2 + x.imag**2 for x in fft_spectrum])
+                fft_freq = np.fft.fftfreq(psd.size, d=timestep)
+                
+                fft_freq_abs = np.abs(fft_freq)
+                f_psd = psd*fft_freq_abs
+                f_psd[0] = 1
+                min_val = np.amin(f_psd[1:])
+                psd_cor = np.zeros_like(psd)
+                psd_cor[0] = 1
+                psd_cor[1:] = (f_psd[1:] - min_val)
+                # psd_cor[1:] = (f_psd[1:] - min_val)/fft_freq_abs[1:]
+
+
+                print(psd)
+                print(fft_freq)
+
+                psd_curve.setData(fft_freq, f_psd)
+                psd_corrected.setData(fft_freq, psd_cor)
+                # moving_normalization_x = np.zeros_like(x)
+                # for i in range(len(x)-normalization_window):
+                #     sub_array = x[i:i+normalization_window]
+                #     min_val = np.amin(sub_array)
+                #     max_val = np.amax(sub_array)
+                #     max_min_val = max_val - min_val
+                #     moving_normalization_x[i] = (x[i]-min_val)/max_min_val
+
                 x_dist = x[1:] - x[:-1]
                 timetrace_curve.setData(x)
-                distance_curve.setData(x_dist)
+                # distance_curve.setData(x_dist)
+                # moving_normalization_curve.setData(moving_normalization_x)
+
                 h_values_tmp = None
                 if histogram_edges is None:
                     h_values_tmp, histogram_edges = np.histogram(x, bins="auto")
@@ -82,21 +144,115 @@ def main():
                     current_sign =  math.copysign(1,x_dist[idx])
                     if current_sign != prev_sign:
                         for i in range(start_transition_idx, idx):
-                            x_cumulation[i] = cumulative_value
+                            x_cumulation[i] = 0 #cumulative_value
                         
+                        mid_point = int((start_transition_idx + idx)/2)
+                        # x_cumulation[start_transition_idx] = cumulative_value
+                        x_cumulation[mid_point] = cumulative_value
+
                         prev_cumulative_value = cumulative_value
                         start_transition_idx = idx
                         cumulative_value = val
                         prev_sign = current_sign
                     
+                    elif idx - start_transition_idx > maximal_transition_len:
+                        cumulative_value -= x_dist[start_transition_idx]
+                        start_transition_idx += 1
+                        cumulative_value += val
+
                     else:
                         cumulative_value += val
-                        # if math.fabs(cumulative_value) > threshold_value:
-                        #     x_cumulation[idx] = cumulative_value
-                        # else:
-                        #     x_cumulation[idx] = 0
+                        
+                standard_deviation = np.zeros_like(x)
+                for i in range(len(x)-standard_deviation_window):
+                    standard_deviation[i] = np.std(x[i:i+standard_deviation_window])
                 
+                mean_std_deviation = np.mean(standard_deviation)
+                threshold_deviation = 2 * mean_std_deviation
+
+                for idx, val in enumerate(standard_deviation):
+                    if val < threshold_deviation:
+                        standard_deviation[idx] = 0
+                        
+
+                standard_deviation_curve.setData(standard_deviation)
+                
+                diff_x_cumulation = x_cumulation[1:] - x_cumulation[:-1]
+                # initial_minus_diff_cumulative = x[:-1] - x_dist
+                diff_cumulative_distance_curve.setData(diff_x_cumulation)
+
+                
+                # initial_minus_diff_cumulative = x[1:-1] - diff_x_cumulation
+                # initial_minus_diff_cumulative_curve.setData(initial_minus_diff_cumulative)
+                # diff_x_cumulation[np.abs(diff_x_cumulation) < threshold_value] = 0
+                # min_val = np.amin(diff_x_cumulation)
+                # max_val = np.amax(diff_x_cumulation)
+                # mid_val = (max_val + min_val) / 2
+                # # transition_up = np.array([mid_val,mid_val, max_val, min_val, mid_val,mid_val])
+                # # transition_down = np.array([mid_val,mid_val, min_val, max_val, mid_val,mid_val])
+                transition_up = np.array([-1,1])
+                # transition_down = transition_up
+                sign_diff_cumulative = np.sign(diff_x_cumulation)
+                convolution_transition_up = np.convolve(sign_diff_cumulative, transition_up, mode='same')
+
+                for i in range(len(convolution_transition_up)):
+                    convolution_transition_up[i] = convolution_transition_up[i] if standard_deviation[i]>0 and abs(convolution_transition_up[i])>1 else 0
+                    # convolution_transition_up[i] = convolution_transition_up[i] if abs(convolution_transition_up[i])>1 else 0
+
+
+                # convolution_transition_down = np.convolve(diff_x_cumulation, transition_down, mode='same')
+                correlation_curve_up.setData(convolution_transition_up)
+                # correlation_curve_down.setData(convolution_transition_down)
+
                 cumulative_distance_curve.setData(x_cumulation)
+                # level_value = 0
+                # initial_index = 0
+                # peak_search = False
+                # resulting_curve = np.zeros_like(standard_deviation)
+                # for idx_diff,val in enumerate(diff_x_cumulation):
+                #     diff_x_cumulation[idx_diff] = level_value 
+                #     if standard_deviation[idx_diff]>0:
+                #         if not peak_search:
+                #             initial_index = idx_diff
+                #         peak_search = True
+                #     elif peak_search:
+                #         # print(idx_diff)
+                #         peak_search = False
+                #         print("indexes")
+                #         print(initial_index, idx_diff)
+                #         print(diff_x_cumulation[initial_index])
+                #         sub_arr = diff_x_cumulation[initial_index:idx_diff]
+                #         print(sub_arr)
+                #         local_max_idx = np.argmax(sub_arr) 
+                #         local_min_idx = np.argmin(sub_arr)
+                #         transition = (diff_x_cumulation[local_max_idx]-diff_x_cumulation[local_min_idx])/2
+                #         print("min, max")
+                #         print(local_min_idx, local_max_idx)
+                #         index_difference = (local_max_idx - local_min_idx)
+                #         # print(index_difference)
+                #         if index_difference == 1:
+                #             level_value = 1
+                #             # level_value+=transition
+                #         elif index_difference == -1:
+                #             level_value = 0
+                #             # level_value -=transition
+
+                #         else:
+                #             pass
+
+                #         for i in range(initial_index, i):
+                #             resulting_curve[i] = level_value
+                            
+
+                 
+                      
+
+                # correlation_curve_up.setData(resulting_curve)
+                        
+
+
+                    
+
 
                 if histogram_cumulative_edges is None:
                     h_values_tmp, histogram_cumulative_edges = np.histogram(x_cumulation, bins="auto")
@@ -110,112 +266,38 @@ def main():
                 else:
                     histogram_cumulative_values = histogram_cumulative_values + h_values_tmp
 
-
-                
-
-
                 histogram_distance.setData(histogram_cumulative_bin_centers, histogram_cumulative_values)
+
+                # diff_amplitudes = diff_x_cumulation[standard_deviation>0]
+
+                # if histogram_diff_edges is None:
+                #     # h_values_tmp, histogram_diff_edges = np.histogram(diff_x_cumulation, bins=100, range=(-1.5,1.5))
+                #     h_values_tmp, histogram_diff_edges = np.histogram(diff_amplitudes, bins=1000, range=(-1.5,1.5))
+                #     histogram_diff_bin_centers = (histogram_diff_edges[1:] + histogram_diff_edges[:-1])/2
+                # else:
+                #     # h_values_tmp, tmp_edges = np.histogram(diff_x_cumulation, bins=histogram_diff_edges)
+                #     h_values_tmp, tmp_edges = np.histogram(diff_amplitudes, bins=histogram_diff_edges)
+                
+                # if histogram_diff_values is None:
+                #     histogram_diff_values = h_values_tmp
+                # else:
+                #     histogram_diff_values = histogram_diff_values + h_values_tmp
+                
+                # histogram_abs_distance.setData(histogram_diff_bin_centers, histogram_diff_values)
+                # print(histogram_diff_bin_centers)
                 
                 QtGui.QApplication.processEvents()
-                while time.time() - prev_time < time_delay:
-                    pass
+                # while time.time() - prev_time < time_delay:
+                #     pass
 
 
         
-        # for idx, val in enumerate(x_dist):
-        #     current_sign =  math.copysign(1,x_dist[idx])
-        #     if current_sign != prev_sign:
-        #         for i in range(start_transition_idx, idx):
-        #             x_cumulation2[i] = cumulative_value
-
-        #         start_transition_idx = idx
-        #         cumulative_value = val
-        #         prev_sign = current_sign
-            
-        #     else:
-        #         cumulative_value += val
-        #         x_cumulation2[idx] = cumulative_value
-
-
-                #     histogram_edges = np.histogram_bin_edges(x, bins="auto")
-                # if not histogram_cumulative_edges:
-                #     histogram_cumulative_edges = np.histogram_bin_edges(x_dist)
-                
-                # time.sleep(0.1)
-        #         x = np.load(f)
-        #         print(x[0:10])
-
+        
 
         except Exception as e:
             print("Exception reading file" )
             print(e)
         
-        
-        # x = np.load(f)
-        # x_dist = x[1:] - x[:-1]
-        # # print(x[:10])
-        # # print(x_dist[:10])
-        # p1.plot(x, pen='r', name="Initial data")
-        # p2.plot(x_dist, pen='r', name="Distances")
-        # h, h_edges = np.histogram(x,bins='fd')
-        # h_centers = (h_edges[1:] + h_edges[:-1])/2
-        # p3.plot(h_centers, h)
-
-        # h_dist, h_dist_edges = np.histogram(x_dist,bins='fd')
-        # h_dist_centers = (h_dist_edges[1:] + h_dist_edges[:-1])/2
-        # p4.plot(h_dist_centers, h_dist)
-        
-        # # x_cumulation = np.zeros_like(x_dist)
-        # x_cumulation = np.cumsum(x_dist)
-        # p2.plot(x_cumulation, pen='b', name="Cumulation")
-        # l = len(x_dist)
-
-        # h_cumulation, h_cumulation_edges = np.histogram(x_cumulation,bins='fd')
-        # h_cumulation_centers = (h_cumulation_edges[1:] + h_cumulation_edges[:-1])/2
-        # p4.plot(h_cumulation_centers, h_cumulation)
-        # x_cumulation2 = np.zeros_like(x_dist)
-
-
-        
-        # for idx, val in enumerate(x_dist):
-        #     current_sign =  math.copysign(1,x_dist[idx])
-        #     if current_sign != prev_sign:
-        #         for i in range(start_transition_idx, idx):
-        #             x_cumulation2[i] = cumulative_value
-
-        #         start_transition_idx = idx
-        #         cumulative_value = val
-        #         prev_sign = current_sign
-            
-        #     else:
-        #         cumulative_value += val
-        #         x_cumulation2[idx] = cumulative_value
-
-        # p2.plot(x_cumulation2, pen='g', name="Cumulation 2")
-
-        # h_cumulation2, h_cumulation2_edges = np.histogram(x_cumulation2,bins='fd')
-        # h_cumulation2_centers = (h_cumulation2_edges[1:] + h_cumulation2_edges[:-1])/2
-        # p4.plot(h_cumulation2_centers, h_cumulation2, pen='g')
-
-
-
-
-            
-
-        # for k in f:
-        # x = np.load(f)
-        # try:
-        #     while True:
-        #         x = np.load(f)
-        #         print(x[0:10])
-        
-        # except EOFError as e:
-        #     print("Exception while reading data")
-        #     print(e)
-
-        # except Exception as e:
-        #     print("Exception while reading data")
-        #     print(e)
 
 
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
