@@ -1139,7 +1139,7 @@ class ExperimentDataAnalysis(QtGui.QMainWindow, Ui_ExperimentDataAnalysis):
 
     @QtCore.pyqtSlot()
     def on_action_plot_tlp_triggered(self):
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
         print("plotting tlp")
         fname = self.data["Filename"].iloc[self._current_selected_point_index]
         print("working directory:", self.working_directory)

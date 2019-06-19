@@ -1,5 +1,5 @@
 ﻿import time
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import spline
 
@@ -241,16 +241,16 @@ def test_pid(P = 0.2,  I = 0.0, D= 0.0, L=2000, name = ""):
     feedback_smooth = spline(time_list, feedback_list, time_smooth)
 
     #plt.ion()
-    plt.plot(time_smooth, feedback_smooth)
-    plt.plot(time_list, setpoint_list)
-    plt.xlim((0, time_list[-1]))
-    plt.ylim((min(feedback_list)-0.5, max(feedback_list)+0.5))
-    plt.xlabel('time (s)')
-    plt.ylabel('PID (PV)')
-    plt.title('TEST PID {0}'.format(name))
-    #plt.ylim((1-0.5, 1+0.5))
-    plt.grid(True)
-    plt.show()
+    # plt.plot(time_smooth, feedback_smooth)
+    # plt.plot(time_list, setpoint_list)
+    # plt.xlim((0, time_list[-1]))
+    # plt.ylim((min(feedback_list)-0.5, max(feedback_list)+0.5))
+    # plt.xlabel('time (s)')
+    # plt.ylabel('PID (PV)')
+    # plt.title('TEST PID {0}'.format(name))
+    # #plt.ylim((1-0.5, 1+0.5))
+    # plt.grid(True)
+    # plt.show()
 
 if __name__ == "__main__":
     #for i in np.arange(0,0.001, 0.0001):
