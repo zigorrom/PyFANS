@@ -57,9 +57,9 @@ def main():
     transition_up = np.array([0,1,-1,0])
     transition_down = np.array([0,-1,1,0])
 
-    fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
+    #fname =  "D:\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
     # fname =  "H:\\WorkPC\\Testdata\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"  
-    #fname = "F:\\TestData\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"
+    fname = "F:\\TestData\\BG=1V\\T06_Noise_BG=1V_28_timetrace.npy"
     with open(fname, 'rb') as f:
         header = f.readline()
         decoded_header = header.decode()
@@ -123,17 +123,37 @@ def main():
                 psd_positive_smoothed = signal.savgol_filter(fpsd_positive, 101, 3, delta=10)
                 psd_positive_smoothed = psd_positive_smoothed / fft_positive_freq
                 
-                psd_change_factor = np.sqrt(psd_positive_smoothed / psd_positive)
+                psd_change_factor = np.ones_like(psd_positive_smoothed)
+                for a,b in zip(psd_positive_smoothed, psd_positive):
+                    psd_change_factor = a/b 
+
+                psd_change_factor = np.array([np.sqrt(a/b) for (a,b) in zip(psd_positive_smoothed, psd_positive)])
                 
                 print("PSD change factor ", psd_change_factor)
+                print("Length", len(psd_change_factor))
+                print("Length fft", fft_spectrum.size)
+                try:
+
+                    for i, val in enumerate(psd_change_factor):
+                        pass
+                        # print(i, val)
+                        # if val == np.nan:
+                        #     print("NAAAAAAAANNNNNN")
+                        # else:
+                        #     print("ok")
+                except Exception as exc:
+                    print(str(exc))
+
+                print("finish")
                 print(fft_positive_freq)
 
                 
                 coefficients = np.ones(fft_spectrum.shape)
+                reverse_psd_change_factor = psd_change_factor[-1::-1].copy()
                 if x_is_odd_len:
                     coefficients[start_psd_idx:end_psd_idx] = psd_change_factor
                     coefficients[end_psd_idx] = psd_change_factor[-1]
-                    coefficients[end_psd_idx+1:] = psd_change_factor[-1::-1]
+                    coefficients[end_psd_idx+1:] = reverse_psd_change_factor
 
                 else:
                     coefficients[start_psd_idx:end_psd_idx] = psd_change_factor
@@ -265,7 +285,7 @@ def main():
                         
                 standard_deviation = np.zeros_like(x)
                 for i in range(len(x)-standard_deviation_window):
-                    standard_deviation[i] = np.std(x[i:i+standard_deviation_window])
+                    standard_deviation[i+standard_deviation_window//2] = np.std(x[i:i+standard_deviation_window])
                 
                 mean_std_deviation = np.mean(standard_deviation)
                 threshold_deviation = 2 * mean_std_deviation
