@@ -32,6 +32,10 @@
             "UI/UI_VoltageControl.ui",
             "pyfans/hardware/forms"
         ],
+		[
+            "UI/UI_CalibrationEdit.ui",
+            "pyfans/hardware/forms"
+        ],
         [
             "UI/UI_NoiseMeasurement_v5_3.ui",
             "pyfans/forms"
