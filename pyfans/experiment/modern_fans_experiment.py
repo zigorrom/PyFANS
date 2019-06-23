@@ -999,7 +999,7 @@ class FANSExperiment(Experiment):
         assert isinstance(self.experiment_settings, ExperimentSettings)
         self.assert_experiment_abort()
         screen_update = self.experiment_settings.display_refresh  #10;
-        total_averaging = self.experiment_settings.averages;
+        total_averaging = self.experiment_settings.averages
         adc = self.fans_acquisition
         
         fs = self.sample_rate
