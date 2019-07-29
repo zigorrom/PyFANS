@@ -1,12 +1,12 @@
 {
     "active": "default",
-    "calibrations": {
-        "default": {
-            "_amplifier_noise_filename": "",
+    "calibrations": [
+        {
+            "_name": "default",
             "_amplification_factor": 1,
-            "_name": "hello",
             "_frequency_response_filename": "",
-            "py/object": "pyfans.hardware.calibration_editor.CalibrationInfoItem"
+            "py/object": "pyfans.hardware.calibration_editor.CalibrationInfoItem",
+            "_amplifier_noise_filename": ""
         }
-    }
+    ]
 }

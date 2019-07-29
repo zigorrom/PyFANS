@@ -120,8 +120,8 @@ def generate_empty_calibration_info():
         )
 
     obj["active"] = name
-    obj["calibrations"] = {}
-    obj["calibrations"][name] = ci
+    obj["calibrations"] = []
+    obj["calibrations"].append(ci)
     return obj
 
 class CalibrationView(QtGui.QDialog, Ui_CalibrationEdit, DataContextWidget):
@@ -154,8 +154,6 @@ class CalibrationView(QtGui.QDialog, Ui_CalibrationEdit, DataContextWidget):
             return 
         
         self._selected_calibration = value
-       
-
 
     def setupUi(self):
         super().setupUi(self)
@@ -192,10 +190,11 @@ class CalibrationView(QtGui.QDialog, Ui_CalibrationEdit, DataContextWidget):
 
 
     def update_list_of_calibrations(self):
-        keys = list(self.calibration_info["calibrations"].keys())
-        print(keys)
-        self.ui_selected_calibration.clear()
-        self.ui_selected_calibration.addItems(keys)
+        # keys = list(self.calibration_info["calibrations"].keys())
+        # print(keys)
+        # self.ui_selected_calibration.clear()
+        # self.ui_selected_calibration.addItems(keys)
+        pass
 
     def refresh_data(self):
         active_name = self.calibration_info["active"]
